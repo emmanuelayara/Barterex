@@ -54,7 +54,7 @@ def dashboard():
 
 @app.route('/marketplace')
 def marketplace():
-    items = Item.query.filter_by(is_available=True).all()
+    items = Item.query.filter_by(is_available=True, is_approved=True).all()
     return render_template('marketplace.html', items=items)
 
 @app.route('/buy/<int:item_id>')
@@ -145,6 +145,14 @@ def approve_item(item_id):
         flash("Invalid value entered.", "danger")
 
     return redirect(url_for('approve_items'))
+
+@app.route('/request_trade/<int:item_id>', methods=['POST'])
+@login_required
+def request_trade(item_id):
+    # Placeholder logic for now
+    flash('Trade request sent!', 'success')
+    return redirect(url_for('marketplace'))
+
 
 
 
