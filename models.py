@@ -13,11 +13,13 @@ class User(db.Model, UserMixin):
     credits = db.Column(db.Integer, default=0)
     is_admin = db.Column(db.Boolean, default=False)
 
+
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100))
-    description = db.Column(db.Text)
-    image_url = db.Column(db.String(200))
-    status = db.Column(db.String(20), default='pending')  # pending, approved
-    assigned_credit = db.Column(db.Integer, default=0)
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    value = db.Column(db.Float, nullable=False)  # value in app credits
+    image_url = db.Column(db.String(300), nullable=True)  # optional image
+    status = db.Column(db.String(20), default='available')  # available, pending, traded
+    is_available = db.Column(db.Boolean, default=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

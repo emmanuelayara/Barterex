@@ -45,9 +45,39 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('home'))
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('dashboard.html', user=current_user)
+
+@app.route('/marketplace')
+def marketplace():
+    items = Item.query.filter_by(is_available=True).all()
+    return render_template('marketplace.html', items=items)
+
+@app.route('/buy/<int:item_id>')
+def buy_item(item_id):
+    if 'user_id' not in session:
+        flash("Please log in to make purchases.", "warning")
+        return redirect(url_for('login'))
+
+    item = Item.query.get_or_404(item_id)
+    user = User.query.get(session['user_id'])
+
+    if not item.is_available:
+        flash("This item is no longer available.", "danger")
+        return redirect(url_for('marketplace'))
+
+    if user.credits < item.value:
+        flash("Insufficient credits to buy this item.", "danger")
+        return redirect(url_for('marketplace'))
+
+    # Deduct credits and update item status
+    user.credits -= item.value
+    item.is_available = False
+    db.session.commit()
+
+    flash(f"You have successfully bought '{item.name}'!", "success")
+    return redirect(url_for('marketplace'))

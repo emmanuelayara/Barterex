@@ -1,0 +1,12 @@
+<h2>Marketplace</h2>
+{% for item in items %}
+    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px;">
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description }}</p>
+        <p><strong>Price:</strong> {{ item.value }} credits</p>
+        {% if item.image_url %}
+            <img src="{{ item.image_url }}" width="200">
+        {% endif %}
+        <a href="{{ url_for('buy_item', item_id=item.id) }}">Buy</a>
+    </div>
+{% endfor %}
