@@ -81,3 +81,57 @@ def buy_item(item_id):
 
     flash(f"You have successfully bought '{item.name}'!", "success")
     return redirect(url_for('marketplace'))
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_item():
+    if 'user_id' not in session:
+        flash("Login required to upload items.", "warning")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        image_url = request.form['image_url']  # optional
+
+        new_item = Item(
+            name=name,
+            description=description,
+            image_url=image_url,
+            owner_id=session['user_id']
+        )
+        db.session.add(new_item)
+        db.session.commit()
+
+        flash("Item submitted for approval!", "info")
+        return redirect(url_for('marketplace'))
+
+    return render_template('upload.html')
+
+@app.route('/admin/approvals')
+def approve_items():
+    if 'user_id' not in session:
+        flash("Admin access only.", "warning")
+        return redirect(url_for('login'))
+
+    admin = User.query.get(session['user_id'])
+    if not admin.is_admin:
+        flash("Access denied.", "danger")
+        return redirect(url_for('marketplace'))
+
+    items = Item.query.filter_by(is_approved=False).all()
+    return render_template('admin_approvals.html', items=items)
+
+@app.route('/admin/approve/<int:item_id>', methods=['POST'])
+def approve_item(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    value = float(request.form['value'])
+    item.value = value
+    item.is_approved = True
+    item.is_available = True
+
+    db.session.commit()
+    flash(f"Item '{item.name}' approved and listed.", "success")
+    return redirect(url_for('approve_items'))
+
+

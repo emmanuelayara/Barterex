@@ -18,8 +18,9 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    value = db.Column(db.Float, nullable=False)  # value in app credits
-    image_url = db.Column(db.String(300), nullable=True)  # optional image
-    status = db.Column(db.String(20), default='available')  # available, pending, traded
-    is_available = db.Column(db.Boolean, default=True)
+    image_url = db.Column(db.String(300), nullable=True)
+    value = db.Column(db.Float, nullable=True)  # will be set by admin
+    is_available = db.Column(db.Boolean, default=False)  # becomes True when approved
+    is_approved = db.Column(db.Boolean, default=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
