@@ -23,4 +23,5 @@ class Item(db.Model):
     is_available = db.Column(db.Boolean, default=False)  # becomes True when approved
     is_approved = db.Column(db.Boolean, default=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
+    
+    owner = db.relationship('User', backref='items')

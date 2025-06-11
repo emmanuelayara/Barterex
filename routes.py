@@ -125,13 +125,26 @@ def approve_items():
 def approve_item(item_id):
     item = Item.query.get_or_404(item_id)
 
-    value = float(request.form['value'])
-    item.value = value
-    item.is_approved = True
-    item.is_available = True
+    if 'user_id' not in session:
+        flash("Login required.", "warning")
+        return redirect(url_for('login'))
 
-    db.session.commit()
-    flash(f"Item '{item.name}' approved and listed.", "success")
+    admin = User.query.get(session['user_id'])
+    if not admin.is_admin:
+        flash("Admins only.", "danger")
+        return redirect(url_for('marketplace'))
+
+    try:
+        value = float(request.form['value'])
+        item.value = value
+        item.is_approved = True
+        item.is_available = True
+        db.session.commit()
+        flash(f"Item '{item.name}' approved with value {value} credits.", "success")
+    except:
+        flash("Invalid value entered.", "danger")
+
     return redirect(url_for('approve_items'))
+
 
 
