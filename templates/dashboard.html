@@ -1,3 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+
 <h2>Welcome, {{ user.username }}!</h2>
 <p>Credits: {{ user.credits }}</p>
 <a href="/logout">Logout</a>
+
+{% endblock %}
