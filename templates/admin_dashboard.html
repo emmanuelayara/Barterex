@@ -1,0 +1,6 @@
+@app.route('/admin/dashboard')
+@admin_login_required
+def admin_dashboard():
+    unapproved_items = Item.query.filter_by(is_approved=False).all()
+    users = User.query.all()
+    return render_template('admin_dashboard.html', items=unapproved_items, users=users)

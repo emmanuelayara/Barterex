@@ -2,8 +2,9 @@ from flask import Flask, render_template, redirect, url_for, request, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, Item  # Assuming models.py contains the User and Item classes
+from models import User, Item, Admin  # Assuming models.py contains the User and Item classes
 from app import app, login_manager, db
+from functools import wraps
 
 
 
@@ -146,12 +147,70 @@ def approve_item(item_id):
 
     return redirect(url_for('approve_items'))
 
+@app.route('/admin/reject/<int:item_id>', methods=['POST'])
+def reject_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    item.is_approved = False
+    item.is_available = False
+    db.session.commit()
+    flash('Item rejected.', 'warning')
+    return redirect(url_for('admin_dashboard'))
+
+
 @app.route('/request_trade/<int:item_id>', methods=['POST'])
 @login_required
 def request_trade(item_id):
     # Placeholder logic for now
     flash('Trade request sent!', 'success')
     return redirect(url_for('marketplace'))
+
+@app.route('/admin/register', methods=['GET', 'POST'])
+def admin_register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = generate_password_hash(request.form['password'])
+
+        admin = Admin(username=username, email=email, password=password)
+        db.session.add(admin)
+        db.session.commit()
+        flash('Admin registered successfully!', 'success')
+        return redirect(url_for('admin_login'))
+
+    return render_template('admin_register.html')
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        admin = Admin.query.filter_by(email=email).first()
+
+        if admin and check_password_hash(admin.password, password):
+            session['admin_id'] = admin.id
+            flash('Logged in as admin!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Invalid credentials', 'danger')
+
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_id', None)
+    flash('Logged out successfully', 'info')
+    return redirect(url_for('admin_login'))
+
+def admin_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'admin_id' not in session:
+            flash('Please log in as admin.', 'warning')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 
 
 
