@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TradeByBarter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        nav, footer { background-color: #222; color: white; padding: 10px 20px; }
+        nav a, footer a { color: #fff; margin: 0 10px; text-decoration: none; }
+        nav a:hover, footer a:hover { text-decoration: underline; }
+        .container { padding: 20px; }
+    </style>
+</head>
+<body>
+
+<!-- ✅ NAVIGATION BAR -->
+<nav>
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('marketplace') }}">Marketplace</a>
+    <a href="{{ url_for('upload_item') }}">Upload Item</a>
+    {% if session.get('is_admin') %}
+        <a href="{{ url_for('approve_items') }}">Admin Panel</a>
+    {% endif %}
+    {% if session.get('user_id') %}
+        <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Register</a>
+    {% endif %}
+</nav>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<!-- ✅ FOOTER -->
+<footer>
+    <p>&copy; 2025 TradeByBarter | <a href="{{ url_for('marketplace') }}">Explore Items</a> | 
+    <a href="{{ url_for('upload_item') }}">Add Item</a> | 
+    <a href="{{ url_for('home') }}">Home</a></p>
+</footer>
+
+</body>
+</html>
