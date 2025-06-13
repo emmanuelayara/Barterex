@@ -43,10 +43,18 @@ def register():
 def login():
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form['username']).first()
+
+        if current_user.is_banned:
+            flash('Your account has been banned.', 'danger')
+            logout_user()
+            return redirect(url_for('login'))
+
         if user and check_password_hash(user.password_hash, request.form['password']):
             login_user(user, remember=True)
             return redirect(url_for('dashboard'))
         flash('Invalid credentials.', 'danger')
+
+
     return render_template('login.html')
 
 
@@ -60,6 +68,12 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+
+    if current_user.is_banned:
+        flash('Your account has been banned.', 'danger')
+        logout_user()
+        return redirect(url_for('login'))
+
     return render_template('dashboard.html', user=current_user)
 
 
@@ -93,6 +107,12 @@ def buy_item(item_id):
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_item():
+
+    if current_user.is_banned:
+        flash('Your account has been banned.', 'danger')
+        logout_user()
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
@@ -202,6 +222,21 @@ def admin_dashboard():
 def manage_users():
     users = User.query.all()
     return render_template('admin_users.html', users=users)
+
+
+@app.route('/admin/ban_user/<int:user_id>', methods=['POST'])
+@admin_login_required
+def ban_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if user.id == session.get('admin_id'):
+        flash("You can't ban yourself.", 'danger')
+        return redirect(url_for('admin_users'))
+
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'User {user.username} has been banned and deleted.', 'warning')
+    return redirect(url_for('admin_users'))
 
 
 @app.route('/admin/user/<int:user_id>/edit', methods=['GET', 'POST'])

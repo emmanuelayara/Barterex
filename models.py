@@ -12,6 +12,8 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128), nullable=False)
     credits = db.Column(db.Integer, default=0)
     is_admin = db.Column(db.Boolean, default=False)
+    is_banned = db.Column(db.Boolean, default=False)
+
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
