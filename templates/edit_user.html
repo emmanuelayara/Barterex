@@ -1,0 +1,17 @@
+<html lang="en">
+<head>
+    <title>Edit User</title>
+</head>
+<body>
+    <h1>Edit User: {{ user.username }}</h1>
+    <nav>
+        <a href="{{ url_for('manage_users') }}">Back to Users</a>
+    </nav>
+
+    <form method="POST">
+        <label for="credits">Credits:</label>
+        <input type="number" name="credits" value="{{ user.credits }}" required>
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>

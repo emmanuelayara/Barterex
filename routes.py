@@ -177,15 +177,44 @@ def admin_login_required(f):
 @app.route('/admin/dashboard')
 @admin_login_required
 def admin_dashboard():
-    filter_status = request.args.get('filter', 'pending')
     page = request.args.get('page', 1, type=int)
+    items = Item.query.order_by(Item.id.desc()).paginate(page=page, per_page=5)
 
-    if filter_status == 'all':
-        items = Item.query.order_by(Item.id.desc()).paginate(page=page, per_page=5)
-    else:
-        items = Item.query.filter_by(status=filter_status).order_by(Item.id.desc()).paginate(page=page, per_page=5)
+    total_users = User.query.count()
+    total_items = Item.query.count()
+    approved_items = Item.query.filter_by(is_approved=True).count()
+    pending_items = Item.query.filter_by(is_approved=False).count()
+    traded_items = Item.query.filter_by(is_available=False).count()
+    total_credits_traded = db.session.query(db.func.sum(Item.value)).filter_by(is_available=False).scalar() or 0
 
-    return render_template('admin_dashboard.html', items=items, filter=filter_status)
+    return render_template('admin_dashboard.html', 
+                           items=items, 
+                           total_users=total_users,
+                           total_items=total_items,
+                           approved_items=approved_items,
+                           pending_items=pending_items,
+                           traded_items=traded_items,
+                           total_credits_traded=total_credits_traded)
+
+
+@app.route('/admin/users')
+@admin_login_required
+def manage_users():
+    users = User.query.all()
+    return render_template('admin_users.html', users=users)
+
+
+@app.route('/admin/user/<int:user_id>/edit', methods=['GET', 'POST'])
+@admin_login_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if request.method == 'POST':
+        new_credits = request.form.get('credits', type=int)
+        user.credits = new_credits
+        db.session.commit()
+        flash(f"{user.username}'s credits updated to {new_credits}.", "success")
+        return redirect(url_for('manage_users'))
+    return render_template('edit_user.html', user=user)
 
 
 @app.route('/admin/approvals')
