@@ -10,8 +10,7 @@ class User(db.Model, UserMixin):
     credits = db.Column(db.Integer, default=0)
     is_admin = db.Column(db.Boolean, default=False)
     is_banned = db.Column(db.Boolean, default=False)
-
-    items = db.relationship('Item', backref='owner', lazy=True)
+    items = db.relationship('Item', back_populates='user', lazy=True)
 
 
 class Admin(db.Model):
@@ -31,3 +30,4 @@ class Item(db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(50), default='available')  # e.g., 'available', 'sold', 'pending'
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='items')

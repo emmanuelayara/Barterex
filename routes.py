@@ -26,42 +26,38 @@ def home():
     return render_template('home.html')
 
 
+from forms import RegisterForm  # Adjust the import path as needed
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = generate_password_hash(request.form['password'])
-
-        if User.query.filter((User.username == username) | (User.email == email)).first():
-            flash('User already exists.', 'warning')
-            return redirect(url_for('register'))
-
-        user = User(username=username, email=email, password_hash=password)
+    form = RegisterForm()
+    if form.validate_on_submit():
+        # Logic to create a new user and add to DB
+        user = User(username=form.username.data, email=form.email.data, password_hash=form.password.data)
         db.session.add(user)
         db.session.commit()
-
         flash('Registration successful. Please log in.', 'success')
         return redirect(url_for('login'))
+    return render_template('register.html', form=form)
 
-    return render_template('register.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        user = User.query.filter_by(username=request.form['username']).first()
-
-        if user and check_password_hash(user.password_hash, request.form['password']):
-            if user.is_banned:
-                flash('Your account has been banned.', 'danger')
-                return redirect(url_for('login'))
-            login_user(user, remember=True)
+    form = LoginForm()
+    if form.validate_on_submit():
+        # handle login logic
+        username = form.username.data
+        password = form.password.data   
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            flash('Login successful!', 'success')
             return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password.', 'danger')
+    return render_template('login.html', form=form)
 
-        flash('Invalid credentials.', 'danger')
-
-    return render_template('login.html')
 
 
 @app.route('/logout')
@@ -111,19 +107,23 @@ def buy_item(item_id):
     return redirect(url_for('marketplace'))
 
 
+
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_item():
+
     if current_user.is_banned:
         flash('Your account has been banned.', 'danger')
         logout_user()
         return redirect(url_for('login'))
 
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        image_url = request.form.get('image_url', '')
 
+    form = UploadItemForm()
+    if form.validate_on_submit():
+        # your logic to handle the form data goes here
+        name = form.name.data
+        description = form.description.data
+        image_url = form.image_url.data
         new_item = Item(
             name=name,
             description=description,
@@ -132,11 +132,12 @@ def upload_item():
         )
         db.session.add(new_item)
         db.session.commit()
-
         flash("Item submitted for approval!", "info")
         return redirect(url_for('marketplace'))
 
-    return render_template('upload.html')
+    return render_template('upload.html', form=form)
+
+
 
 
 @app.route('/request_trade/<int:item_id>', methods=['POST'])
@@ -242,7 +243,7 @@ def admin_dashboard():
 @admin_login_required
 def manage_users():
     users = User.query.all()
-    return render_template('admin_users.html', users=users)
+    return render_template('admin/users.html', users=users)
 
 
 @app.route('/admin/ban_user/<int:user_id>', methods=['POST'])
@@ -279,7 +280,7 @@ def edit_user(user_id):
 @admin_login_required
 def approve_items():
     items = Item.query.filter_by(is_approved=False).all()
-    return render_template('admin_approvals.html', items=items)
+    return render_template('admin/approvals.html', items=items)
 
 
 @app.route('/admin/approve/<int:item_id>', methods=['POST'])
