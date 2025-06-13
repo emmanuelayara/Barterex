@@ -1,18 +1,21 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% block title %}Upload Item{% endblock %}
 {% block content %}
-
-<h2>Upload an Item for Barter</h2>
-<form method="post">
-    <label>Name:</label><br>
-    <input type="text" name="name" required><br><br>
-
-    <label>Description:</label><br>
-    <textarea name="description"></textarea><br><br>
-
-    <label>Image URL (optional):</label><br>
-    <input type="text" name="image_url"><br><br>
-
-    <input type="submit" value="Submit Item">
+<h2>Upload an Item</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+    </div>
+    <div class="mb-3">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control") }}
+    </div>
+    <div class="mb-3">
+        {{ form.image_url.label(class="form-label") }}
+        {{ form.image_url(class="form-control") }}
+    </div>
+    {{ form.submit(class="btn btn-success") }}
 </form>
-
 {% endblock %}

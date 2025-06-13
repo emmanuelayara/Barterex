@@ -1,18 +1,25 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+from flask import (
+    Flask, render_template, redirect, url_for, request,
+    flash, session
+)
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import (
+    LoginManager, UserMixin, login_user, login_required,
+    logout_user, current_user
+)
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, Item, Admin  # Ensure your models are correctly defined
-from app import app, login_manager, db
 from functools import wraps
 
-# Flask-Login user loader
+from app import app, login_manager, db
+from models import User, Item, Admin
+from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, PasswordResetRequestForm
+
+# ---------------------- USER AUTH ---------------------- #
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
-# ---------------------- PUBLIC ROUTES ---------------------- #
 
 @app.route('/')
 def home():
@@ -36,6 +43,7 @@ def register():
 
         flash('Registration successful. Please log in.', 'success')
         return redirect(url_for('login'))
+
     return render_template('register.html')
 
 
@@ -44,16 +52,14 @@ def login():
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form['username']).first()
 
-        if current_user.is_banned:
-            flash('Your account has been banned.', 'danger')
-            logout_user()
-            return redirect(url_for('login'))
-
         if user and check_password_hash(user.password_hash, request.form['password']):
+            if user.is_banned:
+                flash('Your account has been banned.', 'danger')
+                return redirect(url_for('login'))
             login_user(user, remember=True)
             return redirect(url_for('dashboard'))
-        flash('Invalid credentials.', 'danger')
 
+        flash('Invalid credentials.', 'danger')
 
     return render_template('login.html')
 
@@ -68,7 +74,6 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-
     if current_user.is_banned:
         flash('Your account has been banned.', 'danger')
         logout_user()
@@ -76,6 +81,8 @@ def dashboard():
 
     return render_template('dashboard.html', user=current_user)
 
+
+# ---------------------- MARKETPLACE ---------------------- #
 
 @app.route('/marketplace')
 def marketplace():
@@ -107,7 +114,6 @@ def buy_item(item_id):
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_item():
-
     if current_user.is_banned:
         flash('Your account has been banned.', 'danger')
         logout_user()
@@ -136,7 +142,6 @@ def upload_item():
 @app.route('/request_trade/<int:item_id>', methods=['POST'])
 @login_required
 def request_trade(item_id):
-    # Placeholder logic
     flash('Trade request sent!', 'success')
     return redirect(url_for('marketplace'))
 
@@ -145,34 +150,46 @@ def request_trade(item_id):
 
 @app.route('/admin/register', methods=['GET', 'POST'])
 def admin_register():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = generate_password_hash(request.form['password'])
+    form = AdminRegisterForm()
 
-        admin = Admin(username=username, email=email, password=password)
-        db.session.add(admin)
+    if form.validate_on_submit():
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
+
+        # Password confirmation already handled by the form validator
+        hashed_password = generate_password_hash(password)
+
+        new_admin = Admin(username=username, email=email, password=hashed_password)
+        db.session.add(new_admin)
         db.session.commit()
+
         flash('Admin registered successfully!', 'success')
         return redirect(url_for('admin_login'))
 
-    return render_template('admin_register.html')
+    # If form is not valid or GET method, render the form again
+    return render_template('admin/register.html', form=form)
+
 
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        admin = Admin.query.filter_by(email=email).first()
+    form = AdminLoginForm()
+    
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
 
+        admin = Admin.query.filter_by(email=email).first()
         if admin and check_password_hash(admin.password, password):
             session['admin_id'] = admin.id
-            flash('Logged in as admin!', 'success')
-            return redirect(url_for('admin_dashboard'))
-        flash('Invalid credentials', 'danger')
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('admin_dashboard'))  # Replace with your dashboard route
+        else:
+            flash('Invalid email or password', 'danger')
+    
+    return render_template('admin/login.html', form=form)
 
-    return render_template('admin_login.html')
 
 
 @app.route('/admin/logout')
@@ -182,7 +199,7 @@ def admin_logout():
     return redirect(url_for('admin_login'))
 
 
-# ---------------------- ADMIN DASHBOARD & ITEM APPROVAL ---------------------- #
+# ---------------------- ADMIN UTILITY ---------------------- #
 
 def admin_login_required(f):
     @wraps(f)
@@ -193,6 +210,8 @@ def admin_login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+# ---------------------- ADMIN DASHBOARD ---------------------- #
 
 @app.route('/admin/dashboard')
 @admin_login_required
@@ -207,14 +226,16 @@ def admin_dashboard():
     traded_items = Item.query.filter_by(is_available=False).count()
     total_credits_traded = db.session.query(db.func.sum(Item.value)).filter_by(is_available=False).scalar() or 0
 
-    return render_template('admin_dashboard.html', 
-                           items=items, 
-                           total_users=total_users,
-                           total_items=total_items,
-                           approved_items=approved_items,
-                           pending_items=pending_items,
-                           traded_items=traded_items,
-                           total_credits_traded=total_credits_traded)
+    return render_template(
+        'admin/dashboard.html',
+        items=items,
+        total_users=total_users,
+        total_items=total_items,
+        approved_items=approved_items,
+        pending_items=pending_items,
+        traded_items=traded_items,
+        total_credits_traded=total_credits_traded
+    )
 
 
 @app.route('/admin/users')
@@ -231,24 +252,26 @@ def ban_user(user_id):
 
     if user.id == session.get('admin_id'):
         flash("You can't ban yourself.", 'danger')
-        return redirect(url_for('admin_users'))
+        return redirect(url_for('manage_users'))
 
     db.session.delete(user)
     db.session.commit()
     flash(f'User {user.username} has been banned and deleted.', 'warning')
-    return redirect(url_for('admin_users'))
+    return redirect(url_for('manage_users'))
 
 
 @app.route('/admin/user/<int:user_id>/edit', methods=['GET', 'POST'])
 @admin_login_required
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
+
     if request.method == 'POST':
         new_credits = request.form.get('credits', type=int)
         user.credits = new_credits
         db.session.commit()
         flash(f"{user.username}'s credits updated to {new_credits}.", "success")
         return redirect(url_for('manage_users'))
+
     return render_template('edit_user.html', user=user)
 
 
@@ -286,4 +309,3 @@ def reject_item(item_id):
     db.session.commit()
     flash('Item rejected.', 'warning')
     return redirect(url_for('admin_dashboard'))
-
