@@ -86,27 +86,23 @@ def dashboard():
 def marketplace():
     page = request.args.get('page', 1, type=int)
     condition_filter = request.args.get('condition')
-    search_query = request.args.get('search', '')
+    category_filter = request.args.get('category')
+    search = request.args.get('search', '')
 
-    items_query = Item.query.join(User)
+    query = Item.query.filter_by(status='approved')
 
-    # Filter by condition
-    if condition_filter in ['New', 'Fairly Used']:
-        items_query = items_query.filter(Item.condition == condition_filter)
+    if condition_filter:
+        query = query.filter_by(condition=condition_filter)
 
-    # Search by item name or uploader username
-    if search_query:
-        items_query = items_query.filter(
-            db.or_(
-                Item.name.ilike(f"%{search_query}%"),
-                User.username.ilike(f"%{search_query}%")
-            )
-        )
+    if category_filter:
+        query = query.filter_by(category=category_filter)
 
-    items = items_query.order_by(Item.id.desc()).paginate(page=page, per_page=8)
+    if search:
+        query = query.filter(Item.name.ilike(f'%{search}%'))
+
+    items = query.order_by(Item.id.desc()).paginate(page=page, per_page=8)
 
     return render_template('marketplace.html', items=items)
-
 
 
 @app.route('/buy/<int:item_id>')
@@ -134,24 +130,23 @@ def buy_item(item_id):
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_item():
-
     if current_user.is_banned:
         flash('Your account has been banned.', 'danger')
         logout_user()
         return redirect(url_for('login'))
 
-
     form = UploadItemForm()
     if form.validate_on_submit():
-        # your logic to handle the form data goes here
-        name = form.name.data
-        description = form.description.data
-        image_url = form.image_url.data
         new_item = Item(
-            name=name,
-            description=description,
-            image_url=image_url,
-            owner_id=current_user.id
+            name=form.name.data,
+            description=form.description.data,
+            image_url=None,  # Update this if using image upload
+            condition=form.condition.data,
+            category=form.category.data,
+            user_id=current_user.id,
+            is_available=True,
+            is_approved=False,
+            status="available"
         )
         db.session.add(new_item)
         db.session.commit()
@@ -159,8 +154,6 @@ def upload_item():
         return redirect(url_for('marketplace'))
 
     return render_template('upload.html', form=form)
-
-
 
 
 @app.route('/request_trade/<int:item_id>', methods=['POST'])

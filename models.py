@@ -32,3 +32,4 @@ class Item(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_user'), nullable=False)
     user = db.relationship('User', back_populates='items')
     condition = db.Column(db.String(20))  # e.g., "New" or "Fairly Used"
+    category = db.Column(db.String(100), nullable=False)  # Electronics, etc.

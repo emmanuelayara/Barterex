@@ -2,20 +2,27 @@
 {% block title %}Upload Item{% endblock %}
 {% block content %}
 <h2>Upload an Item</h2>
-<form method="POST">
+
+<form method="POST" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
-    <div class="mb-3">
-        {{ form.name.label(class="form-label") }}
-        {{ form.name(class="form-control") }}
+    <div>
+        {{ form.name.label }} {{ form.name() }}
     </div>
-    <div class="mb-3">
-        {{ form.description.label(class="form-label") }}
-        {{ form.description(class="form-control") }}
+    <div>
+        {{ form.description.label }} {{ form.description() }}
     </div>
-    <div class="mb-3">
-        {{ form.image_url.label(class="form-label") }}
-        {{ form.image_url(class="form-control") }}
+    <div>
+        {{ form.condition.label }} {{ form.condition() }}
     </div>
-    {{ form.submit(class="btn btn-success") }}
+    <div>
+        {{ form.category.label }} {{ form.category() }}
+    </div>
+    <div>
+        {{ form.submit() }}
+    </div>
 </form>
+
 {% endblock %}
+
+
+
