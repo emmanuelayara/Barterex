@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}My Items{% endblock %}
+{% block content %}
+<h2>My Uploaded Items</h2>
+<ul>
+  {% for item in items %}
+    <li>{{ item.name }} - Status: {{ item.status }}</li>
+  {% else %}
+    <li>You haven't uploaded any items yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

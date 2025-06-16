@@ -1,8 +1,160 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
 {% block content %}
+<style>
+  .dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', sans-serif;
+  }
 
-<h2>Welcome, {{ user.username }}!</h2>
-<p>Credits: {{ user.credits }}</p>
-<a href="/logout">Logout</a>
+  .sidebar {
+    width: 240px;
+    background: #054e97;
+    color: white;
+    padding: 30px 20px;
+  }
 
+  .sidebar h3 {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    text-align: center;
+    color: #fff;
+  }
+
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .sidebar li {
+    margin: 15px 0;
+  }
+
+  .sidebar a {
+    color: #adb5bd;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    transition: 0.3s;
+  }
+
+  .sidebar a:hover,
+  .sidebar a.active {
+    background-color: #e4e9ee;
+    color: rgb(12, 8, 8);
+  }
+
+  .main-content {
+    flex: 1;
+    padding: 40px;
+    background: #fff;
+  }
+
+  .main-content h2 {
+    margin-bottom: 20px;
+    color: #333;
+  }
+
+  .overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .card {
+    flex: 1;
+    min-width: 220px;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  }
+
+  .card h4 {
+    margin-bottom: 10px;
+    color: #495057;
+  }
+
+  .card p {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #212529;
+  }
+
+  .recent-section {
+    margin-top: 50px;
+  }
+
+  .recent-section h3 {
+    font-size: 1.3rem;
+    color: #212529;
+    margin-bottom: 20px;
+  }
+
+  .recent-section ul {
+    padding-left: 20px;
+  }
+
+  .recent-section li {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: #495057;
+  }
+
+  .recent-section small {
+    color: #adb5bd;
+  }
+</style>
+
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h3>User Menu</h3>
+    <ul>
+      <li><a href="{{ url_for('user_items') }}">My Items</a></li>
+      <li><a href="{{ url_for('my_trades') }}">My Trades</a></li>
+      <li><a href="{{ url_for('credit_history') }}">Credit History</a></li>
+      <li><a href="{{ url_for('notifications') }}">Notifications</a></li>
+      <li><a href="{{ url_for('profile_settings') }}">Profile</a></li>
+      <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <h2>Welcome, {{ current_user.username }}</h2>
+
+    <div class="overview">
+      <div class="card" style="background: #e8f5e9;">
+        <h4>Credit Balance</h4>
+        <p>{{ current_user.credits }} Credits</p>
+      </div>
+
+      <div class="card" style="background: #fff3cd;">
+        <h4>Items Uploaded</h4>
+        <p>{{ item_count }} Items</p>
+      </div>
+
+      <div class="card" style="background: #fce4ec;">
+        <h4>Pending Trades</h4>
+        <p>{{ pending_trades }} Trades</p>
+      </div>
+    </div>
+
+    <div class="recent-section">
+      <h3>Recent Notifications</h3>
+      <ul>
+        {% for note in recent_notifications %}
+          <li>{{ note.message }} <small>({{ note.created_at.strftime('%d %b %Y') }})</small></li>
+        {% else %}
+          <li>No recent notifications.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
 {% endblock %}

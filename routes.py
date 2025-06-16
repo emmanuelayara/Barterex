@@ -12,7 +12,7 @@ from functools import wraps
 from sqlalchemy import and_
 
 from app import app, login_manager, db
-from models import User, Item, Admin
+from models import User, Item, Admin, Trade, Notification, CreditTransaction
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, PasswordResetRequestForm
 
 # ---------------------- USER AUTH ---------------------- #
@@ -77,8 +77,59 @@ def dashboard():
         flash('Your account has been banned.', 'danger')
         logout_user()
         return redirect(url_for('login'))
+    
+    credits = current_user.credits  # assuming this field exists on User
+    item_count = Item.query.filter_by(user_id=current_user.id).count()
+    pending_trades = Trade.query.filter_by(user_id=current_user.id, status='pending').count()
+    
+    # Get latest 5 notifications
+    recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).limit(5).all()
+
 
     return render_template('dashboard.html', user=current_user)
+
+
+@app.route('/user-items')
+@login_required
+def user_items():
+    items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).all()
+    return render_template('user_items.html', items=items)
+
+
+@app.route('/my-trades')
+@login_required
+def my_trades():
+    trades = Trade.query.filter(
+        (Trade.sender_id == current_user.id) | (Trade.receiver_id == current_user.id)
+    ).order_by(Trade.id.desc()).all()
+    return render_template('my_trades.html', trades=trades)
+
+
+@app.route('/credit-history')
+@login_required
+def credit_history():
+    history = CreditTransaction.query.filter_by(user_id=current_user.id).order_by(CreditTransaction.id.desc()).all()
+    return render_template('credit_history.html', history=history)
+
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    notes = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
+    return render_template('notifications.html', notifications=notes)
+
+
+@app.route('/profile-settings', methods=['GET', 'POST'])
+@login_required
+def profile_settings():
+    if request.method == 'POST':
+        current_user.username = request.form['username']
+        current_user.email = request.form['email']
+        db.session.commit()
+        flash('Profile updated successfully', 'success')
+        return redirect(url_for('profile_settings'))
+
+    return render_template('profile_settings.html', user=current_user)
 
 
 # ---------------------- MARKETPLACE ---------------------- #

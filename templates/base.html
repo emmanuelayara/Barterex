@@ -2,86 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TradeByBarter</title>
+    <title>TradeByBarter - {% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #f9fafc;
+            color: #333;
         }
 
-        /* ✅ NAVBAR STYLES */
+        /* ✅ NAVIGATION BAR */
         nav {
-            background: linear-gradient(90deg, #4b6cb7, #182848);
+            background: #2458b3; /* Blue background */
             color: white;
-            padding: 15px 30px;
+            padding: 20px 40px; /* Increased padding */
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 1.05rem; /* Slightly larger text */
         }
 
-        nav .nav-left,
-        nav .nav-right {
+        nav .nav-left {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             flex-wrap: wrap;
         }
 
         nav a {
             color: #fff;
             text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s ease, background-color 0.3s ease;
-            padding: 6px 12px;
-            border-radius: 5px;
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
         }
 
         nav a:hover {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.15);
         }
 
-        /* ✅ CONTAINER */
+        nav a.active {
+            background-color: #1d4ca3;
+            color: white;
+        }
+
+        /* ✅ MAIN CONTAINER */
         .container {
-            padding: 20px;
+            max-width: 90%;
+            margin: 40px auto;
+            padding: 0 20px;
         }
 
         /* ✅ FLASH MESSAGES */
         .flash {
             margin-bottom: 15px;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
         }
 
-        .success { background-color: #d4edda; color: #155724; }
+        .success { background-color: #d1f2eb; color: #145a32; }
         .error { background-color: #f8d7da; color: #721c24; }
-        .info { background-color: #d1ecf1; color: #0c5460; }
+        .info { background-color: #d6eaf8; color: #154360; }
 
         /* ✅ FOOTER */
         footer {
-            background-color: #222;
-            color: #fff;
+            background-color: #2458b3; /* Blue footer */
+            color: #e6ecf3;
             text-align: center;
-            padding: 15px;
-            margin-top: 30px;
+            padding: 25px 10px;
+            margin-top: 60px;
+            font-size: 1rem;
         }
 
         footer a {
-            color: #ccc;
-            margin: 0 10px;
+            color: #ffffff;
+            margin: 0 12px;
             text-decoration: none;
         }
 
         footer a:hover {
-            color: #fff;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
-<!-- ✅ NAVIGATION BAR -->
+<!-- ✅ NAVIGATION -->
 <nav>
     <div class="nav-left">
         <a href="{{ url_for('home') }}">🏠 Home</a>
@@ -99,16 +112,15 @@
             <a href="{{ url_for('admin_login') }}">🛡️ Admin Login</a>
             <a href="{{ url_for('admin_register') }}">👑 Admin Register</a>
             <a href="{{ url_for('admin_dashboard') }}">👑 Admin Dashboard</a>
-            
         {% endif %}
     </div>
 </nav>
 
-<!-- ✅ MAIN CONTAINER -->
+<!-- ✅ PAGE CONTENT -->
 <div class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <ul>
+            <ul style="list-style: none; padding: 0;">
                 {% for category, message in messages %}
                     <li class="flash {{ category }}">{{ message }}</li>
                 {% endfor %}
@@ -121,9 +133,9 @@
 
 <!-- ✅ FOOTER -->
 <footer>
-    <p>&copy; 2025 Barter | 
-        <a href="{{ url_for('marketplace') }}">Explore</a> | 
-        <a href="{{ url_for('upload_item') }}">Add Item</a> | 
+    <p>&copy; 2025 TradeByBarter &bull;
+        <a href="{{ url_for('marketplace') }}">Marketplace</a> |
+        <a href="{{ url_for('upload_item') }}">Upload</a> |
         <a href="{{ url_for('home') }}">Home</a>
     </p>
 </footer>

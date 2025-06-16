@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}My Trades{% endblock %}
+{% block content %}
+<h2>My Trade History</h2>
+<ul>
+  {% for trade in trades %}
+    <li>Exchanged {{ trade.item_given.name }} for {{ trade.item_received.name }} on {{ trade.timestamp }}</li>
+  {% else %}
+    <li>No trades yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

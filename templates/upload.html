@@ -1,28 +1,41 @@
 {% extends 'base.html' %}
 {% block title %}Upload Item{% endblock %}
+
 {% block content %}
-<h2>Upload an Item</h2>
+<div style="max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
+    <h2 style="text-align: center; margin-bottom: 30px; color: #333;">Upload an Item</h2>
 
-<form method="POST" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.name.label }} {{ form.name() }}
-    </div>
-    <div>
-        {{ form.description.label }} {{ form.description() }}
-    </div>
-    <div>
-        {{ form.condition.label }} {{ form.condition() }}
-    </div>
-    <div>
-        {{ form.category.label }} {{ form.category() }}
-    </div>
-    <div>
-        {{ form.image_url.label }} {{ form.image_url() }}
-    </div>
-    <div>
-        {{ form.submit() }}
-    </div>
-</form>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
 
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.name.label }}</label>
+            {{ form.name(class="form-control", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.description.label }}</label>
+            {{ form.description(class="form-control", rows="4", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.condition.label }}</label>
+            {{ form.condition(class="form-select", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.category.label }}</label>
+            {{ form.category(class="form-select", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.image_url.label }}</label>
+            {{ form.image_url(class="form-control", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        </div>
+
+        <div style="text-align: center;">
+            {{ form.submit(class="btn", style="background-color:#007BFF; color:#fff; padding:12px 25px; border:none; border-radius:6px; font-weight: bold; cursor:pointer;") }}
+        </div>
+    </form>
+</div>
 {% endblock %}

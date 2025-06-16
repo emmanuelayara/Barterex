@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<h2>Notifications</h2>
+<ul>
+  {% for note in notifications %}
+    <li>{{ note.message }} - {{ note.timestamp.strftime('%Y-%m-%d %H:%M') }}</li>
+  {% else %}
+    <li>No new notifications.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

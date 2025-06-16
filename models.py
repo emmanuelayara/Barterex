@@ -1,5 +1,6 @@
 from app import db
 from flask_login import UserMixin
+from datetime import datetime
 
 
 class User(db.Model, UserMixin):
@@ -11,6 +12,7 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False)
     is_banned = db.Column(db.Boolean, default=False)
     items = db.relationship('Item', back_populates='user', lazy=True)
+    transactions = db.relationship('CreditTransaction', back_populates='user', lazy=True)
 
 
 class Admin(db.Model):
@@ -33,3 +35,24 @@ class Item(db.Model):
     user = db.relationship('User', back_populates='items')
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
+
+
+class Trade(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    status = db.Column(db.String(50))
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.String(255))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class CreditTransaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    amount = db.Column(db.Integer, nullable=False)
+    transaction_type = db.Column(db.String(50))  # e.g., 'credit', 'debit'
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship('User', back_populates='transactions')  # Assuming User has a transactions relationship
