@@ -90,13 +90,71 @@
         footer a:hover {
             text-decoration: underline;
         }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+        }
+
+        .hamburger div {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+            transition: 0.3s ease;
+        }
+
+        /* ✅ NAV LINKS */
+        .nav-left {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-left {
+                display: none; /* HIDE by default */
+                flex-direction: column;
+                width: 100%;
+                margin-top: 10px;
+                gap: 10px;
+            }
+
+            .nav-left.active {
+                display: flex; /* SHOW when toggled */
+            }
+
+            nav a {
+                width: 100%;
+                padding: 10px 15px;
+                margin: 2px 0;
+            }
+        }
     </style>
 </head>
 <body>
 
 <!-- ✅ NAVIGATION -->
 <nav>
-    <div class="nav-left">
+    <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+        <div class="hamburger" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+    <div class="nav-left" id="navLinks">
         <a href="{{ url_for('home') }}">🏠 Home</a>
         <a href="{{ url_for('marketplace') }}">🛒 Marketplace</a>
         {% if current_user.is_authenticated %}
@@ -115,6 +173,7 @@
         {% endif %}
     </div>
 </nav>
+
 
 <!-- ✅ PAGE CONTENT -->
 <div class="container">
@@ -139,6 +198,14 @@
         <a href="{{ url_for('home') }}">Home</a>
     </p>
 </footer>
+
+<script>
+    function toggleMenu() {
+        const navLinks = document.getElementById('navLinks');
+        navLinks.classList.toggle('active');
+    }
+</script>
+
 
 </body>
 </html>
