@@ -89,13 +89,14 @@ def marketplace():
     category_filter = request.args.get('category')
     search = request.args.get('search', '')
 
-    query = Item.query.filter_by(status='approved')
+    # Start with approved and available items only
+    query = Item.query.filter_by(is_approved=True, is_available=True)
 
     if condition_filter:
-        query = query.filter_by(condition=condition_filter)
+        query = query.filter(Item.condition == condition_filter)
 
     if category_filter:
-        query = query.filter_by(category=category_filter)
+        query = query.filter(Item.category == category_filter)
 
     if search:
         query = query.filter(Item.name.ilike(f'%{search}%'))
@@ -103,6 +104,7 @@ def marketplace():
     items = query.order_by(Item.id.desc()).paginate(page=page, per_page=8)
 
     return render_template('marketplace.html', items=items)
+
 
 
 @app.route('/buy/<int:item_id>')
