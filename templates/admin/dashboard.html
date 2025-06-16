@@ -42,22 +42,38 @@
             <ul class="list-group mb-4">
                 {% for item in items.items %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
+                    <div style="flex: 1;">
                         <strong>{{ item.name }}</strong><br>
                         <small class="text-muted">by {{ item.user.username }}</small>
                     </div>
-                    <span class="badge rounded-pill 
-                        {% if item.status == 'pending' %} bg-warning text-dark
-                        {% elif item.status == 'approved' %} bg-success
-                        {% elif item.status == 'rejected' %} bg-danger
-                        {% endif %}">
-                        {{ item.status|capitalize }}
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill 
+                            {% if item.status == 'pending' %} bg-warning text-dark
+                            {% elif item.status == 'approved' %} bg-success
+                            {% elif item.status == 'rejected' %} bg-danger
+                            {% endif %}">
+                            {{ item.status|capitalize }}
+                        </span>
+
+                        {% if item.status == 'pending' %}
+                        <form method="POST" action="{{ url_for('update_item_status') }}">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="hidden" name="status" value="approved">
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('update_item_status') }}">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="hidden" name="status" value="rejected">
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </li>
                 {% else %}
                 <li class="list-group-item text-center text-muted">No items found.</li>
                 {% endfor %}
             </ul>
+
 
             <!-- 📄 Pagination -->
             {% if items.pages > 1 %}

@@ -377,3 +377,22 @@ def reject_item(item_id):
     db.session.commit()
     flash('Item rejected.', 'warning')
     return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/update-status', methods=['POST'])
+@login_required
+def update_item_status():
+    if not current_user.is_admin:
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('home'))
+
+    item_id = request.form.get('item_id')
+    new_status = request.form.get('status')
+
+    item = Item.query.get_or_404(item_id)
+    item.status = new_status
+    db.session.commit()
+
+    flash(f"Item '{item.name}' has been marked as {new_status}.", "success")
+    return redirect(url_for('admin_dashboard', status='pending'))
+
