@@ -31,5 +31,5 @@ class Item(db.Model):
     status = db.Column(db.String(50), default='available')  # e.g., 'available', 'sold', 'pending'
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_user'), nullable=False)
     user = db.relationship('User', back_populates='items')
-    condition = db.Column(db.String(20))  # e.g., "New" or "Fairly Used"
+    condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.

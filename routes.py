@@ -9,6 +9,7 @@ from flask_login import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from sqlalchemy import and_
 
 from app import app, login_manager, db
 from models import User, Item, Admin
@@ -89,22 +90,20 @@ def marketplace():
     category_filter = request.args.get('category')
     search = request.args.get('search', '')
 
-    # Start with approved and available items only
-    query = Item.query.filter_by(is_approved=True, is_available=True)
+    filters = [Item.is_approved == True, Item.is_available == True]
 
     if condition_filter:
-        query = query.filter(Item.condition == condition_filter)
+        filters.append(Item.condition == condition_filter)
 
     if category_filter:
-        query = query.filter(Item.category == category_filter)
+        filters.append(Item.category == category_filter)
 
     if search:
-        query = query.filter(Item.name.ilike(f'%{search}%'))
+        filters.append(Item.name.ilike(f'%{search}%'))
 
-    items = query.order_by(Item.id.desc()).paginate(page=page, per_page=8)
+    items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=8)
 
     return render_template('marketplace.html', items=items)
-
 
 
 @app.route('/buy/<int:item_id>')
@@ -148,7 +147,6 @@ def upload_item():
             user_id=current_user.id,
             is_available=True,
             is_approved=False,
-            status="available"
         )
         db.session.add(new_item)
         db.session.commit()
