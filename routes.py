@@ -32,6 +32,8 @@ from forms import RegisterForm  # Adjust the import path as needed
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
+        # Hash the password
+        form.password.data = generate_password_hash(form.password.data)
         # Logic to create a new user and add to DB
         user = User(username=form.username.data, email=form.email.data, password_hash=form.password.data)
         db.session.add(user)
@@ -82,8 +84,29 @@ def dashboard():
 
 @app.route('/marketplace')
 def marketplace():
-    items = Item.query.filter_by(is_available=True, is_approved=True).all()
+    page = request.args.get('page', 1, type=int)
+    condition_filter = request.args.get('condition')
+    search_query = request.args.get('search', '')
+
+    items_query = Item.query.join(User)
+
+    # Filter by condition
+    if condition_filter in ['New', 'Fairly Used']:
+        items_query = items_query.filter(Item.condition == condition_filter)
+
+    # Search by item name or uploader username
+    if search_query:
+        items_query = items_query.filter(
+            db.or_(
+                Item.name.ilike(f"%{search_query}%"),
+                User.username.ilike(f"%{search_query}%")
+            )
+        )
+
+    items = items_query.order_by(Item.id.desc()).paginate(page=page, per_page=8)
+
     return render_template('marketplace.html', items=items)
+
 
 
 @app.route('/buy/<int:item_id>')
