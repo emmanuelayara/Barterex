@@ -157,6 +157,32 @@ def marketplace():
     return render_template('marketplace.html', items=items)
 
 
+@app.route('/item/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def view_item(item_id):
+    item = Item.query.get_or_404(item_id)
+
+    if request.method == 'POST':
+        if current_user.credits < item.value:
+            flash('You don’t have enough credits to trade for this item.', 'error')
+            return redirect(url_for('view_item', item_id=item_id))
+        
+
+        if item.owner_id == current_user.id:
+            flash('You already own this item.', 'info')
+            return redirect(url_for('view_item', item_id=item_id))
+        
+        # Proceed with trade logic
+        current_user.credits -= item.value
+        item.owner_id = current_user.id  # transfer ownership
+        db.session.commit()
+        flash('Trade successful! You now own this item.', 'success')
+        return redirect(url_for('dashboard'))
+
+    return render_template('item_detail.html', item=item)
+
+
+
 @app.route('/buy/<int:item_id>')
 @login_required
 def buy_item(item_id):
