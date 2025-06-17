@@ -98,8 +98,7 @@ def dashboard():
     # Get latest 5 notifications
     recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).limit(5).all()
 
-
-    return render_template('dashboard.html', user=current_user)
+    return render_template('dashboard.html', user=current_user, credits=credits, item_count=item_count, pending_trades=pending_trades, recent_notifications=recent_notifications)
 
 
 @app.route('/user-items')
@@ -107,6 +106,44 @@ def dashboard():
 def user_items():
     items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).all()
     return render_template('user_items.html', items=items)
+
+
+@app.route('/edit/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def edit_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    
+    if item.user_id != current_user.id:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('marketplace'))
+
+    form = UploadItemForm(obj=item)  # Pre-fill form with current data
+
+    if form.validate_on_submit():
+        item.name = form.name.data
+        item.description = form.description.data
+        item.condition = form.condition.data
+        item.category = form.category.data
+
+        file = form.image.data
+        if file and allowed_file(file.filename):
+            # Remove old image if it exists
+            if item.image_url:
+                old_path = os.path.join(app.root_path, item.image_url.strip("/"))
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+            filename = secure_filename(file.filename)
+            new_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(new_path)
+            item.image_url = f"/{new_path}"  # Save new image path
+
+        db.session.commit()
+        flash("Item updated successfully!", "success")
+        return redirect(url_for('user_items', item_id=item.id))
+
+    return render_template('edit_item.html', form=form, item=item)
+
 
 
 @app.route('/my-trades')

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Edit Item{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Edit Your Item</h2>
+
+    <form method="POST" enctype="multipart/form-data" class="card shadow p-4 border-0">
+        {{ form.hidden_tag() }}
+
+        <!-- Item Name -->
+        <div class="mb-3">
+            <label for="name" class="form-label">Item Name</label>
+            {{ form.name(class="form-control", id="name") }}
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            {{ form.description(class="form-control", id="description", rows="4") }}
+        </div>
+
+        <!-- Condition -->
+        <div class="mb-3">
+            <label for="condition" class="form-label">Condition</label>
+            {{ form.condition(class="form-select", id="condition") }}
+        </div>
+
+        <!-- Category -->
+        <div class="mb-3">
+            <label for="category" class="form-label">Category</label>
+            {{ form.category(class="form-select", id="category") }}
+        </div>
+
+        <!-- Image Upload -->
+        <div class="mb-3">
+            <label for="image" class="form-label">Replace Image</label>
+            {{ form.image(class="form-control", id="image") }}
+            {% if item.image_url %}
+                <div class="mt-2">
+                    <p class="mb-1">Current Image:</p>
+                    <img src="{{ item.image_url }}" alt="Current Image" style="max-width: 200px; border-radius: 6px;">
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Update Item</button>
+    </form>
+</div>
+{% endblock %}
