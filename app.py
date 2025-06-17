@@ -6,6 +6,14 @@ from flask_migrate import Migrate
 
 
 app = Flask(__name__)
+
+
+UPLOAD_FOLDER = 'static/uploads/'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # Max size: 2MB
+
 app.config['SECRET_KEY'] = 'super-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///barter.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

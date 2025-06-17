@@ -46,7 +46,7 @@ class UploadItemForm(FlaskForm):
         ("Health & Wellness", "Health & Wellness"),
         ("Automotive", "Automotive")
     ], validators=[DataRequired()])
-    image_url = StringField('Image URL')
+    image = FileField('Upload Image', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')])
     submit = SubmitField('Submit Item')
 
 

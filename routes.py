@@ -1,6 +1,7 @@
 from flask import (
     Flask, render_template, redirect, url_for, request,
     flash, session
+    
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -10,10 +11,22 @@ from flask_login import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from sqlalchemy import and_
+from sqlalchemy.orm import joinedload
+import os
+from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
 from models import User, Item, Admin, Trade, Notification, CreditTransaction
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, PasswordResetRequestForm
+
+
+# Configuration
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ---------------------- USER AUTH ---------------------- #
 
@@ -204,7 +217,6 @@ def buy_item(item_id):
     return redirect(url_for('marketplace'))
 
 
-
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_item():
@@ -215,10 +227,19 @@ def upload_item():
 
     form = UploadItemForm()
     if form.validate_on_submit():
+        file = form.image.data  # file field from your form
+
+        image_url = None
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(image_path)
+            image_url = f"/{image_path}"  # Public path to be stored in DB
+
         new_item = Item(
             name=form.name.data,
             description=form.description.data,
-            image_url=None,  # Update this if using image upload
+            image_url=image_url,
             condition=form.condition.data,
             category=form.category.data,
             user_id=current_user.id,
@@ -311,12 +332,27 @@ def admin_login_required(f):
 @admin_login_required
 def admin_dashboard():
     page = request.args.get('page', 1, type=int)
-    items = Item.query.order_by(Item.id.desc()).paginate(page=page, per_page=5)
+    search = request.args.get('search', '').strip()
+    status = request.args.get('status', 'pending')  # Defaults to 'pending'
 
+    # Base query with status filter and user preload
+    query = Item.query.options(joinedload(Item.user)).filter(Item.status == status)
+
+    # If search is applied
+    if search:
+        query = query.join(User).filter(
+            (Item.name.ilike(f"%{search}%")) | (User.username.ilike(f"%{search}%"))
+        )
+
+    # Paginate items
+    items = query.order_by(Item.id.desc()).paginate(page=page, per_page=10)
+
+    # Admin stats
     total_users = User.query.count()
     total_items = Item.query.count()
-    approved_items = Item.query.filter_by(is_approved=True).count()
-    pending_items = Item.query.filter_by(is_approved=False).count()
+    approved_items = Item.query.filter_by(status='approved').count()
+    pending_items = Item.query.filter_by(status='pending').count()
+    rejected_items = Item.query.filter_by(status='rejected').count()
     traded_items = Item.query.filter_by(is_available=False).count()
     total_credits_traded = db.session.query(db.func.sum(Item.value)).filter_by(is_available=False).scalar() or 0
 
@@ -327,9 +363,13 @@ def admin_dashboard():
         total_items=total_items,
         approved_items=approved_items,
         pending_items=pending_items,
+        rejected_items=rejected_items,
         traded_items=traded_items,
-        total_credits_traded=total_credits_traded
+        total_credits_traded=total_credits_traded,
+        search=search,
+        status=status
     )
+
 
 
 @app.route('/admin/users')

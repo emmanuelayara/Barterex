@@ -28,9 +28,9 @@
             {{ form.category(class="form-select", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
         </div>
 
-        <div style="margin-bottom: 25px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.image_url.label }}</label>
-            {{ form.image_url(class="form-control", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        <div class="mb-3">
+            <label for="image" class="form-label">Upload Image</label>
+            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
         </div>
 
         <div style="text-align: center;">
