@@ -37,6 +37,12 @@
         <div style="text-align: center;">
             {{ form.submit(class="btn", style="background-color:#007BFF; color:white; padding: 12px 30px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;") }}
         </div>
+
+        <p style="text-align: center; margin-top: 20px; font-size: 14px;">
+            Already have an account? 
+            <a href="{{ url_for('login') }}" class="login-link">Login here</a>
+        </p>
+
     </form>
 </div>
 {% endblock %}
