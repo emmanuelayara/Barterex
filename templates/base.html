@@ -5,149 +5,100 @@
     <title>TradeByBarter - {% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9fafc;
-            color: #333;
-        }
+/* ✅ NAVIGATION BAR */
+nav {
+    background: #2458b3;
+    color: white;
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 
-        /* ✅ NAVIGATION BAR */
-        nav {
-            background: #2458b3; /* Blue background */
-            color: white;
-            padding: 20px 40px; /* Increased padding */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            font-size: 1.05rem; /* Slightly larger text */
-        }
+nav, footer {
+    background: #2458b3;
+    color: white;
+    padding: 15px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 
-        nav .nav-left {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 10px 16px;
-            border-radius: 6px;
-            transition: background-color 0.3s ease;
-        }
+.nav-left {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
 
-        nav a:hover {
-            background-color: rgba(255, 255, 255, 0.15);
-        }
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
 
-        nav a.active {
-            background-color: #1d4ca3;
-            color: white;
-        }
+nav a:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
 
-        /* ✅ MAIN CONTAINER */
-        .container {
-            max-width: 90%;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+nav a.active {
+    background-color: #1d4ca3;
+    color: white;
+}
 
-        /* ✅ FLASH MESSAGES */
-        .flash {
-            margin-bottom: 15px;
-            padding: 12px 15px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-        }
+/* ✅ HAMBURGER MENU */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+}
 
-        .success { background-color: #d1f2eb; color: #145a32; }
-        .error { background-color: #f8d7da; color: #721c24; }
-        .info { background-color: #d6eaf8; color: #154360; }
+.hamburger div {
+    width: 25px;
+    height: 3px;
+    background-color: white;
+    border-radius: 2px;
+}
 
-        /* ✅ FOOTER */
-        footer {
-            background-color: #2458b3; /* Blue footer */
-            color: #e6ecf3;
-            text-align: center;
-            padding: 25px 10px;
-            margin-top: 60px;
-            font-size: 1rem;
-        }
+/* ✅ RESPONSIVE BEHAVIOR */
+@media (max-width: 768px) {
+    .nav-left {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+    }
 
-        footer a {
-            color: #ffffff;
-            margin: 0 12px;
-            text-decoration: none;
-        }
+    .nav-left.active {
+        display: flex;
+    }
 
-        footer a:hover {
-            text-decoration: underline;
-        }
+    .hamburger {
+        display: flex;
+    }
 
-        .hamburger {
-            display: none;
-            flex-direction: column;
-            cursor: pointer;
-            gap: 5px;
-        }
+    nav a {
+        width: 100%;
+        margin: 4px 0;
+    }
+}
 
-        .hamburger div {
-            width: 25px;
-            height: 3px;
-            background-color: white;
-            border-radius: 2px;
-            transition: 0.3s ease;
-        }
-
-        /* ✅ NAV LINKS */
-        .nav-left {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        @media (max-width: 768px) {
-            nav {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .hamburger {
-                display: flex;
-            }
-
-            .nav-left {
-                display: none; /* HIDE by default */
-                flex-direction: column;
-                width: 100%;
-                margin-top: 10px;
-                gap: 10px;
-            }
-
-            .nav-left.active {
-                display: flex; /* SHOW when toggled */
-            }
-
-            nav a {
-                width: 100%;
-                padding: 10px 15px;
-                margin: 2px 0;
-            }
-        }
     </style>
 </head>
 <body>
 
 <!-- ✅ NAVIGATION -->
 <nav>
-    <div style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+    <div class="nav-header">
         <div class="hamburger" onclick="toggleMenu()">
             <div></div>
             <div></div>
@@ -155,7 +106,7 @@
         </div>
     </div>
     <div class="nav-left" id="navLinks">
-        <a href="{{ url_for('home') }}">🏠 Home</a>
+        <a href="{{ url_for('home') }}">BARTER</a>
         <a href="{{ url_for('marketplace') }}">🛒 Marketplace</a>
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('upload_item') }}">⬆️ Upload</a>
