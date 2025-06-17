@@ -104,7 +104,10 @@ def dashboard():
 @app.route('/user-items')
 @login_required
 def user_items():
-    items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).all()
+
+    page = request.args.get('page', 1, type=int)
+
+    items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=10)
     return render_template('user_items.html', items=items)
 
 
