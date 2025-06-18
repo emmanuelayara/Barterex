@@ -39,8 +39,17 @@ class Item(db.Model):
 
 class Trade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    status = db.Column(db.String(50))
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    item = db.relationship('Item', backref='trades', lazy=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships (optional but recommended)
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_trades')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_trades')
+
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
