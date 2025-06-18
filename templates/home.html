@@ -25,15 +25,79 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      flex-wrap: wrap;
+      position: relative;
     }
 
-    nav a {
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
       color: #fff;
-      margin-left: 20px;
+    }
+
+    .menu-toggle {
+      font-size: 1.8rem;
+      display: none;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .menu-items {
+      display: flex;
+      gap: 15px;
+    }
+
+    .menu-items a,
+    .menu-actions a {
+      color: #fff;
       text-decoration: none;
+      padding: 8px 12px;
+      white-space: nowrap;
+    }
+
+    .menu-actions .btn {
+      background-color: #ff7a00;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    /* 🔽 Mobile Styles */
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+
+      .menu-items {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background: #054e97;
+        padding-top: 10px;
+      }
+
+      .menu-items.show {
+        display: flex;
+      }
+
+      .menu-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .nav-links {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
 
     .hero {
@@ -114,21 +178,32 @@
   </style>
 </head>
 <body>
+  
   <header>
-    <h2>Barter</h2>
-    <nav>
-      <a href="#how">How It Works</a>
-      <a href="#categories">Categories</a>
-      <a href="#trending">Explore</a>
-      <a href="/register">Sign Up</a>
-      <a href="/upload" class="btn">Upload Item</a>
+  <div class="logo">
+    <a href="{{ url_for('home') }}" style="display: flex; align-items: center; text-decoration: none; color: white;">
+      <img src="/static/logo.png" alt="Logo" style="height: 40px; width: 40px; border-radius: 8px; margin-right: 10px;">
+      <span style="font-size: 1.4rem; font-weight: bold;">Barter</span>
+    </a>
+  </div>
+
+    <nav class="nav-links">
+      <div class="menu-items" id="menuItems">
+        <a href="#how">How It Works</a>
+        <a href="#categories">Categories</a>
+        <a href="#trending">Explore</a>
+      </div>
+      <div class="menu-actions">
+        <a href="/register">Sign Up</a>
+        <a href="/upload" class="btn">Upload Item</a>
+      </div>
     </nav>
   </header>
 
   <section class="hero">
     <h1>Swap What You Have for What You Need</h1>
     <p>Trade gadgets, clothes, books and more — without spending cash.</p>
-    <a href="/register" class="btn">Start Bartering</a>
+    <a href="/marketplace" class="btn">Start Bartering</a>
   </section>
 
   <section id="how">
@@ -186,17 +261,23 @@
   </section>
 
   <section id="trending">
-    <h2 style="text-align:center; margin-bottom: 40px;">Trending Trades</h2>
+    <h2 style="text-align:center; margin-bottom: 40px;">🔥 Trending Items</h2>
+    {% if trending_items %}
     <div class="trending">
+      {% for item in trending_items[:4] %}
       <div class="card">
-        <img src="https://source.unsplash.com/random/300x200?laptop" alt="Laptop">
-        <p>HP Pavilion → JBL Speaker</p>
+        {% if item.image_url %}
+        <img src="{{ item.image_url }}" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+        {% endif %}
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}</p>
+        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn" style="margin-top: 10px; display: inline-block;">View Item</a>
       </div>
-      <div class="card">
-        <img src="https://source.unsplash.com/random/300x200?camera" alt="Camera">
-        <p>Canon DSLR → iPhone X</p>
-      </div>
+      {% endfor %}
     </div>
+    {% else %}
+    <div style="text-align: center; color: #999;">No trending items at the moment.</div>
+    {% endif %}
   </section>
 
   <section class="testimonials">
@@ -226,5 +307,12 @@
     <a href="#">FAQ</a>
     <a href="#">Terms</a>
   </footer>
+
+  <script>
+    function toggleMenu() {
+      const menu = document.getElementById('menuItems');
+      menu.classList.toggle('show');
+    }
+  </script>
 </body>
 </html>

@@ -37,7 +37,8 @@ def load_user(user_id):
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()  # 3 rows x 2 cols
+    return render_template('home.html', trending_items=trending_items)
 
 
 from forms import RegisterForm  # Adjust the import path as needed
@@ -211,32 +212,12 @@ def marketplace():
 
 
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
-@login_required
 def view_item(item_id):
     item = Item.query.get_or_404(item_id)
-
-    if request.method == 'POST':
-        if current_user.credits < item.value:
-            flash('You don’t have enough credits to trade for this item.', 'error')
-            return redirect(url_for('view_item', item_id=item_id))
-        
-
-        if item.owner_id == current_user.id:
-            flash('You already own this item.', 'info')
-            return redirect(url_for('view_item', item_id=item_id))
-        
-        # Proceed with trade logic
-        current_user.credits -= item.value
-        item.owner_id = current_user.id  # transfer ownership
-        db.session.commit()
-        flash('Trade successful! You now own this item.', 'success')
-        return redirect(url_for('dashboard'))
-
     return render_template('item_detail.html', item=item)
 
 
-
-@app.route('/buy/<int:item_id>')
+@app.route('/buy/<int:item_id>', methods=['POST', 'GET'])
 @login_required
 def buy_item(item_id):
     item = Item.query.get_or_404(item_id)
@@ -245,16 +226,23 @@ def buy_item(item_id):
         flash("This item is no longer available.", "danger")
         return redirect(url_for('marketplace'))
 
+    if item.user_id == current_user.id:
+        flash("You already own this item.", "info")
+        return redirect(url_for('marketplace'))
+
     if current_user.credits < item.value:
         flash("Insufficient credits to buy this item.", "danger")
         return redirect(url_for('marketplace'))
 
+    # Proceed with trade
     current_user.credits -= item.value
+    item.owner_id = current_user.id
     item.is_available = False
     db.session.commit()
 
     flash(f"You have successfully bought '{item.name}'!", "success")
-    return redirect(url_for('marketplace'))
+    return redirect(url_for('dashboard'))
+
 
 
 @app.route('/upload', methods=['GET', 'POST'])
