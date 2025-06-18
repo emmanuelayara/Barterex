@@ -30,7 +30,7 @@ class LoginForm(FlaskForm):
 
 class UploadItemForm(FlaskForm):
     name = StringField('Item Name', validators=[DataRequired()])
-    description = TextAreaField('Description', validators=[Length(max=500)])
+    description = TextAreaField('Description', validators=[Length(max=500), DataRequired()])
     condition = SelectField('Condition', choices=[('Brand New', 'Brand New'), ('Fairly Used', 'Fairly Used')], validators=[DataRequired()])
     category = SelectField('Category', choices=[
         ("Electronics", "Electronics"),
@@ -46,7 +46,7 @@ class UploadItemForm(FlaskForm):
         ("Health & Wellness", "Health & Wellness"),
         ("Automotive", "Automotive")
     ], validators=[DataRequired()])
-    image = FileField('Upload Image', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')])
+    image = FileField('Upload Image', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!'), DataRequired()])
     submit = SubmitField('Submit Item')
 
 
