@@ -94,8 +94,8 @@ def dashboard():
     
     credits = current_user.credits  # assuming this field exists on User
     item_count = Item.query.filter_by(user_id=current_user.id).count()
-    pending_trades = Trade.query.filter_by(sender_id=current_user.id, status='pending').count()
-    
+    pending_trades = Trade.query.filter(db.or_(Trade.sender_id == current_user.id,Trade.receiver_id == current_user.id),Trade.status == 'pending').count()
+
     # Get latest 5 notifications
     recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).limit(5).all()
 
