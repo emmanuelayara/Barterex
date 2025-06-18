@@ -107,18 +107,18 @@ nav a.active {
     </div>
     <div class="nav-left" id="navLinks">
         <span style="font-size: 2.0rem; font-weight: bold;"><a href="{{ url_for('home') }}">BARTER</a></span>
-        <a href="{{ url_for('marketplace') }}">🛒 Marketplace</a>
+        <a href="{{ url_for('marketplace') }}"> Marketplace </a>
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('upload_item') }}">⬆️ Upload</a>
+            <a href="{{ url_for('upload_item') }}"> Upload</a>
             {% if current_user.is_admin %}
-                <a href="{{ url_for('approve_items') }}">🛠️ Admin Panel</a>
-                <a href="{{ url_for('admin_dashboard') }}">👑 Admin Dashboard</a>
+                <a href="{{ url_for('approve_items') }}"> Admin Panel</a>
+                <a href="{{ url_for('admin_dashboard') }}"> Admin Dashboard</a>
             {% endif %}
-            <a href="{{ url_for('dashboard') }}">📂 Dashboard</a>
-            <a href="{{ url_for('logout') }}">🚪 Logout</a>
+            <a href="{{ url_for('dashboard') }}"> Dashboard</a>
+            <a href="{{ url_for('logout') }}"> Logout</a>
         {% else %}
-            <a href="{{ url_for('login') }}">🔐 Login</a>
-            <a href="{{ url_for('register') }}">📝 Register</a>
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}"> Register</a>
         {% endif %}
     </div>
 </nav>
