@@ -33,6 +33,8 @@ class ProfileUpdateForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     phone_number = StringField('Phone Number', validators=[Length(min=10, max=15)])
     address = TextAreaField('Address', validators=[Length(max=200)])
+    city = StringField('City', validators=[Length(max=50)])
+    state = StringField('State', validators=[Length(max=50)])
     profile_picture = FileField('Profile Picture', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')])
     submit = SubmitField ('Update Profile')
 
