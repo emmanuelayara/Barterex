@@ -29,7 +29,6 @@ class LoginForm(FlaskForm):
 
 
 class ProfileUpdateForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     phone_number = StringField('Phone Number', validators=[Length(min=10, max=15)])
     address = TextAreaField('Address', validators=[Length(max=200)])

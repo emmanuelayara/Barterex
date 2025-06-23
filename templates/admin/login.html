@@ -3,43 +3,97 @@
 {% block title %}Admin Login{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white text-center">
-                    <h4 class="mb-0">Admin Login</h4>
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
+<style>
+  .login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #f1f3f6;
+    font-family: 'Segoe UI', sans-serif;
+  }
 
-                        <div class="mb-3">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control", placeholder="Enter your email") }}
-                            {% for error in form.email.errors %}
-                                <div class="text-danger small mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
+  .login-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 420px;
+    padding: 35px 30px;
+  }
 
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control", placeholder="Enter your password") }}
-                            {% for error in form.password.errors %}
-                                <div class="text-danger small mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
+  .login-title {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #054e97;
+    margin-bottom: 25px;
+  }
 
-                        <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary btn-block") }}
-                        </div>
-                    </form>
-                </div>
-                <div class="card-footer text-center text-muted small">
-                    Access is restricted to authorized administrators.
-                </div>
-            </div>
-        </div>
+  .form-label {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .form-control {
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 15px;
+  }
+
+  .btn-login {
+    background-color: #054e97;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-login:hover {
+    background-color: #ff7a00;
+  }
+
+  .footer-note {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+</style>
+
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-title">Admin Login</div>
+
+    <form method="POST">
+      {{ form.hidden_tag() }}
+
+      <div class="mb-3">
+        {{ form.email.label(class="form-label") }}
+        {{ form.email(class="form-control", placeholder="Enter admin email") }}
+        {% for error in form.email.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      </div> <br>
+
+      <div class="mb-3">
+        {{ form.password.label(class="form-label") }}
+        {{ form.password(class="form-control", placeholder="Enter password") }}
+        {% for error in form.password.errors %}
+          <div class="text-danger small mt-1">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="d-grid">
+        {{ form.submit(class="btn btn-login") }}
+      </div>
+    </form>
+
+    <div class="footer-note">
+      Access is restricted to authorized administrators only.
     </div>
+  </div>
 </div>
 {% endblock %}

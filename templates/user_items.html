@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}My Items{% endblock %}
 {% block content %}
+
+  <h2 class="mb-4">My Uploaded Items</h2>
+
 <style>
   .dashboard-container {
     display: flex;
@@ -112,7 +115,7 @@
 
   <!-- Main Content -->
   <div class="content">
-    <h2 class="mb-4">My Uploaded Items</h2>
+  
 
     {% if items %}
       <div class="items-grid">

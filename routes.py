@@ -179,7 +179,6 @@ def profile_settings():
     form = ProfileUpdateForm()
 
     if request.method == 'POST':
-        current_user.username = request.form['username']
         current_user.email = request.form['email']
         current_user.phone_number = request.form['phone_number']
         current_user.address = request.form['address']
@@ -195,7 +194,7 @@ def profile_settings():
             
         db.session.commit()
         flash('Profile updated successfully', 'success')
-        return redirect(url_for('profile_settings'))
+        return redirect(url_for('dashboard'))
 
     return render_template('profile_settings.html', user=current_user, form=form)
 
