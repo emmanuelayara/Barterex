@@ -201,6 +201,10 @@
         <a href="{{ url_for('dashboard') }}">Dashboard</a>
         <a href="{{ url_for('logout') }}">Sign Out</a>
         {% endif %}
+
+        {% if not current_user.is_admin %}
+        <a href="{{ url_for('admin_dashboard') }}"> Admin Dashboard</a>
+        {% endif %} 
       </div>
       <div class="menu-actions">
         <a href="/register">Sign Up</a>
