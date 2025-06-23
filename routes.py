@@ -17,7 +17,7 @@ from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
 from models import User, Item, Admin, Trade, Notification, CreditTransaction
-from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, PasswordResetRequestForm
+from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm
 
 
 # Configuration
@@ -176,14 +176,28 @@ def notifications():
 @app.route('/profile-settings', methods=['GET', 'POST'])
 @login_required
 def profile_settings():
+    form = ProfileUpdateForm()
+
     if request.method == 'POST':
         current_user.username = request.form['username']
         current_user.email = request.form['email']
+        current_user.phone_number = request.form['phone_number']
+        current_user.address = request.form['address']
+        if form.profile_picture.data:
+            file = form.profile_picture.data
+            if allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                current_user.profile_picture = f"/{file_path}"
+        else:
+            current_user.profile_picture = None
+            
         db.session.commit()
         flash('Profile updated successfully', 'success')
         return redirect(url_for('profile_settings'))
 
-    return render_template('profile_settings.html', user=current_user)
+    return render_template('profile_settings.html', user=current_user, form=form)
 
 
 # ---------------------- MARKETPLACE ---------------------- #

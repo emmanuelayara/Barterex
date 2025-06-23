@@ -28,6 +28,15 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 
+class ProfileUpdateForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    phone_number = StringField('Phone Number', validators=[Length(min=10, max=15)])
+    address = TextAreaField('Address', validators=[Length(max=200)])
+    profile_picture = FileField('Profile Picture', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')])
+    submit = SubmitField ('Update Profile')
+
+
 class UploadItemForm(FlaskForm):
     name = StringField('Item Name', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[Length(max=500), DataRequired()])
