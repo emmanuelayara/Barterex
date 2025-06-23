@@ -33,12 +33,15 @@
   .form-label {
     font-weight: 500;
     color: #333;
+    display: block;
+    margin-bottom: 6px;
   }
 
   .form-control {
     border-radius: 8px;
     padding: 10px;
     font-size: 15px;
+    width: 100%;
   }
 
   .btn-login {
@@ -49,6 +52,7 @@
     font-weight: 600;
     border-radius: 8px;
     transition: background-color 0.3s ease;
+    width: 100%;
   }
 
   .btn-login:hover {
@@ -61,6 +65,14 @@
     font-size: 0.85rem;
     color: #6c757d;
   }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  form {
+    width: 100%;
+  }
 </style>
 
 <div class="login-wrapper">
@@ -70,23 +82,23 @@
     <form method="POST">
       {{ form.hidden_tag() }}
 
-      <div class="mb-3">
-        {{ form.email.label(class="form-label") }} <br>
+      <div class="form-group">
+        {{ form.email.label(class="form-label") }}
         {{ form.email(class="form-control", placeholder="Enter admin email") }}
         {% for error in form.email.errors %}
           <div class="text-danger small mt-1">{{ error }}</div>
         {% endfor %}
-      </div> <br>
+      </div>
 
-      <div class="mb-3">
-        {{ form.password.label(class="form-label") }} <br>
+      <div class="form-group">
+        {{ form.password.label(class="form-label") }}
         {{ form.password(class="form-control", placeholder="Enter password") }}
         {% for error in form.password.errors %}
           <div class="text-danger small mt-1">{{ error }}</div>
         {% endfor %}
-      </div> <br>
+      </div>
 
-      <div class="d-grid">
+      <div class="form-group">
         {{ form.submit(class="btn btn-login") }}
       </div>
     </form>
