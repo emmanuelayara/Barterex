@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* ✅ ADMIN NAVIGATION */
+        .admin-nav {
+            background: #212529;
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .admin-nav h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #ff7a00;
+        }
+
+        .admin-nav-links a {
+            color: #f8f9fa;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        .admin-nav-links a:hover,
+        .admin-nav-links a.active {
+            background-color: #ff7a00;
+            color: white;
+        }
+
+        .admin-container {
+            padding: 30px;
+        }
+
+        footer {
+            background: #212529;
+            color: #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ✅ ADMIN NAVIGATION -->
+<div class="admin-nav">
+    <h2>Admin Dashboard</h2>
+    <div class="admin-nav-links">
+        <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+        <a href="{{ url_for('approve_items') }}">Approve Items</a>
+        <a href="{{ url_for('manage_users') }}">Manage Users</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+</div>
+
+<!-- ✅ PAGE CONTENT -->
+<div class="admin-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul style="list-style: none; padding: 0;">
+                {% for category, message in messages %}
+                    <li class="flash {{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<!-- ✅ FOOTER -->
+<footer>
+    &copy; 2025 TradeByBarter Admin Panel
+</footer>
+
+</body>
+</html>
