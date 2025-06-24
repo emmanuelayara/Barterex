@@ -286,6 +286,7 @@ def upload_item():
             user_id=current_user.id,
             is_available=True,
             is_approved=False,
+            status='pending'
         )
         db.session.add(new_item)
         db.session.commit()

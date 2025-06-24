@@ -30,7 +30,7 @@ class Item(db.Model):
     value = db.Column(db.Float, nullable=True)
     is_available = db.Column(db.Boolean, default=False)
     is_approved = db.Column(db.Boolean, default=False)
-    status = db.Column(db.String(50), default='available')  # e.g., 'available', 'sold', 'pending'
+    status = db.Column(db.String(50), default='pending') 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_user'), nullable=False)
     user = db.relationship('User', back_populates='items')
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
@@ -66,3 +66,4 @@ class CreditTransaction(db.Model):
     transaction_type = db.Column(db.String(50))  # e.g., 'credit', 'debit'
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', back_populates='transactions')  # Assuming User has a transactions relationship
+    
