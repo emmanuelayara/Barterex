@@ -490,10 +490,6 @@ def reject_item(item_id):
 @app.route('/admin/update-status', methods=['POST'])
 @admin_login_required
 def update_item_status():
-    if not current_user.is_admin:
-        flash("Unauthorized access", "danger")
-        return redirect(url_for('home'))
-
     item_id = request.form.get('item_id')
     new_status = request.form.get('status')
 
@@ -503,4 +499,5 @@ def update_item_status():
 
     flash(f"Item '{item.name}' has been marked as {new_status}.", "success")
     return redirect(url_for('admin_dashboard', status='pending'))
+
 
