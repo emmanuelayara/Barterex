@@ -488,7 +488,7 @@ def reject_item(item_id):
 
 
 @app.route('/admin/update-status', methods=['POST'])
-@login_required
+@admin_login_required
 def update_item_status():
     if not current_user.is_admin:
         flash("Unauthorized access", "danger")

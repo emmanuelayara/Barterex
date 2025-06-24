@@ -105,11 +105,8 @@
             {% endif %}">
           {{ item.status|capitalize }}
         </span>
-        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#previewModal{{ item.id }}">Preview</button>
-        {% if item.status == 'pending' %}
-        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ item.id }}">Approve</button>
-        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ item.id }}">Reject</button>
-        {% endif %}
+        <a href="{{ url_for('approve_items') }}" class="btn btn-sm btn-outline-primary">Preview</a>
+
       </div>
     </li>
     {% else %}
