@@ -5,30 +5,102 @@
 {% block content %}
 
 <style>
-  header {
-    background-color: #2c3e50;
-    color: #fff;
-    padding: 1rem 2rem;
+  header.admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: #054e97;
+    padding: 20px 30px;
+    color: #fff;
+    border-bottom: 3px solid #ff7a00;
+    flex-wrap: wrap;
+  }
+
+  .admin-header h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .admin-nav-btns a {
+    margin-left: 10px;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: 0.3s ease;
+    font-weight: 500;
+  }
+
+  .btn-warning, .btn-success, .btn-danger,
+  .btn-outline-warning, .btn-outline-success, .btn-outline-danger {
+    border: 1px solid transparent;
+  }
+
+  .btn-outline-warning {
+    color: #ffc107;
+    background: transparent;
+    border-color: #ffc107;
+  }
+
+  .btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #fff;
+  }
+
+  .btn-outline-success {
+    color: #28a745;
+    background: transparent;
+    border-color: #28a745;
+  }
+
+  .btn-outline-success:hover {
+    background-color: #28a745;
+    color: #fff;
+  }
+
+  .btn-outline-danger {
+    color: #dc3545;
+    background: transparent;
+    border-color: #dc3545;
+  }
+
+  .btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: #fff;
+  }
+
+  .btn-warning {
+    background-color: #ffc107;
+    color: white;
+  }
+
+  .btn-success {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .btn-danger {
+    background-color: #dc3545;
+    color: white;
   }
 </style>
 
-<div class="container mt-5">
-  <div class="card shadow border-0">
 
-    <!-- ⚙️ Admin Header Navigation -->
-    <header>
-      <div><strong>Admin Panel</strong></div>
-      <nav>
-        <a href="{{ url_for('admin_dashboard', status='pending') }}" class="btn btn-sm me-2 {{ 'btn-warning text-white' if status == 'pending' else 'btn-outline-warning' }}">Pending</a>
-        <a href="{{ url_for('admin_dashboard', status='approved') }}" class="btn btn-sm me-2 {{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">Approved</a>
-        <a href="{{ url_for('admin_dashboard', status='rejected') }}" class="btn btn-sm {{ 'btn-danger' if status == 'rejected' else 'btn-outline-danger' }}">Rejected</a>
-        <a href="{{ url_for('approve_items') }}" class="btn btn-outline-secondary btn-sm">Approve Items</a>
-        <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
-      </nav>
-    </header>
+<header class="admin-header">
+  <h1>🛠 Admin Panel</h1>
+  <div class="admin-nav-btns">
+    <a href="{{ url_for('admin_dashboard', status='pending') }}" class="{{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }}">
+      Pending
+    </a>
+    <a href="{{ url_for('admin_dashboard', status='approved') }}" class="{{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">
+      Approved
+    </a>
+    <a href="{{ url_for('admin_dashboard', status='rejected') }}" class="{{ 'btn-danger' if status == 'rejected' else 'btn-outline-danger' }}">
+      Rejected
+    </a>
+  </div>
+</header>
 
     <!-- 📊 Admin Summary -->
     <div class="row text-center mt-4 mb-4">
