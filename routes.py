@@ -377,8 +377,12 @@ def admin_dashboard():
     search = request.args.get('search', '').strip()
     status = request.args.get('status', 'pending')  # Defaults to 'pending'
 
-    # Base query with status filter and user preload
-    query = Item.query.options(joinedload(Item.user)).filter(Item.status == status)
+    # Base query with optional status filter
+    query = Item.query.options(joinedload(Item.user))
+
+    if status != 'all':
+        query = query.filter(Item.status == status)
+
 
     # If search is applied
     if search:
