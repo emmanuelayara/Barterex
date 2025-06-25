@@ -468,6 +468,10 @@ def approve_item(item_id):
         item.value = value
         item.is_approved = True
         item.is_available = True
+
+        # ✅ Give user the same value as credits
+        item.user.credits += int(value)
+
         db.session.commit()
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
     except ValueError:
