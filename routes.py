@@ -468,6 +468,7 @@ def approve_item(item_id):
         item.value = value
         item.is_approved = True
         item.is_available = True
+        item.status = 'approved'
 
         # ✅ Give user the same value as credits
         item.user.credits += int(value)
@@ -486,6 +487,8 @@ def reject_item(item_id):
     item = Item.query.get_or_404(item_id)
     item.is_approved = False
     item.is_available = False
+    item.status = 'rejected'
+
     db.session.commit()
     flash('Item rejected.', 'warning')
     return redirect(url_for('admin_dashboard'))
@@ -503,5 +506,21 @@ def update_item_status():
 
     flash(f"Item '{item.name}' has been marked as {new_status}.", "success")
     return redirect(url_for('admin_dashboard', status='pending'))
+
+
+@app.route('/admin/fix-status', methods=['POST'])
+@admin_login_required
+def fix_misclassified_items():
+    items_to_fix = Item.query.filter(Item.is_approved == True, Item.status == 'pending').all()
+    count = 0
+
+    for item in items_to_fix:
+        item.status = 'approved'
+        count += 1
+
+    db.session.commit()
+    flash(f"{count} item(s) with approved status were moved from 'pending' to 'approved'.", "info")
+    return redirect(url_for('admin_dashboard', status='approved'))
+
 
 

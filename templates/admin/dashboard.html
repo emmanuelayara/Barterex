@@ -72,6 +72,11 @@
     </a>
     <a href="{{ url_for('approve_items') }}" class="btn btn-outline-secondary">Approve Items</a>
     <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary">Manage Users</a>
+
+    <form method="POST" action="{{ url_for('fix_misclassified_items') }}" onsubmit="return confirm('Fix status for misclassified items?')">
+      <button class="btn btn-outline-secondary btn-sm">🔄 Fix Misclassified Items</button>
+    </form>
+
   </div>
 </div>
 
@@ -130,6 +135,9 @@
   </nav>
   {% endif %}
 </div>
+
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
