@@ -523,4 +523,25 @@ def fix_misclassified_items():
     return redirect(url_for('admin_dashboard', status='approved'))
 
 
+@app.route('/admin/fix-missing-credits', methods=['POST'])
+@admin_login_required
+def fix_missing_credits():
+    items_to_fix = Item.query.filter(
+        Item.is_approved == True,
+        Item.credited == False,
+        Item.is_available == True
+    ).all()
+
+    count = 0
+    for item in items_to_fix:
+        if item.user:
+            item.user.credits += item.value or 0
+            item.credited = True
+            count += 1
+
+    db.session.commit()
+    flash(f"{count} item(s) were fixed and credits added to users.", "success")
+    return redirect(url_for('admin_dashboard'))
+
+
 

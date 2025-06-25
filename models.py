@@ -35,6 +35,8 @@ class Item(db.Model):
     user = db.relationship('User', back_populates='items')
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
+    credited = db.Column(db.Boolean, default=False)
+
 
 
 class Trade(db.Model):
