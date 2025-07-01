@@ -299,8 +299,39 @@ def upload_item():
 @app.route('/request_trade/<int:item_id>', methods=['POST'])
 @login_required
 def request_trade(item_id):
-    flash('Trade request sent!', 'success')
-    return redirect(url_for('marketplace'))
+    item = Item.query.get_or_404(item_id)
+
+    if not item.is_available:
+        flash("This item has already been traded or removed.", "danger")
+        return redirect(url_for('marketplace'))
+
+    if item.user_id == current_user.id:
+        flash("You cannot trade your own item.", "info")
+        return redirect(url_for('marketplace'))
+
+    if current_user.credits < item.value:
+        flash("You do not have enough credits to trade for this item.", "danger")
+        return redirect(url_for('marketplace'))
+
+    # Create Trade Record
+    trade = Trade(
+        item_id=item.id,
+        sender_id=current_user.id,
+        receiver_id=item.user_id,
+        status='completed'
+    )
+    db.session.add(trade)
+
+    # Deduct user's credits
+    current_user.credits -= item.value
+
+    # Mark item as traded
+    item.is_available = False
+    item.status = 'traded'
+
+    db.session.commit()
+    flash("Trade completed successfully!", "success")
+    return redirect(url_for('my_trades'))
 
 
 # ---------------------- ADMIN AUTH ---------------------- #
