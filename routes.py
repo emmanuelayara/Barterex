@@ -153,10 +153,9 @@ def edit_item(item_id):
 @app.route('/my-trades')
 @login_required
 def my_trades():
-    trades = Trade.query.filter(
-        (Trade.sender_id == current_user.id) | (Trade.receiver_id == current_user.id)
-    ).order_by(Trade.id.desc()).all()
-    return render_template('my_trades.html', trades=trades)
+    sent_trades = Trade.query.filter_by(sender_id=current_user.id).order_by(Trade.timestamp.desc()).all()
+    received_trades = Trade.query.filter_by(receiver_id=current_user.id).order_by(Trade.timestamp.desc()).all()
+    return render_template('my_trades.html', sent_trades=sent_trades, received_trades=received_trades)
 
 
 @app.route('/credit-history')
@@ -247,15 +246,26 @@ def buy_item(item_id):
         flash("Insufficient credits to buy this item.", "danger")
         return redirect(url_for('marketplace'))
 
-    # Proceed with trade
+    # Deduct credits and mark item as sold
     current_user.credits -= item.value
     item.owner_id = current_user.id
     item.is_available = False
+
+    # ✅ Record the trade
+    trade = Trade(
+        sender_id=current_user.id,          # Buyer
+        receiver_id=item.user_id,           # Seller
+        item_id=item.id,               # ✅ Required to satisfy NOT NULL
+        item_given_id=None,            # No item given in purchase
+        item_received_id=item.id,           # The item bought
+        status='completed'
+    )
+    db.session.add(trade)
+
     db.session.commit()
 
     flash(f"You have successfully bought '{item.name}'!", "success")
     return redirect(url_for('dashboard'))
-
 
 
 @app.route('/upload', methods=['GET', 'POST'])

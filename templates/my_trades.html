@@ -64,11 +64,22 @@
     </ul>
   </div>
 
+<h3>Trades You Initiated</h3>
 <ul>
-  {% for trade in trades %}
-    <li>Exchanged {{ trade.item_given.name }} for {{ trade.item_received.name }} on {{ trade.timestamp }}</li>
+  {% for trade in sent_trades %}
+    <li>Gave: <strong>{{ trade.item_given.name }}</strong> → Received: <strong>{{ trade.item_received.name }}</strong> on {{ trade.timestamp.strftime('%Y-%m-%d %H:%M') }}</li>
   {% else %}
-    <li>No trades yet.</li>
+    <li>No sent trades yet.</li>
   {% endfor %}
 </ul>
+
+<h3>Trades You Received</h3>
+<ul>
+  {% for trade in received_trades %}
+    <li>Gave: <strong>{{ trade.item_received.name }}</strong> → Received: <strong>{{ trade.item_given.name }}</strong> on {{ trade.timestamp.strftime('%Y-%m-%d %H:%M') }}</li>
+  {% else %}
+    <li>No received trades yet.</li>
+  {% endfor %}
+</ul>
+
 {% endblock %}
