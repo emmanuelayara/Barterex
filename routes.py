@@ -473,7 +473,8 @@ def manage_users():
 def view_user(user_id):
     user = User.query.get_or_404(user_id)
     items_uploaded = Item.query.filter_by(user_id=user.id).count()
-    items_traded = Item.query.filter_by(owner_id=user.id, is_available=False).count()
+    items_traded = Item.query.filter_by(user_id=user.id, is_available=False).count()
+
 
     return render_template('admin/view_user.html', user=user,
                            items_uploaded=items_uploaded,
