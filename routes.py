@@ -181,6 +181,8 @@ def profile_settings():
         current_user.email = request.form['email']
         current_user.phone_number = request.form['phone_number']
         current_user.address = request.form['address']
+        current_user.city = request.form['city']              # Add this
+        current_user.state = request.form['state']
         if form.profile_picture.data:
             file = form.profile_picture.data
             if allowed_file(file.filename):

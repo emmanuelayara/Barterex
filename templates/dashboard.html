@@ -146,8 +146,11 @@
       </div>
 
       <div class="card" style="background: #fce4ec;">
-        <h4>Pending Trades</h4>
-        <p>{{ pending_trades }} Trades</p>
+        <h4>Your Address</h4>
+        <p>  
+          <span style="font-style: italic; font-size: 0.7em;">{{ current_user.address or 'No address provided yet.' }}, {{ current_user.city or 'N/A' }}, {{ current_user.state or 'N/A' }}
+          </span>
+        </p>
       </div>
     </div>
 
