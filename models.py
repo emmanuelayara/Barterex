@@ -7,6 +7,8 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    phone_number = db.Column(db.String(15), nullable=True)
+    profile_picture = db.Column(db.String(200), nullable=True)  # URL to the profile picture
     address = db.Column(db.String(255))
     city = db.Column(db.String(50))
     state = db.Column(db.String(50))

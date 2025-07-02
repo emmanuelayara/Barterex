@@ -1,166 +1,41 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
+<div class="container py-5">
+    <h1 class="mb-4" style="color: #2c3e50;">Manage Users</h1>
 
-<!-- templates/admin_users.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin | Manage Users</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: #2c3e50;
-            color: #fff;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        nav a {
-            color: #ecf0f1;
-            margin-right: 20px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        nav a:hover {
-            text-decoration: underline;
-        }
-
-        .container {
-            padding: 2rem;
-        }
-
-        h1 {
-            color: #2c3e50;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        th, td {
-            padding: 12px 20px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        th {
-            background-color: #f0f2f5;
-            color: #333;
-        }
-
-        tr:hover {
-            background-color: #f9f9f9;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .btn-edit {
-            background-color: #3498db;
-            color: #fff;
-        }
-
-        .btn-ban {
-            background-color: #e74c3c;
-            color: #fff;
-        }
-
-        .btn-edit:hover {
-            background-color: #2980b9;
-        }
-
-        .btn-ban:hover {
-            background-color: #c0392b;
-        }
-
-        form {
-            margin: 0;
-        }
-
-        @media (max-width: 768px) {
-            table, thead, tbody, th, td, tr {
-                display: block;
-            }
-
-            thead tr {
-                display: none;
-            }
-
-            td {
-                padding: 10px;
-                border-bottom: none;
-                border-top: 1px solid #ddd;
-                position: relative;
-            }
-
-            td::before {
-                content: attr(data-label);
-                position: absolute;
-                left: 10px;
-                font-weight: bold;
-                text-transform: uppercase;
-            }
-
-            .actions {
-                flex-direction: column;
-                gap: 5px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        <h1>Manage Users</h1>
-
-        <table>
-            <thead>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover shadow-sm bg-white">
+            <thead class="table-light">
                 <tr>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Credits</th>
-                    <th>Actions</th>
+                    <th scope="col">Username</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Credits</th>
+                    <th scope="col">Address</th>
+                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
                 <tr>
-                    <td data-label="Username">{{ user.username }}</td>
-                    <td data-label="Email">{{ user.email }}</td>
-                    <td data-label="Credits">{{ user.credits }}</td>
-                    <td data-label="Address">{{ user.address or 'No address provided yet.' }}, {{ user.city or 'N/A' }}, {{ user.state or 'N/A' }}</td>
-
-                    <td data-label="Actions">
-                        <div class="actions">
-                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-edit">Edit</a>
-                            <form method="POST" action="{{ url_for('ban_user', user_id=user.id) }}" onsubmit="return confirm('Are you sure you want to ban this user?');">
-                                <button type="submit" class="btn btn-ban">Ban</button>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="badge bg-success">{{ user.credits }}</span>
+                    </td>
+                    <td>
+                        {{ user.address or 'No address provided' }},
+                        {{ user.city or 'N/A' }},
+                        {{ user.state or 'N/A' }}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="{{ url_for('view_user', user_id=user.id) }}" class="btn btn-sm btn-secondary">View</a>
+                            <form method="POST" action="{{ url_for('ban_user', user_id=user.id) }}"
+                                  onsubmit="return confirm('Are you sure you want to ban this user?');"
+                                  class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger">Ban</button>
                             </form>
                         </div>
                     </td>
@@ -169,7 +44,6 @@
             </tbody>
         </table>
     </div>
-</body>
-</html>
+</div>
 
 {% endblock %}

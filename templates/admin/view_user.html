@@ -1,0 +1,40 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<div class="container py-5">
+    <h2 class="mb-4 text-primary">User Profile</h2>
+
+    <div class="card shadow-sm p-4 mb-4">
+        <h4 class="card-title">{{ user.username }}</h4>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Credits:</strong> <span class="badge bg-success">{{ user.credits }}</span></p>
+        <p><strong>Address:</strong> {{ user.address or 'Not Provided' }}</p>
+        <p><strong>City:</strong> {{ user.city or 'Not Provided' }}</p>
+        <p><strong>State:</strong> {{ user.state or 'Not Provided' }}</p>
+        <p><strong>Phone Number:</strong> {{ user.phone or 'Not Provided' }}</p>
+        <p><strong>Date Joined:</strong> {{ user.date_created.strftime('%B %d, %Y') if user.date_created else 'Unknown' }}</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Items Uploaded</h5>
+                    <p class="display-6 text-primary">{{ items_uploaded }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Items Traded</h5>
+                    <p class="display-6 text-success">{{ items_traded }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary mt-4">← Back to User List</a>
+</div>
+
+{% endblock %}

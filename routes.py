@@ -468,6 +468,18 @@ def manage_users():
     return render_template('admin/users.html', users=users)
 
 
+@app.route('/admin/view_user/<int:user_id>')
+@admin_login_required
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    items_uploaded = Item.query.filter_by(user_id=user.id).count()
+    items_traded = Item.query.filter_by(owner_id=user.id, is_available=False).count()
+
+    return render_template('admin/view_user.html', user=user,
+                           items_uploaded=items_uploaded,
+                           items_traded=items_traded)
+
+
 @app.route('/admin/ban_user/<int:user_id>', methods=['POST'])
 @admin_login_required
 def ban_user(user_id):
