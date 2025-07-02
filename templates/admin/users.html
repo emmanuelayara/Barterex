@@ -154,6 +154,8 @@
                     <td data-label="Username">{{ user.username }}</td>
                     <td data-label="Email">{{ user.email }}</td>
                     <td data-label="Credits">{{ user.credits }}</td>
+                    <td data-label="Address">{{ user.address or 'No address provided yet.' }}, {{ user.city or 'N/A' }}, {{ user.state or 'N/A' }}</td>
+
                     <td data-label="Actions">
                         <div class="actions">
                             <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-edit">Edit</a>
