@@ -34,7 +34,16 @@
         </div>
     </div>
 
-    <a href="{{ url_for('manage_users') }}" class="btn btn-secondary mt-4">← Back to User List</a>
+        <a 
+        href="{{ url_for('manage_users') }}" 
+        class="btn mt-4" 
+        style="background-color: #007BFF; color: white; border-color: #007BFF;" 
+        onmouseover="this.style.backgroundColor='#ff7a00'; this.style.borderColor='#ff7a00'; this.style.color='white';" 
+        onmouseout="this.style.backgroundColor='#007BFF'; this.style.borderColor='#007BFF'; this.style.color='white';">
+        ← Back to User List
+        </a>
+
+
 </div>
 
 {% endblock %}
