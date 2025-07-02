@@ -46,4 +46,30 @@
   </div>
   #}
 </div>
+
+<!-- Related Items Section -->
+<div style="margin-top: 60px;">
+  <h3 style="margin-bottom: 20px;">🔗 Related Items in "{{ item.category }}"</h3>
+  <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+    {% for related in related_items %}
+      <div style="flex: 1 1 180px; background: #fff3e0; border: 1px solid #ffe0b2;
+                  border-radius: 10px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+        <a href="{{ url_for('view_item', item_id=related.id) }}" style="text-decoration: none; color: inherit;">
+          {% if related.image_url %}
+            <img src="{{ related.image_url }}" alt="{{ related.name }}"
+                 style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" />
+          {% else %}
+            <div style="width: 100%; height: 120px; background-color: #ddd; border-radius: 8px;"></div>
+          {% endif %}
+          <h5 style="margin: 0; font-size: 16px;">{{ related.name }}</h5>
+          <p style="color: #555; font-size: 14px;">₦{{ related.value }} credits</p>
+        </a>
+      </div>
+    {% else %}
+      <p>No related items found.</p>
+    {% endfor %}
+  </div>
+</div>
+
+
 {% endblock %}

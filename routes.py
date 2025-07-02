@@ -228,7 +228,14 @@ def marketplace():
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
 def view_item(item_id):
     item = Item.query.get_or_404(item_id)
-    return render_template('item_detail.html', item=item)
+
+    related_items = Item.query.filter(
+        Item.category == item.category,
+        Item.id != item.id,
+        Item.is_available == True
+    ).limit(5).all()
+
+    return render_template('item_detail.html', item=item, related_items=related_items)
 
 
 @app.route('/buy/<int:item_id>', methods=['POST', 'GET'])
