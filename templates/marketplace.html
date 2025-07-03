@@ -37,7 +37,10 @@
   </form>
 
   <!-- Display Items -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px;background-color: #fff;
+            transition: box-shadow 0.3s, transform 0.3s;"
+     onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
+     onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">
     {% for item in items.items %}
       <div style="border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; background-color: #fff;
                   transition: box-shadow 0.3s; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);">
