@@ -280,7 +280,9 @@
         {% endif %}
         <h3>{{ item.name }}</h3>
         <p>{{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}</p>
-        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn" style="margin-top: 10px; display: inline-block;">View Item</a>
+        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn" style="margin-top: 10px; display: inline-block;"
+           onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
+           onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">View Item</a>
       </div>
       {% endfor %}
     </div>
