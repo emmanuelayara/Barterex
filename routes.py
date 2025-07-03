@@ -220,7 +220,7 @@ def marketplace():
     if search:
         filters.append(Item.name.ilike(f'%{search}%'))
 
-    items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=8)
+    items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=16)
 
     return render_template('marketplace.html', items=items)
 
