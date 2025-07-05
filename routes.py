@@ -117,9 +117,15 @@ def user_items():
 def edit_item(item_id):
     item = Item.query.get_or_404(item_id)
     
+    # Ensure the current user owns the item
     if item.user_id != current_user.id:
         flash("Unauthorized access.", "danger")
         return redirect(url_for('marketplace'))
+
+    # Block edit if item is approved
+    if item.is_approved:
+        flash("This item has already been approved by the admin and cannot be edited.", "warning")
+        return redirect(url_for('dashboard'))
 
     form = UploadItemForm(obj=item)  # Pre-fill form with current data
 
