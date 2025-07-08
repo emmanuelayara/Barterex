@@ -18,6 +18,7 @@ class User(db.Model, UserMixin):
     is_banned = db.Column(db.Boolean, default=False)
     items = db.relationship('Item', back_populates='user', lazy=True)
     transactions = db.relationship('CreditTransaction', back_populates='user', lazy=True)
+    notifications = db.relationship('Notification', back_populates='user', lazy=True)
 
 
 class Admin(db.Model):

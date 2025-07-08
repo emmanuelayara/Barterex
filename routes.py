@@ -561,7 +561,7 @@ def approve_item(item_id):
 
         # in admin routes after approving/rejecting
         if item.status == 'approved':
-            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved!")
+            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for {item.value} credits!")
         else:
             create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected.")
 
