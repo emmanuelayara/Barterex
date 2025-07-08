@@ -76,6 +76,8 @@ class Notification(db.Model):
     message = db.Column(db.String(255))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow) 
+    user = db.relationship('User', back_populates='notifications')  # Assuming User has a notifications relationship
+    is_read = db.Column(db.Boolean, default=False)  # To track if the notification has been read
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
