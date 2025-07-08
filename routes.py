@@ -1,7 +1,7 @@
 from flask import (
     Flask, render_template, redirect, url_for, request,
-    flash, session
-    
+    flash, session,
+    abort
 )
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
@@ -16,7 +16,7 @@ import os
 from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
-from models import User, Item, Admin, Trade, Notification, CreditTransaction
+from models import User, Item, Admin, Trade, Notification, CreditTransaction, db
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm
 
 
@@ -35,13 +35,18 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+
+def create_notification(user_id, message):
+    notification = Notification(user_id=user_id, message=message)
+    db.session.add(notification)
+    db.session.commit()
+
+
 @app.route('/')
 def home():
     trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()  # 3 rows x 2 cols
     return render_template('home.html', trending_items=trending_items)
 
-
-from forms import RegisterForm  # Adjust the import path as needed
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -176,6 +181,17 @@ def credit_history():
 def notifications():
     notes = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
     return render_template('notifications.html', notifications=notes)
+
+
+@app.route('/notifications/read/<int:notification_id>')
+@login_required
+def mark_as_read(notification_id):
+    n = Notification.query.get_or_404(notification_id)
+    if n.user_id != current_user.id:
+        abort(403)
+    n.is_read = True
+    db.session.commit()
+    return redirect(url_for('view_notifications'))
 
 
 @app.route('/profile-settings', methods=['GET', 'POST'])
@@ -543,8 +559,18 @@ def approve_item(item_id):
         item.is_available = True
         item.status = 'approved'
 
+        # in admin routes after approving/rejecting
+        if item.status == 'approved':
+            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved!")
+        else:
+            create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected.")
+
+
         # ✅ Give user the same value as credits
         item.user.credits += int(value)
+        # after admin adds/removes credit
+        create_notification(item.user_id, f"💰 Your credits have been updated. New balance: {item.user.credits} credits.")
+
 
         db.session.commit()
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
