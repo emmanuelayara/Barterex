@@ -559,17 +559,15 @@ def approve_item(item_id):
         item.is_available = True
         item.status = 'approved'
 
-        # in admin routes after approving/rejecting
-        if item.status == 'approved':
-            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for {item.value} credits!")
-        else:
-            create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected.")
-
 
         # ✅ Give user the same value as credits
         item.user.credits += int(value)
-        # after admin adds/removes credit
-        create_notification(item.user_id, f"💰 Your credits have been updated. New balance: {item.user.credits} credits.")
+
+
+        if item.status == 'approved':
+            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is New balance: ₦{item.user.credits} credits.")
+        else:
+            create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected.")
 
 
         db.session.commit()
