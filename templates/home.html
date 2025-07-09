@@ -189,6 +189,13 @@
       margin: 0 10px;
       text-decoration: none;
     }
+
+    .text-with-orange-glow {
+        color: white;
+        text-shadow: 0 0 3px #ff7a00, 0 0 8px rgba(0, 0, 0, 0.3);
+    }
+
+
   </style>
 </head>
 <body>
@@ -218,8 +225,8 @@
   </header>
 
   <section class="hero">
-    <h1>Swap What You Have for What You Need</h1>
-    <p>Trade gadgets, clothes, books and more — without spending cash.</p>
+    <h1 class="text-with-orange-glow">Swap What You Have for What You Need</h1>
+    <p class="text-with-orange-glow">Trade gadgets, clothes, books and more — without spending cash.</p>
     <a href="/marketplace" class="btn" style="margin-top: 10px; display: inline-block;"
            onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
            onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">Start Bartering</a>
