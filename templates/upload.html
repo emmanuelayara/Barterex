@@ -3,15 +3,16 @@
 
 {% block content %}
 <div style="max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-    
     <h2 style="text-align: center; margin-bottom: 30px; color: #333;">Upload an Item</h2>
 
     <!-- Reminder Box -->
-    <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px 20px; border-radius: 8px; color: #856404; margin-bottom: 25px; box-shadow: 0 0 8px rgba(0,0,0,0.05); font-size: 15px;">
-        <strong>⚠️ Please Note:</strong><br>
-        - Items must be **less than 5 years** old from the purchase date.<br>
-        - Items must be in **good condition**.<br>
-        - You are required to **upload or provide a receipt** as proof of ownership and purchase date.
+    <div style="background-color: #fff7f0; border-left: 5px solid #ff7a00; padding: 15px 20px; border-radius: 6px; color: #333; margin-bottom: 25px; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+        <strong style="color: #ff7a00;">⚠ Important Guidelines Before Uploading:</strong><br>
+        <ul style="margin-top: 10px; padding-left: 18px;">
+            <li>The item must not be older than <strong>5 years</strong> from purchase date.</li>
+            <li>The item should be in <strong>good and functional condition</strong>.</li>
+            <li>During item appraisal, you will be required to present a <strong>receipt</strong> as proof of ownership and date of purchase.</li>
+        </ul>
     </div>
 
     <form method="POST" enctype="multipart/form-data">
