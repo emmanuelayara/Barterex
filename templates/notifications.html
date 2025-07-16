@@ -1,7 +1,53 @@
 {% extends 'base.html' %}
 {% block title %}Notifications{% endblock %}
+
 {% block content %}
-<h2>Notifications</h2>
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h3>User Menu</h3>
+    <ul>
+      <li><a href="{{ url_for('user_items') }}">My Items</a></li>
+      <li><a href="{{ url_for('my_trades') }}">My Trades</a></li>
+      <li><a href="{{ url_for('credit_history') }}">Credit History</a></li>
+      <li><a href="{{ url_for('notifications') }}" class="active">Notifications</a></li>
+      <li><a href="{{ url_for('profile_settings') }}">Profile</a></li>
+      <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- Content Area -->
+  <div class="content" style="flex: 1; padding: 40px;">
+    <h2 style="margin-bottom: 30px;">🔔 Notifications</h2>
+
+    {% if notifications %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+          <thead style="background-color: #054e97; color: #fff;">
+            <tr>
+              <th style="padding: 12px; text-align: left;">#</th>
+              <th style="padding: 12px; text-align: left;">Message</th>
+              <th style="padding: 12px; text-align: left;">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for note in notifications %}
+            <tr class="{% if loop.index0 % 2 == 0 %}even-row{% else %}odd-row{% endif %}">
+              <td style="padding: 12px;">{{ loop.index }}</td>
+              <td style="padding: 12px;">{{ note.message }}</td>
+              <td style="padding: 12px;">{{ note.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 20px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 6px;">
+        No new notifications.
+      </div>
+    {% endif %}
+  </div>
+</div>
 
 <style>
   .dashboard-container {
@@ -48,27 +94,11 @@
     background-color: #ff7a00;
     color: rgb(255, 255, 255);
   }
+  .even-row {
+    background-color: #f9f9f9;
+  }
+  .odd-row {
+    background-color: #fff;
+  }
 </style>
-
-<div class="dashboard-container">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h3>User Menu</h3>
-    <ul>
-      <li><a href="{{ url_for('user_items') }}">My Items</a></li>
-      <li><a href="{{ url_for('my_trades') }}">My Trades</a></li>
-      <li><a href="{{ url_for('credit_history') }}">Credit History</a></li>
-      <li><a href="{{ url_for('notifications') }}">Notifications</a></li>
-      <li><a href="{{ url_for('profile_settings') }}">Profile</a></li>
-      <li><a href="{{ url_for('logout') }}">Logout</a></li>
-    </ul>
-  </div>
-
-<ul>
-  {% for note in notifications %}
-    <li>{{ note.message }} - {{ note.timestamp.strftime('%Y-%m-%d %H:%M') }}</li>
-  {% else %}
-    <li>No new notifications.</li>
-  {% endfor %}
-</ul>
 {% endblock %}
