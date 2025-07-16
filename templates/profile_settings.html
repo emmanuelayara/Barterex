@@ -3,8 +3,6 @@
 
 {% block content %}
 
-    <h2>Edit Profile</h2>
-
 <style>
   .dashboard-container {
     display: flex;
@@ -124,6 +122,9 @@
   </div>
 
   <!-- Content -->
+  <div class="content" style="flex: 1; padding: 40px;">
+    <h2 style="margin-bottom: 30px;">Edit your Profile</h2>
+
   <div class="profile-content">
     <form method="POST">
       {{ form.hidden_tag() }}
