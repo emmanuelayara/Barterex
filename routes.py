@@ -113,7 +113,7 @@ def user_items():
 
     page = request.args.get('page', 1, type=int)
 
-    items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=10)
+    items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=9)
     return render_template('user_items.html', items=items)
 
 
