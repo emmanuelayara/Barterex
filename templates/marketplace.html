@@ -2,23 +2,21 @@
 {% block title %}Marketplace{% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: auto; padding: 30px;">
-  <h2 style="text-align: center; margin-bottom: 30px;">🛒 Explore the Marketplace</h2>
+<div class="market-container">
+  <h2 class="market-title">🛒 Explore the Marketplace</h2>
 
   <!-- Filter & Search Form -->
-  <form method="GET" action="{{ url_for('marketplace') }}"
-        style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 30px;">
+  <form method="GET" action="{{ url_for('marketplace') }}" class="market-filter-form">
     <input type="text" name="search" placeholder="Search items..."
-           value="{{ request.args.get('search', '') }}"
-           style="padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 6px;" />
+           value="{{ request.args.get('search', '') }}" class="input-field" />
 
-    <select name="condition" style="padding: 10px; width: 180px; border-radius: 6px; border: 1px solid #ccc;">
+    <select name="condition" class="input-field">
       <option value="">All Conditions</option>
       <option value="Brand New" {% if request.args.get('condition') == 'Brand New' %}selected{% endif %}>Brand New</option>
       <option value="Fairly Used" {% if request.args.get('condition') == 'Fairly Used' %}selected{% endif %}>Fairly Used</option>
     </select>
 
-    <select name="category" style="padding: 10px; width: 200px; border-radius: 6px; border: 1px solid #ccc;">
+    <select name="category" class="input-field">
       <option value="">All Categories</option>
       {% set categories = [
         "Electronics", "Fashion / Clothing", "Footwear", "Home & Kitchen", "Beauty & Personal Care",
@@ -30,57 +28,67 @@
       {% endfor %}
     </select>
 
-    <button type="submit"
-            style="background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;"
-            onmouseover="this.style.backgroundColor='#ff7a00';"
-            onmouseout="this.style.backgroundColor='#007BFF';">
-      Filter
-    </button>
-
+    <button type="submit" class="btn-primary">Filter</button>
   </form>
 
   <!-- Display Items -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px;">
+  <div class="market-grid">
     {% for item in items.items %}
-      <div style="border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; background-color: #fff;
-                  transition: box-shadow 0.3s; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);background-color: #fff;
-            transition: box-shadow 0.3s, transform 0.3s;"
-     onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
-     onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">
+      <div class="market-card">
         {% if item.image_url %}
-          <img src="{{ item.image_url }}" alt="{{ item.name }}"
-               style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px;" />
+          <img src="{{ item.image_url }}" alt="{{ item.name }}" class="market-image" />
         {% endif %}
-        <h4 style="margin: 10px 0 6px;">{{ item.name }}</h4>
-        <p style="margin: 5px 0;"><strong>Condition:</strong> {{ item.condition }}</p>
-        <p style="margin: 5px 0;"><strong>Credit Value:</strong> ₦{{ item.value }}</p>
-          <a 
-            href="{{ url_for('view_item', item_id=item.id) }}"
-            style="display: inline-block; margin-top: 10px; text-align: center; background-color: #2458b3; color: white;
-                  padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: 500;"
-            onmouseover="this.style.backgroundColor='#ff7a00'; this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
-            onmouseout="this.style.backgroundColor='#2458b3'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">
-            🔍 View Details
-          </a>
+        <h4>{{ item.name }}</h4>
+        <p><strong>Condition:</strong> {{ item.condition }}</p>
+        <p><strong>Credit Value:</strong> ₦{{ item.value }}</p>
+        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-view">🔍 View Details</a>
       </div>
     {% else %}
-      <p style="text-align: center; color: #888; font-style: italic;">No items found matching your criteria.</p>
-    {% endfor %}  
+      <p class="no-items">No items found matching your criteria.</p>
+    {% endfor %}
   </div>
 
   <!-- Pagination -->
-  <div style="margin-top: 40px; text-align: center;">
+  <div class="pagination">
     {% if items.has_prev %}
-      <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}"
-         style="margin-right: 20px; color: #007BFF; text-decoration: none;">&laquo; Previous</a>
+      <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}" class="page-link">&laquo; Previous</a>
     {% endif %}
 
-    <span style="font-weight: 500;"> Page {{ items.page }} of {{ items.pages }} </span>
+    <span>Page {{ items.page }} of {{ items.pages }}</span>
 
     {% if items.has_next %}
-      <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}"
-         style="margin-left: 20px; color: #007BFF; text-decoration: none;">Next &raquo;</a>
+      <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}" class="page-link">Next &raquo;</a>
     {% endif %}
   </div>
 </div>
+
+<style>
+  .market-container { max-width: 1200px; margin: auto; padding: 20px; }
+  .market-title { text-align: center; margin-bottom: 20px; }
+  .market-filter-form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px; }
+  .input-field { padding: 10px; border: 1px solid #ccc; border-radius: 6px; flex: 1; min-width: 150px; }
+  .btn-primary { background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
+  .btn-primary:hover { background-color: #ff7a00; }
+
+  .market-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+  .market-card { border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; background-color: #fff;
+                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); transition: transform 0.3s, box-shadow 0.3s; text-align: center; }
+  .market-card:hover, .market-card:active { box-shadow: 0 0 10px #ff7a00; transform: scale(1.02); }
+  .market-image { width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
+
+  .btn-view { display: inline-block; margin-top: 10px; background-color: #2458b3; color: white; padding: 10px 15px;
+              border-radius: 6px; text-decoration: none; font-weight: 500; }
+  .btn-view:hover, .btn-view:active { background-color: #ff7a00; }
+
+  .no-items { text-align: center; color: #888; font-style: italic; }
+
+  .pagination { margin-top: 30px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 20px; }
+  .page-link { color: #007BFF; text-decoration: none; }
+  .page-link:hover { text-decoration: underline; }
+
+  @media (max-width: 768px) {
+    .market-filter-form { flex-direction: column; align-items: stretch; }
+    .btn-primary { width: 100%; }
+  }
+</style>
 {% endblock %}
