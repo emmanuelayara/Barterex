@@ -30,6 +30,7 @@ login_manager.login_view = 'login'
 migrate = Migrate(app, db)
 
 from routes import *
+from models import *
 
 if __name__ == '__main__':
     with app.app_context():
