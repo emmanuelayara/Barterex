@@ -108,7 +108,104 @@
     <a href="/marketplace" class="btn">Start Bartering</a>
   </section>
 
-  <!-- Other sections remain unchanged -->
+
+  <section id="how">
+    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">How It Works</h2>
+    <div class="steps">
+      <div class="card">
+        <h3>📷 Upload</h3>
+        <p>Post your items with clear photos, detailed descriptions and condition (Brand new / Fairly used).</p>
+      </div>
+      <div class="card">
+        <h3>💳 Earn Credits</h3>
+        <p>Visit our center, get appraised and receive credits based on value.</p>
+      </div>
+      <div class="card">
+        <h3>🔍 Browse</h3>
+        <p>Find other items that match your interest.</p>
+      </div>
+      <div class="card">
+        <h3>🤝 Barter</h3>
+        <p>Use your credits to swap instantly with others.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="benefits">
+    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">Why Use Barter?</h2>
+    <div class="benefits">
+      <div class="card">
+        <h3>No Cash Needed</h3>
+        <p>Exchange goods using credits —<p>no money involved.</p></p>
+      </div>
+      <div class="card">
+        <h3>Verified Community</h3>
+        <p>Trade with real, verified users near you.</p>
+      </div>
+      <div class="card">
+        <h3>Instant Notifications</h3>
+        <p>Stay updated on approvals, matches, and trades.</p>
+      </div>
+      <div class="card">
+        <h3>Fair Appraisals</h3>
+        <p>Admin-reviewed value ensures fair trading.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="categories">
+    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">Popular Categories</h2>
+    <div class="categories">
+      <div class="card">Phones & Gadgets</div>
+      <div class="card">Clothes & Fashion</div>
+      <div class="card">Books & Stationery</div>
+      <div class="card">Home & Kitchen</div>
+    </div>
+  </section>
+
+  <section id="trending">
+    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">🔥 Trending Items</h2>
+    {% if trending_items %}
+    <div class="trending">
+      {% for item in trending_items[:4] %}
+      <div class="card">
+        {% if item.image_url %}
+        <img src="{{ item.image_url }}" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
+        {% endif %}
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}</p>
+        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn" style="margin-top: 10px; display: inline-block;"
+           onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
+           onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">View Item</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-with-orange-glow" style="text-align: center; color: #999;">No trending items at the moment.</div>
+    {% endif %}
+  </section>
+
+  <section class="testimonials">
+    <h2 class="text-with-orange-glow"style="text-align:center; margin-bottom: 40px;">What Our Users Say</h2>
+    <div class="testimonials">
+      <div class="card">
+        <p>“I traded my tablet for a smartwatch, love this platform!”</p>
+        <strong>- Ada from Lagos</strong>
+      </div>
+      <div class="card">
+        <p>“Smooth and easy. No scams, just real people trading!”</p>
+        <strong>- Seyi from Abuja</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Ready to Start Swapping?</h2>
+    <p>Create an account and trade your first item today.</p> <br><br>
+    <a href="/register" class="btn" style="margin-top: 10px; display: inline-block;"
+           onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
+           onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">Get Started Free</a>
+  </section>
 
   <footer>
     &copy; 2025 Barter. All rights reserved. |
