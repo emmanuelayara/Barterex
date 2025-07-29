@@ -2,87 +2,74 @@
 {% block title %}Item Details{% endblock %}
 
 {% block content %}
-<div class="item-container">
-  <div class="item-details">
+<div style="max-width: 1000px; margin: auto; padding: 40px 20px;">
+  <div style="display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start;">
 
     <!-- Item Image -->
-    <div class="item-image">
+    <div style="flex: 1 1 350px;">
       {% if item.image_url %}
-        <img src="{{ item.image_url }}" alt="{{ item.name }}" />
+        <img src="{{ item.image_url }}" alt="{{ item.name }}"
+             style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" />
       {% else %}
-        <div class="no-image"></div>
+        <div style="width: 100%; height: 300px; background-color: #eee; border-radius: 10px;"></div>
       {% endif %}
     </div>
 
     <!-- Item Info -->
-    <div class="item-info">
-      <h2>{{ item.name }}</h2>
-      <p><strong>Category:</strong> {{ item.category }}</p>
-      <p><strong>Condition:</strong> {{ item.condition }}</p>
-      <p class="credit-value">💳 Credit Value: ₦{{ item.value }}</p>
+    <div style="flex: 1 1 400px;">
+      <h2 style="margin-bottom: 10px;">{{ item.name }}</h2>
+      <p style="color: #888; margin-bottom: 5px;"><strong>Category:</strong> {{ item.category }}</p>
+      <p style="color: #888; margin-bottom: 5px;"><strong>Condition:</strong> {{ item.condition }}</p>
+      <p style="color: #2458b3; font-size: 20px; font-weight: bold; margin-top: 10px;">💳 Credit Value: ₦{{ item.value }}</p>
 
-      <hr>
+      <hr style="margin: 20px 0;">
 
       <h4>Description:</h4>
-      <p>{{ item.description }}</p>
+      <p style="line-height: 1.6;">{{ item.description }}</p>
 
-      <form method="POST" action="{{ url_for('buy_item', item_id=item.id) }}" class="trade-form">
-        <button type="submit" class="btn-trade">🔁 Trade Now with Credits</button>
+      <form method="POST" action="{{ url_for('buy_item', item_id=item.id) }}" style="margin-top: 30px;">
+        <button type="submit"
+                style="padding: 12px 25px; background-color: #28a745; color: white; border: none;
+                       border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">
+          🔁 Trade Now with Credits
+        </button>
       </form>
     </div>
   </div>
 
-  <!-- Related Items Section -->
-  <div class="related-section">
-    <h3>🔗 Related Items in "{{ item.category }}"</h3>
-    <div class="related-grid">
-      {% for related in related_items %}
-        <div class="related-card">
-          <a href="{{ url_for('view_item', item_id=related.id) }}">
-            {% if related.image_url %}
-              <img src="{{ related.image_url }}" alt="{{ related.name }}" />
-            {% else %}
-              <div class="no-related-image"></div>
-            {% endif %}
-            <h5>{{ related.name }}</h5>
-            <p>₦{{ related.value }} credits</p>
-          </a>
-        </div>
-      {% else %}
-        <p>No related items found.</p>
-      {% endfor %}
-    </div>
+  <!-- Optional: Seller Info -->
+  {# 
+  <div style="margin-top: 40px;">
+    <h4>Seller Information</h4>
+    <p><strong>Username:</strong> {{ item.user.username }}</p>
+    <p><strong>Location:</strong> {{ item.user.location }}</p>
+  </div>
+  #}
+</div>
+
+<!-- Related Items Section -->
+<div style="margin-top: 60px;">
+  <h3 style="margin-bottom: 20px;">🔗 Related Items in "{{ item.category }}"</h3>
+  <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+    {% for related in related_items %}
+      <div style="flex: 1 1 180px; background: #fff3e0; border: 1px solid #ffe0b2;
+                  border-radius: 10px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+        <a href="{{ url_for('view_item', item_id=related.id) }}" style="text-decoration: none; color: inherit;">
+          {% if related.image_url %}
+            <img src="{{ related.image_url }}" alt="{{ related.name }}"
+                 style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" />
+          {% else %}
+            <div style="width: 100%; height: 120px; background-color: #ddd; border-radius: 8px;"></div>
+          {% endif %}
+          <h5 style="margin: 0; font-size: 16px;">{{ related.name }}</h5>
+          <p style="color: #555; font-size: 14px;">₦{{ related.value }} credits</p>
+        </a>
+      </div>
+    {% else %}
+      <p>No related items found.</p>
+    {% endfor %}
   </div>
 </div>
 
-<style>
-  .item-container { max-width: 1000px; margin: auto; padding: 20px; }
-  .item-details { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
-  .item-image { flex: 1 1 350px; }
-  .item-image img { width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  .no-image { width: 100%; height: 300px; background-color: #eee; border-radius: 10px; }
 
-  .item-info { flex: 1 1 350px; background: #fff; padding: 15px; border-radius: 8px; }
-  .item-info h2 { margin-bottom: 10px; }
-  .credit-value { color: #2458b3; font-size: 18px; font-weight: bold; margin-top: 10px; }
-
-  .trade-form { margin-top: 20px; }
-  .btn-trade { padding: 12px 25px; background-color: #28a745; color: white; border: none; border-radius: 6px;
-               font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
-  .btn-trade:hover { background-color: #218838; }
-
-  .related-section { margin-top: 40px; }
-  .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-  .related-card { background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; padding: 10px; text-align: center;
-                  box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-  .related-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; }
-  .related-card h5 { margin: 0; font-size: 15px; }
-  .related-card p { color: #555; font-size: 14px; }
-
-  /* ✅ Responsive Mobile View */
-  @media (max-width: 768px) {
-    .item-details { flex-direction: column; }
-    .btn-trade { font-size: 18px; padding: 14px; }
-  }
-</style>
 {% endblock %}

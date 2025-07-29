@@ -21,6 +21,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 # os.environ.get('DATABASE_URL')
+#'sqlite:///barter.db'
 # postgresql://barter_n7gd_user:txVmlNLLM5YFzI1bkCc28ixYSWTCfcKQ@dpg-d248b2ffte5s73ar0ba0-a.oregon-postgres.render.com/barter_n7gd
 
 db = SQLAlchemy(app)
