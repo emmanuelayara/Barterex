@@ -133,35 +133,39 @@
   /* Button styling */
   .btn-primary {
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 8px;
     text-align: center;
     background-color: #2458b3;
     color: white;
-    padding: 10px 15px;
-    border-radius: 6px;
+    padding: 8px 12px;
+    border-radius: 5px;
     text-decoration: none;
     font-weight: 500;
+    font-size: 0.9rem;
     transition: all 0.3s;
-    width: 100%;
+    width: auto;
+    max-width: fit-content;
   }
 
   .btn-primary:hover {
     background-color: #ff7a00;
-    box-shadow: 0 0 10px #ff7a00;
-    transform: scale(1.02);
+    box-shadow: 0 0 8px rgba(255, 122, 0, 0.3);
+    transform: translateY(-1px);
   }
 
   @media (max-width: 768px) {
     .btn-primary {
-      padding: 8px 12px;
-      font-size: 0.85rem;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      margin-top: 6px;
     }
   }
 
   @media (max-width: 480px) {
     .btn-primary {
-      padding: 6px 10px;
-      font-size: 0.8rem;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      margin-top: 5px;
     }
   }
 
@@ -272,7 +276,7 @@
         <h4 style="margin: 10px 0 6px;">{{ item.name }}</h4>
         <p style="margin: 5px 0;"><strong>Condition:</strong> {{ item.condition }}</p>
         <p style="margin: 5px 0;"><strong>Credit Value:</strong> ₦{{ item.value }}</p>
-        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary" >
+        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary">
           🔍 View Details
         </a>
       </div>
