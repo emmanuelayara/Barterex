@@ -98,12 +98,14 @@
 
   <!-- ✅ Top Navbar -->
   <nav class="admin-navbar">
-    <h1>🛠 Admin Panel</h1>
+    <h1><a href="{{ url_for('admin_dashboard') }}">🛠 Admin Panel</a></h1>
     <div class="admin-nav-links">
+      {% if current_user.is_admin %}
       <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
       <a href="{{ url_for('approve_items') }}">Approve Items</a>
       <a href="{{ url_for('manage_users') }}">Manage Users</a>
       <a href="{{ url_for('logout') }}">Logout</a>
+      {% endif %}
     </div>
   </nav>
 
