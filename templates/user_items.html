@@ -1,21 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}My Items{% endblock %}
 {% block content %}
-
 <style>
   .top-menu {
     display: flex;
     justify-content: center;
     background: #054e97;
-    padding: 10px 0;
+    padding: 12px 0;
     border-bottom: 2px solid #ff7a00;
-    flex-wrap: wrap;
   }
 
   .top-menu ul {
     list-style: none;
     display: flex;
-    gap: 15px;
+    justify-content: center;
+    gap: 25px;
     padding: 0;
     margin: 0;
     flex-wrap: wrap;
@@ -28,10 +27,11 @@
   .top-menu a {
     color: white;
     text-decoration: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    transition: 0.3s;
+    padding: 10px 18px;
+    border-radius: 6px;
+    transition: 0.3s ease;
     font-weight: 500;
+    font-size: 15px;
   }
 
   .top-menu a:hover,
@@ -110,14 +110,15 @@
 <!-- Top Menu -->
 <div class="top-menu">
   <ul>
-    <li><a href="{{ url_for('user_items') }}">My Items</a></li>
-    <li><a href="{{ url_for('my_trades') }}">My Trades</a></li>
-    <li><a href="{{ url_for('credit_history') }}">Credit History</a></li>
-    <li><a href="{{ url_for('notifications') }}">Notifications</a></li>
-    <li><a href="{{ url_for('profile_settings') }}">Profile</a></li>
+    <li><a href="{{ url_for('user_items') }}" class="{% if request.endpoint == 'user_items' %}active{% endif %}">My Items</a></li>
+    <li><a href="{{ url_for('my_trades') }}" class="{% if request.endpoint == 'my_trades' %}active{% endif %}">My Trades</a></li>
+    <li><a href="{{ url_for('credit_history') }}" class="{% if request.endpoint == 'credit_history' %}active{% endif %}">Credit History</a></li>
+    <li><a href="{{ url_for('notifications') }}" class="{% if request.endpoint == 'notifications' %}active{% endif %}">Notifications</a></li>
+    <li><a href="{{ url_for('profile_settings') }}" class="{% if request.endpoint == 'profile_settings' %}active{% endif %}">Profile</a></li>
     <li><a href="{{ url_for('logout') }}">Logout</a></li>
   </ul>
 </div>
+
 
   <!-- Main Content -->
 
