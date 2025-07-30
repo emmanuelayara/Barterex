@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Barter - Swap Smarter</title>
@@ -24,18 +23,37 @@
     header {
       background: #054e97;
       color: #fff;
-      padding: 20px 40px;
+      padding: 15px 20px;
+      position: relative;
+    }
+
+    .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      position: relative;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
     .logo {
       font-size: 1.5rem;
       font-weight: bold;
       color: #fff;
+      z-index: 1000;
+    }
+
+    .logo a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: white;
+    }
+
+    .logo img {
+      height: 50px;
+      width: 50px;
+      border-radius: 8px;
+      margin-right: 10px;
     }
 
     .menu-toggle {
@@ -43,71 +61,154 @@
       display: none;
       cursor: pointer;
       color: #fff;
+      background: none;
+      border: none;
+      z-index: 1000;
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
+      gap: 20px;
     }
 
     .menu-items {
       display: flex;
-      gap: 15px;
+      gap: 20px;
+      align-items: center;
     }
 
-    .menu-items a,
-    .menu-actions a {
+    .menu-items a {
       color: #fff;
       text-decoration: none;
       padding: 8px 12px;
       white-space: nowrap;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+
+    .menu-items a:hover,
+    .menu-items a.active {
+      background-color: #ff7a00;
+      color: rgb(255, 255, 255);
+    }
+
+    .menu-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .menu-actions a {
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      white-space: nowrap;
+      transition: all 0.3s;
     }
 
     .menu-actions .btn {
       background-color: #ff7a00;
-      border-radius: 4px;
       font-weight: bold;
     }
 
-    /* 🔽 Mobile Styles */
+    .menu-actions .btn:hover {
+      background-color: #e56900;
+      transform: translateY(-1px);
+    }
+
+    /* Mobile Styles */
     @media (max-width: 768px) {
+      header {
+        padding: 10px 15px;
+      }
+
       .menu-toggle {
         display: block;
       }
 
-      .menu-items {
-        display: none;
-        flex-direction: column;
-        width: 100%;
+      .nav-links {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
         background: #054e97;
-        padding-top: 10px;
+        flex-direction: column;
+        padding: 20px;
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
-      .menu-items.show {
-        display: flex;
+      .nav-links.show {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .menu-items {
+        flex-direction: column;
+        width: 100%;
+        gap: 0;
+        margin-bottom: 20px;
+      }
+
+      .menu-items a {
+        width: 100%;
+        text-align: center;
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .menu-items a:last-child {
+        border-bottom: none;
       }
 
       .menu-actions {
-        display: flex;
+        flex-direction: column;
+        width: 100%;
         gap: 10px;
       }
 
-      .nav-links {
+      .menu-actions a {
         width: 100%;
-        justify-content: space-between;
-        margin-top: 10px;
-        flex-direction: column;
-        align-items: flex-start;
+        text-align: center;
+        padding: 12px;
+      }
+
+      .logo span {
+        font-size: 1.2rem;
+      }
+
+      .logo img {
+        height: 40px;
+        width: 40px;
       }
     }
 
-    .nav-links a:hover,
-    .nav-links a.active {
-    background-color: #ff7a00;
-    color: rgb(255, 255, 255);
-  }
+    /* Small mobile screens */
+    @media (max-width: 480px) {
+      .header-content {
+        padding: 0 10px;
+      }
+
+      .logo span {
+        font-size: 1.1rem;
+      }
+
+      .logo img {
+        height: 35px;
+        width: 35px;
+        margin-right: 8px;
+      }
+
+      .menu-toggle {
+        font-size: 1.6rem;
+      }
+    }
 
     .hero {
       background: url('https://images.unsplash.com/photo-1549921296-3ecf58d88f57') no-repeat center center/cover;
@@ -126,6 +227,32 @@
       margin-bottom: 30px;
     }
 
+    @media (max-width: 768px) {
+      .hero {
+        padding: 60px 15px;
+      }
+
+      .hero h1 {
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+      }
+
+      .hero p {
+        font-size: 1.2rem;
+        margin-bottom: 25px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+
+      .hero p {
+        font-size: 1rem;
+      }
+    }
+
     .btn {
       background: #ff7a00;
       color: white;
@@ -133,10 +260,32 @@
       text-decoration: none;
       border-radius: 5px;
       font-weight: bold;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      background: #e56900;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     section {
       padding: 60px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      section {
+        padding: 40px 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      section {
+        padding: 30px 15px;
+      }
     }
 
     .steps, .benefits, .categories, .trending, .testimonials {
@@ -145,20 +294,43 @@
       gap: 30px;
     }
 
+    @media (max-width: 768px) {
+      .steps, .benefits, .categories, .trending, .testimonials {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .steps, .benefits, .categories, .trending, .testimonials {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+    }
+
     .card {
       background: #f9f9f9;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
     .card h3 {
       margin-bottom: 10px;
+      color: #054e97;
     }
 
     .trending img {
       width: 100%;
       border-radius: 10px;
+      height: 180px;
+      object-fit: cover;
     }
 
     .testimonial {
@@ -170,6 +342,12 @@
       color: white;
       text-align: center;
       padding: 60px 20px;
+    }
+
+    @media (max-width: 768px) {
+      .cta {
+        padding: 40px 15px;
+      }
     }
 
     footer {
@@ -186,46 +364,55 @@
     }
 
     .text-with-orange-glow {
-        color: #03376b;
-        text-shadow: 0 0 5px #ff7a00, 15px 15px 30px rgba(0, 0, 0, 0.3);
+      color: #03376b;
+      text-shadow: 0 0 5px #ff7a00, 15px 15px 30px rgba(0, 0, 0, 0.3);
     }
 
+    @media (max-width: 768px) {
+      .text-with-orange-glow {
+        text-shadow: 0 0 3px #ff7a00, 8px 8px 15px rgba(0, 0, 0, 0.3);
+      }
+    }
 
+    /* Fix for overlapping text in benefits section */
+    .benefits .card p {
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
   
   <header>
-  <div class="logo">
-    <a href="{{ url_for('home') }}" style="display: flex; align-items: center; text-decoration: none; color: white;">
-      <img src="/static/logo.png" alt="Logo" style="height: 70px; width: 70px; border-radius: 8px; margin-right: 10px;">
-      <span style="font-size: 1.4rem; font-weight: bold;">Barter</span>
-    </a>
-  </div>
+    <div class="header-content">
+      <div class="logo">
+        <a href="#">
+          <img src="/static/logo.png" alt="Logo">
+          <span>Barter</span>
+        </a>
+      </div>
 
-    <nav class="nav-links">
-      <div class="menu-items" id="menuItems">
-        <a href="#how">How It Works</a>
-        <a href="#trending">Explore</a>
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('logout') }}">Sign Out</a>
-        {% endif %}
-      </div>
-      <div class="menu-actions">
-        <a href="/register">Sign Up</a>
-        <a href="/upload" class="btn">Upload Item</a>
-      </div>
-    </nav>
+      <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+
+      <nav class="nav-links" id="navLinks">
+        <div class="menu-items">
+          <a href="#how">How It Works</a>
+          <a href="#trending">Explore</a>
+          <a href="#">Dashboard</a>
+          <a href="#">Sign Out</a>
+        </div>
+        <div class="menu-actions">
+          <a href="/register">Sign Up</a>
+          <a href="/upload" class="btn">Upload Item</a>
+        </div>
+      </nav>
+    </div>
   </header>
 
   <section class="hero">
     <h1 class="text-with-orange-glow">Swap What You Have for What You Need</h1>
     <p class="text-with-orange-glow">Trade gadgets, clothes, books and more — without spending cash.</p>
-    <a href="/marketplace" class="btn" style="margin-top: 10px; display: inline-block;"
-           onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
-           onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">Start Bartering</a>
-  </section> <br><br>
+    <a href="/marketplace" class="btn">Start Bartering</a>
+  </section>
 
   <section id="how">
     <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">How It Works</h2>
@@ -254,7 +441,7 @@
     <div class="benefits">
       <div class="card">
         <h3>No Cash Needed</h3>
-        <p>Exchange goods using credits —<p>no money involved.</p></p>
+        <p>Exchange goods using credits — no money involved.</p>
       </div>
       <div class="card">
         <h3>Verified Community</h3>
@@ -304,14 +491,14 @@
   </section>
 
   <section class="testimonials">
-    <h2 class="text-with-orange-glow"style="text-align:center; margin-bottom: 40px;">What Our Users Say</h2>
+    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">What Our Users Say</h2>
     <div class="testimonials">
       <div class="card">
-        <p>“I traded my tablet for a smartwatch, love this platform!”</p>
+        <p>"I traded my tablet for a smartwatch, love this platform!"</p>
         <strong>- Ada from Lagos</strong>
       </div>
       <div class="card">
-        <p>“Smooth and easy. No scams, just real people trading!”</p>
+        <p>"Smooth and easy. No scams, just real people trading!"</p>
         <strong>- Seyi from Abuja</strong>
       </div>
     </div>
@@ -319,10 +506,9 @@
 
   <section class="cta">
     <h2>Ready to Start Swapping?</h2>
-    <p>Create an account and trade your first item today.</p> <br><br>
-    <a href="/register" class="btn" style="margin-top: 10px; display: inline-block;"
-           onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
-           onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">Get Started Free</a>
+    <p>Create an account and trade your first item today.</p>
+    <br><br>
+    <a href="/register" class="btn">Get Started Free</a>
   </section>
 
   <footer>
@@ -335,9 +521,28 @@
 
   <script>
     function toggleMenu() {
-      const menu = document.getElementById('menuItems');
-      menu.classList.toggle('show');
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('show');
     }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const navLinks = document.getElementById('navLinks');
+      const menuToggle = document.querySelector('.menu-toggle');
+      const header = document.querySelector('header');
+      
+      if (!header.contains(event.target)) {
+        navLinks.classList.remove('show');
+      }
+    });
+
+    // Close menu when window is resized to desktop
+    window.addEventListener('resize', function() {
+      const navLinks = document.getElementById('navLinks');
+      if (window.innerWidth > 768) {
+        navLinks.classList.remove('show');
+      }
+    });
   </script>
 </body>
 </html>
