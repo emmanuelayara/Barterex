@@ -2,102 +2,123 @@
 {% block title %}My Trades{% endblock %}
 
 {% block content %}
+
 <style>
-  .dashboard-container {
+  .top-menu {
     display: flex;
-    min-height: 100vh;
-    background-color: #f5f7fa;
-    font-family: 'Segoe UI', sans-serif;
-  }
-
-  .sidebar {
-    width: 240px;
+    justify-content: center;
     background: #054e97;
-    color: white;
-    padding: 30px 20px;
+    padding: 10px 0;
+    border-bottom: 2px solid #ff7a00;
+    flex-wrap: wrap;
   }
 
-  .sidebar h3 {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
+  .top-menu ul {
+    list-style: none;
+    display: flex;
+    gap: 15px;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+
+  .top-menu li {
+    display: inline-block;
+  }
+
+  .top-menu a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    transition: 0.3s;
+    font-weight: 500;
+  }
+
+  .top-menu a:hover,
+  .top-menu a.active {
+    background: #ff7a00;
+    color: #fff;
+  }
+
+  .main-content {
+    padding: 40px;
+    background: #fff;
+  }
+
+  .main-content h2 {
+    margin-bottom: 20px;
+    color: #333;
     text-align: center;
   }
 
-  .sidebar ul {
-    list-style: none;
-    padding: 0;
+  .overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
   }
 
-  .sidebar li {
-    margin: 15px 0;
-  }
-
-  .sidebar a {
-    color: #ffffff;
-    text-decoration: none;
-    display: block;
-    padding: 10px;
-    border-radius: 5px;
-    transition: 0.3s;
-  }
-
-  .sidebar a:hover,
-  .sidebar a.active {
-    background-color: #ff7a00;
-    color: white;
-  }
-
-  .content-area {
-    flex-grow: 1;
-    padding: 40px;
-  }
-
-  .trades-section {
-    background: white;
+  .card {
+    flex: 1;
+    min-width: 220px;
+    max-width: 300px;
+    padding: 25px;
     border-radius: 12px;
-    padding: 25px 30px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    text-align: center;
   }
 
-  .trades-section h3 {
+  .card h4 {
+    margin-bottom: 10px;
+    color: #495057;
+  }
+
+  .card p {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #212529;
+  }
+
+  .recent-section {
+    margin-top: 50px;
+    text-align: center;
+  }
+
+  .recent-section h3 {
+    font-size: 1.3rem;
+    color: #212529;
     margin-bottom: 20px;
-    color: #054e97;
   }
 
-  .trade-item {
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
+  .recent-section ul {
+    padding-left: 0;
+    list-style: none;
   }
 
-  .trade-item:last-child {
-    border-bottom: none;
+  .recent-section li {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: #495057;
   }
 
-  .trade-item strong {
-    color: #333;
-  }
-
-  .empty-msg {
-    color: #777;
-    font-style: italic;
-    margin: 10px 0;
+  .recent-section small {
+    color: #adb5bd;
   }
 </style>
 
-<div class="dashboard-container">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h3>User Menu</h3>
-    <ul>
-      <li><a href="{{ url_for('user_items') }}">My Items</a></li>
-      <li><a href="{{ url_for('my_trades') }}" class="active">My Trades</a></li>
-      <li><a href="{{ url_for('credit_history') }}">Credit History</a></li>
-      <li><a href="{{ url_for('notifications') }}">Notifications</a></li>
-      <li><a href="{{ url_for('profile_settings') }}">Profile</a></li>
-      <li><a href="{{ url_for('logout') }}">Logout</a></li>
-    </ul>
-  </div>
+<!-- Top Menu -->
+<div class="top-menu">
+  <ul>
+    <li><a href="{{ url_for('user_items') }}">My Items</a></li>
+    <li><a href="{{ url_for('my_trades') }}">My Trades</a></li>
+    <li><a href="{{ url_for('credit_history') }}">Credit History</a></li>
+    <li><a href="{{ url_for('notifications') }}">Notifications</a></li>
+    <li><a href="{{ url_for('profile_settings') }}">Profile</a></li>
+    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+  </ul>
+</div>
 
   <!-- Main Content -->
   <div class="content-area">
