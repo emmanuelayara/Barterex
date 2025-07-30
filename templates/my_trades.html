@@ -41,70 +41,65 @@
     color: #fff;
   }
 
-  .main-content {
+  .content-area {
     padding: 40px;
     background: #fff;
   }
 
-  .main-content h2 {
-    margin-bottom: 20px;
+  .content-area h2 {
+    margin-bottom: 30px;
     color: #333;
     text-align: center;
   }
 
-  .overview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
+  .trades-section {
+    margin-bottom: 40px;
   }
 
-  .card {
-    flex: 1;
-    min-width: 220px;
-    max-width: 300px;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  .trades-section h3 {
     text-align: center;
-  }
-
-  .card h4 {
-    margin-bottom: 10px;
-    color: #495057;
-  }
-
-  .card p {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #212529;
-  }
-
-  .recent-section {
-    margin-top: 50px;
-    text-align: center;
-  }
-
-  .recent-section h3 {
-    font-size: 1.3rem;
-    color: #212529;
+    color: #054e97;
     margin-bottom: 20px;
   }
 
-  .recent-section ul {
-    padding-left: 0;
-    list-style: none;
+  .trades-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
   }
 
-  .recent-section li {
-    margin-bottom: 10px;
-    font-size: 0.95rem;
-    color: #495057;
+  .trade-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: transform 0.3s ease;
   }
 
-  .recent-section small {
-    color: #adb5bd;
+  .trade-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .trade-card strong {
+    color: #333;
+    font-size: 16px;
+  }
+
+  .trade-card small {
+    display: block;
+    margin-top: 8px;
+    color: #777;
+    font-size: 13px;
+  }
+
+  .empty-msg {
+    text-align: center;
+    padding: 15px;
+    background: #fff3cd;
+    border-radius: 8px;
+    color: #856404;
+    font-size: 14px;
   }
 </style>
 
@@ -120,42 +115,44 @@
   </ul>
 </div>
 
+<!-- Main Content -->
+<div class="content-area">
+  <h2>My Trade History</h2>
 
-  <!-- Main Content -->
-  <div class="content-area">
-    <h2 style="margin-bottom: 30px;">My Trade History</h2>
-
-    <!-- Sent Trades -->
-    <div class="trades-section">
-      <h3>Trades You Initiated</h3>
-      {% if sent_trades %}
+  <!-- Sent Trades -->
+  <div class="trades-section">
+    <h3>Trades You Initiated</h3>
+    {% if sent_trades %}
+      <div class="trades-grid">
         {% for trade in sent_trades %}
-          <div class="trade-item">
-          Received: <strong>{{ trade.item_received.name }}</strong> (₦{{ trade.item_received.value }})
-            <br>
+          <div class="trade-card">
+            Received: <strong>{{ trade.item_received.name }}</strong>  
+            (₦{{ trade.item_received.value }})
             <small>{{ trade.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
           </div>
         {% endfor %}
-      {% else %}
-        <div class="empty-msg">You haven't initiated any trades yet.</div>
-      {% endif %}
-    </div>
+      </div>
+    {% else %}
+      <div class="empty-msg">You haven't initiated any trades yet.</div>
+    {% endif %}
+  </div>
 
-    <!-- Received Trades -->
-    <div class="trades-section">
-      <h3>Trades You Received</h3>
-      {% if received_trades %}
+  <!-- Received Trades -->
+  <div class="trades-section">
+    <h3>Trades You Received</h3>
+    {% if received_trades %}
+      <div class="trades-grid">
         {% for trade in received_trades %}
-          <div class="trade-item">
-            Gave: <strong>{{ trade.item_received.name }}</strong> (₦{{ trade.item_received.value }})
-            <br>
+          <div class="trade-card">
+            Gave: <strong>{{ trade.item_received.name }}</strong>  
+            (₦{{ trade.item_received.value }})
             <small>{{ trade.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
           </div>
         {% endfor %}
-      {% else %}
-        <div class="empty-msg">You haven't received any trades yet.</div>
-      {% endif %}
-    </div>
+      </div>
+    {% else %}
+      <div class="empty-msg">You haven't received any trades yet.</div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

@@ -41,70 +41,61 @@
     color: #fff;
   }
 
-  .main-content {
+  .content-area {
     padding: 40px;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .profile-card {
+    width: 100%;
+    max-width: 500px;
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .profile-card h2 {
+    text-align: center;
+    color: #054e97;
+    margin-bottom: 25px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    font-weight: 500;
+    color: #333;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
     background: #fff;
   }
 
-  .main-content h2 {
-    margin-bottom: 20px;
-    color: #333;
-    text-align: center;
+  .submit-btn {
+    width: 100%;
+    background: #054e97;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: 0.3s ease;
   }
 
-  .overview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-  }
-
-  .card {
-    flex: 1;
-    min-width: 220px;
-    max-width: 300px;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    text-align: center;
-  }
-
-  .card h4 {
-    margin-bottom: 10px;
-    color: #495057;
-  }
-
-  .card p {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #212529;
-  }
-
-  .recent-section {
-    margin-top: 50px;
-    text-align: center;
-  }
-
-  .recent-section h3 {
-    font-size: 1.3rem;
-    color: #212529;
-    margin-bottom: 20px;
-  }
-
-  .recent-section ul {
-    padding-left: 0;
-    list-style: none;
-  }
-
-  .recent-section li {
-    margin-bottom: 10px;
-    font-size: 0.95rem;
-    color: #495057;
-  }
-
-  .recent-section small {
-    color: #adb5bd;
+  .submit-btn:hover {
+    background: #ff7a00;
   }
 </style>
 
@@ -120,28 +111,31 @@
   </ul>
 </div>
 
-
-  <!-- Content -->
-  <div class="content" style="flex: 1; padding: 40px;">
-    <h2 style="margin-bottom: 30px;">Edit your Profile</h2>
-
-  <div class="profile-content">
+<!-- Main Content -->
+<div class="content-area">
+  <div class="profile-card">
+    <h2>Edit Your Profile</h2>
     <form method="POST">
       {{ form.hidden_tag() }}
       <div class="form-group">
-        {{ form.email.label }} {{ form.email(class="form-control") }}
+        {{ form.email.label }} 
+        {{ form.email(class="form-control") }}
       </div>
       <div class="form-group">
-        {{ form.phone_number.label }} {{ form.phone_number(class="form-control") }}
+        {{ form.phone_number.label }} 
+        {{ form.phone_number(class="form-control") }}
       </div>
       <div class="form-group">
-        {{ form.address.label }} {{ form.address(class="form-control") }}
+        {{ form.address.label }} 
+        {{ form.address(class="form-control") }}
       </div>
       <div class="form-group">
-        {{ form.city.label }} {{ form.city(class="form-control") }}
+        {{ form.city.label }} 
+        {{ form.city(class="form-control") }}
       </div>
       <div class="form-group">
-        {{ form.state.label }} {{ form.state(class="form-control") }}
+        {{ form.state.label }} 
+        {{ form.state(class="form-control") }}
       </div>
       <div>
         {{ form.submit(class="submit-btn") }}

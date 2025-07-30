@@ -40,70 +40,89 @@
     color: #fff;
   }
 
-  .main-content {
+  .content {
     padding: 40px;
     background: #fff;
   }
 
-  .main-content h2 {
-    margin-bottom: 20px;
+  .content h2 {
+    margin-bottom: 30px;
     color: #333;
     text-align: center;
   }
 
-  .overview {
-    display: flex;
-    flex-wrap: wrap;
+  /* Items Grid */
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
+  }
+
+  .item-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s;
+  }
+
+  .item-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .item-card h4 {
+    color: #054e97;
+    margin-bottom: 10px;
+  }
+
+  .item-card p {
+    color: #495057;
+    font-size: 14px;
+    min-height: 40px;
+  }
+
+  .item-card img {
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+
+  .item-actions {
+    margin-top: 15px;
+  }
+
+  .item-actions p {
+    margin-bottom: 8px;
+  }
+
+  /* Pagination */
+  .pagination {
+    margin-top: 30px;
+    display: flex;
     justify-content: center;
+    gap: 15px;
+    align-items: center;
   }
 
-  .card {
-    flex: 1;
-    min-width: 220px;
-    max-width: 300px;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    text-align: center;
+  .pagination a {
+    padding: 8px 16px;
+    background: #054e97;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: 0.3s;
   }
 
-  .card h4 {
-    margin-bottom: 10px;
-    color: #495057;
+  .pagination a:hover {
+    background: #ff7a00;
   }
 
-  .card p {
-    font-size: 1.5rem;
+  .pagination span {
     font-weight: bold;
-    color: #212529;
-  }
-
-  .recent-section {
-    margin-top: 50px;
-    text-align: center;
-  }
-
-  .recent-section h3 {
-    font-size: 1.3rem;
-    color: #212529;
-    margin-bottom: 20px;
-  }
-
-  .recent-section ul {
-    padding-left: 0;
-    list-style: none;
-  }
-
-  .recent-section li {
-    margin-bottom: 10px;
-    font-size: 0.95rem;
     color: #495057;
-  }
-
-  .recent-section small {
-    color: #adb5bd;
   }
 </style>
 
@@ -119,59 +138,53 @@
   </ul>
 </div>
 
+<!-- Main Content -->
+<div class="content">
+  <h2>Uploaded Items</h2>
 
-  <!-- Main Content -->
+  {% if items %}
+    <div class="items-grid">
+      {% for item in items %}
+        <div class="item-card">
+          <h4>{{ item.name }}</h4>
+          <p>{{ item.description }}</p>
+          {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.name }}">
+          {% endif %}
 
-  <div class="content" style="flex: 1; padding: 40px;">
-    <h2 style="margin-bottom: 30px;">Uploaded Items</h2>
-
-  <div class="content">
-  
-
-    {% if items %}
-      <div class="items-grid">
-        {% for item in items %}
-          <div class="item-card">
-            <h4>{{ item.name }}</h4>
-            <p>{{ item.description }}</p>
-            {% if item.image_url %}
-              <img src="{{ item.image_url }}" alt="{{ item.name }}">
-            {% endif %}
-
-            {% if item.user_id == current_user.id %}
-              <div class="item-actions">
-                <p><strong>Status:</strong>
-                  {% if item.is_approved %}
-                    <span style="color: green;">Approved</span>
-                  {% else %}
-                    <span style="color: orange;">Pending</span>
-                  {% endif %}
-                </p>
-
-                {% if not item.is_approved %}
-                  <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+          {% if item.user_id == current_user.id %}
+            <div class="item-actions">
+              <p><strong>Status:</strong>
+                {% if item.is_approved %}
+                  <span style="color: green;">Approved</span>
                 {% else %}
-                  <button class="btn btn-sm btn-secondary" disabled>Locked</button>
+                  <span style="color: orange;">Pending</span>
                 {% endif %}
-              </div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="alert alert-info">You haven't uploaded any items yet.</div>
-    {% endif %}
+              </p>
 
-    <!-- Pagination -->
-    <div class="pagination">
-      {% if items.has_prev %}
-        <a href="{{ url_for('user_items', page=items.prev_num) }}">&laquo; Previous</a>
-      {% endif %}
-      <span>Page {{ items.page }} of {{ items.pages }}</span>
-      {% if items.has_next %}
-        <a href="{{ url_for('user_items', page=items.next_num) }}">Next &raquo;</a>
-      {% endif %}
+              {% if not item.is_approved %}
+                <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+              {% else %}
+                <button class="btn btn-sm btn-secondary" disabled>Locked</button>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
     </div>
+  {% else %}
+    <div class="alert alert-info text-center">You haven't uploaded any items yet.</div>
+  {% endif %}
+
+  <!-- Pagination -->
+  <div class="pagination">
+    {% if items.has_prev %}
+      <a href="{{ url_for('user_items', page=items.prev_num) }}">&laquo; Previous</a>
+    {% endif %}
+    <span>Page {{ items.page }} of {{ items.pages }}</span>
+    {% if items.has_next %}
+      <a href="{{ url_for('user_items', page=items.next_num) }}">Next &raquo;</a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
