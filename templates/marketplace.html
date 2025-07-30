@@ -2,23 +2,247 @@
 {% block title %}Marketplace{% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: auto; padding: 30px;">
+<style>
+  /* Mobile-specific grid layout */
+  .marketplace-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 25px;
+  }
+
+  /* Mobile breakpoint - show 2 items per row */
+  @media (max-width: 768px) {
+    .marketplace-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+  }
+
+  /* Very small screens - still show 2 items but with smaller gap */
+  @media (max-width: 480px) {
+    .marketplace-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+  }
+
+  /* Item card responsive adjustments */
+  .marketplace-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #fff;
+    transition: box-shadow 0.3s, transform 0.3s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  .marketplace-item:hover {
+    box-shadow: 0 0 10px #ff7a00;
+    transform: scale(1.02);
+  }
+
+  .marketplace-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  /* Mobile adjustments for item cards */
+  @media (max-width: 768px) {
+    .marketplace-item {
+      padding: 12px;
+    }
+
+    .marketplace-item img {
+      height: 140px;
+    }
+
+    .marketplace-item h4 {
+      font-size: 0.95rem;
+      margin: 8px 0 5px;
+    }
+
+    .marketplace-item p {
+      font-size: 0.85rem;
+      margin: 4px 0;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .marketplace-item {
+      padding: 10px;
+    }
+
+    .marketplace-item img {
+      height: 120px;
+    }
+
+    .marketplace-item h4 {
+      font-size: 0.9rem;
+      margin: 6px 0 4px;
+    }
+
+    .marketplace-item p {
+      font-size: 0.8rem;
+      margin: 3px 0;
+    }
+  }
+
+  /* Filter form responsive */
+  .filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 768px) {
+    .filter-form {
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .filter-form input,
+    .filter-form select {
+      width: 100%;
+      max-width: 200px;
+    }
+
+    .filter-form button {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .filter-form {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .filter-form input,
+    .filter-form select,
+    .filter-form button {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+
+  /* Button styling */
+  .btn-primary {
+    display: inline-block;
+    margin-top: 10px;
+    text-align: center;
+    background-color: #2458b3;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+    width: 100%;
+  }
+
+  .btn-primary:hover {
+    background-color: #ff7a00;
+    box-shadow: 0 0 10px #ff7a00;
+    transform: scale(1.02);
+  }
+
+  @media (max-width: 768px) {
+    .btn-primary {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .btn-primary {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+  }
+
+  /* Container responsive */
+  .marketplace-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 30px;
+  }
+
+  @media (max-width: 768px) {
+    .marketplace-container {
+      padding: 20px 15px;
+    }
+
+    .marketplace-container h2 {
+      font-size: 1.5rem;
+      margin-bottom: 25px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .marketplace-container {
+      padding: 15px 10px;
+    }
+
+    .marketplace-container h2 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+    }
+  }
+
+  /* Pagination responsive */
+  .pagination {
+    margin-top: 40px;
+    text-align: center;
+  }
+
+  .pagination a {
+    color: #007BFF;
+    text-decoration: none;
+    margin: 0 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+
+  .pagination a:hover {
+    background-color: #ff7a00;
+    color: white;
+  }
+
+  @media (max-width: 480px) {
+    .pagination {
+      margin-top: 30px;
+    }
+
+    .pagination a {
+      margin: 0 5px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
+<div class="marketplace-container">
   <h2 style="text-align: center; margin-bottom: 30px;">🛒 Explore the Marketplace</h2>
 
   <!-- Filter & Search Form -->
-  <form method="GET" action="{{ url_for('marketplace') }}"
-        style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 30px;">
+  <form method="GET" action="{{ url_for('marketplace') }}" class="filter-form">
     <input type="text" name="search" placeholder="Search items..."
            value="{{ request.args.get('search', '') }}"
-           style="padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 6px;" />
+           style="padding: 10px; border: 1px solid #ccc; border-radius: 6px;" />
 
-    <select name="condition" style="padding: 10px; width: 180px; border-radius: 6px; border: 1px solid #ccc;">
+    <select name="condition" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
       <option value="">All Conditions</option>
       <option value="Brand New" {% if request.args.get('condition') == 'Brand New' %}selected{% endif %}>Brand New</option>
       <option value="Fairly Used" {% if request.args.get('condition') == 'Fairly Used' %}selected{% endif %}>Fairly Used</option>
     </select>
 
-    <select name="category" style="padding: 10px; width: 200px; border-radius: 6px; border: 1px solid #ccc;">
+    <select name="category" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
       <option value="">All Categories</option>
       {% set categories = [
         "Electronics", "Fashion / Clothing", "Footwear", "Home & Kitchen", "Beauty & Personal Care",
@@ -36,50 +260,39 @@
             onmouseout="this.style.backgroundColor='#007BFF';">
       Filter
     </button>
-
   </form>
 
   <!-- Display Items -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px;">
+  <div class="marketplace-grid">
     {% for item in items.items %}
-      <div style="border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; background-color: #fff;
-                  transition: box-shadow 0.3s; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);background-color: #fff;
-            transition: box-shadow 0.3s, transform 0.3s;"
-     onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
-     onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">
+      <div class="marketplace-item">
         {% if item.image_url %}
-          <img src="{{ item.image_url }}" alt="{{ item.name }}"
-               style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px;" />
+          <img src="{{ item.image_url }}" alt="{{ item.name }}" />
         {% endif %}
         <h4 style="margin: 10px 0 6px;">{{ item.name }}</h4>
         <p style="margin: 5px 0;"><strong>Condition:</strong> {{ item.condition }}</p>
         <p style="margin: 5px 0;"><strong>Credit Value:</strong> ₦{{ item.value }}</p>
-          <a 
-            href="{{ url_for('view_item', item_id=item.id) }}"
-            style="display: inline-block; margin-top: 10px; text-align: center; background-color: #2458b3; color: white;
-                  padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: 500;"
-            onmouseover="this.style.backgroundColor='#ff7a00'; this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
-            onmouseout="this.style.backgroundColor='#2458b3'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">
-            🔍 View Details
-          </a>
+        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary" >
+          🔍 View Details
+        </a>
       </div>
     {% else %}
-      <p style="text-align: center; color: #888; font-style: italic;">No items found matching your criteria.</p>
+      <div style="grid-column: 1 / -1; text-align: center; color: #888; font-style: italic; padding: 40px;">
+        No items found matching your criteria.
+      </div>
     {% endfor %}  
   </div>
 
   <!-- Pagination -->
-  <div style="margin-top: 40px; text-align: center;">
+  <div class="pagination">
     {% if items.has_prev %}
-      <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}"
-         style="margin-right: 20px; color: #007BFF; text-decoration: none;">&laquo; Previous</a>
+      <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}">&laquo; Previous</a>
     {% endif %}
 
-    <span style="font-weight: 500;"> Page {{ items.page }} of {{ items.pages }} </span>
+    <span style="font-weight: 500; margin: 0 15px;"> Page {{ items.page }} of {{ items.pages }} </span>
 
     {% if items.has_next %}
-      <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}"
-         style="margin-left: 20px; color: #007BFF; text-decoration: none;">Next &raquo;</a>
+      <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}">Next &raquo;</a>
     {% endif %}
   </div>
 </div>
