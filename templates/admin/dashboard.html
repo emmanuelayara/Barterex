@@ -109,7 +109,8 @@
     {% for item in items.items %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
       <div>
-        <strong>{{ item.name }}</strong><br>
+        <h5><strong>{{ item.name }}</strong><br></h5>
+        <p>Item No: <strong>{{ item.item_number }}</strong></p>
         <small class="text-muted">by {{ item.user.username }}</small>
       </div>
       <div class="d-flex align-items-center gap-2">
