@@ -1,6 +1,7 @@
 from app import db
 from flask_login import UserMixin
 from datetime import datetime
+import random
 
 
 class User(db.Model, UserMixin):
@@ -42,6 +43,13 @@ class Item(db.Model):
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
     credited = db.Column(db.Boolean, default=False)
+    # Unique number in format EA-123456
+    item_number = db.Column(
+        db.String(20), 
+        unique=True, 
+        nullable=False, 
+        default=lambda: f"EA-{random.randint(1, 999999999)}"
+    )
 
 
 

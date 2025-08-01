@@ -151,7 +151,7 @@
           {% if item.image_url %}
             <img src="{{ item.image_url }}" alt="{{ item.name }}">
           {% endif %}
-
+           <p>Item Number: <strong>{{ item.item_number }}</strong></p>
           {% if item.user_id == current_user.id %}
             <div class="item-actions">
               <p><strong>Status:</strong>
