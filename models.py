@@ -43,6 +43,7 @@ class Item(db.Model):
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
     credited = db.Column(db.Boolean, default=False)
+    location = db.Column(db.String(100))  # New field
     # Unique number in format EA-123456
     item_number = db.Column(
         db.String(20), 
