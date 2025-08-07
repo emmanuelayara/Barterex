@@ -325,6 +325,7 @@ def upload_item():
             condition=form.condition.data,
             category=form.category.data,
             user_id=current_user.id,
+            location=current_user.state,
             is_available=True,
             is_approved=False,
             status='pending'
