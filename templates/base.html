@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barter - {% block title %}{% endblock %}</title>
+    <title>Barterex - {% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
 /* ✅ NAVIGATION BAR */
@@ -110,7 +110,12 @@ nav a.active {
         </div>
     </div>
     <div class="nav-left" id="navLinks">
-        <a href="{{ url_for('home') }}"><img src="/static/logo.png" alt="Logo" style="height: 20px; width: auto;"></a></span>
+    <div class="logo">
+        <a href="{{ url_for('home') }}">
+          <img src="/static/logo.png" alt="Logo">
+          <span>Barterex</span>
+        </a>
+    </div>
         <a href="{{ url_for('marketplace') }}"> Marketplace </a>
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('upload_item') }}"> Upload</a>
