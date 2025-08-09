@@ -2,61 +2,153 @@
 {% block content %}
 
 <div class="container py-5">
-    <h1 class="mb-4" style="color: #2c3e50;">Manage Users</h1>
+    <h1 class="mb-4 text-center fw-bold" style="color: #2c3e50;">Manage Users</h1>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover shadow-sm bg-white">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col">Username</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Credits</th>
-                    <th scope="col">Address</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>
-                        <span class="badge bg-success">{{ user.credits }}</span>
-                    </td>
-                    <td>
-                        {{ user.address or 'No address provided' }},
-                        {{ user.city or 'N/A' }},
-                        {{ user.state or 'N/A' }}
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a href="{{ url_for('edit_user', user_id=user.id) }}"  
-                                class="btn btn-sm" 
-                                style="background-color: #007BFF; color: white; border-color: #007BFF;" 
-                                onmouseover="this.style.backgroundColor='#ff7a00'; this.style.borderColor='#ff7a00'; this.style.color='white';" 
-                                onmouseout="this.style.backgroundColor='#007BFF'; this.style.borderColor='#007BFF'; this.style.color='white';">Edit
-                            </a>
-                            
-                            <a href="{{ url_for('view_user', user_id=user.id) }}" 
-                                class="btn btn-sm" 
-                                style="background-color: #007BFF; color: white; border-color: #007BFF;" 
-                                onmouseover="this.style.backgroundColor='#ff7a00'; this.style.borderColor='#ff7a00'; this.style.color='white';" 
-                                onmouseout="this.style.backgroundColor='#007BFF'; this.style.borderColor='#007BFF'; this.style.color='white';">
-                                View
-                            </a>
+    <!-- All Users Section -->
+    <div class="card shadow-lg mb-5">
+        <div class="card-header bg-primary text-white fw-bold fs-5">
+            All Users
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_banned %}
+                                    <span class="badge bg-danger">Banned</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- View Button -->
+                                <a href="{{ url_for('view_user', user_id=user.id) }}" 
+                                   class="btn btn-info btn-sm me-1 action-btn">
+                                   View
+                                </a>
 
-                            <form method="POST" action="{{ url_for('ban_user', user_id=user.id) }}"
-                                  onsubmit="return confirm('Are you sure you want to ban this user?');"
-                                  class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger">Ban</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                                <!-- Edit Button -->
+                                <a href="{{ url_for('edit_user', user_id=user.id) }}" 
+                                   class="btn btn-warning btn-sm me-1 action-btn">
+                                   Edit
+                                </a>
+
+                                {% if not user.is_banned %}
+                                    <!-- Ban Button -->
+                                    <button type="button" 
+                                            class="btn btn-danger btn-sm action-btn"
+                                            onclick="toggleBanReason('{{ user.id }}')">
+                                        Ban
+                                    </button>
+                                    <form id="ban-form-{{ user.id }}" 
+                                          action="{{ url_for('ban_user', user_id=user.id) }}" 
+                                          method="POST" 
+                                          class="mt-2" style="display:none;">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" name="ban_reason" 
+                                                   placeholder="Enter ban reason" 
+                                                   class="form-control" required>
+                                            <button type="submit" class="btn btn-danger">Confirm</button>
+                                        </div>
+                                    </form>
+                                {% else %}
+                                    <!-- Unban Button -->
+                                    <form action="{{ url_for('unban_user', user_id=user.id) }}" 
+                                          method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-success btn-sm action-btn">
+                                            Unban
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banned Users Section -->
+    <div class="card shadow-lg">
+        <div class="card-header bg-danger text-white fw-bold fs-5">
+            Banned Users
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Ban Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in banned_users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.ban_reason or 'No reason provided' }}</td>
+                            <td>
+                                <a href="{{ url_for('view_user', user_id=user.id) }}" 
+                                   class="btn btn-info btn-sm me-1 action-btn">
+                                   View
+                                </a>
+                                <a href="{{ url_for('edit_user', user_id=user.id) }}" 
+                                   class="btn btn-warning btn-sm me-1 action-btn">
+                                   Edit
+                                </a>
+                                <form action="{{ url_for('unban_user', user_id=user.id) }}" 
+                                      method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-success btn-sm action-btn">
+                                        Unban
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Button Hover Effect -->
+<style>
+    .action-btn {
+        transition: all 0.2s ease-in-out;
+    }
+    .action-btn:hover {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+</style>
+
+<!-- Ban Reason Toggle Script -->
+<script>
+function toggleBanReason(userId) {
+    let form = document.getElementById('ban-form-' + userId);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+</script>
 
 {% endblock %}

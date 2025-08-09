@@ -1,0 +1,10 @@
+<h2>You have been banned</h2>
+<p>Reason: {{ reason }}</p>
+
+{% if not unban_requested %}
+<form action="{{ url_for('request_unban') }}" method="POST">
+    <button type="submit">Request Unban</button>
+</form>
+{% else %}
+<p>You have already requested to be unbanned. Please wait for admin review.</p>
+{% endif %}

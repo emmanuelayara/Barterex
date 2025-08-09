@@ -68,10 +68,13 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        # handle login logic
         username = form.username.data
-        password = form.password.data   
+        password = form.password.data
         user = User.query.filter_by(username=username).first()
+
+        if user:
+            if user.is_banned:
+                return render_template("banned.html", reason=user.ban_reason, unban_requested=user.unban_requested)
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             flash('Login successful!', 'success')
@@ -79,6 +82,48 @@ def login():
         else:
             flash('Invalid username or password.', 'danger')
     return render_template('login.html', form=form)
+
+
+@app.route('/banned')
+def banned():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+
+    # If somehow the user is not banned but tries to access banned page
+    if not user.is_banned:
+        return redirect(url_for('login'))
+
+    return render_template(
+        'banned.html',
+        reason=user.ban_reason,
+        unban_requested=user.unban_requested
+    )
+
+
+@app.route('/request_unban', methods=['POST'])
+def request_unban():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('login'))
+
+    if not user.is_banned:
+        flash("You are not banned.", "info")
+        return redirect(url_for('dashboard'))  # Redirect to user dashboard if not banned
+
+    if not user.unban_requested:
+        user.unban_requested = True
+        db.session.commit()
+        flash('Your unban request has been submitted. Please wait for admin review.', 'info')
+    else:
+        flash('You have already submitted an unban request.', 'warning')
+
+    return redirect(url_for('banned'))
 
 
 
@@ -495,7 +540,10 @@ def admin_dashboard():
 @admin_login_required
 def manage_users():
     users = User.query.all()
-    return render_template('admin/users.html', users=users)
+    unban_requests = User.query.filter_by(unban_requested=True, is_banned=True).all()
+    banned_users = User.query.filter_by(is_banned=True).all()
+    return render_template('admin/users.html', users=users, unban_requests=unban_requests,
+        banned_users=banned_users)
 
 
 @app.route('/admin/view_user/<int:user_id>')
@@ -530,6 +578,49 @@ def ban_user(user_id):
     db.session.commit()
 
     flash(f'User {user.username} has been banned.', 'warning')
+    return redirect(url_for('manage_users'))
+
+
+@app.route('/admin/banned_users')
+@admin_login_required
+def admin_banned_users():
+    banned_users = User.query.filter_by(is_banned=True).all()
+    return render_template('admin_banned_users.html', users=banned_users)
+
+@app.route('/admin/unban_user/<int:user_id>', methods=['POST'])
+@admin_login_required
+def unban_user(user_id):
+    user = User.query.get_or_404(user_id)
+    user.is_banned = False
+    user.ban_reason = None
+    user.unban_requested = False
+    db.session.commit()
+
+    flash(f"{user.username} has been unbanned.", "success")
+    return redirect(url_for('admin_banned_users'))
+
+
+@app.route('/admin/approve_unban/<int:user_id>', methods=['POST'])
+@admin_login_required
+def approve_unban(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_banned:
+        user.is_banned = False
+        user.unban_requested = False
+        user.ban_reason = None
+        db.session.commit()
+        flash(f'User {user.username} has been unbanned.', 'success')
+    return redirect(url_for('manage_users'))
+
+
+@app.route('/admin/reject_unban/<int:user_id>', methods=['POST'])
+@admin_login_required
+def reject_unban(user_id):
+    user = User.query.get_or_404(user_id)
+    if user.is_banned and user.unban_requested:
+        user.unban_requested = False
+        db.session.commit()
+        flash(f'User {user.username}\'s unban request has been rejected.', 'danger')
     return redirect(url_for('manage_users'))
 
 
