@@ -584,8 +584,9 @@ def ban_user(user_id):
 @app.route('/admin/banned_users')
 @admin_login_required
 def admin_banned_users():
+    users = User.query.all()
     banned_users = User.query.filter_by(is_banned=True).all()
-    return render_template('admin_banned_users.html', users=banned_users)
+    return render_template('admin/users.html', users=users, banned_users=banned_users)
 
 @app.route('/admin/unban_user/<int:user_id>', methods=['POST'])
 @admin_login_required
