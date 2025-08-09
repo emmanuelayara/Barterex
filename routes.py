@@ -573,7 +573,7 @@ def approve_item(item_id):
 
 
         if item.status == 'approved':
-            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is New balance: ₦{item.user.credits} credits.")
+            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is: ₦{item.user.credits} credits.")
         else:
             create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected.")
 
