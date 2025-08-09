@@ -17,6 +17,7 @@
                             <th>ID</th>
                             <th>Username</th>
                             <th>Email</th>
+                            <th>Credit Balance</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -27,6 +28,7 @@
                             <td>{{ user.id }}</td>
                             <td>{{ user.username }}</td>
                             <td>{{ user.email }}</td>
+                            <td>₦{{ user.credits }}</td>
                             <td>
                                 {% if user.is_banned %}
                                     <span class="badge bg-danger">Banned</span>
