@@ -26,7 +26,10 @@
       <hr style="margin: 20px 0;">
 
       <h4>Description:</h4>
-      <p style="line-height: 1.6;">{{ item.description }}</p>
+      <p style="line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
+          {{ item.description }}
+      </p>
+
 
       <form method="POST" action="{{ url_for('buy_item', item_id=item.id) }}" style="margin-top: 30px;">
         <button type="submit"
