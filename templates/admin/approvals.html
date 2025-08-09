@@ -23,6 +23,7 @@
                         <!-- Context Info -->
                         <p class="mb-1"><span class="text-muted">Uploader:</span> <strong>{{ item.user.username }}</strong></p>
                         <p><span class="badge bg-secondary">{{ item.category }}</span></p>
+                        <p style="color: #888; margin-bottom: 5px;"><strong>Condition:</strong> {{ item.condition }}</p>
 
                         <!-- Approval Form -->
                         <form method="POST" action="{{ url_for('approve_item', item_id=item.id) }}" class="mt-auto">
