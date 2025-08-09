@@ -520,9 +520,16 @@ def ban_user(user_id):
         flash("You can't ban yourself.", 'danger')
         return redirect(url_for('manage_users'))
 
-    db.session.delete(user)
+    reason = request.form.get('ban_reason')  # Get reason from form
+    if not reason.strip():
+        flash("You must provide a reason for banning this user.", 'danger')
+        return redirect(url_for('manage_users'))
+
+    user.is_banned = True
+    user.ban_reason = reason
     db.session.commit()
-    flash(f'User {user.username} has been banned and deleted.', 'warning')
+
+    flash(f'User {user.username} has been banned.', 'warning')
     return redirect(url_for('manage_users'))
 
 
