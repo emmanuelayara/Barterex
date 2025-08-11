@@ -1,8 +1,8 @@
-"""item number
+"""migrate
 
-Revision ID: a1a5df778e45
+Revision ID: ded6fa9a20ca
 Revises: 
-Create Date: 2025-08-01 12:09:42.657598
+Create Date: 2025-08-11 13:55:17.940996
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a1a5df778e45'
+revision = 'ded6fa9a20ca'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -40,6 +40,8 @@ def upgrade():
     sa.Column('credits', sa.Integer(), nullable=True),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('is_banned', sa.Boolean(), nullable=True),
+    sa.Column('ban_reason', sa.Text(), nullable=True),
+    sa.Column('unban_requested', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('username')
@@ -66,6 +68,7 @@ def upgrade():
     sa.Column('condition', sa.String(length=20), nullable=True),
     sa.Column('category', sa.String(length=100), nullable=False),
     sa.Column('credited', sa.Boolean(), nullable=True),
+    sa.Column('location', sa.String(length=100), nullable=True),
     sa.Column('item_number', sa.String(length=20), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name='fk_item_user'),
     sa.PrimaryKeyConstraint('id'),
