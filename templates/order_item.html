@@ -2,7 +2,7 @@
 {% block content %}
 <h2>Order {{ item.name }}</h2>
 <p>{{ item.description }}</p>
-<p>{{ item.credits }}</p>
+<p>₦{{ item.value }}</p>
 
 <form method="POST">
     {{ form.hidden_tag() }}
