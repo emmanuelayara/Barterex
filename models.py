@@ -82,6 +82,16 @@ class Trade(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    delivery_method = db.Column(db.String(50), nullable=False)  # "Delivery" or "Pickup"
+    delivery_address = db.Column(db.String(255))  # Only for delivery
+    status = db.Column(db.String(50), default="Pending")
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)

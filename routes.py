@@ -16,8 +16,8 @@ import os
 from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
-from models import User, Item, Admin, Trade, Notification, CreditTransaction, db
-from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm
+from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order
+from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm
 
 
 # Configuration
@@ -331,17 +331,48 @@ def buy_item(item_id):
     trade = Trade(
         sender_id=current_user.id,          # Buyer
         receiver_id=item.user_id,           # Seller
-        item_id=item.id,               # ✅ Required to satisfy NOT NULL
-        item_given_id=None,            # No item given in purchase
-        item_received_id=item.id,           # The item bought
+        item_id=item.id,
+        item_given_id=None,
+        item_received_id=item.id,
         status='completed'
     )
     db.session.add(trade)
-
     db.session.commit()
 
-    flash(f"You have successfully bought '{item.name}'!", "success")
-    return redirect(url_for('dashboard'))
+    flash(f"You have successfully bought '{item.name}'. Please choose your delivery method.", "success")
+
+    # ✅ Redirect to order page immediately after purchase
+    return redirect(url_for('order_item', item_id=item.id))
+
+
+@app.route("/order/<int:item_id>", methods=["GET", "POST"])
+@login_required
+def order_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    form = OrderForm()
+
+    if form.validate_on_submit():
+        delivery_method = form.delivery_method.data
+        delivery_address = form.delivery_address.data if delivery_method == "Delivery" else None
+
+        if delivery_method == "Delivery" and not delivery_address:
+            flash("Please enter your delivery address.", "danger")
+            return render_template("order_item.html", form=form, item=item)
+
+        new_order = Order(
+            user_id=current_user.id,
+            item_id=item.id,
+            delivery_method=delivery_method,
+            delivery_address=delivery_address
+        )
+        db.session.add(new_order)
+        db.session.commit()
+
+        flash("Your order has been placed successfully!", "success")
+        return redirect(url_for("user_orders"))
+
+    return render_template("order_item.html", form=form, item=item)
+
 
 
 @app.route('/upload', methods=['GET', 'POST'])

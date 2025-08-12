@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField, FileField, IntegerField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, Optional
 from flask_wtf.file import FileAllowed
 from models import User, Admin
 
@@ -36,6 +36,16 @@ class ProfileUpdateForm(FlaskForm):
     state = StringField('State', validators=[Length(max=50)])
     profile_picture = FileField('Profile Picture', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')])
     submit = SubmitField ('Update Profile')
+
+
+class OrderForm(FlaskForm):
+    delivery_method = SelectField(
+        "Delivery Method",
+        choices=[("Pickup", "Pickup at Station"), ("Delivery", "Deliver to my Address")],
+        validators=[DataRequired()]
+    )
+    delivery_address = StringField("Delivery Address (only if delivery selected)", validators=[Optional()])
+    submit = SubmitField("Place Order")
 
 
 class UploadItemForm(FlaskForm):

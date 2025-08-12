@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Order {{ item.name }}</h2>
+<p>{{ item.description }}</p>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+    
+    <div>
+        {{ form.delivery_method.label }}<br>
+        {{ form.delivery_method(class="form-control", id="delivery_method") }}
+    </div>
+
+    <div id="address_field" style="display:none; margin-top:10px;">
+        {{ form.delivery_address.label }}<br>
+        {{ form.delivery_address(class="form-control") }}
+    </div>
+
+    <br>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+
+<script>
+document.getElementById("delivery_method").addEventListener("change", function() {
+    let addressField = document.getElementById("address_field");
+    if (this.value === "Delivery") {
+        addressField.style.display = "block";
+    } else {
+        addressField.style.display = "none";
+    }
+});
+</script>
+{% endblock %}
