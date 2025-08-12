@@ -351,6 +351,10 @@ def order_item(item_id):
     item = Item.query.get_or_404(item_id)
     form = OrderForm()
 
+    # ✅ Pre-fill address from user's profile
+    if request.method == "GET":
+        form.delivery_address.data = current_user.address  # Assuming your User model has 'address'
+
     if form.validate_on_submit():
         delivery_method = form.delivery_method.data
         delivery_address = form.delivery_address.data if delivery_method == "Delivery" else None
