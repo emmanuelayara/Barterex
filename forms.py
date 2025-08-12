@@ -39,7 +39,7 @@ class ProfileUpdateForm(FlaskForm):
 
 
 class OrderForm(FlaskForm):
-    delivery_method = SelectField("Delivery Method", choices=[("Delivery", "Delivery"), ("Pickup", "Pickup Station")])
+    delivery_method = SelectField("Delivery Method", choices=[("Pick Delivery Method", "Pick Delivery Method"), ("Delivery", "Home Delivery"), ("Pickup", "Pickup Station")])
     delivery_address = StringField("Delivery Address", validators=[Optional()])
     submit = SubmitField("Place Order")
 
