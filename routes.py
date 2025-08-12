@@ -346,47 +346,51 @@ def buy_item(item_id):
 
 
 
-@app.route("/order/<int:item_id>", methods=["GET", "POST"])
+@app.route('/order_item/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 def order_item(item_id):
     item = Item.query.get_or_404(item_id)
+
+    # Get seller details
+    seller = User.query.get(item.seller_id)  # Or your Seller model if separate
+
+    if not seller or not seller.state:
+        flash('This item’s seller does not have a registered state.', 'danger')
+        return redirect(url_for('view_item', item_id=item.id))
+
+    # Filter pickup stations in the same state as seller
+    stations = PickupStation.query.filter_by(state=seller.state).all()
+
     form = OrderForm()
+    form.pickup_station.choices = [(s.id, s.name) for s in stations]
 
-    # Pre-fill address
-    if request.method == "GET":
+    if request.method == 'GET':
+        # Pre-fill delivery address from user profile
         form.delivery_address.data = current_user.address
-
-        # Filter pickup stations by item state
-        stations = PickupStation.query.filter_by(state=item.state).all()
-        form.pickup_station.choices = [(s.id, f"{s.name} - {s.address}") for s in stations]
 
     if form.validate_on_submit():
         delivery_method = form.delivery_method.data
+        pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
 
-        if delivery_method == "Delivery":
-            delivery_address = form.delivery_address.data
-            if not delivery_address:
-                flash("Please enter your delivery address.", "danger")
-                return render_template("order_item.html", form=form, item=item)
-            pickup_station_id = None
-        else:  # Pickup
-            pickup_station_id = form.pickup_station.data
-            delivery_address = None
-
-        new_order = Order(
-            user_id=current_user.id,
+        order = Order(
+            buyer_id=current_user.id,
             item_id=item.id,
             delivery_method=delivery_method,
-            delivery_address=delivery_address,
+            delivery_address=form.delivery_address.data if delivery_method == 'delivery' else None,
             pickup_station_id=pickup_station_id
         )
-        db.session.add(new_order)
+        db.session.add(order)
         db.session.commit()
 
-        flash("Your order has been placed successfully!", "success")
-        return redirect(url_for("user_orders"))
+        flash('Your order has been placed successfully!', 'success')
+        return redirect(url_for('dashboard'))
 
-    return render_template("order_item.html", form=form, item=item)
+    return render_template(
+        'order_item.html',
+        form=form,
+        item=item,
+        stations=stations
+    )
 
 
 
