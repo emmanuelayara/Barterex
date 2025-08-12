@@ -86,11 +86,20 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
-    delivery_method = db.Column(db.String(50), nullable=False)  # "Delivery" or "Pickup"
-    delivery_address = db.Column(db.String(255))  # Only for delivery
+    delivery_method = db.Column(db.String(20), nullable=False)
+    delivery_address = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default="Pending")
     created_at = db.Column(db.DateTime, default=db.func.now())
+    pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
+    pickup_station = db.relationship('PickupStation', backref='orders')
 
+
+
+class PickupStation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(50), nullable=False)
+    address = db.Column(db.String(255), nullable=False)
 
 
 class Notification(db.Model):

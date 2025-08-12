@@ -66,6 +66,16 @@ class UploadItemForm(FlaskForm):
     submit = SubmitField('Submit Item')
 
 
+class OrderForm(FlaskForm):
+    delivery_method = SelectField("Delivery Method", choices=[
+        ("Delivery", "Delivery"),
+        ("Pickup", "Pickup Station")
+    ])
+    delivery_address = StringField("Delivery Address", validators=[Optional()])
+    pickup_station = SelectField("Pickup Station", choices=[], coerce=int, validators=[Optional()])
+    submit = SubmitField("Place Order")
+
+
 class PasswordResetRequestForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Request Password Reset')

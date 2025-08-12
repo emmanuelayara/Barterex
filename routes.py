@@ -16,7 +16,7 @@ import os
 from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
-from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order
+from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm
 
 
@@ -345,29 +345,40 @@ def buy_item(item_id):
     return redirect(url_for('order_item', item_id=item.id))
 
 
+
 @app.route("/order/<int:item_id>", methods=["GET", "POST"])
 @login_required
 def order_item(item_id):
     item = Item.query.get_or_404(item_id)
     form = OrderForm()
 
-    # ✅ Pre-fill address from user's profile
+    # Pre-fill address
     if request.method == "GET":
-        form.delivery_address.data = current_user.address  # Assuming your User model has 'address'
+        form.delivery_address.data = current_user.address
+
+        # Filter pickup stations by item state
+        stations = PickupStation.query.filter_by(state=item.state).all()
+        form.pickup_station.choices = [(s.id, f"{s.name} - {s.address}") for s in stations]
 
     if form.validate_on_submit():
         delivery_method = form.delivery_method.data
-        delivery_address = form.delivery_address.data if delivery_method == "Delivery" else None
 
-        if delivery_method == "Delivery" and not delivery_address:
-            flash("Please enter your delivery address.", "danger")
-            return render_template("order_item.html", form=form, item=item)
+        if delivery_method == "Delivery":
+            delivery_address = form.delivery_address.data
+            if not delivery_address:
+                flash("Please enter your delivery address.", "danger")
+                return render_template("order_item.html", form=form, item=item)
+            pickup_station_id = None
+        else:  # Pickup
+            pickup_station_id = form.pickup_station.data
+            delivery_address = None
 
         new_order = Order(
             user_id=current_user.id,
             item_id=item.id,
             delivery_method=delivery_method,
-            delivery_address=delivery_address
+            delivery_address=delivery_address,
+            pickup_station_id=pickup_station_id
         )
         db.session.add(new_order)
         db.session.commit()
@@ -776,4 +787,31 @@ def fix_missing_credits():
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route("/admin/pickup-stations/add", methods=["GET", "POST"])
+@admin_login_required
+def add_pickup_station():
+    if request.method == "POST":
+        name = request.form.get("name")
+        state = request.form.get("state")
+        address = request.form.get("address")
+
+        if not name or not state or not address:
+            flash("All fields are required", "danger")
+            return redirect(url_for("add_pickup_station"))
+
+        new_station = PickupStation(name=name, state=state, address=address)
+        db.session.add(new_station)
+        db.session.commit()
+
+        flash("Pickup station added successfully!", "success")
+        return redirect(url_for("manage_pickup_stations"))
+
+    return render_template("admin/add_pickup_station.html")
+
+
+@app.route("/admin/pickup-stations")
+@admin_login_required
+def manage_pickup_stations():
+    stations = PickupStation.query.all()
+    return render_template("admin/manage_pickup_stations.html", stations=stations)
 
