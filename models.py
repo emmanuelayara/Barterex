@@ -22,6 +22,7 @@ class User(db.Model, UserMixin):
     items = db.relationship('Item', back_populates='user', lazy=True)
     transactions = db.relationship('CreditTransaction', back_populates='user', lazy=True)
     notifications = db.relationship('Notification', back_populates='user', lazy=True)
+    orders = db.relationship('Order', back_populates='user', lazy=True)
 
 
 class Admin(db.Model):
@@ -92,7 +93,8 @@ class Order(db.Model):
     date_ordered = db.Column(db.DateTime, default=db.func.now())
     pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
     pickup_station = db.relationship('PickupStation', backref='orders')
-
+    item = db.relationship('Item', backref='orders')
+    user = db.relationship('User', back_populates='orders')  # Assuming User has a orders relationship
 
 
 class PickupStation(db.Model):

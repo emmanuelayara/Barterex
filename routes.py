@@ -374,7 +374,7 @@ def order_item(item_id):
         pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
 
         order = Order(
-            buyer_id=current_user.id,
+            user_id=current_user.id,
             item_id=item.id,
             delivery_method=delivery_method,
             delivery_address=form.delivery_address.data if delivery_method == 'delivery' else None,
