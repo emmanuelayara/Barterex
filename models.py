@@ -89,7 +89,7 @@ class Order(db.Model):
     delivery_method = db.Column(db.String(20), nullable=False)
     delivery_address = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default="Pending")
-    created_at = db.Column(db.DateTime, default=db.func.now())
+    date_ordered = db.Column(db.DateTime, default=db.func.now())
     pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
     pickup_station = db.relationship('PickupStation', backref='orders')
 
