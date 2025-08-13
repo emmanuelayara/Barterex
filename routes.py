@@ -352,7 +352,8 @@ def order_item(item_id):
     item = Item.query.get_or_404(item_id)
 
     # Get seller details
-    seller = User.query.get(item.seller_id)  # Or your Seller model if separate
+    seller = User.query.get(item.user_id)
+
 
     if not seller or not seller.state:
         flash('This item’s seller does not have a registered state.', 'danger')
