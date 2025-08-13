@@ -4,36 +4,60 @@
 
 {% block content %}
 
-<h2>Manage Orders</h2>
-<table border="1" cellpadding="8">
-    <tr>
-        <th>Order ID</th>
-        <th>Item</th>
-        <th>Buyer</th>
-        <th>Delivery Method</th>
-        <th>Pickup Station / Address</th>
-        <th>Status</th>
-        <th>Date Ordered</th>
-    </tr>
-    {% for order in orders %}
-    <tr>
-        <td>{{ order.id }}</td>
-        <td>{{ order.item.name }}</td>
-        <td>{{ order.buyer.username }}</td>
-        <td>{{ order.delivery_method }}</td>
-        <td>
-            {% if order.delivery_method == 'pickup' %}
-                {{ order.pickup_station.name }} ({{ order.pickup_station.state }})
-            {% else %}
-                {{ order.delivery_address }}
-            {% endif %}
-        </td>
-        <td>{{ order.status }}</td>
-        <td>{{ order.date_ordered.strftime('%Y-%m-%d %H:%M') }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="container my-4">
+    <h2 class="mb-4">Manage Orders</h2>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Item</th>
+                    <th scope="col">Buyer</th>
+                    <th scope="col">Delivery Method</th>
+                    <th scope="col">Pickup Station / Address</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Date Ordered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td><strong>#{{ order.id }}</strong></td>
+                    <td>{{ order.item.name }}</td>
+                    <td>{{ order.buyer.username }}</td>
+                    <td>
+                        {% if order.delivery_method == 'pickup' %}
+                            <span class="badge bg-info text-dark">Pickup</span>
+                        {% else %}
+                            <span class="badge bg-primary">Home Delivery</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.delivery_method == 'pickup' %}
+                            <span class="fw-bold">{{ order.pickup_station.name }}</span>
+                            <small class="text-muted">({{ order.pickup_station.state }})</small>
+                        {% else %}
+                            {{ order.delivery_address }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif order.status == 'Completed' %}
+                            <span class="badge bg-success">Completed</span>
+                        {% elif order.status == 'Cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% else %}
+                            {{ order.status }}
+                        {% endif %}
+                    </td>
+                    <td>{{ order.date_ordered.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
 {% endblock %}
-
-
