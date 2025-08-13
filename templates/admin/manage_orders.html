@@ -1,0 +1,29 @@
+<h2>Manage Orders</h2>
+<table border="1" cellpadding="8">
+    <tr>
+        <th>Order ID</th>
+        <th>Item</th>
+        <th>Buyer</th>
+        <th>Delivery Method</th>
+        <th>Pickup Station / Address</th>
+        <th>Status</th>
+        <th>Date Ordered</th>
+    </tr>
+    {% for order in orders %}
+    <tr>
+        <td>{{ order.id }}</td>
+        <td>{{ order.item.name }}</td>
+        <td>{{ order.buyer.username }}</td>
+        <td>{{ order.delivery_method }}</td>
+        <td>
+            {% if order.delivery_method == 'pickup' %}
+                {{ order.pickup_station.name }} ({{ order.pickup_station.state }})
+            {% else %}
+                {{ order.delivery_address }}
+            {% endif %}
+        </td>
+        <td>{{ order.status }}</td>
+        <td>{{ order.date_ordered.strftime('%Y-%m-%d %H:%M') }}</td>
+    </tr>
+    {% endfor %}
+</table>

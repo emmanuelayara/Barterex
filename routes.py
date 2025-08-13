@@ -820,3 +820,11 @@ def manage_pickup_stations():
     stations = PickupStation.query.all()
     return render_template("admin/manage_pickup_stations.html", stations=stations)
 
+
+@app.route('/admin/manage_orders')
+@admin_login_required
+def manage_orders():
+    orders = Order.query.order_by(Order.date_ordered.desc()).all()
+    return render_template('admin/manage_orders.html', orders=orders)
+
+
