@@ -1,22 +1,43 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
-<html lang="en">
-<head>
-    <title>Edit User</title>
-</head>
-<body>
-    <h1>Edit User: {{ user.username }}</h1>
-    <nav>
-        <a href="{{ url_for('manage_users') }}">Back to Users</a>
-    </nav>
-
-    <form method="POST">
-        <label for="credits">Credits:</label>
-        <input type="number" name="credits" value="{{ user.credits }}" required>
-        <button type="submit">Update</button>
-    </form>
-</body>
-</html>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Card -->
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Edit User: {{ user.username }}</h4>
+                    <a href="{{ url_for('manage_users') }}" class="btn btn-light btn-sm">
+                        ← Back to Users
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Credits Input -->
+                        <div class="form-group mb-4">
+                            <label for="credits" class="form-label fw-bold">Credits</label>
+                            <input 
+                                type="number" 
+                                class="form-control form-control-lg" 
+                                id="credits" 
+                                name="credits" 
+                                value="{{ user.credits }}" 
+                                required
+                            >
+                        </div>
+                        <!-- Submit -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                💾 Update User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- /Card -->
+        </div>
+    </div>
+</div>
 
 {% endblock %}
