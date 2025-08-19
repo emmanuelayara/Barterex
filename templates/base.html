@@ -6,177 +6,535 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barterex - {% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-/* ✅ NAVIGATION BAR */
-nav {
-    background: #054e97;
-    color: white;
-    padding: 15px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
+        :root {
+            --primary-blue: #054e97;
+            --primary-orange: #ff7a00;
+            --dark-blue: #043a72;
+            --light-blue: #0d5fa8;
+            --white: #ffffff;
+            --gray-100: #f8fafc;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-900: #0f172a;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
 
-nav, footer {
-    background: #054e97;
-    color: white;
-    padding: 15px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.nav-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background-color: var(--gray-100);
+        }
 
-.nav-left {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
+        /* ✨ MODERN NAVIGATION BAR */
+        nav {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-lg);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
 
-nav a {
-    color: #fff;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 10px 16px;
-    border-radius: 6px;
-    transition: background-color 0.3s ease;
-}
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
 
-nav a:hover {
-    background-color: #ff7a00;
-}
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            position: relative;
+        }
 
-nav a.active {
-    background-color: #ff7a00;
-    color: white;
-}
+        /* 🎨 LOGO STYLING */
+        .logo-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 1.25rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
-/* ✅ HAMBURGER MENU */
-.hamburger {
-    display: none;
-    flex-direction: column;
-    gap: 5px;
-    cursor: pointer;
-}
+        .logo-link:hover {
+            background: var(--primary-orange);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 122, 0, 0.3);
+            color: var(--white);
+            text-decoration: none;
+        }
 
-.hamburger div {
-    width: 25px;
-    height: 3px;
-    background-color: white;
-    border-radius: 2px;
-}
+        .logo-img {
+            height: 32px;
+            width: auto;
+            filter: brightness(1.1);
+            transition: all 0.3s ease;
+        }
 
-/* ✅ RESPONSIVE BEHAVIOR */
-@media (max-width: 768px) {
-    .nav-left {
-        display: none;
-        flex-direction: column;
-        align-items: flex-start;
-    }
+        .logo-text {
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--white), var(--gray-200));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    .nav-left.active {
-        display: flex;
-    }
+        /* 🔗 NAVIGATION LINKS */
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            list-style: none;
+        }
 
-    .hamburger {
-        display: flex;
-    }
+        .nav-item {
+            position: relative;
+        }
 
-    nav a {
-        width: 100%;
-        margin: 4px 0;
-    }
+        .nav-link {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-    
-}
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
 
-.logo-link {
-    display: inline-flex;
-    align-items: center;
-    height: 100%;
-    padding: 5px;
-    transition: background-color 0.3s ease;
-}
+        .nav-link:hover::before {
+            left: 100%;
+        }
 
-.logo-img {
-    height: 30px;
-    width: auto;
-    display: block;
-}
+        .nav-link:hover {
+            background: var(--primary-orange);
+            color: var(--white);
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 122, 0, 0.3);
+            border-color: var(--primary-orange);
+        }
 
-.logo-link:hover {
-    background-color: #ff7a00; /* adjust for dark or light themes */
-    border-radius: 6px; /* optional: make the hover look nicer */
-}
+        .nav-link.active {
+            background: var(--primary-orange);
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(255, 122, 0, 0.4);
+            border-color: var(--primary-orange);
+        }
 
+        .nav-link i {
+            font-size: 0.9rem;
+            transition: transform 0.3s ease;
+        }
 
+        .nav-link:hover i {
+            transform: scale(1.1);
+        }
+
+        /* 🍔 HAMBURGER MENU */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hamburger:hover {
+            background: var(--primary-orange);
+            transform: scale(1.05);
+        }
+
+        .hamburger-line {
+            width: 25px;
+            height: 3px;
+            background: var(--white);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .hamburger.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+
+        .hamburger.active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* 📱 MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .nav-links {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+                flex-direction: column;
+                gap: 0;
+                padding: 1rem;
+                border-radius: 0 0 20px 20px;
+                box-shadow: var(--shadow-xl);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .nav-links.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .nav-item {
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+
+            .nav-link {
+                width: 100%;
+                justify-content: flex-start;
+                padding: 1rem 1.25rem;
+                font-size: 1rem;
+                border-radius: 12px;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .logo-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 1.1rem;
+            }
+
+            .logo-img {
+                height: 28px;
+            }
+        }
+
+        /* 🎯 ADDITIONAL EFFECTS */
+        .nav-indicator {
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            height: 3px;
+            background: var(--primary-orange);
+            border-radius: 2px 2px 0 0;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .nav-link:hover .nav-indicator,
+        .nav-link.active .nav-indicator {
+            opacity: 1;
+            width: 100%;
+        }
+
+        /* ✨ SCROLL EFFECT */
+        nav.scrolled {
+            background: rgba(5, 78, 151, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* 🎨 MAIN CONTENT STYLING */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* 📜 FLASH MESSAGES */
+        .flash {
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 12px;
+            border-left: 4px solid;
+            box-shadow: var(--shadow-md);
+            animation: slideIn 0.3s ease;
+        }
+
+        .flash.success {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #22c55e;
+        }
+
+        .flash.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #ef4444;
+        }
+
+        .flash.warning {
+            background: #fffbeb;
+            color: #d97706;
+            border-color: #f59e0b;
+        }
+
+        .flash.info {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 🦶 FOOTER */
+        footer {
+            background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-600) 100%);
+            color: var(--white);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        footer a {
+            color: var(--primary-orange);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        footer a:hover {
+            color: var(--white);
+            text-shadow: 0 0 8px var(--primary-orange);
+        }
+
+        /* 🌙 DARK MODE ENHANCEMENTS */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--gray-900);
+                color: var(--white);
+            }
+            
+            .container {
+                background: rgba(15, 23, 42, 0.5);
+                border-radius: 20px;
+                backdrop-filter: blur(10px);
+            }
+        }
     </style>
 </head>
 <body>
 
-<!-- ✅ NAVIGATION -->
-<nav>
-    <div class="nav-header">
-        <div class="hamburger" onclick="toggleMenu()">
-            <div></div>
-            <div></div>
-            <div></div>
+<!-- ✨ MODERN NAVIGATION -->
+<nav id="navbar">
+    <div class="nav-container">
+        <div class="nav-header">
+            <a href="{{ url_for('home') }}" class="logo-link">
+                <img src="/static/logo.png" alt="Barterex Logo" class="logo-img">
+                <span class="logo-text">Barterex</span>
+            </a>
+            
+            <div class="hamburger" onclick="toggleMenu()" id="hamburger">
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+            </div>
+            
+            <ul class="nav-links" id="navLinks">
+                <li class="nav-item">
+                    <a href="{{ url_for('marketplace') }}" class="nav-link">
+                        <i class="fas fa-store"></i>
+                        <span>Marketplace</span>
+                        <div class="nav-indicator"></div>
+                    </a>
+                </li>
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('upload_item') }}" class="nav-link">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Upload</span>
+                            <div class="nav-indicator"></div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                            <div class="nav-indicator"></div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('logout') }}" class="nav-link">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                            <div class="nav-indicator"></div>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('login') }}" class="nav-link">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Login</span>
+                            <div class="nav-indicator"></div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('register') }}" class="nav-link">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Register</span>
+                            <div class="nav-indicator"></div>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
         </div>
-    </div>
-    <div class="nav-left" id="navLinks">
-        <a href="{{ url_for('home') }}" class="logo-link">
-            <img src="/static/logo.png" alt="Barterex Logo" class="logo-img">
-        </a>
-        <a href="{{ url_for('marketplace') }}"> Marketplace </a>
-        {% if current_user.is_authenticated %}
-            <a href="{{ url_for('upload_item') }}"> Upload</a>
-            <a href="{{ url_for('dashboard') }}"> Dashboard</a>
-            <a href="{{ url_for('logout') }}"> Logout</a>
-        {% else %}
-            <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('register') }}"> Register</a>
-        {% endif %}
     </div>
 </nav>
 
-
-<!-- ✅ PAGE CONTENT -->
+<!-- ✨ PAGE CONTENT -->
 <div class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <ul style="list-style: none; padding: 0;">
+            <div>
                 {% for category, message in messages %}
-                    <li class="flash {{ category }}">{{ message }}</li>
+                    <div class="flash {{ category }}">
+                        <i class="fas fa-info-circle"></i>
+                        {{ message }}
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         {% endif %}
     {% endwith %}
 
-    {% block content %}{% endblock %}
+    {% block content %}
+    <!-- Demo content -->
+    <div style="padding: 2rem; text-align: center;">
+        <h1 style="color: #054e97; margin-bottom: 1rem;">Welcome to Barterex</h1>
+        <p style="color: #6b7280; font-size: 1.1rem;">Your modern marketplace for trading and bartering</p>
+    </div>
+    {% endblock %}
 </div>
 
-<!-- ✅ FOOTER -->
+<!-- ✨ MODERN FOOTER -->
 <footer>
-    <p>&copy; 2025 Barter Express &bull;
-        <a href="{{ url_for('marketplace') }}">Marketplace</a> |
-        <a href="{{ url_for('upload_item') }}">Upload</a> |
-        <a href="{{ url_for('home') }}">Home</a>
-    </p>
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <p>&copy; 2025 Barter Express &bull;
+            <a href="{{ url_for('marketplace') }}">Marketplace</a> |
+            <a href="{{ url_for('upload_item') }}">Upload</a> |
+            <a href="{{ url_for('home') }}">Home</a>
+        </p>
+    </div>
 </footer>
 
 <script>
     function toggleMenu() {
         const navLinks = document.getElementById('navLinks');
+        const hamburger = document.getElementById('hamburger');
+        
         navLinks.classList.toggle('active');
+        hamburger.classList.toggle('active');
     }
-</script>
 
+    // Close mobile menu when clicking on a link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            
+            if (navLinks.classList.contains('active')) {
+                navLinks.classList.remove('active');
+                hamburger.classList.remove('active');
+            }
+        });
+    });
+
+    // Add scroll effect to navbar
+    window.addEventListener('scroll', () => {
+        const navbar = document.getElementById('navbar');
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+
+    // Add active class to current page
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const navLinks = document.getElementById('navLinks');
+        const hamburger = document.getElementById('hamburger');
+        const navContainer = document.querySelector('.nav-container');
+        
+        if (!navContainer.contains(e.target) && navLinks.classList.contains('active')) {
+            navLinks.classList.remove('active');
+            hamburger.classList.remove('active');
+        }
+    });
+</script>
 
 </body>
 </html>
