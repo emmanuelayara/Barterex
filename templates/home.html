@@ -6,6 +6,66 @@
   <title>Barterex - Swap Smarter</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    .trending-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      padding: 0 2rem;
+    }
+
+    .trending-card {
+      background: #fff;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .trending-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .trending-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .trending-card-content {
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .trending-card-content h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .trending-card-content p {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 1rem;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff6a00, #ff9900);
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ff9900, #ff6a00);
+    }
+
+
     :root {
       --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -884,23 +944,32 @@
       </div>
     </section>
 
-    <section id="trending" class="fade-in">
-      <div class="section-header">
-        <h2>🔥 Trending Items</h2>
-        <p>See what's hot in our community right now</p>
+<section id="trending" class="fade-in py-5">
+  <div class="section-header text-center mb-5">
+    <h2>🔥 Trending Items</h2>
+    <p>See what's hot in our community right now</p>
+  </div>
+
+  {% if trending_items %}
+  <div class="trending-grid">
+    {% for item in trending_items[:3] %}
+    <div class="trending-card">
+      {% if item.image_url %}
+      <img src="{{ item.image_url }}" alt="{{ item.name }}">
+      {% endif %}
+      <div class="trending-card-content">
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description[:60] }}{% if item.description|length > 60 %}...{% endif %}</p>
+        <a href="#" class="btn-primary">View Item</a>
       </div>
-      
-      <div class="trending-grid">
-        <div class="trending-card">
-          <img src="https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=200&fit=crop" alt="Camera">
-          <div class="trending-card-content">
-            <h3>Canon EOS Camera</h3>
-            <p>Professional DSLR with lens kit, perfect for photography enthusiasts</p>
-            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-center">No trending items right now. Check back later! 🚀</p>
+  {% endif %}
+</section>
+
 
     <section class="fade-in">
       <div class="section-header">
@@ -1061,27 +1130,3 @@
   </script>
 </body>
 </html>
-          <img src="https://images.unsplash.com/photo-1556656793-08538906a9f8?w=400&h=200&fit=crop" alt="iPhone">
-          <div class="trending-card-content">
-            <h3>iPhone 13 Pro</h3>
-            <p>Excellent condition, includes original box and accessories</p>
-            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
-          </div>
-        </div>
-        <div class="trending-card">
-          <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=200&fit=crop" alt="Sneakers">
-          <div class="trending-card-content">
-            <h3>Nike Air Jordan</h3>
-            <p>Limited edition sneakers, barely worn, size 10</p>
-            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
-          </div>
-        </div>
-        <div class="trending-card">
-          <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=200&fit=crop" alt="Books">
-          <div class="trending-card-content">
-            <h3>Programming Books Set</h3>
-            <p>Complete collection of modern programming guides</p>
-            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
-          </div>
-        </div>
-        <div class="trending-card">
