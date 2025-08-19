@@ -3,156 +3,616 @@
 
 {% block content %}
 <style>
-  .top-menu {
-    display: flex;
-    justify-content: center;
-    background: #054e97;
-    padding: 12px 0;
-    border-bottom: 2px solid #ff7a00;
+  * {
+    box-sizing: border-box;
   }
 
-  .top-menu ul {
-    list-style: none;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
+  .page-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .top-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .nav-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
     margin: 0;
+    padding: 0;
+    gap: 8px;
     flex-wrap: wrap;
+    min-height: 60px;
   }
 
-  .top-menu li {
-    display: inline-block;
+  .nav-item {
+    margin: 4px 0;
   }
 
-  .top-menu a {
-    color: white;
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4a5568;
     text-decoration: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    transition: 0.3s ease;
+    padding: 12px 18px;
+    border-radius: 12px;
     font-weight: 500;
-    font-size: 15px;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
-  .top-menu a:hover,
-  .top-menu a.active {
-    background: #ff7a00;
-    color: #fff;
+  .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   }
 
-  .content-area {
-    padding: 40px;
-    background: #fff;
+  .nav-link.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   }
 
-  .content-area h2 {
-    margin-bottom: 30px;
-    color: #333;
+  .nav-link.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+  }
+
+  .nav-link.logout {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .nav-link.logout:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+  }
+
+  .main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .page-header {
     text-align: center;
+    margin-bottom: 50px;
+    color: white;
+  }
+
+  .page-title {
+    font-size: 2.75rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff, #e2e8f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+
+  .trades-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 50px;
+  }
+
+  .summary-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 28px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+
+  .summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .summary-title {
+    color: #4a5568;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .summary-value {
+    color: #1a202c;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
   }
 
   .trades-section {
-    margin-bottom: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
   }
 
-  .trades-section h3 {
-    text-align: center;
-    color: #054e97;
-    margin-bottom: 20px;
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+  }
+
+  .section-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
   }
 
   .trades-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
   }
 
   .trade-card {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    text-align: center;
-    transition: transform 0.3s ease;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
   }
 
   .trade-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
   }
 
-  .trade-card strong {
-    color: #333;
-    font-size: 16px;
+  .trade-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
   }
 
-  .trade-card small {
-    display: block;
-    margin-top: 8px;
-    color: #777;
-    font-size: 13px;
+  .trade-type {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #667eea;
   }
 
-  .empty-msg {
-    text-align: center;
-    padding: 15px;
-    background: #fff3cd;
+  .trade-date {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .trade-details {
+    margin-bottom: 16px;
+  }
+
+  .item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .item-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
     border-radius: 8px;
-    color: #856404;
-    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 18px;
+  }
+
+  .item-details {
+    flex: 1;
+  }
+
+  .item-name {
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 4px;
+    font-size: 1.05rem;
+  }
+
+  .item-value {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #059669;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .trade-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 12px 0;
+    color: #667eea;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .trade-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.4;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #334155;
+  }
+
+  .empty-description {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-bottom: 30px;
+    line-height: 1.5;
+  }
+
+  .btn-explore {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-explore:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .nav-menu {
+      gap: 4px;
+    }
+    
+    .nav-link {
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    .main-content {
+      padding: 20px 16px;
+    }
+
+    .page-title {
+      font-size: 2.25rem;
+    }
+
+    .trades-section {
+      padding: 24px 20px;
+      border-radius: 20px;
+    }
+
+    .trades-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .trade-card {
+      padding: 20px;
+    }
+
+    .section-header {
+      flex-direction: column;
+      text-align: center;
+      gap: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .nav-menu {
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 0;
+    }
+
+    .nav-link {
+      width: 100%;
+      max-width: 280px;
+      justify-content: center;
+    }
+
+    .page-title {
+      font-size: 1.875rem;
+    }
+
+    .trades-summary {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
-<!-- Top Menu -->
-<div class="top-menu">
-  <ul>
-    <li><a href="{{ url_for('user_items') }}" class="{% if request.endpoint == 'user_items' %}active{% endif %}">My Items</a></li>
-    <li><a href="{{ url_for('my_trades') }}" class="{% if request.endpoint == 'my_trades' %}active{% endif %}">My Trades</a></li>
-    <li><a href="{{ url_for('credit_history') }}" class="{% if request.endpoint == 'credit_history' %}active{% endif %}">Credit History</a></li>
-    <li><a href="{{ url_for('notifications') }}" class="{% if request.endpoint == 'notifications' %}active{% endif %}">Notifications</a></li>
-    <li><a href="{{ url_for('profile_settings') }}" class="{% if request.endpoint == 'profile_settings' %}active{% endif %}">Profile</a></li>
-    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-  </ul>
-</div>
+<div class="page-container">
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="nav-container">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
+            📦 My Items
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
+            🔄 My Trades
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('credit_history') }}" class="nav-link {% if request.endpoint == 'credit_history' %}active{% endif %}">
+            💳 Credit History
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
+            🔔 Notifications
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
+            👤 Profile
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('logout') }}" class="nav-link logout">
+            🚪 Logout
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
 
-<!-- Main Content -->
-<div class="content-area">
-  <h2>My Trade History</h2>
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">My Trades</h1>
+      <p class="page-subtitle">Track your trading activity and transaction history</p>
+    </div>
 
-  <!-- Sent Trades -->
-  <div class="trades-section">
-    <h3>Trades You Initiated</h3>
-    {% if sent_trades %}
-      <div class="trades-grid">
-        {% for trade in sent_trades %}
-          <div class="trade-card">
-            Received: <strong>{{ trade.item_received.name }}</strong>  
-            (₦{{ trade.item_received.value }})
-            <small>{{ trade.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
-          </div>
-        {% endfor %}
+    <!-- Trade Summary -->
+    <div class="trades-summary">
+      <div class="summary-card">
+        <div class="summary-icon">📤</div>
+        <div class="summary-title">Trades Initiated</div>
+        <div class="summary-value">{{ sent_trades|length }}</div>
       </div>
-    {% else %}
-      <div class="empty-msg">You haven't initiated any trades yet.</div>
-    {% endif %}
-  </div>
-
-  <!-- Received Trades -->
-  <div class="trades-section">
-    <h3>Trades You Received</h3>
-    {% if received_trades %}
-      <div class="trades-grid">
-        {% for trade in received_trades %}
-          <div class="trade-card">
-            Gave: <strong>{{ trade.item_received.name }}</strong>  
-            (₦{{ trade.item_received.value }})
-            <small>{{ trade.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
-          </div>
-        {% endfor %}
+      <div class="summary-card">
+        <div class="summary-icon">📥</div>
+        <div class="summary-title">Trades Received</div>
+        <div class="summary-value">{{ received_trades|length }}</div>
       </div>
-    {% else %}
-      <div class="empty-msg">You haven't received any trades yet.</div>
-    {% endif %}
+      <div class="summary-card">
+        <div class="summary-icon">🎯</div>
+        <div class="summary-title">Total Trades</div>
+        <div class="summary-value">{{ (sent_trades|length) + (received_trades|length) }}</div>
+      </div>
+    </div>
+
+    <!-- Sent Trades Section -->
+    <div class="trades-section">
+      <div class="section-header">
+        <div class="section-icon">📤</div>
+        <h2 class="section-title">Trades You Initiated</h2>
+      </div>
+
+      {% if sent_trades %}
+        <div class="trades-grid">
+          {% for trade in sent_trades %}
+            <div class="trade-card">
+              <div class="trade-header">
+                <div class="trade-type">
+                  🚀 Initiated Trade
+                </div>
+                <div class="trade-date">
+                  {{ trade.timestamp.strftime('%b %d, %Y') }}
+                </div>
+              </div>
+
+              <div class="trade-details">
+                <div class="item-info">
+                  <div class="item-icon">📦</div>
+                  <div class="item-details">
+                    <div class="item-name">{{ trade.item_received.name }}</div>
+                    <div class="item-value">
+                      💰 ₦{{ trade.item_received.value }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="trade-arrow">↓ Received</div>
+
+                <div class="trade-status">
+                  ✅ Completed
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📤</div>
+          <h3 class="empty-title">No Initiated Trades</h3>
+          <p class="empty-description">You haven't started any trades yet. Browse available items to begin trading!</p>
+          <a href="{{ url_for('marketplace') }}" class="btn-explore">
+            🔍 Explore Marketplace
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Received Trades Section -->
+    <div class="trades-section">
+      <div class="section-header">
+        <div class="section-icon">📥</div>
+        <h2 class="section-title">Trades You Received</h2>
+      </div>
+
+      {% if received_trades %}
+        <div class="trades-grid">
+          {% for trade in received_trades %}
+            <div class="trade-card">
+              <div class="trade-header">
+                <div class="trade-type">
+                  📨 Received Trade
+                </div>
+                <div class="trade-date">
+                  {{ trade.timestamp.strftime('%b %d, %Y') }}
+                </div>
+              </div>
+
+              <div class="trade-details">
+                <div class="item-info">
+                  <div class="item-icon">📦</div>
+                  <div class="item-details">
+                    <div class="item-name">{{ trade.item_received.name }}</div>
+                    <div class="item-value">
+                      💰 ₦{{ trade.item_received.value }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="trade-arrow">↑ Gave Away</div>
+
+                <div class="trade-status">
+                  ✅ Completed
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📥</div>
+          <h3 class="empty-title">No Received Trades</h3>
+          <p class="empty-description">You haven't received any trade offers yet. Make sure your items are visible and appealing!</p>
+          <a href="{{ url_for('user_items') }}" class="btn-explore">
+            📦 Manage My Items
+          </a>
+        </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}
