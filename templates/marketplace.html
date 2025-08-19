@@ -3,301 +3,794 @@
 
 {% block content %}
 <style>
-  /* Mobile-specific grid layout */
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --orange-gradient: linear-gradient(135deg, #ff7b00 0%, #ff9500 100%);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --surface: #ffffff;
+    --surface-hover: #f8fafc;
+    --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Page background with gradient */
+  .marketplace-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 40px 0;
+  }
+
+  /* Modern container */
+  .marketplace-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* Hero header section */
+  .marketplace-header {
+    text-align: center;
+    margin-bottom: 60px;
+    padding: 60px 40px;
+    background: var(--surface);
+    border-radius: 24px;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .marketplace-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--orange-gradient);
+  }
+
+  .marketplace-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .marketplace-header p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Modern filter section */
+  .filter-section {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 40px;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .filter-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .filter-header h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .filter-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+  }
+
+  .filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    align-items: end;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-input, .form-select {
+    padding: 15px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--surface);
+    color: var(--text-primary);
+  }
+
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .filter-btn {
+    background: var(--orange-gradient);
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(255, 123, 0, 0.4);
+  }
+
+  /* Results info */
+  .results-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px 30px;
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .results-count {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 10px;
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  .view-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
+  }
+
+  .view-btn.active {
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Modern grid layout */
   .marketplace-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 60px;
   }
 
-  /* Mobile breakpoint - show 2 items per row */
-  @media (max-width: 768px) {
-    .marketplace-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-    }
+  .marketplace-grid.compact {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
   }
 
-  /* Very small screens - still show 2 items but with smaller gap */
-  @media (max-width: 480px) {
-    .marketplace-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-  }
-
-  /* Item card responsive adjustments */
+  /* Modern item cards */
   .marketplace-item {
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 15px;
-    background-color: #fff;
-    transition: box-shadow 0.3s, transform 0.3s;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    background: var(--surface);
+    border-radius: 24px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    position: relative;
+    group: hover;
   }
 
   .marketplace-item:hover {
-    box-shadow: 0 0 10px #ff7a00;
-    transform: scale(1.02);
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .item-image-container {
+    position: relative;
+    overflow: hidden;
+    height: 220px;
   }
 
   .marketplace-item img {
     width: 100%;
-    height: 180px;
+    height: 100%;
     object-fit: cover;
-    border-radius: 6px;
+    transition: transform 0.3s ease;
   }
 
-  /* Mobile adjustments for item cards */
-  @media (max-width: 768px) {
-    .marketplace-item {
-      padding: 12px;
-    }
-
-    .marketplace-item img {
-      height: 140px;
-    }
-
-    .marketplace-item h4 {
-      font-size: 0.95rem;
-      margin: 8px 0 5px;
-    }
-
-    .marketplace-item p {
-      font-size: 0.85rem;
-      margin: 4px 0;
-    }
+  .marketplace-item:hover img {
+    transform: scale(1.1);
   }
 
-  @media (max-width: 480px) {
-    .marketplace-item {
-      padding: 10px;
-    }
-
-    .marketplace-item img {
-      height: 120px;
-    }
-
-    .marketplace-item h4 {
-      font-size: 0.9rem;
-      margin: 6px 0 4px;
-    }
-
-    .marketplace-item p {
-      font-size: 0.8rem;
-      margin: 3px 0;
-    }
-  }
-
-  /* Filter form responsive */
-  .filter-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-    margin-bottom: 30px;
-  }
-
-  @media (max-width: 768px) {
-    .filter-form {
-      gap: 10px;
-      margin-bottom: 25px;
-    }
-
-    .filter-form input,
-    .filter-form select {
-      width: 100%;
-      max-width: 200px;
-    }
-
-    .filter-form button {
-      width: 100%;
-      max-width: 200px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .filter-form {
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .filter-form input,
-    .filter-form select,
-    .filter-form button {
-      width: 100%;
-      max-width: 300px;
-    }
-  }
-
-  /* Button styling */
-  .btn-primary {
-    display: inline-block;
-    margin-top: 8px;
-    text-align: center;
-    background-color: #2458b3;
+  .item-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--orange-gradient);
     color: white;
-    padding: 8px 12px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .item-content {
+    padding: 25px;
+  }
+
+  .item-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+
+  .item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .item-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 0.9rem;
-    transition: all 0.3s;
-    width: auto;
-    max-width: fit-content;
+    color: var(--text-secondary);
+  }
+
+  .detail-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .item-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+  }
+
+  .item-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-primary {
+    flex: 1;
+    background: var(--primary-gradient);
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
 
   .btn-primary:hover {
-    background-color: #ff7a00;
-    box-shadow: 0 0 8px rgba(255, 122, 0, 0.3);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
   }
 
-  @media (max-width: 768px) {
-    .btn-primary {
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      margin-top: 6px;
-    }
+  .btn-secondary {
+    width: 48px;
+    height: 48px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
   }
 
-  @media (max-width: 480px) {
-    .btn-primary {
-      padding: 5px 8px;
-      font-size: 0.75rem;
-      margin-top: 5px;
-    }
+  .btn-secondary:hover {
+    background: var(--orange-gradient);
+    color: white;
+    transform: translateY(-2px);
   }
 
-  /* Container responsive */
-  .marketplace-container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 30px;
-  }
-
-  @media (max-width: 768px) {
-    .marketplace-container {
-      padding: 20px 15px;
-    }
-
-    .marketplace-container h2 {
-      font-size: 1.5rem;
-      margin-bottom: 25px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .marketplace-container {
-      padding: 15px 10px;
-    }
-
-    .marketplace-container h2 {
-      font-size: 1.3rem;
-      margin-bottom: 20px;
-    }
-  }
-
-  /* Pagination responsive */
-  .pagination {
-    margin-top: 40px;
+  /* Empty state */
+  .empty-state {
+    grid-column: 1 / -1;
     text-align: center;
+    padding: 80px 40px;
+    background: var(--surface);
+    border-radius: 24px;
+    box-shadow: var(--shadow-soft);
   }
 
-  .pagination a {
-    color: #007BFF;
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+
+  .empty-description {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 30px;
+  }
+
+  /* Modern pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 60px;
+    padding: 30px;
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .pagination-btn {
+    padding: 12px 20px;
+    border: 2px solid #e5e7eb;
+    background: var(--surface);
+    color: var(--text-secondary);
     text-decoration: none;
-    margin: 0 10px;
-    padding: 8px 12px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .pagination a:hover {
-    background-color: #ff7a00;
+  .pagination-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-2px);
+  }
+
+  .pagination-btn.active {
+    background: var(--primary-gradient);
+    border-color: transparent;
     color: white;
   }
 
-  @media (max-width: 480px) {
-    .pagination {
-      margin-top: 30px;
+  .pagination-info {
+    padding: 0 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .marketplace-container {
+      padding: 0 20px;
     }
 
-    .pagination a {
-      margin: 0 5px;
-      padding: 6px 10px;
-      font-size: 0.9rem;
+    .marketplace-header {
+      padding: 40px 20px;
+      margin-bottom: 40px;
     }
+
+    .marketplace-header h1 {
+      font-size: 2.2rem;
+    }
+
+    .filter-section {
+      padding: 30px 20px;
+    }
+
+    .filter-form {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .marketplace-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .marketplace-grid.compact {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .marketplace-item {
+      border-radius: 16px;
+    }
+
+    .item-image-container {
+      height: 150px;
+    }
+
+    .item-content {
+      padding: 20px 15px;
+    }
+
+    .item-title {
+      font-size: 1.1rem;
+    }
+
+    .results-info {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+    }
+
+    .pagination {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .marketplace-container {
+      padding: 0 15px;
+    }
+
+    .marketplace-header {
+      padding: 30px 15px;
+    }
+
+    .marketplace-header h1 {
+      font-size: 1.8rem;
+    }
+
+    .filter-section {
+      padding: 20px 15px;
+    }
+
+    .marketplace-grid {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+
+    .marketplace-grid.compact {
+      grid-template-columns: 1fr;
+    }
+
+    .item-image-container {
+      height: 180px;
+    }
+
+    .item-actions {
+      flex-direction: column;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      height: 48px;
+    }
+  }
+
+  /* Loading animation */
+  .loading-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .loading-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  .loading-placeholder {
+    background: #e5e7eb;
+    border-radius: 8px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 </style>
 
-<div class="marketplace-container">
-  <h2 style="text-align: center; margin-bottom: 30px;">🛒 Explore the Marketplace</h2>
+  <div class="marketplace-container">
+    <!-- Modern Header -->
+    <div class="marketplace-header">
+      <h1>🛒 Explore Marketplace</h1>
+      <p>Discover amazing items from our verified community. Trade smart, trade secure.</p>
+    </div>
 
-  <!-- Filter & Search Form -->
-  <form method="GET" action="{{ url_for('marketplace') }}" class="filter-form">
-    <input type="text" name="search" placeholder="Search items..."
-           value="{{ request.args.get('search', '') }}"
-           style="padding: 10px; border: 1px solid #ccc; border-radius: 6px;" />
+    <!-- Modern Filter Section -->
+    <div class="filter-section">
+      <div class="filter-header">
+        <div class="filter-icon">🔍</div>
+        <h3>Find Your Perfect Match</h3>
+      </div>
+      
+      <form method="GET" action="{{ url_for('marketplace') }}" class="filter-form">
+        <div class="form-group">
+          <label for="search">Search Items</label>
+          <input type="text" 
+                 id="search"
+                 name="search" 
+                 placeholder="What are you looking for?"
+                 value="{{ request.args.get('search', '') }}"
+                 class="form-input" />
+        </div>
 
-    <select name="condition" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-      <option value="">All Conditions</option>
-      <option value="Brand New" {% if request.args.get('condition') == 'Brand New' %}selected{% endif %}>Brand New</option>
-      <option value="Fairly Used" {% if request.args.get('condition') == 'Fairly Used' %}selected{% endif %}>Fairly Used</option>
-    </select>
+        <div class="form-group">
+          <label for="condition">Condition</label>
+          <select name="condition" id="condition" class="form-select">
+            <option value="">All Conditions</option>
+            <option value="Brand New" {% if request.args.get('condition') == 'Brand New' %}selected{% endif %}>Brand New</option>
+            <option value="Fairly Used" {% if request.args.get('condition') == 'Fairly Used' %}selected{% endif %}>Fairly Used</option>
+          </select>
+        </div>
 
-    <select name="category" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-      <option value="">All Categories</option>
-      {% set categories = [
-        "Electronics", "Fashion / Clothing", "Footwear", "Home & Kitchen", "Beauty & Personal Care",
-        "Sports & Outdoors", "Groceries", "Furniture", "Toys & Games", "Books & Stationery",
-        "Health & Wellness", "Automotive"
-      ] %}
-      {% for cat in categories %}
-        <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
-      {% endfor %}
-    </select>
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select name="category" id="category" class="form-select">
+            <option value="">All Categories</option>
+            {% set categories = [
+              "Electronics", "Fashion / Clothing", "Footwear", "Home & Kitchen", "Beauty & Personal Care",
+              "Sports & Outdoors", "Groceries", "Furniture", "Toys & Games", "Books & Stationery",
+              "Health & Wellness", "Automotive"
+            ] %}
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
 
-    <button type="submit"
-            style="background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;"
-            onmouseover="this.style.backgroundColor='#ff7a00';"
-            onmouseout="this.style.backgroundColor='#007BFF';">
-      Filter
-    </button>
-  </form>
+        <div class="form-group">
+          <label>&nbsp;</label>
+          <button type="submit" class="filter-btn">
+            🔍 Filter Results
+          </button>
+        </div>
+      </form>
+    </div>
 
-  <!-- Display Items -->
-  <div class="marketplace-grid">
-    {% for item in items.items %}
-      <div class="marketplace-item">
-        {% if item.image_url %}
-          <img src="{{ item.image_url }}" alt="{{ item.name }}" />
+    <!-- Results Info -->
+    <div class="results-info">
+      <div class="results-count">
+        <strong>{{ items.total }}</strong> items found
+        {% if request.args.get('search') or request.args.get('condition') or request.args.get('category') %}
+          • Filtered results
         {% endif %}
-        <h4 style="margin: 10px 0 6px;">{{ item.name }}</h4>
-        <p style="margin: 5px 0;"><strong>Condition:</strong> {{ item.condition }}</p>
-        <p style="margin: 5px 0;"><strong>Credit Value:</strong> ₦{{ item.value }}</p>
-        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary">
-          🔍 View Details
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="toggleView('grid')">⊞ Grid</button>
+        <button class="view-btn" onclick="toggleView('compact')">⊡ Compact</button>
+      </div>
+    </div>
+
+    <!-- Items Grid -->
+    <div class="marketplace-grid" id="itemsGrid">
+      {% for item in items.items %}
+        <div class="marketplace-item">
+          <div class="item-image-container">
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.name }}" />
+            {% else %}
+              <div style="height: 100%; background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%); display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 3rem;">📷</div>
+            {% endif %}
+            <div class="item-badge">{{ item.condition }}</div>
+          </div>
+          
+          <div class="item-content">
+            <h4 class="item-title">{{ item.name }}</h4>
+            
+            <div class="item-details">
+              <div class="item-detail">
+                <div class="detail-icon">⭐</div>
+                <span>{{ item.condition }}</span>
+              </div>
+              <div class="item-detail">
+                <div class="detail-icon">📂</div>
+                <span>{{ item.category or 'General' }}</span>
+              </div>
+            </div>
+            
+            <div class="item-value">₦{{ item.value }}</div>
+            
+            <div class="item-actions">
+              <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary">
+                👁️ View Details
+              </a>
+              <button class="btn-secondary" title="Add to wishlist">
+                ❤️
+              </button>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h3 class="empty-title">No items found</h3>
+          <p class="empty-description">
+            Try adjusting your search criteria or browse all available items.
+          </p>
+          <a href="{{ url_for('marketplace') }}" class="btn-primary" style="display: inline-flex; width: auto;">
+            🔄 Clear Filters
+          </a>
+        </div>
+      {% endfor %}  
+    </div>
+
+    <!-- Modern Pagination -->
+    {% if items.pages > 1 %}
+    <div class="pagination">
+      {% if items.has_prev %}
+        <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}" 
+           class="pagination-btn">
+          ← Previous
         </a>
+      {% endif %}
+
+      <div class="pagination-info">
+        Page <strong>{{ items.page }}</strong> of <strong>{{ items.pages }}</strong>
       </div>
-    {% else %}
-      <div style="grid-column: 1 / -1; text-align: center; color: #888; font-style: italic; padding: 40px;">
-        No items found matching your criteria.
-      </div>
-    {% endfor %}  
-  </div>
 
-  <!-- Pagination -->
-  <div class="pagination">
-    {% if items.has_prev %}
-      <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}">&laquo; Previous</a>
-    {% endif %}
-
-    <span style="font-weight: 500; margin: 0 15px;"> Page {{ items.page }} of {{ items.pages }} </span>
-
-    {% if items.has_next %}
-      <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}">Next &raquo;</a>
+      {% if items.has_next %}
+        <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}" 
+           class="pagination-btn">
+          Next →
+        </a>
+      {% endif %}
+    </div>
     {% endif %}
   </div>
 </div>
+
+<script>
+  function toggleView(viewType) {
+    const grid = document.getElementById('itemsGrid');
+    const buttons = document.querySelectorAll('.view-btn');
+    
+    // Update button states
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Update grid class
+    if (viewType === 'compact') {
+      grid.classList.add('compact');
+    } else {
+      grid.classList.remove('compact');
+    }
+  }
+
+  // Search suggestions
+  const searchInput = document.getElementById('search');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      // Add search suggestions logic here
+    });
+  }
+
+  // Smooth scroll for pagination
+  document.querySelectorAll('.pagination-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // Add loading states
+  document.querySelector('.filter-form').addEventListener('submit', function() {
+    const button = this.querySelector('.filter-btn');
+    button.innerHTML = '⏳ Searching...';
+    button.disabled = true;
+  });
+
+  // Intersection Observer for animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, observerOptions);
+
+  // Observe marketplace items
+  document.querySelectorAll('.marketplace-item').forEach((item, index) => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateY(30px)';
+    item.style.transition = `all 0.6s ease ${index * 0.1}s`;
+    observer.observe(item);
+  });
+</script>
 {% endblock %}
