@@ -4,8 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Barterex - Swap Smarter</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --orange-gradient: linear-gradient(135deg, #ff7b00 0%, #ff9500 100%);
+      --dark-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      --glass-bg: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b7280;
+      --surface: #ffffff;
+      --surface-hover: #f8fafc;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -13,31 +27,60 @@
     }
 
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Inter', sans-serif;
       line-height: 1.6;
-      color: #333;
-      background: var(--bg-image) no-repeat center center fixed;
-      background-size: cover;
+      color: var(--text-primary);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      overflow-x: hidden;
     }
 
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+      animation: backgroundShift 20s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes backgroundShift {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Glassmorphism header */
     header {
-      background: #054e97;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      padding: 15px 20px;
-      position: relative;
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: all 0.3s ease;
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
+      padding: 0 40px;
     }
 
     .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
       color: #fff;
       z-index: 1000;
     }
@@ -47,13 +90,19 @@
       align-items: center;
       text-decoration: none;
       color: white;
+      transition: transform 0.3s ease;
+    }
+
+    .logo a:hover {
+      transform: scale(1.05);
     }
 
     .logo img {
-      height: 50px;
-      width: 50px;
-      border-radius: 8px;
-      margin-right: 10px;
+      height: 55px;
+      width: 55px;
+      border-radius: 12px;
+      margin-right: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     .menu-toggle {
@@ -64,6 +113,11 @@
       background: none;
       border: none;
       z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+
+    .menu-toggle:hover {
+      transform: scale(1.1);
     }
 
     .nav-links {
@@ -72,56 +126,518 @@
       gap: 20px;
     }
 
-    .menu-items {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-    }
-
-    .menu-items a {
-      color: #fff;
-      text-decoration: none;
-      padding: 8px 12px;
-      white-space: nowrap;
-      border-radius: 4px;
-      transition: background-color 0.3s;
-    }
-
-    .menu-items a:hover,
-    .menu-items a.active {
-      background-color: #ff7a00;
-      color: rgb(255, 255, 255);
-    }
-
     .menu-actions {
       display: flex;
-      gap: 10px;
+      gap: 15px;
       align-items: center;
     }
 
     .menu-actions a {
       color: #fff;
       text-decoration: none;
-      padding: 8px 16px;
-      border-radius: 4px;
+      padding: 12px 24px;
+      border-radius: 50px;
       white-space: nowrap;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .menu-actions a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .menu-actions a:hover::before {
+      left: 100%;
+    }
+
+    .menu-actions a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
     }
 
     .menu-actions .btn {
-      background-color: #ff7a00;
-      font-weight: bold;
+      background: var(--orange-gradient);
+      font-weight: 600;
+      box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
     }
 
     .menu-actions .btn:hover {
-      background-color: #e56900;
-      transform: translateY(-1px);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(255, 123, 0, 0.4);
     }
 
-    /* Mobile Styles */
+    /* Hero section with modern design */
+    .hero {
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      max-width: 900px;
+      z-index: 2;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 4.5rem;
+      font-weight: 700;
+      margin-bottom: 30px;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      animation: fadeInUp 1s ease-out;
+    }
+
+    .hero p {
+      font-size: 1.4rem;
+      margin-bottom: 40px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 300;
+      animation: fadeInUp 1s ease-out 0.2s both;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 1s ease-out 0.4s both;
+    }
+
+    .btn-primary {
+      background: var(--orange-gradient);
+      color: white;
+      padding: 18px 36px;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 40px rgba(255, 123, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 50px rgba(255, 123, 0, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 18px 36px;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
+    }
+
+    /* Floating elements animation */
+    .floating-elements {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .floating-element {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .floating-element:nth-child(1) {
+      width: 80px;
+      height: 80px;
+      left: 10%;
+      top: 20%;
+      animation-delay: 0s;
+    }
+
+    .floating-element:nth-child(2) {
+      width: 120px;
+      height: 120px;
+      right: 10%;
+      top: 60%;
+      animation-delay: 2s;
+    }
+
+    .floating-element:nth-child(3) {
+      width: 60px;
+      height: 60px;
+      left: 70%;
+      top: 10%;
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Modern sections */
+    .main-content {
+      background: #ffffff;
+      position: relative;
+      z-index: 1;
+    }
+
+    section {
+      padding: 100px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .section-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 3rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-header p {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Modern grid layouts */
+    .steps-grid, .benefits-grid, .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    .modern-card {
+      background: var(--surface);
+      padding: 40px 30px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .modern-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--orange-gradient);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .modern-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .modern-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--accent-gradient);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .modern-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: var(--text-primary);
+    }
+
+    .modern-card p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    /* Categories with hover effects */
+    .category-card {
+      background: var(--surface);
+      padding: 50px 30px;
+      border-radius: 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .category-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 0;
+    }
+
+    .category-card:hover::before {
+      opacity: 1;
+    }
+
+    .category-card:hover {
+      transform: translateY(-10px);
+      color: white;
+      box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+    }
+
+    .category-card span {
+      position: relative;
+      z-index: 1;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    /* Trending items with modern design */
+    .trending-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-top: 60px;
+    }
+
+    .trending-card {
+      background: var(--surface);
+      border-radius: 24px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .trending-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .trending-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .trending-card-content {
+      padding: 25px;
+    }
+
+    .trending-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .trending-card p {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* Testimonials with modern design */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 40px;
+      margin-top: 60px;
+    }
+
+    .testimonial-card {
+      background: var(--surface);
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: 20px;
+      left: 30px;
+      font-size: 4rem;
+      color: var(--orange-gradient);
+      opacity: 0.3;
+      font-family: serif;
+    }
+
+    .testimonial-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .testimonial-text {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .testimonial-author {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Modern CTA section */
+    .cta-section {
+      background: var(--dark-gradient);
+      color: white;
+      text-align: center;
+      padding: 100px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .cta-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .cta-section p {
+      font-size: 1.3rem;
+      margin-bottom: 40px;
+      opacity: 0.9;
+    }
+
+    /* Modern footer */
+    footer {
+      background: #1a1a1a;
+      color: white;
+      text-align: center;
+      padding: 60px 40px 40px;
+      position: relative;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      font-weight: 500;
+    }
+
+    .footer-links a:hover {
+      color: #ff7b00;
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 30px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Mobile responsiveness */
     @media (max-width: 768px) {
-      header {
-        padding: 10px 15px;
+      .header-content {
+        padding: 0 20px;
       }
 
       .menu-toggle {
@@ -133,14 +649,15 @@
         top: 100%;
         left: 0;
         right: 0;
-        background: #054e97;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
         flex-direction: column;
-        padding: 20px;
+        padding: 30px 20px;
         transform: translateY(-100%);
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease-in-out;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       }
 
       .nav-links.show {
@@ -149,234 +666,100 @@
         visibility: visible;
       }
 
-      .menu-items {
-        flex-direction: column;
-        width: 100%;
-        gap: 0;
-        margin-bottom: 20px;
-      }
-
-      .menu-items a {
-        width: 100%;
-        text-align: center;
-        padding: 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .menu-items a:last-child {
-        border-bottom: none;
-      }
-
       .menu-actions {
         flex-direction: column;
         width: 100%;
-        gap: 10px;
+        gap: 15px;
       }
 
       .menu-actions a {
         width: 100%;
         text-align: center;
-        padding: 12px;
+        padding: 15px;
       }
 
-      .logo span {
-        font-size: 1.2rem;
-      }
-
-      .logo img {
-        height: 40px;
-        width: 40px;
-      }
-    }
-
-    /* Small mobile screens */
-    @media (max-width: 480px) {
-      .header-content {
-        padding: 0 10px;
-      }
-
-      .logo span {
-        font-size: 1.1rem;
-      }
-
-      .logo img {
-        height: 35px;
-        width: 35px;
-        margin-right: 8px;
-      }
-
-      .menu-toggle {
-        font-size: 1.6rem;
-      }
-    }
-
-    .hero {
-      background: url('https://images.unsplash.com/photo-1549921296-3ecf58d88f57') no-repeat center center/cover;
-      color: white;
-      text-align: center;
-      padding: 80px 20px;
-    }
-
-    .hero h1 {
-      font-size: 3rem;
-      margin-bottom: 20px;
-    }
-
-    .hero p {
-      font-size: 1.5rem;
-      margin-bottom: 30px;
-    }
-
-    @media (max-width: 768px) {
       .hero {
-        padding: 60px 15px;
+        padding: 80px 20px;
+        min-height: 80vh;
       }
 
       .hero h1 {
-        font-size: 2.2rem;
-        margin-bottom: 15px;
+        font-size: 2.8rem;
       }
 
       .hero p {
         font-size: 1.2rem;
-        margin-bottom: 25px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .hero h1 {
-        font-size: 1.8rem;
       }
 
-      .hero p {
-        font-size: 1rem;
+      .hero-cta {
+        flex-direction: column;
+        align-items: center;
       }
-    }
 
-    .btn {
-      background: #ff7a00;
-      color: white;
-      padding: 12px 24px;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-      display: inline-block;
-      transition: all 0.3s;
-    }
-
-    .btn:hover {
-      background: #e56900;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    section {
-      padding: 60px 40px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    @media (max-width: 768px) {
       section {
-        padding: 40px 20px;
+        padding: 60px 20px;
       }
-    }
 
-    @media (max-width: 480px) {
-      section {
-        padding: 30px 15px;
+      .section-header h2 {
+        font-size: 2.2rem;
       }
-    }
 
-    .steps, .benefits, .categories, .trending, .testimonials {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 30px;
-    }
-
-    @media (max-width: 768px) {
-      .steps, .benefits, .categories, .trending, .testimonials {
+      .steps-grid, .benefits-grid, .categories-grid {
         grid-template-columns: 1fr;
+        gap: 30px;
+      }
+
+      .trending-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-section h2 {
+        font-size: 2.2rem;
+      }
+
+      .footer-links {
+        flex-direction: column;
         gap: 20px;
       }
     }
 
     @media (max-width: 480px) {
-      .steps, .benefits, .categories, .trending, .testimonials {
-        grid-template-columns: 1fr;
-        gap: 15px;
+      .hero h1 {
+        font-size: 2.2rem;
+      }
+
+      .hero p {
+        font-size: 1.1rem;
+      }
+
+      .btn-primary, .btn-secondary {
+        padding: 15px 30px;
+        font-size: 1rem;
+      }
+
+      .section-header h2 {
+        font-size: 1.8rem;
+      }
+
+      .modern-card {
+        padding: 30px 20px;
       }
     }
 
-    .card {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
-      transition: transform 0.3s, box-shadow 0.3s;
+    /* Scroll animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease;
     }
 
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .card h3 {
-      margin-bottom: 10px;
-      color: #054e97;
-    }
-
-    .trending img {
-      width: 100%;
-      border-radius: 10px;
-      height: 180px;
-      object-fit: cover;
-    }
-
-    .testimonial {
-      text-align: center;
-    }
-
-    .cta {
-      background: #054e97;
-      color: white;
-      text-align: center;
-      padding: 60px 20px;
-    }
-
-    @media (max-width: 768px) {
-      .cta {
-        padding: 40px 15px;
-      }
-    }
-
-    footer {
-      background: #f0f0f0;
-      text-align: center;
-      padding: 20px;
-      font-size: 0.9rem;
-    }
-
-    footer a {
-      color: #054e97;
-      margin: 0 10px;
-      text-decoration: none;
-    }
-
-    .text-with-orange-glow {
-      color: #03376b;
-      text-shadow: 0 0 5px #ff7a00, 15px 15px 30px rgba(0, 0, 0, 0.3);
-    }
-
-    @media (max-width: 768px) {
-      .text-with-orange-glow {
-        text-shadow: 0 0 3px #ff7a00, 8px 8px 15px rgba(0, 0, 0, 0.3);
-      }
-    }
-
-    /* Fix for overlapping text in benefits section */
-    .benefits .card p {
-      line-height: 1.6;
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
@@ -403,114 +786,175 @@
   </header>
 
   <section class="hero">
-    <h1 class="text-with-orange-glow">Swap What You Have for What You Need</h1>
-    <p class="text-with-orange-glow">Trade gadgets, clothes, books and more — without spending cash.</p>
-    <a href="/marketplace" class="btn">Start Bartering</a>
-  </section>
-
-  <section id="how">
-    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">How It Works</h2>
-    <div class="steps">
-      <div class="card">
-        <h3>📷 Upload</h3>
-        <p>Post your items with clear photos, detailed descriptions and condition (Brand new / Fairly used).</p>
-      </div>
-      <div class="card">
-        <h3>💳 Earn Credits</h3>
-        <p>Visit our center, get appraised and receive credits based on value.</p>
-      </div>
-      <div class="card">
-        <h3>🔍 Browse</h3>
-        <p>Find other items that match your interest.</p>
-      </div>
-      <div class="card">
-        <h3>🤝 Barter</h3>
-        <p>Use your credits to swap instantly with others.</p>
+    <div class="floating-elements">
+      <div class="floating-element"></div>
+      <div class="floating-element"></div>
+      <div class="floating-element"></div>
+    </div>
+    
+    <div class="hero-content">
+      <h1>Swap What You Have for What You Need</h1>
+      <p>Trade gadgets, clothes, books and more — without spending cash. Join thousands of smart traders today.</p>
+      <div class="hero-cta">
+        <a href="/marketplace" class="btn-primary">
+          🚀 Start Bartering
+        </a>
+        <a href="#how" class="btn-secondary">Learn How</a>
       </div>
     </div>
   </section>
 
-  <section class="benefits">
-    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">Why Use Barter?</h2>
-    <div class="benefits">
-      <div class="card">
-        <h3>No Cash Needed</h3>
-        <p>Exchange goods using credits, no money involved.</p>
+  <div class="main-content">
+    <section id="how" class="fade-in">
+      <div class="section-header">
+        <h2>How It Works</h2>
+        <p>Four simple steps to start trading items with verified users in your community</p>
       </div>
-      <div class="card">
-        <h3>Verified Community</h3>
-        <p>Trade with real, verified users near you.</p>
+      <div class="steps-grid">
+        <div class="modern-card">
+          <div class="card-icon">📷</div>
+          <h3>Upload Your Items</h3>
+          <p>Post your items with clear photos, detailed descriptions and condition ratings. Our AI helps optimize your listings for maximum visibility.</p>
+        </div>
+        <div class="modern-card">
+          <div class="card-icon">💎</div>
+          <h3>Get Verified & Earn Credits</h3>
+          <p>Visit our verification center to get your items professionally appraised and receive credits based on their true market value.</p>
+        </div>
+        <div class="modern-card">
+          <div class="card-icon">🔍</div>
+          <h3>Discover Amazing Items</h3>
+          <p>Browse through thousands of verified items, use smart filters, and get personalized recommendations based on your interests.</p>
+        </div>
+        <div class="modern-card">
+          <div class="card-icon">🤝</div>
+          <h3>Trade Instantly</h3>
+          <p>Use your earned credits to swap instantly with other users. Secure transactions with built-in protection and instant notifications.</p>
+        </div>
       </div>
-      <div class="card">
-        <h3>Instant Notifications</h3>
-        <p>Stay updated on approvals, matches, and trades.</p>
-      </div>
-      <div class="card">
-        <h3>Fair Appraisals</h3>
-        <p>Admin-reviewed value ensures fair trading.</p>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <section id="categories">
-    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">Popular Categories</h2>
-    <div class="categories">
-      <div class="card">Phones & Gadgets</div>
-      <div class="card">Clothes & Fashion</div>
-      <div class="card">Books & Stationery</div>
-      <div class="card">Home & Kitchen</div>
-    </div>
-  </section>
-
-  <section id="trending">
-    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">🔥 Trending Items</h2>
-    {% if trending_items %}
-    <div class="trending">
-      {% for item in trending_items[:4] %}
-      <div class="card">
-        {% if item.image_url %}
-        <img src="{{ item.image_url }}" alt="{{ item.name }}" style="height: 180px; object-fit: cover;">
-        {% endif %}
-        <h3>{{ item.name }}</h3>
-        <p>{{ item.description[:30] }}{% if item.description|length > 30 %}...{% endif %}</p>
-        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn" style="margin-top: 10px; display: inline-block;"
-           onmouseover="this.style.boxShadow='0 0 10px #ff7a00'; this.style.transform='scale(1.02)';"
-           onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.05)'; this.style.transform='scale(1)';">View Item</a>
+    <section class="fade-in">
+      <div class="section-header">
+        <h2>Why Choose Barterex?</h2>
+        <p>Experience the future of trading with our innovative platform designed for modern users</p>
       </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="text-with-orange-glow" style="text-align: center; color: #999;">No trending items at the moment.</div>
-    {% endif %}
-  </section>
-
-  <section class="testimonials">
-    <h2 class="text-with-orange-glow" style="text-align:center; margin-bottom: 40px;">What Our Users Say</h2>
-    <div class="testimonials">
-      <div class="card">
-        <p>"I traded my tablet for a smartwatch, love this platform!"</p>
-        <strong>- Ada from Lagos</strong>
+      <div class="benefits-grid">
+        <div class="modern-card">
+          <div class="card-icon">💳</div>
+          <h3>Completely Cashless</h3>
+          <p>Exchange goods using our secure credit system. No money needed, just smart trading that benefits everyone.</p>
+        </div>
+        <div class="modern-card">
+          <div class="card-icon">🛡️</div>
+          <h3>Verified Community</h3>
+          <p>Trade with confidence knowing every user is verified and every item is authenticated by our expert team.</p>
+        </div>
+        <div class="modern-card">
+          <div class="card-icon">⚡</div>
+          <h3>Real-time Updates</h3>
+          <p>Stay connected with instant notifications for approvals, matches, trades, and new items that match your interests.</p>
+        </div>
+        <div class="modern-card">
+          <div class="card-icon">⚖️</div>
+          <h3>Fair Value System</h3>
+          <p>Our professional appraisal system ensures fair pricing for all items, creating a balanced and trustworthy marketplace.</p>
+        </div>
       </div>
-      <div class="card">
-        <p>"Smooth and easy. No scams, just real people trading!"</p>
-        <strong>- Seyi from Abuja</strong>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="cta">
-    <h2>Ready to Start Swapping?</h2>
-    <p>Create an account and trade your first item today.</p>
-    <br><br>
-    <a href="/register" class="btn">Get Started Free</a>
+    <section id="categories" class="fade-in">
+      <div class="section-header">
+        <h2>Popular Categories</h2>
+        <p>Explore our most active trading categories</p>
+      </div>
+      <div class="categories-grid">
+        <div class="category-card">
+          <span>📱 Phones & Gadgets</span>
+        </div>
+        <div class="category-card">
+          <span>👕 Fashion & Clothing</span>
+        </div>
+        <div class="category-card">
+          <span>📚 Books & Education</span>
+        </div>
+        <div class="category-card">
+          <span>🏠 Home & Kitchen</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="trending" class="fade-in">
+      <div class="section-header">
+        <h2>🔥 Trending Items</h2>
+        <p>See what's hot in our community right now</p>
+      </div>
+      
+      <div class="trending-grid">
+        <div class="trending-card">
+          <img src="https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=200&fit=crop" alt="Camera">
+          <div class="trending-card-content">
+            <h3>Canon EOS Camera</h3>
+            <p>Professional DSLR with lens kit, perfect for photography enthusiasts</p>
+            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="fade-in">
+      <div class="section-header">
+        <h2>What Our Users Say</h2>
+        <p>Join thousands of satisfied traders who've transformed their trading experience</p>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-text">
+            "I traded my old tablet for a smartwatch and couldn't be happier! The process was smooth, secure, and the community is amazing. Barterex has completely changed how I think about getting new items."
+          </div>
+          <div class="testimonial-author">— Ada from Lagos</div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-text">
+            "Finally, a platform where I can trade without worrying about scams. The verification process gives me peace of mind, and I've made some great trades with genuine people in my area."
+          </div>
+          <div class="testimonial-author">— Seyi from Abuja</div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-text">
+            "The credit system is genius! I've been able to get items I really wanted without spending any cash. The app is beautiful and the whole experience feels premium."
+          </div>
+          <div class="testimonial-author">— Kemi from Port Harcourt</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="cta-section">
+    <div class="cta-content">
+      <h2>Ready to Start Your Trading Journey?</h2>
+      <p>Join our growing community of smart traders and discover a better way to get what you need.</p>
+      <a href="/register" class="btn-primary" style="font-size: 1.2rem; padding: 20px 40px;">
+        🎉 Get Started Free
+      </a>
+    </div>
   </section>
 
   <footer>
-    &copy; 2025 Barter Express. All rights reserved. |
-    <a href="#">About</a>
-    <a href="#">Contact</a>
-    <a href="#">FAQ</a>
-    <a href="#">Terms</a>
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="#">About Us</a>
+        <a href="#">How It Works</a>
+        <a href="#">Safety</a>
+        <a href="#">Contact</a>
+        <a href="#">FAQ</a>
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+      </div>
+      <div class="footer-bottom">
+        &copy; 2025 Barterex. All rights reserved. Made with ❤️ for smart traders.
+      </div>
+    </div>
   </footer>
 
   <script>
@@ -537,6 +981,107 @@
         navLinks.classList.remove('show');
       }
     });
+
+    // Scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    // Observe all fade-in elements
+    document.querySelectorAll('.fade-in').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Header background blur effect on scroll
+    window.addEventListener('scroll', function() {
+      const header = document.querySelector('header');
+      if (window.scrollY > 100) {
+        header.style.background = 'rgba(255, 255, 255, 0.15)';
+        header.style.backdropFilter = 'blur(25px)';
+      } else {
+        header.style.background = 'rgba(255, 255, 255, 0.1)';
+        header.style.backdropFilter = 'blur(20px)';
+      }
+    });
+
+    // Add loading animation
+    window.addEventListener('load', function() {
+      document.body.style.opacity = '0';
+      document.body.style.transition = 'opacity 0.5s ease-in-out';
+      setTimeout(() => {
+        document.body.style.opacity = '1';
+      }, 100);
+    });
+
+    // Interactive card hover effects
+    document.querySelectorAll('.modern-card, .category-card, .trending-card, .testimonial-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-10px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+      });
+    });
+
+    // Parallax effect for floating elements
+    window.addEventListener('scroll', function() {
+      const scrolled = window.pageYOffset;
+      const parallax = document.querySelectorAll('.floating-element');
+      const speed = 0.5;
+
+      parallax.forEach((element, index) => {
+        const yPos = -(scrolled * speed * (index + 1) * 0.3);
+        element.style.transform = `translateY(${yPos}px) rotate(${scrolled * 0.1}deg)`;
+      });
+    });
   </script>
 </body>
 </html>
+          <img src="https://images.unsplash.com/photo-1556656793-08538906a9f8?w=400&h=200&fit=crop" alt="iPhone">
+          <div class="trending-card-content">
+            <h3>iPhone 13 Pro</h3>
+            <p>Excellent condition, includes original box and accessories</p>
+            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
+          </div>
+        </div>
+        <div class="trending-card">
+          <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=200&fit=crop" alt="Sneakers">
+          <div class="trending-card-content">
+            <h3>Nike Air Jordan</h3>
+            <p>Limited edition sneakers, barely worn, size 10</p>
+            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
+          </div>
+        </div>
+        <div class="trending-card">
+          <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=200&fit=crop" alt="Books">
+          <div class="trending-card-content">
+            <h3>Programming Books Set</h3>
+            <p>Complete collection of modern programming guides</p>
+            <a href="#" class="btn-primary" style="padding: 12px 24px; font-size: 0.9rem;">View Item</a>
+          </div>
+        </div>
+        <div class="trending-card">
