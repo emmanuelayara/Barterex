@@ -1,74 +1,93 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container my-5">
-    <div class="row g-5 align-items-start">
+<div class="container-fluid min-vh-100 d-flex p-0">
 
-        <!-- Left Column: Item Image -->
-        <div class="col-lg-5">
-            <div class="card shadow-sm border-0">
+    <!-- Left Side: Product Showcase -->
+    <div class="col-lg-6 d-flex align-items-center justify-content-center bg-light p-5">
+        <div class="text-center w-100" style="max-width: 500px;">
+            <div class="card border-0 shadow-sm mb-4">
                 {% if item.image_url %}
                     <img src="{{ item.image_url }}" alt="{{ item.name }}"
-                        class="card-img-top rounded-top"
-                        style="max-height: 400px; object-fit: cover;">
+                         class="card-img-top rounded"
+                         style="max-height: 400px; object-fit: cover;">
                 {% else %}
-                    <div class="bg-light rounded-top d-flex align-items-center justify-content-center"
-                        style="height: 300px;">
-                        <span class="text-muted">No Image Available</span>
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                         style="height: 350px;">
+                         <span class="text-muted">No Image Available</span>
                     </div>
                 {% endif %}
             </div>
-        </div>
 
-        <!-- Right Column: Details + Form -->
-        <div class="col-lg-7">
+            <h1 class="fw-bold mb-3">{{ item.name }}</h1>
+            <p class="lead text-muted mb-4">{{ item.description }}</p>
 
-            <!-- Item Details Card -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-body">
-                    <h2 class="card-title mb-2">{{ item.name }}</h2>
-                    <p class="text-muted mb-3">{{ item.description }}</p>
-                    <h4 class="text-success fw-bold mb-0">₦{{ item.value }}</h4>
-                </div>
-            </div>
+            <h2 class="text-success fw-bold mb-3">
+                ₦{{ item.value }}
+                <span class="badge bg-warning text-dark ms-2">Available</span>
+            </h2>
 
-            <!-- Order Form Card -->
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">Place Your Order</h5>
-
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
-
-                        <!-- Delivery Method -->
-                        <div class="mb-4">
-                            <label class="form-label">{{ form.delivery_method.label }}</label>
-                            {{ form.delivery_method(class="form-select") }}
-                        </div>
-
-                        <!-- Delivery Address -->
-                        <div id="delivery_address_field" class="mb-4">
-                            <label class="form-label">{{ form.delivery_address.label }}</label>
-                            {{ form.delivery_address(class="form-control", placeholder="Enter your delivery address") }}
-                            <small class="text-muted">We will use your saved profile address by default. You can change it here.</small>
-                        </div>
-
-                        <!-- Pickup Station -->
-                        <div id="pickup_station_field" class="mb-4" style="display:none;">
-                            <label class="form-label">{{ form.pickup_station.label }}</label>
-                            {{ form.pickup_station(class="form-select") }}
-                            <small class="text-muted">Select a pickup station close to you and in the same state as the item.</small>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <button type="submit" class="btn btn-primary w-100 py-2">Place Order</button>
-                    </form>
-                </div>
-            </div>
-
+            <ul class="list-unstyled text-muted">
+                <li>✔️ Fast delivery available</li>
+                <li>✔️ Pickup stations near you</li>
+                <li>✔️ Buyer protection guaranteed</li>
+            </ul>
         </div>
     </div>
+
+    <!-- Right Side: Order Form -->
+    <div class="col-lg-6 d-flex align-items-center justify-content-center p-5">
+        <div class="card border-0 shadow-lg w-100" style="max-width: 500px;">
+            <div class="card-body p-5">
+                <h3 class="card-title mb-4 text-center">🛒 Place Your Order</h3>
+                
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <!-- Delivery Method -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">{{ form.delivery_method.label }}</label>
+                        {{ form.delivery_method(class="form-select") }}
+                    </div>
+
+                    <!-- Delivery Address -->
+                    <div id="delivery_address_field" class="mb-4">
+                        <label class="form-label fw-semibold">{{ form.delivery_address.label }}</label>
+                        {{ form.delivery_address(class="form-control", placeholder="Enter your delivery address") }}
+                        <small class="text-muted">We will use your saved profile address by default. You can update it here.</small>
+                    </div>
+
+                    <!-- Pickup Station -->
+                    <div id="pickup_station_field" class="mb-4" style="display:none;">
+                        <label class="form-label fw-semibold">{{ form.pickup_station.label }}</label>
+                        {{ form.pickup_station(class="form-select") }}
+                        <small class="text-muted">Select a pickup station near you (must be in the same state as the item).</small>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-gradient w-100 py-3 fw-bold fs-5">
+                        ✅ Confirm & Place Order
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<!-- Gradient Button Styling -->
+<style>
+.btn-gradient {
+    background: linear-gradient(135deg, #007bff, #00c6ff);
+    color: white;
+    border: none;
+    transition: 0.3s ease-in-out;
+}
+.btn-gradient:hover {
+    background: linear-gradient(135deg, #0056b3, #0096c7);
+    transform: scale(1.02);
+}
+</style>
 
 <!-- Toggle Script -->
 <script>
