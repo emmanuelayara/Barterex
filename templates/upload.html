@@ -2,50 +2,827 @@
 {% block title %}Upload Item{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9;">
-    <h2 style="text-align: center; margin-bottom: 30px; color: #333;">Upload an Item</h2>
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --orange-gradient: linear-gradient(135deg, #ff7b00 0%, #ff9500 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --warning-gradient: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --surface: #ffffff;
+    --surface-hover: #f8fafc;
+    --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+  }
 
-    <!-- Reminder Box -->
-    <div style="background-color: #fff7f0; border-left: 5px solid #ff7a00; padding: 15px 20px; border-radius: 6px; color: #333; margin-bottom: 25px; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-        <strong style="color: #ff7a00;">⚠ Important Guidelines Before Uploading:</strong><br>
-        <ul style="margin-top: 10px; padding-left: 18px;">
-            <li>The item must not be older than <strong>5 years</strong> from purchase date.</li>
-            <li>The item should be in <strong>good and functional condition</strong>.</li>
-            <li>During item appraisal, you will be required to present a <strong>receipt</strong> as proof of ownership and date of purchase.</li>
-        </ul>
+  /* Page background */
+  .upload-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 40px 20px;
+    position: relative;
+  }
+
+  .upload-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.2) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Main container */
+  .upload-container {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header section */
+  .upload-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 40px 30px;
+    background: var(--surface);
+    border-radius: 24px;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--orange-gradient);
+  }
+
+  .upload-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .upload-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--orange-gradient);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
+  }
+
+  .upload-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* Guidelines section */
+  .guidelines-section {
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    border: 2px solid #fb923c;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .guidelines-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(180deg); }
+  }
+
+  .guidelines-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .warning-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--orange-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
+  }
+
+  .guidelines-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ea580c;
+    margin: 0;
+  }
+
+  .guidelines-list {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .guidelines-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .guidelines-list li:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  .guideline-icon {
+    width: 24px;
+    height: 24px;
+    background: var(--orange-gradient);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .guideline-text {
+    color: #9a3412;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  /* Form container */
+  .form-container {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* Form groups */
+  .form-group {
+    margin-bottom: 30px;
+  }
+
+  .form-label {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .label-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  /* Form inputs */
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 18px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .form-textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  /* File upload section */
+  .file-upload-container {
+    position: relative;
+  }
+
+  .file-upload-area {
+    border: 3px dashed #d1d5db;
+    border-radius: 20px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .file-upload-area:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+    transform: translateY(-2px);
+  }
+
+  .file-upload-area.dragover {
+    border-color: #667eea;
+    background: var(--accent-gradient);
+    color: white;
+  }
+
+  .file-upload-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--accent-gradient);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 40px rgba(79, 172, 254, 0.3);
+  }
+
+  .file-upload-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+
+  .file-upload-subtext {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* Image preview */
+  .image-preview {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .preview-image {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+    border: 3px solid white;
+  }
+
+  .remove-image {
+    background: var(--secondary-gradient);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 10px auto 0;
+    transition: all 0.3s ease;
+  }
+
+  .remove-image:hover {
+    transform: scale(1.1);
+  }
+
+  /* Submit button */
+  .submit-container {
+    text-align: center;
+    margin-top: 40px;
+  }
+
+  .submit-btn {
+    background: var(--orange-gradient);
+    color: white;
+    padding: 18px 40px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 40px rgba(255, 123, 0, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+    justify-content: center;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 50px rgba(255, 123, 0, 0.4);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .submit-btn.loading {
+    position: relative;
+    color: transparent;
+  }
+
+  .submit-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Progress steps */
+  .progress-steps {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 40px;
+    padding: 30px;
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 50px;
+    background: #f3f4f6;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .progress-step.active {
+    background: var(--orange-gradient);
+    color: white;
+    box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
+  }
+
+  .progress-step.completed {
+    background: var(--success-gradient);
+    color: white;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .upload-page {
+      padding: 20px 15px;
+    }
+
+    .upload-header {
+      padding: 30px 20px;
+      margin-bottom: 30px;
+    }
+
+    .upload-header h1 {
+      font-size: 2rem;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .upload-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+    }
+
+    .guidelines-section {
+      padding: 25px 20px;
+      margin-bottom: 30px;
+    }
+
+    .guidelines-header {
+      flex-direction: column;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .form-container {
+      padding: 30px 20px;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    .file-upload-area {
+      padding: 30px 15px;
+    }
+
+    .file-upload-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+    }
+
+    .progress-steps {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px 30px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .upload-header h1 {
+      font-size: 1.6rem;
+    }
+
+    .guidelines-section {
+      padding: 20px 15px;
+    }
+
+    .guidelines-list li {
+      padding: 12px 15px;
+      flex-direction: column;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .form-container {
+      padding: 25px 15px;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      padding: 15px;
+    }
+  }
+
+  /* Animations */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+<div class="upload-page">
+  <div class="upload-container">
+    <!-- Progress Steps -->
+    <div class="progress-steps fade-in">
+      <div class="progress-step active">
+        <span>📝</span> Fill Details
+      </div>
+      <div class="progress-step">
+        <span>📸</span> Upload Photo
+      </div>
+      <div class="progress-step">
+        <span>✅</span> Submit
+      </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data">
+    <!-- Header -->
+    <div class="upload-header fade-in">
+      <h1>
+        <div class="upload-icon">📤</div>
+        Upload Your Item
+      </h1>
+      <p class="upload-subtitle">Share what you have and discover what you need</p>
+    </div>
+
+    <!-- Guidelines -->
+    <div class="guidelines-section fade-in">
+      <div class="guidelines-header">
+        <div class="warning-icon">⚠️</div>
+        <h3 class="guidelines-title">Important Guidelines Before Uploading</h3>
+      </div>
+      <ul class="guidelines-list">
+        <li>
+          <div class="guideline-icon">📅</div>
+          <div class="guideline-text">
+            The item must not be older than <strong>5 years</strong> from purchase date
+          </div>
+        </li>
+        <li>
+          <div class="guideline-icon">⭐</div>
+          <div class="guideline-text">
+            The item should be in <strong>good and functional condition</strong>
+          </div>
+        </li>
+        <li>
+          <div class="guideline-icon">🧾</div>
+          <div class="guideline-text">
+            During appraisal, you'll need to present a <strong>receipt</strong> as proof of ownership and purchase date
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Form -->
+    <div class="form-container fade-in">
+      <form method="POST" enctype="multipart/form-data" id="uploadForm">
         {{ form.hidden_tag() }}
 
-        <div style="margin-bottom: 20px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.name.label }}</label>
-            {{ form.name(class="form-control", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">🏷️</span>
+            {{ form.name.label.text }}
+          </label>
+          {{ form.name(class="form-input", placeholder="Enter a descriptive name for your item") }}
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.description.label }}</label>
-            {{ form.description(class="form-control", rows="4", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📝</span>
+            {{ form.description.label.text }}
+          </label>
+          {{ form.description(class="form-textarea", rows="4", placeholder="Describe your item in detail - include brand, model, features, and any important details") }}
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.condition.label }}</label>
-            {{ form.condition(class="form-select", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">⭐</span>
+            {{ form.condition.label.text }}
+          </label>
+          {{ form.condition(class="form-select") }}
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="display:block; font-weight: 600; margin-bottom: 6px;">{{ form.category.label }}</label>
-            {{ form.category(class="form-select", style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;") }}
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📂</span>
+            {{ form.category.label.text }}
+          </label>
+          {{ form.category(class="form-select") }}
         </div>
 
-        <div class="mb-3">
-            <label for="image" class="form-label">Upload Image</label>
-            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📸</span>
+            Upload Image
+          </label>
+          <div class="file-upload-container">
+            <div class="file-upload-area" id="fileUploadArea">
+              <div class="file-upload-icon" id="uploadIcon">📷</div>
+              <div class="file-upload-text">Drag & drop your image here</div>
+              <div class="file-upload-subtext">or click to browse files (JPG, PNG, WEBP)</div>
+              <input type="file" class="file-input" id="imageInput" name="image" accept="image/*" required>
+            </div>
+            <div class="image-preview" id="imagePreview" style="display: none;">
+              <img id="previewImg" class="preview-image" alt="Preview">
+              <button type="button" class="remove-image" id="removeImage">✕</button>
+            </div>
+          </div>
         </div>
 
-        <div style="text-align: center;">
-            {{ form.submit(class="btn", style="background-color:#007BFF; color:#fff; padding:12px 25px; border:none; border-radius:6px; font-weight: bold; cursor:pointer;") }}
+        <div class="submit-container">
+          {{ form.submit(class="submit-btn", id="submitBtn") }}
         </div>
-    </form>
+      </form>
+    </div>
+  </div>
 </div>
+
+<script>
+  // Progress step management
+  function updateProgressStep(stepIndex) {
+    const steps = document.querySelectorAll('.progress-step');
+    steps.forEach((step, index) => {
+      if (index < stepIndex) {
+        step.classList.add('completed');
+        step.classList.remove('active');
+      } else if (index === stepIndex) {
+        step.classList.add('active');
+        step.classList.remove('completed');
+      } else {
+        step.classList.remove('active', 'completed');
+      }
+    });
+  }
+
+  // File upload handling
+  const fileUploadArea = document.getElementById('fileUploadArea');
+  const fileInput = document.getElementById('imageInput');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImg = document.getElementById('previewImg');
+  const removeImageBtn = document.getElementById('removeImage');
+  const uploadIcon = document.getElementById('uploadIcon');
+
+  // Drag and drop functionality
+  fileUploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileUploadArea.classList.add('dragover');
+  });
+
+  fileUploadArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    fileUploadArea.classList.remove('dragover');
+  });
+
+  fileUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileUploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFileUpload(e.target.files[0]);
+    }
+  });
+
+  function handleFileUpload(file) {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        imagePreview.style.display = 'block';
+        fileUploadArea.style.display = 'none';
+        updateProgressStep(1);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImageBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    imagePreview.style.display = 'none';
+    fileUploadArea.style.display = 'block';
+    updateProgressStep(0);
+  });
+
+  // Form validation and submission
+  const form = document.getElementById('uploadForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Add loading state
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    updateProgressStep(2);
+
+    // Simulate form processing (replace with actual submission)
+    setTimeout(() => {
+      // Remove this setTimeout and uncomment the line below for actual form submission
+      // form.submit();
+      
+      // For demo purposes, show success
+      submitBtn.classList.remove('loading');
+      submitBtn.innerHTML = '✅ Uploaded Successfully!';
+      submitBtn.style.background = 'var(--success-gradient)';
+    }, 2000);
+  });
+
+  // Form field interactions
+  const formInputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
+  
+  formInputs.forEach(input => {
+    input.addEventListener('focus', function() {
+      this.parentElement.style.transform = 'translateY(-2px)';
+    });
+    
+    input.addEventListener('blur', function() {
+      this.parentElement.style.transform = 'translateY(0)';
+    });
+  });
+
+  // Scroll animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, observerOptions);
+
+  // Observe all fade-in elements
+  document.querySelectorAll('.fade-in').forEach((el, index) => {
+    el.style.transitionDelay = `${index * 0.1}s`;
+    observer.observe(el);
+  });
+
+  // Real-time form validation
+  const nameInput = document.querySelector('input[name="name"]');
+  const descriptionInput = document.querySelector('textarea[name="description"]');
+
+  nameInput.addEventListener('input', function() {
+    if (this.value.length > 0) {
+      this.style.borderColor = '#10b981';
+    } else {
+      this.style.borderColor = '#e5e7eb';
+    }
+  });
+
+  descriptionInput.addEventListener('input', function() {
+    if (this.value.length > 20) {
+      this.style.borderColor = '#10b981';
+    } else {
+      this.style.borderColor = '#f59e0b';
+    }
+  });
+</script>
 {% endblock %}
