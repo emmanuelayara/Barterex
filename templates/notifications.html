@@ -536,14 +536,6 @@
         <div class="summary-title">Unread</div>
         <div class="summary-value">{{ notifications|selectattr('is_read', 'equalto', false)|list|length }}</div>
       </div>
-      <div class="summary-card">
-        <div class="summary-icon">📅</div>
-        <div class="summary-title">Today</div>
-        <div class="summary-value">
-          {% set today = moment().format('YYYY-MM-DD') %}
-          {{ notifications|selectattr('timestamp')|selectattr('timestamp', 'match', today + '.*')|list|length if notifications else 0 }}
-        </div>
-      </div>
     </div>
 
     <!-- Notifications Container -->

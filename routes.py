@@ -4,8 +4,6 @@ from flask import (
     abort
 )
 
-from flask_moment import Moment
-
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, UserMixin, login_user, login_required,
@@ -228,7 +226,7 @@ def credit_history():
 @login_required
 def notifications():
     notes = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
-    return render_template('notifications.html', notifications=notes, moment=moment)
+    return render_template('notifications.html', notifications=notes)
 
 
 @app.route('/notifications/read/<int:notification_id>')
