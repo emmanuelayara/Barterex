@@ -2,78 +2,609 @@
 {% block title %}Item Details{% endblock %}
 
 {% block content %}
-<div style="max-width: 1000px; margin: auto; padding: 40px 20px;">
-  <div style="display: flex; flex-wrap: wrap; gap: 30px; align-items: flex-start;">
+<style>
+  * {
+    box-sizing: border-box;
+  }
 
-    <!-- Item Image -->
-    <div style="flex: 1 1 350px;">
-      {% if item.image_url %}
-        <img src="{{ item.image_url }}" alt="{{ item.name }}"
-             style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" />
+  .page-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 40px 20px;
+  }
+
+  .main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    margin-bottom: 30px;
+  }
+
+  .breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 12px 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+  }
+
+  .breadcrumb-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+
+  .breadcrumb-link:hover {
+    color: white;
+  }
+
+  .breadcrumb-separator {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .breadcrumb-current {
+    color: white;
+    font-weight: 500;
+  }
+
+  .item-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .item-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 600px;
+  }
+
+  .image-section {
+    position: relative;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .item-image:hover {
+    transform: scale(1.05);
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: #94a3b8;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  }
+
+  .image-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+  }
+
+  .info-section {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .item-header {
+    margin-bottom: 24px;
+  }
+
+  .item-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  .item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .meta-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .price-section {
+    margin: 24px 0;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-radius: 16px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+  }
+
+  .price-label {
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .price-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .location-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4a5568;
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+
+  .description-section {
+    margin: 24px 0;
+  }
+
+  .description-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .description-text {
+    color: #4a5568;
+    line-height: 1.7;
+    font-size: 1rem;
+  }
+
+  .action-section {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  .trade-button {
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trade-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .trade-button:hover::before {
+    left: 100%;
+  }
+
+  .trade-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  }
+
+  .trade-button:active {
+    transform: translateY(0);
+  }
+
+  .related-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .related-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    color: #1a202c;
+  }
+
+  .related-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+
+  .related-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+
+  .related-item {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  .related-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+
+  .related-item a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .related-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background: linear-gradient(45deg, #f1f5f9, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 2rem;
+  }
+
+  .related-content {
+    padding: 20px;
+  }
+
+  .related-name {
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 8px;
+    font-size: 1.05rem;
+    line-height: 1.3;
+  }
+
+  .related-price {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #059669;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .empty-related {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+  }
+
+  .empty-related-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .empty-related-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .item-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .image-section {
+      min-height: 400px;
+    }
+
+    .info-section {
+      padding: 30px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page-container {
+      padding: 20px 16px;
+    }
+
+    .item-title {
+      font-size: 1.875rem;
+    }
+
+    .price-value {
+      font-size: 2rem;
+    }
+
+    .related-section {
+      padding: 24px 20px;
+    }
+
+    .related-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .item-title {
+      font-size: 1.5rem;
+    }
+
+    .info-section {
+      padding: 24px 20px;
+    }
+
+    .item-meta {
+      gap: 8px;
+    }
+
+    .meta-tag {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+
+    .price-value {
+      font-size: 1.75rem;
+    }
+
+    .trade-button {
+      padding: 14px 20px;
+      font-size: 1rem;
+    }
+  }
+
+  /* Loading animation */
+  @keyframes shimmer {
+    0% { background-position: -468px 0; }
+    100% { background-position: 468px 0; }
+  }
+
+  .loading-shimmer {
+    animation: shimmer 1.2s ease-in-out infinite;
+    background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+    background-size: 800px 104px;
+  }
+</style>
+
+    <!-- Item Details Container -->
+    <div class="item-container">
+      <div class="item-layout">
+        <!-- Image Section -->
+        <div class="image-section">
+          {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image">
+            <div class="image-badge">📸 High Quality</div>
+          {% else %}
+            <div class="image-placeholder">📦</div>
+            <div class="image-badge">📷 No Image</div>
+          {% endif %}
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+          <div class="item-header">
+            <h1 class="item-title">{{ item.name }}</h1>
+            
+            <div class="item-meta">
+              <div class="meta-tag">
+                🏷️ {{ item.category }}
+              </div>
+              <div class="meta-tag">
+                ⚡ {{ item.condition }}
+              </div>
+            </div>
+
+            <div class="location-info">
+              📍 Available in {{ item.location }}
+            </div>
+          </div>
+
+          <div class="price-section">
+            <div class="price-label">Credit Value</div>
+            <div class="price-value">
+              💰 ₦{{ item.value }}
+            </div>
+          </div>
+
+          <div class="description-section">
+            <h3 class="description-title">
+              📝 Description
+            </h3>
+            <p class="description-text">{{ item.description }}</p>
+          </div>
+
+          <div class="action-section">
+            <form method="POST" action="{{ url_for('buy_item', item_id=item.id) }}">
+              <button type="submit" class="trade-button">
+                🔄 Trade Now with Credits
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Items Section -->
+    <div class="related-section">
+      <div class="related-header">
+        <div class="related-icon">🔗</div>
+        <h2 class="related-title">Related Items in "{{ item.category }}"</h2>
+      </div>
+
+      {% if related_items %}
+        <div class="related-grid">
+          {% for related in related_items %}
+            <div class="related-item">
+              <a href="{{ url_for('view_item', item_id=related.id) }}">
+                {% if related.image_url %}
+                  <img src="{{ related.image_url }}" alt="{{ related.name }}" class="related-image">
+                {% else %}
+                  <div class="related-image">📦</div>
+                {% endif %}
+                <div class="related-content">
+                  <h4 class="related-name">{{ related.name }}</h4>
+                  <div class="related-price">
+                    💰 ₦{{ related.value }} credits
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
       {% else %}
-        <div style="width: 100%; height: 300px; background-color: #eee; border-radius: 10px;"></div>
+        <div class="empty-related">
+          <div class="empty-related-icon">🔍</div>
+          <div class="empty-related-text">No related items found in this category</div>
+        </div>
       {% endif %}
     </div>
-
-    <!-- Item Info -->
-    <div style="flex: 1 1 400px;">
-      <h2 style="margin-bottom: 10px;">{{ item.name }}</h2>
-      <p style="color: #888; margin-bottom: 5px;"><strong>Category:</strong> {{ item.category }}</p>
-      <p style="color: #888; margin-bottom: 5px;"><strong>Condition:</strong> {{ item.condition }}</p>
-      <p style="color: #2458b3; font-size: 20px; font-weight: bold; margin-top: 10px;">💳 Credit Value: ₦{{ item.value }}</p>
-      <p><strong>Available in:</strong> {{ item.location }}</p>
-
-      <hr style="margin: 20px 0;">
-
-      <h4>Description:</h4>
-      <p style="line-height: 1.6; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
-          {{ item.description }}
-      </p>
-
-
-      <form method="POST" action="{{ url_for('buy_item', item_id=item.id) }}" style="margin-top: 30px;">
-        <button type="submit"
-                style="padding: 12px 25px; background-color: #28a745; color: white; border: none;
-                       border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">
-          🔁 Trade Now with Credits
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Optional: Seller Info -->
-  {# 
-  <div style="margin-top: 40px;">
-    <h4>Seller Information</h4>
-    <p><strong>Username:</strong> {{ item.user.username }}</p>
-    <p><strong>Location:</strong> {{ item.user.location }}</p>
-  </div>
-  #}
-</div>
-
-<!-- Related Items Section -->
-<div style="margin-top: 60px;">
-  <h3 style="margin-bottom: 20px;">🔗 Related Items in "{{ item.category }}"</h3>
-  <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-    {% for related in related_items %}
-      <div style="flex: 1 1 180px; background: #fff3e0; border: 1px solid #ffe0b2;
-                  border-radius: 10px; padding: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
-        <a href="{{ url_for('view_item', item_id=related.id) }}" style="text-decoration: none; color: inherit;">
-          {% if related.image_url %}
-            <img src="{{ related.image_url }}" alt="{{ related.name }}"
-                 style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" />
-          {% else %}
-            <div style="width: 100%; height: 120px; background-color: #ddd; border-radius: 8px;"></div>
-          {% endif %}
-          <h5 style="margin: 0; font-size: 16px;">{{ related.name }}</h5>
-          <p style="color: #555; font-size: 14px;">₦{{ related.value }} credits</p>
-        </a>
-      </div>
-    {% else %}
-      <p>No related items found.</p>
-    {% endfor %}
   </div>
 </div>
 
+<script>
+  // Add smooth loading effect for images
+  document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('img[src]');
+    
+    images.forEach(img => {
+      if (!img.complete) {
+        img.classList.add('loading-shimmer');
+        
+        img.addEventListener('load', function() {
+          this.classList.remove('loading-shimmer');
+        });
+        
+        img.addEventListener('error', function() {
+          this.classList.remove('loading-shimmer');
+          // Replace with placeholder
+          const placeholder = document.createElement('div');
+          placeholder.className = 'image-placeholder';
+          placeholder.innerHTML = '📦';
+          this.parentNode.replaceChild(placeholder, this);
+        });
+      }
+    });
+  });
 
+  // Add click animation to trade button
+  document.querySelector('.trade-button')?.addEventListener('click', function(e) {
+    // Create ripple effect
+    const ripple = document.createElement('span');
+    const rect = this.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    ripple.style.cssText = `
+      position: absolute;
+      width: ${size}px;
+      height: ${size}px;
+      left: ${x}px;
+      top: ${y}px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: scale(0);
+      animation: ripple 0.6s linear;
+      pointer-events: none;
+    `;
+    
+    this.appendChild(ripple);
+    
+    setTimeout(() => ripple.remove(), 600);
+  });
+
+  // Add CSS for ripple animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes ripple {
+      to {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+</script>
 {% endblock %}

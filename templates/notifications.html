@@ -3,154 +3,630 @@
 
 {% block content %}
 <style>
-  .top-menu {
-    display: flex;
-    justify-content: center;
-    background: #054e97;
-    padding: 12px 0;
-    border-bottom: 2px solid #ff7a00;
+  * {
+    box-sizing: border-box;
   }
 
-  .top-menu ul {
-    list-style: none;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
+  .page-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .top-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .nav-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
     margin: 0;
+    padding: 0;
+    gap: 8px;
     flex-wrap: wrap;
+    min-height: 60px;
   }
 
-  .top-menu li {
-    display: inline-block;
+  .nav-item {
+    margin: 4px 0;
   }
 
-  .top-menu a {
-    color: white;
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4a5568;
     text-decoration: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    transition: 0.3s ease;
+    padding: 12px 18px;
+    border-radius: 12px;
     font-weight: 500;
-    font-size: 15px;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
-  .top-menu a:hover,
-  .top-menu a.active {
-    background: #ff7a00;
-    color: #fff;
+  .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  }
+
+  .nav-link.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  }
+
+  .nav-link.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+  }
+
+  .nav-link.logout {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .nav-link.logout:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
   }
 
   .main-content {
-    padding: 40px;
-    background: #fff;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
   }
 
-  .main-content h2 {
-    margin-bottom: 20px;
-    color: #333;
+  .page-header {
     text-align: center;
+    margin-bottom: 50px;
+    color: white;
   }
 
-  .overview {
+  .page-title {
+    font-size: 2.75rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff, #e2e8f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    align-items: center;
     justify-content: center;
+    gap: 16px;
   }
 
-  .card {
-    flex: 1;
-    min-width: 220px;
-    max-width: 300px;
-    padding: 25px;
+  .page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+
+  .notifications-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 50px;
+  }
+
+  .summary-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 28px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+
+  .summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .summary-icon {
+    width: 48px;
+    height: 48px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .summary-title {
+    color: #4a5568;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .summary-value {
+    color: #1a202c;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .notifications-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .container-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+  }
+
+  .container-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .container-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+  }
+
+  .container-title h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 8px 16px;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .filter-btn:hover,
+  .filter-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
+
+  .notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .notification-item {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+
+  .notification-item.unread {
+    border-left: 4px solid #667eea;
+    background: rgba(102, 126, 234, 0.02);
+  }
+
+  .notification-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 16px;
+  }
+
+  .notification-content {
+    flex: 1;
+  }
+
+  .notification-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .notification-message {
+    color: #2d3748;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+
+  .notification-time {
+    color: #718096;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .notification-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .notification-badge {
+    width: 8px;
+    height: 8px;
+    background: #667eea;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .notification-badge.read {
+    background: #cbd5e0;
+  }
+
+  .action-btn {
+    padding: 6px 12px;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+  }
+
+  .empty-state {
     text-align: center;
+    padding: 80px 20px;
+    color: #64748b;
   }
 
-  .card h4 {
-    margin-bottom: 10px;
-    color: #495057;
-  }
-
-  .card p {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #212529;
-  }
-
-  .recent-section {
-    margin-top: 50px;
-    text-align: center;
-  }
-
-  .recent-section h3 {
-    font-size: 1.3rem;
-    color: #212529;
+  .empty-icon {
+    font-size: 4rem;
     margin-bottom: 20px;
+    opacity: 0.4;
   }
 
-  .recent-section ul {
-    padding-left: 0;
-    list-style: none;
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #334155;
   }
 
-  .recent-section li {
-    margin-bottom: 10px;
-    font-size: 0.95rem;
-    color: #495057;
+  .empty-description {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-bottom: 30px;
+    line-height: 1.5;
   }
 
-  .recent-section small {
-    color: #adb5bd;
+  .btn-explore {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-explore:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .nav-menu {
+      gap: 4px;
+    }
+    
+    .nav-link {
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    .main-content {
+      padding: 20px 16px;
+    }
+
+    .page-title {
+      font-size: 2.25rem;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .notifications-container {
+      padding: 24px 20px;
+      border-radius: 20px;
+    }
+
+    .container-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .filter-buttons {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .notification-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .notification-actions {
+      align-self: flex-end;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .nav-menu {
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 0;
+    }
+
+    .nav-link {
+      width: 100%;
+      max-width: 280px;
+      justify-content: center;
+    }
+
+    .page-title {
+      font-size: 1.875rem;
+    }
+
+    .notifications-summary {
+      grid-template-columns: 1fr;
+    }
+
+    .notification-item {
+      padding: 20px;
+    }
   }
 </style>
 
-<!-- Top Menu -->
-<div class="top-menu">
-  <ul>
-    <li><a href="{{ url_for('user_items') }}" class="{% if request.endpoint == 'user_items' %}active{% endif %}">My Items</a></li>
-    <li><a href="{{ url_for('my_trades') }}" class="{% if request.endpoint == 'my_trades' %}active{% endif %}">My Trades</a></li>
-    <li><a href="{{ url_for('credit_history') }}" class="{% if request.endpoint == 'credit_history' %}active{% endif %}">Credit History</a></li>
-    <li><a href="{{ url_for('notifications') }}" class="{% if request.endpoint == 'notifications' %}active{% endif %}">Notifications</a></li>
-    <li><a href="{{ url_for('profile_settings') }}" class="{% if request.endpoint == 'profile_settings' %}active{% endif %}">Profile</a></li>
-    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-  </ul>
-</div>
+<div class="page-container">
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="nav-container">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
+            📦 My Items
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
+            🔄 My Trades
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('credit_history') }}" class="nav-link {% if request.endpoint == 'credit_history' %}active{% endif %}">
+            💳 Credit History
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
+            🔔 Notifications
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
+            👤 Profile
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('logout') }}" class="nav-link logout">
+            🚪 Logout
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
 
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">
+        🔔 Notifications
+      </h1>
+      <p class="page-subtitle">Stay updated with your latest activity and important updates</p>
+    </div>
 
-  <!-- Content Area -->
-  <div class="content" style="flex: 1; padding: 40px;">
-    <h2 style="margin-bottom: 30px;">🔔 Notifications</h2>
-
-    {% if notifications %}
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
-          <thead style="background-color: #054e97; color: #fff;">
-            <tr>
-              <th style="padding: 12px; text-align: left;">#</th>
-              <th style="padding: 12px; text-align: left;">Message</th>
-              <th style="padding: 12px; text-align: left;">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for note in notifications %}
-            <tr class="{% if loop.index0 % 2 == 0 %}even-row{% else %}odd-row{% endif %}">
-              <td style="padding: 12px;">{{ loop.index }}</td>
-              <td style="padding: 12px;">{{ note.message }}</td>
-              <td style="padding: 12px;">{{ note.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <!-- Notifications Summary -->
+    <div class="notifications-summary">
+      <div class="summary-card">
+        <div class="summary-icon">📬</div>
+        <div class="summary-title">Total Notifications</div>
+        <div class="summary-value">{{ notifications|length }}</div>
       </div>
-    {% else %}
-      <div style="padding: 20px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 6px;">
-        No new notifications.
+      <div class="summary-card">
+        <div class="summary-icon">🔴</div>
+        <div class="summary-title">Unread</div>
+        <div class="summary-value">{{ notifications|selectattr('is_read', 'equalto', false)|list|length }}</div>
       </div>
-    {% endif %}
+      <div class="summary-card">
+        <div class="summary-icon">📅</div>
+        <div class="summary-title">Today</div>
+        <div class="summary-value">
+          {% set today = moment().format('YYYY-MM-DD') %}
+          {{ notifications|selectattr('timestamp')|selectattr('timestamp', 'match', today + '.*')|list|length if notifications else 0 }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div class="notifications-container">
+      <div class="container-header">
+        <div class="container-title">
+          <div class="container-icon">🔔</div>
+          <h2>All Notifications</h2>
+        </div>
+        <div class="filter-buttons">
+          <button class="filter-btn active">All</button>
+          <button class="filter-btn">Unread</button>
+          <button class="filter-btn">Today</button>
+        </div>
+      </div>
+
+      {% if notifications %}
+        <div class="notifications-list">
+          {% for note in notifications %}
+            <div class="notification-item {% if not note.is_read %}unread{% endif %}">
+              <div class="notification-header">
+                <div class="notification-content">
+                  <div class="notification-type">
+                    📢 System Alert
+                  </div>
+                  <div class="notification-message">{{ note.message }}</div>
+                  <div class="notification-time">
+                    {{ note.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
+                  </div>
+                </div>
+                <div class="notification-actions">
+                  <div class="notification-badge {% if note.is_read %}read{% endif %}"></div>
+                  {% if not note.is_read %}
+                    <button class="action-btn">Mark Read</button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🔔</div>
+          <h3 class="empty-title">No Notifications Yet</h3>
+          <p class="empty-description">You're all caught up! When you have new activity, notifications will appear here.</p>
+          <a href="{{ url_for('marketplace') }}" class="btn-explore">
+            🔍 Explore Marketplace
+          </a>
+        </div>
+      {% endif %}
+    </div>
   </div>
 </div>
+
+<script>
+  // Simple filter functionality (can be enhanced with actual filtering logic)
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Here you would implement actual filtering logic
+      // For now, just visual feedback
+      console.log('Filter:', this.textContent);
+    });
+  });
+
+  // Mark as read functionality
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const notificationItem = this.closest('.notification-item');
+      const badge = notificationItem.querySelector('.notification-badge');
+      
+      // Remove unread styling
+      notificationItem.classList.remove('unread');
+      badge.classList.add('read');
+      
+      // Hide the button
+      this.style.display = 'none';
+      
+      // Here you would make an AJAX call to mark as read in the backend
+      console.log('Marking notification as read');
+    });
+  });
+</script>
 {% endblock %}
