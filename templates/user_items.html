@@ -2,189 +2,571 @@
 {% block title %}My Items{% endblock %}
 {% block content %}
 <style>
-  .top-menu {
-    display: flex;
-    justify-content: center;
-    background: #054e97;
-    padding: 12px 0;
-    border-bottom: 2px solid #ff7a00;
+  * {
+    box-sizing: border-box;
   }
 
-  .top-menu ul {
-    list-style: none;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
+  .page-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .top-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .nav-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
     margin: 0;
+    padding: 0;
+    gap: 8px;
     flex-wrap: wrap;
+    min-height: 60px;
   }
 
-  .top-menu li {
-    display: inline-block;
+  .nav-item {
+    margin: 4px 0;
   }
 
-  .top-menu a {
-    color: white;
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #4a5568;
     text-decoration: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    transition: 0.3s ease;
+    padding: 12px 18px;
+    border-radius: 12px;
     font-weight: 500;
-    font-size: 15px;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
-  .top-menu a:hover,
-  .top-menu a.active {
-    background: #ff7a00;
-    color: #fff;
+  .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   }
 
-  .content {
-    padding: 40px;
-    background: #fff;
+  .nav-link.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   }
 
-  .content h2 {
-    margin-bottom: 30px;
-    color: #333;
+  .nav-link.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+  }
+
+  .nav-link.logout {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .nav-link.logout:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #b91c1c;
+  }
+
+  .main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .page-header {
     text-align: center;
+    margin-bottom: 50px;
+    color: white;
   }
 
-  /* Items Grid */
+  .page-title {
+    font-size: 2.75rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff, #e2e8f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+
+  .items-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+  }
+
   .items-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 28px;
+    margin-bottom: 40px;
   }
 
   .item-card {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: transform 0.2s;
+    background: white;
+    border-radius: 20px;
+    padding: 0;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .item-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
 
   .item-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   }
 
-  .item-card h4 {
-    color: #054e97;
-    margin-bottom: 10px;
+  .item-card:hover::before {
+    opacity: 1;
   }
 
-  .item-card p {
-    color: #495057;
-    font-size: 14px;
-    min-height: 40px;
-  }
-
-  .item-card img {
+  .item-image {
     width: 100%;
-    max-height: 180px;
+    height: 200px;
     object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    background: linear-gradient(45deg, #f1f5f9, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 3rem;
+  }
+
+  .item-content {
+    padding: 24px;
+  }
+
+  .item-header {
+    margin-bottom: 16px;
+  }
+
+  .item-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .item-number {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    gap: 4px;
+  }
+
+  .item-description {
+    color: #4a5568;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    min-height: 48px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .item-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-approved {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+  }
+
+  .status-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
   }
 
   .item-actions {
-    margin-top: 15px;
+    display: flex;
+    gap: 12px;
   }
 
-  .item-actions p {
-    margin-bottom: 8px;
+  .btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
   }
 
-  /* Pagination */
-  .pagination {
-    margin-top: 30px;
+  .btn-edit {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
+
+  .btn-edit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-locked {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: #4a5568;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #2d3748;
+  }
+
+  .empty-description {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-bottom: 30px;
+  }
+
+  .btn-upload {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+  }
+
+  .pagination-container {
     display: flex;
     justify-content: center;
-    gap: 15px;
     align-items: center;
+    gap: 16px;
+    padding: 30px 0;
   }
 
-  .pagination a {
-    padding: 8px 16px;
-    background: #054e97;
-    color: white;
-    border-radius: 5px;
+  .pagination-btn {
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #4a5568;
+    border-radius: 12px;
     text-decoration: none;
-    transition: 0.3s;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  .pagination a:hover {
-    background: #ff7a00;
+  .pagination-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   }
 
-  .pagination span {
-    font-weight: bold;
-    color: #495057;
+  .pagination-info {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    padding: 0 12px;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .nav-menu {
+      gap: 4px;
+    }
+    
+    .nav-link {
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    .main-content {
+      padding: 20px 16px;
+    }
+
+    .page-title {
+      font-size: 2.25rem;
+    }
+
+    .items-container {
+      padding: 24px 20px;
+      border-radius: 20px;
+    }
+
+    .items-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .item-content {
+      padding: 20px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .nav-menu {
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 0;
+    }
+
+    .nav-link {
+      width: 100%;
+      max-width: 280px;
+      justify-content: center;
+    }
+
+    .page-title {
+      font-size: 1.875rem;
+    }
+
+    .items-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .pagination-container {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .pagination-btn {
+      width: 100%;
+      max-width: 200px;
+      justify-content: center;
+    }
   }
 </style>
 
-<!-- Top Menu -->
-<div class="top-menu">
-  <ul>
-    <li><a href="{{ url_for('user_items') }}" class="{% if request.endpoint == 'user_items' %}active{% endif %}">My Items</a></li>
-    <li><a href="{{ url_for('my_trades') }}" class="{% if request.endpoint == 'my_trades' %}active{% endif %}">My Trades</a></li>
-    <li><a href="{{ url_for('credit_history') }}" class="{% if request.endpoint == 'credit_history' %}active{% endif %}">Credit History</a></li>
-    <li><a href="{{ url_for('notifications') }}" class="{% if request.endpoint == 'notifications' %}active{% endif %}">Notifications</a></li>
-    <li><a href="{{ url_for('profile_settings') }}" class="{% if request.endpoint == 'profile_settings' %}active{% endif %}">Profile</a></li>
-    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-  </ul>
-</div>
-
-<!-- Main Content -->
-<div class="content">
-  <h2>Uploaded Items</h2>
-
-  {% if items %}
-    <div class="items-grid">
-      {% for item in items %}
-        <div class="item-card">
-          <h4>{{ item.name }}</h4>
-          <p>{{ item.description }}</p>
-          {% if item.image_url %}
-            <img src="{{ item.image_url }}" alt="{{ item.name }}">
-          {% endif %}
-           <p>Item Number: <strong>{{ item.item_number }}</strong></p>
-          {% if item.user_id == current_user.id %}
-            <div class="item-actions">
-              <p><strong>Status:</strong>
-                {% if item.is_approved %}
-                  <span style="color: green;">Approved</span>
-                {% else %}
-                  <span style="color: orange;">Pending</span>
-                {% endif %}
-              </p>
-
-              {% if not item.is_approved %}
-                <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-              {% else %}
-                <button class="btn btn-sm btn-secondary" disabled>Locked</button>
-              {% endif %}
-            </div>
-          {% endif %}
-        </div>
-      {% endfor %}
+<div class="page-container">
+  <!-- Top Navigation -->
+  <nav class="top-nav">
+    <div class="nav-container">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
+            📦 My Items
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
+            🔄 My Trades
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('credit_history') }}" class="nav-link {% if request.endpoint == 'credit_history' %}active{% endif %}">
+            💳 Credit History
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
+            🔔 Notifications
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
+            👤 Profile
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('logout') }}" class="nav-link logout">
+            🚪 Logout
+          </a>
+        </li>
+      </ul>
     </div>
-  {% else %}
-    <div class="alert alert-info text-center">You haven't uploaded any items yet.</div>
-  {% endif %}
+  </nav>
 
-  <!-- Pagination -->
-  <div class="pagination">
-    {% if items.has_prev %}
-      <a href="{{ url_for('user_items', page=items.prev_num) }}">&laquo; Previous</a>
-    {% endif %}
-    <span>Page {{ items.page }} of {{ items.pages }}</span>
-    {% if items.has_next %}
-      <a href="{{ url_for('user_items', page=items.next_num) }}">Next &raquo;</a>
-    {% endif %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">My Items</h1>
+      <p class="page-subtitle">Manage your uploaded items and track their status</p>
+    </div>
+
+    <!-- Items Container -->
+    <div class="items-container">
+      {% if items %}
+        <div class="items-grid">
+          {% for item in items %}
+            <div class="item-card">
+              <!-- Item Image -->
+              {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image">
+              {% else %}
+                <div class="item-image">📦</div>
+              {% endif %}
+
+              <!-- Item Content -->
+              <div class="item-content">
+                <div class="item-header">
+                  <h3 class="item-title">{{ item.name }}</h3>
+                  <div class="item-number">
+                    🏷️ {{ item.item_number }}
+                  </div>
+                </div>
+
+                <p class="item-description">{{ item.description }}</p>
+
+                {% if item.user_id == current_user.id %}
+                  <div class="item-status">
+                    {% if item.is_approved %}
+                      <span class="status-badge status-approved">
+                        ✅ Approved
+                      </span>
+                    {% else %}
+                      <span class="status-badge status-pending">
+                        ⏳ Pending Review
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <div class="item-actions">
+                    {% if not item.is_approved %}
+                      <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-edit">
+                        ✏️ Edit Item
+                      </a>
+                    {% else %}
+                      <button class="btn btn-locked" disabled>
+                        🔒 Item Locked
+                      </button>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if items.pages > 1 %}
+          <div class="pagination-container">
+            {% if items.has_prev %}
+              <a href="{{ url_for('user_items', page=items.prev_num) }}" class="pagination-btn">
+                ← Previous
+              </a>
+            {% endif %}
+            
+            <span class="pagination-info">
+              Page {{ items.page }} of {{ items.pages }}
+            </span>
+            
+            {% if items.has_next %}
+              <a href="{{ url_for('user_items', page=items.next_num) }}" class="pagination-btn">
+                Next →
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <h3 class="empty-title">No Items Yet</h3>
+          <p class="empty-description">You haven't uploaded any items yet. Start by adding your first item to begin trading!</p>
+          <a href="{{ url_for('upload_item') }}" class="btn-upload">
+            ➕ Upload Your First Item
+          </a>
+        </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}
