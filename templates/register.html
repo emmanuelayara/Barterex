@@ -9,7 +9,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding-top: 80px;
+            /* Fixed navbar positioning issue */
         }
 
         .main-content {
@@ -18,6 +18,8 @@
             justify-content: center;
             min-height: calc(100vh - 80px);
             padding: 40px 20px;
+            /* Add top margin to push content below navbar */
+            margin-top: 80px;
         }
 
         .registration-container {
@@ -110,6 +112,21 @@
 
         .form-input::placeholder {
             color: #a0aec0;
+        }
+
+        /* Style for Flask form errors */
+        .flask-error {
+            color: #e53e3e;
+            font-size: 13px;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        .flask-error::before {
+            content: "⚠";
+            margin-right: 6px;
         }
 
         .error-message {
@@ -354,6 +371,7 @@
 
             .main-content {
                 padding: 20px 10px;
+                margin-top: 60px; /* Reduced margin for mobile */
             }
 
             .navbar-content {
@@ -381,67 +399,50 @@
             </div>
 
             <form method="POST" id="registrationForm">
-                <!-- Hidden tag placeholder -->
-                <input type="hidden" name="csrf_token" value="">
+                {{ form.hidden_tag() }}
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label" for="email">Email Address</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            class="form-input" 
-                            placeholder="Enter your email"
-                            required
-                        >
+                        <label class="form-label">{{ form.email.label }}</label>
+                        {{ form.email(class="form-input", placeholder="Enter your email", id="email") }}
+                        {% for error in form.email.errors %}
+                            <div class="flask-error">{{ error }}</div>
+                        {% endfor %}
                         <div class="error-message" style="display: none;"></div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="username">Username</label>
-                        <input 
-                            type="text" 
-                            id="username" 
-                            name="username" 
-                            class="form-input" 
-                            placeholder="Choose a username"
-                            required
-                        >
+                        <label class="form-label">{{ form.username.label }}</label>
+                        {{ form.username(class="form-input", placeholder="Choose a username", id="username") }}
+                        {% for error in form.username.errors %}
+                            <div class="flask-error">{{ error }}</div>
+                        {% endfor %}
                         <div class="error-message" style="display: none;"></div>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label" for="password">Password</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            class="form-input" 
-                            placeholder="Create a strong password"
-                            required
-                        >
+                        <label class="form-label">{{ form.password.label }}</label>
+                        {{ form.password(class="form-input", placeholder="Create a strong password", id="password") }}
                         <div class="password-strength" id="passwordStrength">
                             <div class="strength-bar">
                                 <div class="strength-fill"></div>
                             </div>
                             <div class="strength-text">Password strength</div>
                         </div>
+                        {% for error in form.password.errors %}
+                            <div class="flask-error">{{ error }}</div>
+                        {% endfor %}
                         <div class="error-message" style="display: none;"></div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="confirm_password">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            id="confirm_password" 
-                            name="confirm_password" 
-                            class="form-input" 
-                            placeholder="Confirm your password"
-                            required
-                        >
+                        <label class="form-label">{{ form.confirm_password.label }}</label>
+                        {{ form.confirm_password(class="form-input", placeholder="Confirm your password", id="confirm_password") }}
+                        {% for error in form.confirm_password.errors %}
+                            <div class="flask-error">{{ error }}</div>
+                        {% endfor %}
                         <div class="error-message" style="display: none;"></div>
                     </div>
                 </div>
@@ -453,13 +454,11 @@
                     </label>
                 </div>
 
-                <button type="submit" class="submit-button" id="submitBtn">
-                    Create Account
-                </button>
+                {{ form.submit(class="submit-button", id="submitBtn") }}
 
                 <div class="form-footer">
                     <p>Already have an account?</p>
-                    <a href="/login" class="login-link">Sign in here</a>
+                    <a href="{{ url_for('login') }}" class="login-link">Sign in here</a>
                 </div>
             </form>
         </div>
@@ -471,7 +470,7 @@
         const passwordStrength = document.getElementById('passwordStrength');
         const confirmPasswordInput = document.getElementById('confirm_password');
         const termsCheckbox = document.getElementById('termsCheckbox');
-        const submitBtn = document.getElementById('submitBtn');
+        const submitBtn = document.querySelector('input[type="submit"], button[type="submit"]');
         const form = document.getElementById('registrationForm');
 
         let termsAccepted = false;
@@ -523,7 +522,7 @@
         confirmPasswordInput.addEventListener('input', function() {
             const password = passwordInput.value;
             const confirmPassword = this.value;
-            const errorDiv = this.nextElementSibling;
+            const errorDiv = this.parentNode.querySelector('.error-message');
 
             if (confirmPassword && password !== confirmPassword) {
                 errorDiv.textContent = 'Passwords do not match';
@@ -548,10 +547,10 @@
 
         // Update submit button state
         function updateSubmitButton() {
-            if (termsAccepted) {
+            if (termsAccepted && submitBtn) {
                 submitBtn.style.opacity = '1';
                 submitBtn.style.pointerEvents = 'auto';
-            } else {
+            } else if (submitBtn) {
                 submitBtn.style.opacity = '0.5';
                 submitBtn.style.pointerEvents = 'none';
             }
@@ -567,7 +566,13 @@
 
             // Add loading state
             form.classList.add('loading');
-            submitBtn.textContent = 'Creating Account...';
+            if (submitBtn) {
+                if (submitBtn.tagName === 'INPUT') {
+                    submitBtn.value = 'Creating Account...';
+                } else {
+                    submitBtn.textContent = 'Creating Account...';
+                }
+            }
         });
 
         // Real-time validation for all inputs
@@ -575,13 +580,20 @@
             input.addEventListener('blur', function() {
                 validateField(this);
             });
+
+            input.addEventListener('input', function() {
+                // Clear client-side error state when user starts typing
+                const errorDiv = this.parentNode.querySelector('.error-message');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                    this.style.borderColor = '#e2e8f0';
+                }
+            });
         });
 
         function validateField(field) {
             const value = field.value.trim();
-            const errorDiv = field.nextElementSibling.classList.contains('error-message') 
-                ? field.nextElementSibling 
-                : field.parentNode.querySelector('.error-message');
+            const errorDiv = field.parentNode.querySelector('.error-message');
 
             let isValid = true;
             let errorMessage = '';
@@ -617,11 +629,15 @@
             }
 
             if (isValid) {
-                errorDiv.style.display = 'none';
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
                 field.style.borderColor = '#e2e8f0';
             } else {
-                errorDiv.textContent = errorMessage;
-                errorDiv.style.display = 'block';
+                if (errorDiv) {
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.style.display = 'block';
+                }
                 field.style.borderColor = '#e53e3e';
             }
         }
