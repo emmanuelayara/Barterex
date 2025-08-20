@@ -5,118 +5,387 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - {% block title %}{% endblock %}</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
-
-  <!-- Bootstrap CSS (Optional: if you're using Bootstrap) -->
+  
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fa;
+    :root {
+      --primary-blue: #054e97;
+      --accent-orange: #ff7a00;
+      --light-gray: #f8f9fa;
+      --border-gray: #dee2e6;
+      --text-muted: #6c757d;
+      --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-gray);
+      margin: 0;
+    }
+
+    /* Enhanced Admin Navbar */
     .admin-navbar {
-      background-color: #054e97;
-      padding: 15px 30px;
-      color: white;
+      background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
+      padding: 0;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-navbar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%23ffffff" opacity="0.05"/><circle cx="75" cy="75" r="1" fill="%23ffffff" opacity="0.05"/><circle cx="75" cy="25" r="1" fill="%23ffffff" opacity="0.03"/><circle cx="25" cy="75" r="1" fill="%23ffffff" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      pointer-events: none;
+    }
+
+    .navbar-container {
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-
-    .admin-navbar h1 {
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-
-    .admin-nav-links a {
-      color: white;
-      text-decoration: none;
-      margin-left: 20px;
-      font-weight: 500;
-      transition: 0.3s;
-    }
-
-    .admin-nav-links a:hover {
-      color: #ff7a00;
-    }
-
-    .admin-header-section {
-      background-color: #fff;
-      padding: 20px 30px;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .admin-content {
-      padding: 30px;
-    }
-
-    .footer {
-      background-color: #054e97;
-      color: white;
-      text-align: center;
-      padding: 10px;
-      font-size: 0.9rem;
+      padding: 1rem 2rem;
       position: relative;
-      bottom: 0;
-      width: 100%;
-      margin-top: 40px;
+      z-index: 2;
     }
 
-    .count-badge {
-      background: #fff;
-      color: #054e97;
-      border-radius: 50px;
-      padding: 2px 8px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      margin-left: 6px;
-    }
-
-    .admin-nav-btns a {
-      text-decoration: none;
-      padding: 10px 16px;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      font-weight: 500;
+    /* Logo/Brand Section */
+    .admin-brand {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 12px;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
     }
 
+    .admin-brand:hover {
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .brand-icon {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 8px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .brand-text h1 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    /* Navigation Links */
+    .admin-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-item {
+      position: relative;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      position: relative;
+      backdrop-filter: blur(10px);
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover {
+      color: white;
+      background: rgba(255, 122, 0, 0.2);
+      border-color: rgba(255, 122, 0, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+    }
+
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+
+    .nav-link i {
+      font-size: 1rem;
+    }
+
+    /* Count badges for notifications */
+    .count-badge {
+      background: var(--accent-orange);
+      color: white;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-left: 4px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Mobile Menu Toggle */
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-menu-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Header Section */
+    .admin-header-section {
+      background: white;
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border-gray);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Content Area */
+    .admin-content {
+      padding: 32px;
+      min-height: calc(100vh - 200px);
+    }
+
+    /* Enhanced Footer */
+    .footer {
+      background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+      margin-top: 40px;
+      border-top: 3px solid var(--accent-orange);
+    }
+
+    /* Alert Enhancements */
+    .alert {
+      border: none;
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      border-left: 4px solid;
+    }
+
+    .alert-success {
+      background-color: #d1f2eb;
+      border-left-color: #28a745;
+    }
+
+    .alert-warning {
+      background-color: #fff3cd;
+      border-left-color: var(--accent-orange);
+    }
+
+    .alert-danger {
+      background-color: #f8d7da;
+      border-left-color: #dc3545;
+    }
+
+    .alert-info {
+      background-color: #cce7ff;
+      border-left-color: var(--primary-blue);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .navbar-container {
+        padding: 1rem;
+      }
+
+      .mobile-menu-toggle {
+        display: block;
+      }
+
+      .admin-nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--primary-blue);
+        flex-direction: column;
+        gap: 0;
+        box-shadow: var(--shadow-md);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .admin-nav-links.show {
+        display: flex;
+      }
+
+      .nav-link {
+        width: 100%;
+        justify-content: flex-start;
+        border-radius: 0;
+        padding: 16px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .nav-link:hover {
+        transform: none;
+        background: rgba(255, 122, 0, 0.2);
+      }
+
+      .brand-text h1 {
+        font-size: 1.2rem;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .admin-content {
+        padding: 20px;
+      }
+    }
+
+    /* Loading animation for better UX */
+    .nav-link.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .nav-link.loading::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      margin-left: 8px;
+      border: 2px solid transparent;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Better button styles for consistency */
     .btn-outline-warning:hover,
     .btn-outline-success:hover,
     .btn-outline-danger:hover {
       color: #fff !important;
     }
   </style>
-
+  
   {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-
-  <!-- ✅ Top Navbar -->
+  <!-- Enhanced Top Navbar -->
   <nav class="admin-navbar">
-    <h1><a href="{{ url_for('admin_dashboard') }}">🛠 Admin Panel</a></h1>
-    <div class="admin-nav-links">
+    <div class="navbar-container">
+      <!-- Brand/Logo Section -->
+      <a href="{{ url_for('admin_dashboard') }}" class="admin-brand">
+        <div class="brand-icon">
+          <i class="bi bi-gear-fill"></i>
+        </div>
+        <div class="brand-text">
+          <h1>Admin Panel</h1>
+          <p class="brand-subtitle">Barter Express</p>
+        </div>
+      </a>
+
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <!-- Navigation Links -->
       {% if current_user.is_admin %}
-      <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-      <a href="{{ url_for('approve_items') }}">Approve Items</a>
-      <a href="{{ url_for('manage_users') }}">Manage Users</a>
-      <a href="{{ url_for('logout') }}">Logout</a>
+      <div class="admin-nav-links" id="navLinks">
+        <div class="nav-item">
+          <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+            <i class="bi bi-speedometer2"></i>
+            Dashboard
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="{{ url_for('approve_items') }}" class="nav-link">
+            <i class="bi bi-check-circle"></i>
+            Approve Items
+            <!-- Add notification badge if needed -->
+            <!-- <span class="count-badge">3</span> -->
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="{{ url_for('manage_users') }}" class="nav-link">
+            <i class="bi bi-people"></i>
+            Manage Users
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="{{ url_for('logout') }}" class="nav-link" onclick="handleLogout(event)">
+            <i class="bi bi-box-arrow-right"></i>
+            Logout
+          </a>
+        </div>
+      </div>
       {% endif %}
     </div>
   </nav>
 
-  <!-- ✅ Page Specific Content -->
+  <!-- Page Specific Content -->
   <div class="admin-content">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="mb-4">
           {% for category, message in messages %}
             <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              <strong>
+                {% if category == 'success' %}
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                {% elif category == 'warning' %}
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {% elif category == 'danger' %}
+                  <i class="bi bi-x-circle-fill me-2"></i>
+                {% else %}
+                  <i class="bi bi-info-circle-fill me-2"></i>
+                {% endif %}
+              </strong>
               {{ message }}
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -128,13 +397,70 @@
     {% block content %}{% endblock %}
   </div>
 
-  <!-- ✅ Footer -->
+  <!-- Enhanced Footer -->
   <footer class="footer">
-    &copy; {{ current_year if current_year else '2025' }} Barter Express | All rights reserved.
+    <div class="container">
+      <p class="mb-0">
+        &copy; {{ current_year if current_year else '2025' }} Barter Express | All rights reserved.
+      </p>
+    </div>
   </footer>
 
-  <!-- Bootstrap JS (Optional) -->
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Mobile menu toggle functionality
+    function toggleMobileMenu() {
+      const navLinks = document.getElementById('navLinks');
+      const toggleBtn = document.querySelector('.mobile-menu-toggle i');
+      
+      navLinks.classList.toggle('show');
+      toggleBtn.classList.toggle('bi-list');
+      toggleBtn.classList.toggle('bi-x');
+    }
+
+    // Handle logout with confirmation and loading state
+    function handleLogout(event) {
+      event.preventDefault();
+      const logoutLink = event.currentTarget;
+      
+      if (confirm('Are you sure you want to logout?')) {
+        logoutLink.classList.add('loading');
+        window.location.href = logoutLink.href;
+      }
+    }
+
+    // Add active class to current page navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      const currentPath = window.location.pathname;
+      const navLinks = document.querySelectorAll('.nav-link');
+      
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const navLinks = document.getElementById('navLinks');
+      const toggleBtn = document.querySelector('.mobile-menu-toggle');
+      
+      if (navLinks && navLinks.classList.contains('show')) {
+        if (!event.target.closest('.admin-navbar')) {
+          navLinks.classList.remove('show');
+          document.querySelector('.mobile-menu-toggle i').classList.add('bi-list');
+          document.querySelector('.mobile-menu-toggle i').classList.remove('bi-x');
+        }
+      }
+    });
+
+    // Smooth scroll behavior for better UX
+    document.documentElement.style.scrollBehavior = 'smooth';
+  </script>
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>
