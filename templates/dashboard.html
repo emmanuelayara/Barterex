@@ -24,6 +24,85 @@
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
   }
 
+  /* Mobile menu toggle button */
+  .nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    padding: 15px 0;
+    cursor: pointer;
+    font-size: 18px;
+    color: #4a5568;
+    width: 100%;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .nav-toggle:hover {
+    color: #667eea;
+  }
+
+  /* Update your existing mobile media query */
+  @media (max-width: 768px) {
+    .nav-toggle {
+      display: block;
+    }
+
+    .nav-menu {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      padding: 0 0 15px 0;
+      min-height: auto;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-menu.show {
+      display: flex;
+      opacity: 1;
+      max-height: 400px;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .nav-item {
+      width: 100%;
+      margin: 4px 0;
+    }
+
+    .nav-link {
+      width: 100%;
+      justify-content: center;
+      margin: 0;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    .nav-link:hover {
+      transform: none;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    }
+
+    .nav-link.active:hover {
+      transform: none;
+      box-shadow: 0 2px 15px rgba(102, 126, 234, 0.3);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .nav-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -364,37 +443,42 @@
 
 <div class="dashboard-container">
   <!-- Top Navigation -->
-  <nav class="top-nav">
-    <div class="nav-container">
-      <ul class="nav-menu">
-        <li class="nav-item">
-          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
-            📦 My Items
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
-            🔄 My Trades
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('credit_history') }}" class="nav-link {% if request.endpoint == 'credit_history' %}active{% endif %}">
-            💳 Credit History
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
-            🔔 Notifications
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
-            👤 Profile
-          </a>
-        </li>
-      </ul>
-    </div>
-  </nav>
+<nav class="top-nav">
+  <div class="nav-container">
+    <!-- Mobile menu toggle button (only visible on mobile) -->
+    <button class="nav-toggle" onclick="toggleNav()">
+      <span id="toggle-text">☰ Menu</span>
+    </button>
+    
+    <ul class="nav-menu" id="navMenu">
+      <li class="nav-item">
+        <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
+          📦 My Items
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
+          🔄 My Trades
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('credit_history') }}" class="nav-link {% if request.endpoint == 'credit_history' %}active{% endif %}">
+          💳 Credit History
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
+          🔔 Notifications
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
+          👤 Profile
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
 
   <!-- Main Content -->
   <div class="main-content">
@@ -466,4 +550,43 @@
     </div>
   </div>
 </div>
+
+<script>
+  function toggleNav() {
+    const navMenu = document.getElementById('navMenu');
+    const toggleText = document.getElementById('toggle-text');
+    
+    navMenu.classList.toggle('show');
+    
+    if (navMenu.classList.contains('show')) {
+      toggleText.textContent = '✕ Close';
+    } else {
+      toggleText.textContent = '☰ Menu';
+    }
+  }
+
+  // Close menu when clicking on a nav link (mobile)
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        const navMenu = document.getElementById('navMenu');
+        const toggleText = document.getElementById('toggle-text');
+        navMenu.classList.remove('show');
+        toggleText.textContent = '☰ Menu';
+      }
+    });
+  });
+
+  // Close menu when window is resized to desktop
+  window.addEventListener('resize', () => {
+    const navMenu = document.getElementById('navMenu');
+    const toggleText = document.getElementById('toggle-text');
+    
+    if (window.innerWidth > 768) {
+      navMenu.classList.remove('show');
+      toggleText.textContent = '☰ Menu';
+    }
+  });
+</script>
+
 {% endblock %}
