@@ -4,12 +4,24 @@
 {% block content %}
 <style>
   :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --orange-gradient: linear-gradient(135deg, #ff7b00 0%, #ff9500 100%);
+    /* Brand Colors */
+    --primary-color: #667eea;
+    --primary-light: rgba(102, 126, 234, 0.1);
+    --primary-medium: rgba(102, 126, 234, 0.3);
+    --primary-strong: rgba(102, 126, 234, 0.8);
+    --accent-color: #ff7a00;
+    --accent-light: rgba(255, 122, 0, 0.1);
+    --accent-medium: rgba(255, 122, 0, 0.3);
+    --accent-strong: rgba(255, 122, 0, 0.9);
+    
+    /* Gradients with brand colors */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+    --accent-gradient: linear-gradient(135deg, #ff7a00 0%, #ff8c00 100%);
+    --hero-gradient: linear-gradient(135deg, #667eea 0%, #ff7a00 100%);
     --glass-bg: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
+    
+    /* Text and surfaces */
     --text-primary: #1a1a1a;
     --text-secondary: #6b7280;
     --surface: #ffffff;
@@ -18,10 +30,10 @@
     --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
   }
 
-  /* Page background with gradient */
+  /* Page background with brand gradient */
   .marketplace-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, var(--primary-light) 0%, rgba(255, 255, 255, 0.95) 100%);
     padding: 40px 0;
   }
 
@@ -32,7 +44,7 @@
     padding: 0 40px;
   }
 
-  /* Hero header section */
+  /* Hero header section with brand colors */
   .marketplace-header {
     text-align: center;
     margin-bottom: 60px;
@@ -42,6 +54,7 @@
     box-shadow: var(--shadow-soft);
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--primary-light);
   }
 
   .marketplace-header::before {
@@ -51,7 +64,7 @@
     left: 0;
     width: 100%;
     height: 4px;
-    background: var(--orange-gradient);
+    background: var(--accent-gradient);
   }
 
   .marketplace-header h1 {
@@ -72,14 +85,14 @@
     margin: 0 auto;
   }
 
-  /* Modern filter section */
+  /* Modern filter section with brand accents */
   .filter-section {
     background: var(--surface);
     border-radius: 24px;
     padding: 40px;
     margin-bottom: 40px;
     box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--primary-light);
   }
 
   .filter-header {
@@ -100,13 +113,14 @@
   .filter-icon {
     width: 40px;
     height: 40px;
-    background: var(--accent-gradient);
+    background: var(--primary-gradient);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 1.2rem;
+    box-shadow: 0 4px 15px var(--primary-medium);
   }
 
   .filter-form {
@@ -142,13 +156,13 @@
 
   .form-input:focus, .form-select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px var(--primary-light);
     transform: translateY(-2px);
   }
 
   .filter-btn {
-    background: var(--orange-gradient);
+    background: var(--accent-gradient);
     color: white;
     padding: 15px 30px;
     border: none;
@@ -157,17 +171,17 @@
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
+    box-shadow: 0 8px 32px var(--accent-medium);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
   .filter-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(255, 123, 0, 0.4);
+    box-shadow: 0 12px 40px var(--accent-medium);
   }
 
-  /* Results info */
+  /* Results info with brand styling */
   .results-info {
     display: flex;
     justify-content: space-between;
@@ -177,6 +191,7 @@
     background: var(--surface);
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--primary-light);
   }
 
   .results-count {
@@ -187,7 +202,7 @@
   .view-toggle {
     display: flex;
     gap: 10px;
-    background: #f3f4f6;
+    background: var(--primary-light);
     border-radius: 12px;
     padding: 4px;
   }
@@ -204,8 +219,9 @@
 
   .view-btn.active {
     background: var(--surface);
-    color: var(--text-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px var(--primary-medium);
+    font-weight: 600;
   }
 
   /* Modern grid layout */
@@ -221,20 +237,21 @@
     gap: 20px;
   }
 
-  /* Modern item cards */
+  /* Modern item cards with brand colors */
   .marketplace-item {
     background: var(--surface);
     border-radius: 24px;
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--primary-light);
     position: relative;
   }
 
   .marketplace-item:hover {
     transform: translateY(-10px);
-    box-shadow: var(--shadow-hover);
+    box-shadow: 0 20px 60px var(--primary-medium);
+    border-color: var(--primary-medium);
   }
 
   .item-image-container {
@@ -258,7 +275,7 @@
     position: absolute;
     top: 15px;
     right: 15px;
-    background: var(--orange-gradient);
+    background: var(--accent-gradient);
     color: white;
     padding: 6px 12px;
     border-radius: 20px;
@@ -266,6 +283,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px var(--accent-medium);
   }
 
   .item-content {
@@ -307,7 +325,7 @@
   .item-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--primary-color);
     margin-bottom: 20px;
   }
 
@@ -331,18 +349,19 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    box-shadow: 0 4px 15px var(--primary-medium);
   }
 
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 25px var(--primary-medium);
   }
 
   .btn-secondary {
     width: 48px;
     height: 48px;
-    background: #f3f4f6;
-    border: none;
+    background: var(--primary-light);
+    border: 1px solid var(--primary-medium);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -353,12 +372,14 @@
   }
 
   .btn-secondary:hover {
-    background: var(--orange-gradient);
+    background: var(--accent-gradient);
+    border-color: var(--accent-color);
     color: white;
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--accent-medium);
   }
 
-  /* Empty state */
+  /* Empty state with brand colors */
   .empty-state {
     grid-column: 1 / -1;
     text-align: center;
@@ -366,19 +387,21 @@
     background: var(--surface);
     border-radius: 24px;
     box-shadow: var(--shadow-soft);
+    border: 1px solid var(--primary-light);
   }
 
   .empty-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    background: var(--primary-light);
+    border: 2px solid var(--primary-medium);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 20px;
     font-size: 2rem;
-    color: var(--text-secondary);
+    color: var(--primary-color);
   }
 
   .empty-title {
@@ -395,7 +418,7 @@
     margin-bottom: 30px;
   }
 
-  /* Modern pagination */
+  /* Modern pagination with brand colors */
   .pagination {
     display: flex;
     justify-content: center;
@@ -406,11 +429,12 @@
     background: var(--surface);
     border-radius: 20px;
     box-shadow: var(--shadow-soft);
+    border: 1px solid var(--primary-light);
   }
 
   .pagination-btn {
     padding: 12px 20px;
-    border: 2px solid #e5e7eb;
+    border: 2px solid var(--primary-light);
     background: var(--surface);
     color: var(--text-secondary);
     text-decoration: none;
@@ -423,15 +447,17 @@
   }
 
   .pagination-btn:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--primary-light);
   }
 
   .pagination-btn.active {
     background: var(--primary-gradient);
     border-color: transparent;
     color: white;
+    box-shadow: 0 4px 15px var(--primary-medium);
   }
 
   .pagination-info {
@@ -440,7 +466,7 @@
     color: var(--text-primary);
   }
 
-  /* Mobile responsiveness */
+  /* Mobile responsiveness - Fixed to show 2 columns */
   @media (max-width: 768px) {
     .marketplace-container {
       padding: 0 20px;
@@ -464,14 +490,15 @@
       gap: 20px;
     }
 
+    /* Fixed: Show 2 items side by side on mobile */
     .marketplace-grid {
       grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      gap: 15px;
     }
 
     .marketplace-grid.compact {
       grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
+      gap: 12px;
     }
 
     .marketplace-item {
@@ -479,26 +506,54 @@
     }
 
     .item-image-container {
-      height: 150px;
+      height: 140px;
     }
 
     .item-content {
-      padding: 20px 15px;
+      padding: 15px 12px;
     }
 
     .item-title {
-      font-size: 1.1rem;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .item-value {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+    }
+
+    .item-actions {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      padding: 10px 15px;
+      font-size: 0.9rem;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      height: 40px;
     }
 
     .results-info {
       flex-direction: column;
       gap: 15px;
       text-align: center;
+      padding: 15px 20px;
     }
 
     .pagination {
       flex-wrap: wrap;
       gap: 10px;
+      padding: 20px 15px;
+    }
+
+    .pagination-btn {
+      padding: 10px 15px;
+      font-size: 0.9rem;
     }
   }
 
@@ -519,35 +574,61 @@
       padding: 20px 15px;
     }
 
+    /* Keep 2 columns even on very small screens */
     .marketplace-grid {
-      grid-template-columns: 1fr;
-      gap: 15px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
 
     .marketplace-grid.compact {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
 
     .item-image-container {
-      height: 180px;
+      height: 120px;
     }
 
-    .item-actions {
-      flex-direction: column;
+    .item-content {
+      padding: 12px 8px;
+    }
+
+    .item-title {
+      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+
+    .item-details {
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .item-detail {
+      font-size: 0.8rem;
+    }
+
+    .item-value {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+
+    .btn-primary {
+      padding: 8px 12px;
+      font-size: 0.8rem;
     }
 
     .btn-secondary {
-      width: 100%;
-      height: 48px;
+      height: 36px;
     }
   }
 
-  /* Loading animation */
+  /* Loading animation with brand colors */
   .loading-card {
     background: var(--surface);
     border-radius: 24px;
     padding: 25px;
     box-shadow: var(--shadow-soft);
+    border: 1px solid var(--primary-light);
     position: relative;
     overflow: hidden;
   }
@@ -559,7 +640,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
     animation: shimmer 2s infinite;
   }
 
@@ -569,7 +650,7 @@
   }
 
   .loading-placeholder {
-    background: #e5e7eb;
+    background: var(--primary-light);
     border-radius: 8px;
     animation: pulse 2s infinite;
   }
@@ -580,11 +661,12 @@
   }
 </style>
 
+<div class="marketplace-page">
   <div class="marketplace-container">
     <!-- Modern Header -->
     <div class="marketplace-header">
-      <h1>🛒 Explore Marketplace</h1>
-      <p>Discover amazing items from our verified community. Trade smart, trade secure.</p>
+      <h1>🛒 Explore the Marketplace</h1>
+      <p>Discover amazing items from our community.</p>
     </div>
 
     <!-- Modern Filter Section -->
@@ -660,7 +742,7 @@
             {% if item.image_url %}
               <img src="{{ item.image_url }}" alt="{{ item.name }}" />
             {% else %}
-              <div style="height: 100%; background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%); display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 3rem;">📷</div>
+              <div style="height: 100%; background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%); display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-size: 3rem;">📷</div>
             {% endif %}
             <div class="item-badge">{{ item.condition }}</div>
           </div>
@@ -673,10 +755,6 @@
                 <div class="detail-icon">⭐</div>
                 <span>{{ item.condition }}</span>
               </div>
-              <div class="item-detail">
-                <div class="detail-icon">📂</div>
-                <span>{{ item.category or 'General' }}</span>
-              </div>
             </div>
             
             <div class="item-value">₦{{ item.value }}</div>
@@ -685,9 +763,6 @@
               <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary">
                 👁️ View Details
               </a>
-              <button class="btn-secondary" title="Add to wishlist">
-                ❤️
-              </button>
             </div>
           </div>
         </div>
