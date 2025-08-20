@@ -2,155 +2,1133 @@
 {% block content %}
 
 <div class="container py-5">
-    <h1 class="mb-4 text-center fw-bold" style="color: #2c3e50;">Manage Users</h1>
+    <!-- Enhanced Header Section -->
+    <div class="header-section text-center mb-5">
+        <div class="header-icon mb-3">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <h1 class="display-5 fw-bold mb-3" style="color: #054e97;">User Management</h1>
+        <p class="lead text-muted">Manage user accounts, permissions, and account status</p>
+        
+        <!-- Quick Stats -->
+        <div class="row g-3 mt-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ users|length }}</h3>
+                        <p class="stat-label">Total Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ (users|length) - (banned_users|length) }}</h3>
+                        <p class="stat-label">Active Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-danger">
+                        <i class="bi bi-ban"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">{{ banned_users|length }}</h3>
+                        <p class="stat-label">Banned Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning">
+                        <i class="bi bi-currency-exchange"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">₦{{ users|sum(attribute='credits') }}</h3>
+                        <p class="stat-label">Total Credits</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section mb-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="search-box">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" id="userSearch" class="form-control ps-5" 
+                                   placeholder="Search users by username, email, or ID...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="filter-buttons d-flex gap-2 justify-content-md-end justify-content-start mt-3 mt-md-0">
+                            <button class="btn btn-filter active" data-filter="all">
+                                <i class="bi bi-grid-3x3-gap me-1"></i>All Users
+                            </button>
+                            <button class="btn btn-filter" data-filter="active">
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            </button>
+                            <button class="btn btn-filter" data-filter="banned">
+                                <i class="bi bi-ban me-1"></i>Banned
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- All Users Section -->
-    <div class="card shadow-lg mb-5">
-        <div class="card-header bg-primary text-white fw-bold fs-5">
-            All Users
+    <div class="users-section mb-5" id="allUsersSection">
+        <div class="section-header mb-4">
+            <h2 class="section-title">
+                <i class="bi bi-people me-2"></i>All Users
+                <span class="section-badge">{{ users|length }}</span>
+            </h2>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered align-middle text-center mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Credit Balance</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr>
-                            <td>{{ user.id }}</td>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>₦{{ user.credits }}</td>
-                            <td>
-                                {% if user.is_banned %}
-                                    <span class="badge bg-danger">Banned</span>
-                                {% else %}
-                                    <span class="badge bg-success">Active</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <!-- View Button -->
-                                <a href="{{ url_for('view_user', user_id=user.id) }}" 
-                                   class="btn btn-info btn-sm me-1 action-btn">
-                                   View
-                                </a>
+        
+        <div class="enhanced-card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">User Directory</h5>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-outline-primary" onclick="exportUsers()">
+                            <i class="bi bi-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-container">
+                    <table class="table table-hover align-middle mb-0" id="usersTable">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="sortable" data-sort="id">
+                                    <div class="th-content">
+                                        <i class="bi bi-hash me-1"></i>ID
+                                        <i class="bi bi-chevron-expand sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th class="sortable" data-sort="username">
+                                    <div class="th-content">
+                                        <i class="bi bi-person me-1"></i>Username
+                                        <i class="bi bi-chevron-expand sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th class="sortable" data-sort="email">
+                                    <div class="th-content">
+                                        <i class="bi bi-envelope me-1"></i>Email
+                                        <i class="bi bi-chevron-expand sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th class="sortable" data-sort="credits">
+                                    <div class="th-content">
+                                        <i class="bi bi-currency-exchange me-1"></i>Credits
+                                        <i class="bi bi-chevron-expand sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="bi bi-shield-check me-1"></i>Status
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        <i class="bi bi-gear me-1"></i>Actions
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="user-row" data-status="{{ 'banned' if user.is_banned else 'active' }}">
+                                <td>
+                                    <span class="user-id">#{{ user.id }}</span>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            {{ user.username[0].upper() }}
+                                        </div>
+                                        <div class="user-details">
+                                            <div class="user-name">{{ user.username }}</div>
+                                            <div class="user-meta">ID: {{ user.id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="email-container">
+                                        <i class="bi bi-envelope-fill me-2 text-muted"></i>
+                                        <span class="user-email">{{ user.email }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="credit-display">
+                                        <i class="bi bi-currency-exchange me-1 text-warning"></i>
+                                        <span class="credit-amount">₦{{ "{:,}".format(user.credits) }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if user.is_banned %}
+                                        <span class="status-badge status-banned">
+                                            <i class="bi bi-ban me-1"></i>Banned
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-active">
+                                            <i class="bi bi-check-circle me-1"></i>Active
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <!-- View Button -->
+                                        <button class="action-btn btn-view" 
+                                                onclick="location.href='{{ url_for('view_user', user_id=user.id) }}'"
+                                                data-bs-toggle="tooltip" title="View User">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
 
-                                <!-- Edit Button -->
-                                <a href="{{ url_for('edit_user', user_id=user.id) }}" 
-                                   class="btn btn-warning btn-sm me-1 action-btn">
-                                   Edit
-                                </a>
+                                        <!-- Edit Button -->
+                                        <button class="action-btn btn-edit" 
+                                                onclick="location.href='{{ url_for('edit_user', user_id=user.id) }}'"
+                                                data-bs-toggle="tooltip" title="Edit User">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
 
-                                {% if not user.is_banned %}
-                                    <!-- Ban Button -->
-                                    <button type="button" 
-                                            class="btn btn-danger btn-sm action-btn"
-                                            onclick="toggleBanReason('{{ user.id }}')">
-                                        Ban
-                                    </button>
+                                        {% if not user.is_banned %}
+                                            <!-- Ban Button -->
+                                            <button class="action-btn btn-ban" 
+                                                    onclick="showBanModal('{{ user.id }}', '{{ user.username }}')"
+                                                    data-bs-toggle="tooltip" title="Ban User">
+                                                <i class="bi bi-ban"></i>
+                                            </button>
+                                        {% else %}
+                                            <!-- Unban Button -->
+                                            <button class="action-btn btn-unban" 
+                                                    onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
+                                                    data-bs-toggle="tooltip" title="Unban User">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Hidden Ban Form -->
                                     <form id="ban-form-{{ user.id }}" 
                                           action="{{ url_for('ban_user', user_id=user.id) }}" 
-                                          method="POST" 
-                                          class="mt-2" style="display:none;">
-                                        <div class="input-group input-group-sm">
-                                            <input type="text" name="ban_reason" 
-                                                   placeholder="Enter ban reason" 
-                                                   class="form-control" required>
-                                            <button type="submit" class="btn btn-danger">Confirm</button>
-                                        </div>
+                                          method="POST" style="display:none;">
+                                        <input type="text" name="ban_reason" id="ban-reason-{{ user.id }}">
                                     </form>
-                                {% else %}
-                                    <!-- Unban Button -->
-                                    <form action="{{ url_for('unban_user', user_id=user.id) }}" 
-                                          method="POST" style="display:inline;">
-                                        <button type="submit" class="btn btn-success btn-sm action-btn">
-                                            Unban
-                                        </button>
+
+                                    <!-- Hidden Unban Form -->
+                                    <form id="unban-form-{{ user.id }}" 
+                                          action="{{ url_for('unban_user', user_id=user.id) }}" 
+                                          method="POST" style="display:none;">
                                     </form>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Banned Users Section -->
-    <div class="card shadow-lg">
-        <div class="card-header bg-danger text-white fw-bold fs-5">
-            Banned Users
+    <div class="banned-section" id="bannedUsersSection">
+        <div class="section-header mb-4">
+            <h2 class="section-title text-danger">
+                <i class="bi bi-ban me-2"></i>Banned Users
+                <span class="section-badge bg-danger">{{ banned_users|length }}</span>
+            </h2>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-bordered align-middle text-center mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Ban Reason</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in banned_users %}
-                        <tr>
-                            <td>{{ user.id }}</td>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>{{ user.ban_reason or 'No reason provided' }}</td>
-                            <td>
-                                <a href="{{ url_for('view_user', user_id=user.id) }}" 
-                                   class="btn btn-info btn-sm me-1 action-btn">
-                                   View
-                                </a>
-                                <a href="{{ url_for('edit_user', user_id=user.id) }}" 
-                                   class="btn btn-warning btn-sm me-1 action-btn">
-                                   Edit
-                                </a>
-                                <form action="{{ url_for('unban_user', user_id=user.id) }}" 
-                                      method="POST" style="display:inline;">
-                                    <button type="submit" class="btn btn-success btn-sm action-btn">
-                                        Unban
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        
+        {% if banned_users %}
+        <div class="enhanced-card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Restricted Accounts
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-container">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-header">
+                            <tr>
+                                <th><i class="bi bi-hash me-1"></i>ID</th>
+                                <th><i class="bi bi-person me-1"></i>Username</th>
+                                <th><i class="bi bi-envelope me-1"></i>Email</th>
+                                <th><i class="bi bi-exclamation-circle me-1"></i>Ban Reason</th>
+                                <th><i class="bi bi-gear me-1"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in banned_users %}
+                            <tr class="banned-user-row">
+                                <td><span class="user-id">#{{ user.id }}</span></td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar banned">
+                                            {{ user.username[0].upper() }}
+                                        </div>
+                                        <div class="user-details">
+                                            <div class="user-name">{{ user.username }}</div>
+                                            <div class="user-meta text-danger">Banned Account</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="email-container">
+                                        <i class="bi bi-envelope-fill me-2 text-muted"></i>
+                                        <span class="user-email">{{ user.email }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="ban-reason">
+                                        {% if user.ban_reason %}
+                                            <i class="bi bi-chat-quote me-2 text-danger"></i>
+                                            <span>{{ user.ban_reason }}</span>
+                                        {% else %}
+                                            <span class="text-muted">
+                                                <i class="bi bi-dash-circle me-2"></i>No reason provided
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn btn-view" 
+                                                onclick="location.href='{{ url_for('view_user', user_id=user.id) }}'"
+                                                data-bs-toggle="tooltip" title="View User">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="action-btn btn-edit" 
+                                                onclick="location.href='{{ url_for('edit_user', user_id=user.id) }}'"
+                                                data-bs-toggle="tooltip" title="Edit User">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="action-btn btn-unban" 
+                                                onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
+                                                data-bs-toggle="tooltip" title="Unban User">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <form id="unban-form-banned-{{ user.id }}" 
+                                          action="{{ url_for('unban_user', user_id=user.id) }}" 
+                                          method="POST" style="display:none;">
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h4>No Banned Users</h4>
+            <p class="text-muted">All users are currently in good standing.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Ban Confirmation Modal -->
+<div class="modal fade" id="banModal" tabindex="-1" aria-labelledby="banModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="banModalLabel">
+                    <i class="bi bi-ban me-2"></i>Ban User Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ban-warning mb-3">
+                    <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                    You are about to ban user: <strong id="banUsername"></strong>
+                </div>
+                <div class="mb-3">
+                    <label for="banReasonInput" class="form-label">Ban Reason *</label>
+                    <textarea class="form-control" id="banReasonInput" rows="3" 
+                             placeholder="Please provide a reason for banning this user..." required></textarea>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This action will immediately restrict the user's access to the platform.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmBanBtn">
+                    <i class="bi bi-ban me-1"></i>Ban User
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Button Hover Effect -->
+<!-- Enhanced Styles -->
 <style>
-    .action-btn {
-        transition: all 0.2s ease-in-out;
+    :root {
+        --primary-blue: #054e97;
+        --accent-orange: #ff7a00;
+        --light-gray: #f8f9fa;
+        --border-color: #e2e8f0;
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+        --border-radius: 12px;
+        --transition: all 0.3s ease;
     }
+
+    /* Header Section */
+    .header-section {
+        background: linear-gradient(135deg, rgba(5, 78, 151, 0.05) 0%, rgba(255, 122, 0, 0.05) 100%);
+        border-radius: var(--border-radius);
+        padding: 40px 20px;
+        margin-bottom: 30px;
+    }
+
+    .header-icon i {
+        font-size: 3rem;
+        color: var(--primary-blue);
+        opacity: 0.8;
+    }
+
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        transition: var(--transition);
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+        color: var(--primary-blue);
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    /* Search and Filter Section */
+    .search-filter-section .card {
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        z-index: 3;
+    }
+
+    .search-box .form-control {
+        border-radius: 10px;
+        border: 2px solid var(--border-color);
+        padding: 12px 20px 12px 45px;
+        transition: var(--transition);
+    }
+
+    .search-box .form-control:focus {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 0.2rem rgba(5, 78, 151, 0.25);
+    }
+
+    .btn-filter {
+        border: 2px solid var(--border-color);
+        color: #6c757d;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-weight: 500;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .btn-filter:hover, .btn-filter.active {
+        border-color: var(--primary-blue);
+        color: white;
+        background: var(--primary-blue);
+        transform: translateY(-1px);
+    }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .section-title {
+        color: var(--primary-blue);
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-badge {
+        background: var(--primary-blue);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Enhanced Cards */
+    .enhanced-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .enhanced-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .enhanced-card .card-header {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
+        color: white;
+        padding: 20px;
+        border-bottom: none;
+    }
+
+    .enhanced-card .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .header-actions .btn {
+        border-radius: 8px;
+        font-weight: 500;
+    }
+
+    /* Table Enhancements */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .table-header th {
+        background: #f8f9fa;
+        border: none;
+        padding: 18px 15px;
+        font-weight: 600;
+        color: var(--primary-blue);
+        white-space: nowrap;
+    }
+
+    .th-content {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .sortable {
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .sortable:hover {
+        background: #e9ecef;
+    }
+
+    .sort-icon {
+        opacity: 0.5;
+        font-size: 0.8rem;
+        transition: var(--transition);
+    }
+
+    .sortable:hover .sort-icon {
+        opacity: 1;
+    }
+
+    /* User Info */
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-orange) 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .user-avatar.banned {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: var(--primary-blue);
+    }
+
+    .user-meta {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .user-id {
+        font-family: 'Courier New', monospace;
+        background: rgba(5, 78, 151, 0.1);
+        color: var(--primary-blue);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .email-container, .credit-display {
+        display: flex;
+        align-items: center;
+    }
+
+    .credit-amount {
+        font-weight: 600;
+        color: var(--primary-blue);
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .status-banned {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.9rem;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, var(--accent-orange) 0%, #e55a00 100%);
+        color: white;
+    }
+
+    .btn-ban {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    .btn-unban {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
     .action-btn:hover {
-        transform: scale(1.05);
-        opacity: 0.9;
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Table Rows */
+    .user-row {
+        transition: var(--transition);
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .user-row:hover {
+        background: rgba(5, 78, 151, 0.02);
+        transform: translateX(2px);
+    }
+
+    .banned-user-row {
+        background: rgba(220, 53, 69, 0.05);
+        border-left: 4px solid #dc3545;
+    }
+
+    /* Ban Reason */
+    .ban-reason {
+        max-width: 200px;
+    }
+
+    .ban-reason span {
+        display: block;
+        font-style: italic;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+
+    .empty-icon i {
+        font-size: 4rem;
+        color: #28a745;
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+
+    .empty-state h4 {
+        color: var(--primary-blue);
+        margin-bottom: 10px;
+    }
+
+    /* Modal Enhancements */
+    .modal-content {
+        border-radius: var(--border-radius);
+        border: none;
+        box-shadow: var(--shadow-md);
+    }
+
+    .modal-header {
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+
+    .ban-warning {
+        background: rgba(255, 193, 7, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #ffc107;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .header-section {
+            padding: 30px 15px;
+        }
+
+        .stat-card {
+            margin-bottom: 15px;
+        }
+
+        .action-buttons {
+            flex-wrap: wrap;
+        }
+
+        .table-container {
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            flex-direction: column;
+            text-align: left;
+            gap: 5px;
+        }
+    }
+
+    /* Hide sections initially for filtering */
+    .users-section.d-none, .banned-section.d-none {
+        display: none !important;
     }
 </style>
 
-<!-- Ban Reason Toggle Script -->
 <script>
-function toggleBanReason(userId) {
-    let form = document.getElementById('ban-form-' + userId);
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
-}
+    // Enhanced JavaScript functionality
+    let currentUserId = null;
+    let currentUsername = null;
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize search functionality
+        initializeSearch();
+        
+        // Initialize filter functionality
+        initializeFilters();
+
+        // Animate stats on load
+        animateStats();
+    });
+
+    // Search functionality
+    function initializeSearch() {
+        const searchInput = document.getElementById('userSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.user-row, .banned-user-row');
+                
+                rows.forEach(row => {
+                    const username = row.querySelector('.user-name')?.textContent.toLowerCase() || '';
+                    const email = row.querySelector('.user-email')?.textContent.toLowerCase() || '';
+                    const userId = row.querySelector('.user-id')?.textContent.toLowerCase() || '';
+                    
+                    if (username.includes(query) || email.includes(query) || userId.includes(query)) {
+                        row.style.display = '';
+                        row.classList.add('search-highlight');
+                        setTimeout(() => row.classList.remove('search-highlight'), 300);
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                updateEmptyStates();
+            });
+        }
+    }
+
+    // Filter functionality
+    function initializeFilters() {
+        const filterButtons = document.querySelectorAll('.btn-filter');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.getAttribute('data-filter');
+                const allUsersSection = document.getElementById('allUsersSection');
+                const bannedUsersSection = document.getElementById('bannedUsersSection');
+                
+                // Show/hide sections based on filter
+                switch(filter) {
+                    case 'all':
+                        allUsersSection.classList.remove('d-none');
+                        bannedUsersSection.classList.remove('d-none');
+                        break;
+                    case 'active':
+                        allUsersSection.classList.remove('d-none');
+                        bannedUsersSection.classList.add('d-none');
+                        // Hide banned users in all users table
+                        document.querySelectorAll('[data-status="banned"]').forEach(row => {
+                            row.style.display = 'none';
+                        });
+                        document.querySelectorAll('[data-status="active"]').forEach(row => {
+                            row.style.display = '';
+                        });
+                        break;
+                    case 'banned':
+                        allUsersSection.classList.add('d-none');
+                        bannedUsersSection.classList.remove('d-none');
+                        break;
+                }
+                
+                updateEmptyStates();
+            });
+        });
+    }
+
+    // Update empty states
+    function updateEmptyStates() {
+        const sections = ['allUsersSection', 'bannedUsersSection'];
+        
+        sections.forEach(sectionId => {
+            const section = document.getElementById(sectionId);
+            if (section && !section.classList.contains('d-none')) {
+                const visibleRows = section.querySelectorAll('tbody tr:not([style*="display: none"])');
+                const table = section.querySelector('.table-container');
+                
+                if (visibleRows.length === 0) {
+                    if (!section.querySelector('.no-results')) {
+                        const noResults = document.createElement('div');
+                        noResults.className = 'no-results text-center p-4';
+                        noResults.innerHTML = `
+                            <i class="bi bi-search text-muted" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0 text-muted">No users match your search criteria</p>
+                        `;
+                        table.appendChild(noResults);
+                    }
+                } else {
+                    const noResults = section.querySelector('.no-results');
+                    if (noResults) {
+                        noResults.remove();
+                    }
+                }
+            }
+        });
+    }
+
+    // Animate stats on load
+    function animateStats() {
+        const statNumbers = document.querySelectorAll('.stat-number');
+        
+        statNumbers.forEach(stat => {
+            const target = parseInt(stat.textContent.replace(/[^\d]/g, ''));
+            let current = 0;
+            const increment = target / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    stat.textContent = stat.textContent.replace(/\d+/, target);
+                    clearInterval(timer);
+                } else {
+                    const currentText = stat.textContent;
+                    stat.textContent = currentText.replace(/\d+/, Math.ceil(current));
+                }
+            }, 30);
+        });
+    }
+
+    // Show ban modal
+    function showBanModal(userId, username) {
+        currentUserId = userId;
+        currentUsername = username;
+        
+        document.getElementById('banUsername').textContent = username;
+        document.getElementById('banReasonInput').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('banModal'));
+        modal.show();
+    }
+
+    // Confirm ban action
+    document.getElementById('confirmBanBtn').addEventListener('click', function() {
+        const reason = document.getElementById('banReasonInput').value.trim();
+        
+        if (!reason) {
+            alert('Please provide a reason for banning this user.');
+            return;
+        }
+        
+        if (currentUserId) {
+            document.getElementById(`ban-reason-${currentUserId}`).value = reason;
+            document.getElementById(`ban-form-${currentUserId}`).submit();
+        }
+    });
+
+    // Unban user with confirmation
+    function unbanUser(userId, username) {
+        if (confirm(`Are you sure you want to unban user "${username}"?`)) {
+            const form = document.getElementById(`unban-form-${userId}`) || 
+                        document.getElementById(`unban-form-banned-${userId}`);
+            if (form) {
+                // Add loading state
+                const button = event.target.closest('.action-btn');
+                button.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                button.classList.add('loading');
+                
+                form.submit();
+            }
+        }
+    }
+
+    // Export users functionality
+    function exportUsers() {
+        const users = [];
+        const rows = document.querySelectorAll('#usersTable tbody tr.user-row');
+        
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cells = row.querySelectorAll('td');
+                users.push({
+                    id: cells[0].textContent.trim(),
+                    username: cells[1].querySelector('.user-name').textContent.trim(),
+                    email: cells[2].querySelector('.user-email').textContent.trim(),
+                    credits: cells[3].querySelector('.credit-amount').textContent.trim(),
+                    status: cells[4].querySelector('.status-badge').textContent.trim()
+                });
+            }
+        });
+        
+        // Create CSV
+        let csv = 'ID,Username,Email,Credits,Status\n';
+        users.forEach(user => {
+            csv += `${user.id},"${user.username}","${user.email}","${user.credits}","${user.status}"\n`;
+        });
+        
+        // Download CSV
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    // Table sorting functionality
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', function() {
+            const table = this.closest('table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const column = this.getAttribute('data-sort');
+            const isAscending = !this.classList.contains('sort-asc');
+            
+            // Clear all sort indicators
+            table.querySelectorAll('.sortable').forEach(h => {
+                h.classList.remove('sort-asc', 'sort-desc');
+                h.querySelector('.sort-icon').className = 'bi bi-chevron-expand sort-icon';
+            });
+            
+            // Set current sort indicator
+            this.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
+            this.querySelector('.sort-icon').className = `bi bi-chevron-${isAscending ? 'up' : 'down'} sort-icon`;
+            
+            // Sort rows
+            rows.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch(column) {
+                    case 'id':
+                        aValue = parseInt(a.querySelector('.user-id').textContent.replace('#', ''));
+                        bValue = parseInt(b.querySelector('.user-id').textContent.replace('#', ''));
+                        break;
+                    case 'username':
+                        aValue = a.querySelector('.user-name').textContent.toLowerCase();
+                        bValue = b.querySelector('.user-name').textContent.toLowerCase();
+                        break;
+                    case 'email':
+                        aValue = a.querySelector('.user-email').textContent.toLowerCase();
+                        bValue = b.querySelector('.user-email').textContent.toLowerCase();
+                        break;
+                    case 'credits':
+                        aValue = parseInt(a.querySelector('.credit-amount').textContent.replace(/[^\d]/g, ''));
+                        bValue = parseInt(b.querySelector('.credit-amount').textContent.replace(/[^\d]/g, ''));
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (typeof aValue === 'string') {
+                    return isAscending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                } else {
+                    return isAscending ? aValue - bValue : bValue - aValue;
+                }
+            });
+            
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+
+    // Add search highlighting
+    const style = document.createElement('style');
+    style.textContent = `
+        .search-highlight {
+            background: rgba(255, 122, 0, 0.2) !important;
+            animation: searchPulse 0.3s ease-in-out;
+        }
+        
+        @keyframes searchPulse {
+            0% { background: rgba(255, 122, 0, 0.4) !important; }
+            100% { background: rgba(255, 122, 0, 0.2) !important; }
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            document.getElementById('userSearch')?.focus();
+        }
+        
+        // ESC to clear search
+        if (e.key === 'Escape') {
+            const searchInput = document.getElementById('userSearch');
+            if (searchInput && searchInput.value) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        }
+    });
 </script>
 
 {% endblock %}

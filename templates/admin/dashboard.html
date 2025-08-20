@@ -5,152 +5,664 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
+    :root {
+      --primary-blue: #054e97;
+      --accent-orange: #ff7a00;
+      --light-gray: #f8f9fa;
+      --bg-color: #f1f5f9;
+      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --card-shadow-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+      --border-radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     body {
-      background-color: #f1f3f6;
-      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
     }
+
+    /* Enhanced Admin Header */
     .admin-header {
-      background-color: #054e97;
-      padding: 20px;
+      background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
+      padding: 30px 20px;
       color: white;
-      border-bottom: 3px solid #ff7a00;
-      border-radius: 0 0 10px 10px;
+      border-bottom: 4px solid var(--accent-orange);
+      border-radius: 0 0 24px 24px;
       margin-bottom: 30px;
+      box-shadow: var(--card-shadow-hover);
+      position: relative;
+      overflow: hidden;
     }
+
+    .admin-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+      pointer-events: none;
+    }
+
     .admin-header h1 {
-      font-size: 1.8rem;
-      margin-bottom: 15px;
+      font-size: 2.2rem;
+      margin-bottom: 20px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 2;
     }
+
+    .admin-header .lead {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 25px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Enhanced Navigation Buttons */
+    .admin-nav-btns {
+      position: relative;
+      z-index: 2;
+    }
+
     .admin-nav-btns a {
-      margin-right: 10px;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: 500;
+      margin: 5px;
+      padding: 12px 20px;
+      border-radius: var(--border-radius);
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       text-decoration: none;
+      transition: var(--transition);
+      backdrop-filter: blur(10px);
+      border: 2px solid transparent;
+      position: relative;
+      overflow: hidden;
     }
+
+    .admin-nav-btns a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .admin-nav-btns a:hover::before {
+      left: 100%;
+    }
+
+    .admin-nav-btns a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Enhanced Count Badge */
     .count-badge {
-      background-color: #fff;
-      color: #054e97;
-      border-radius: 50px;
-      padding: 3px 10px;
-      font-size: 0.85rem;
-      font-weight: bold;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      color: var(--primary-blue);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: pulse-badge 2s infinite;
     }
+
+    @keyframes pulse-badge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Dashboard Container */
     .dashboard-container {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 0 20px;
     }
+
+    /* Enhanced Search Section */
+    .search-section {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid #e2e8f0;
+      transition: var(--transition);
+    }
+
+    .search-section:hover {
+      box-shadow: var(--card-shadow-hover);
+      transform: translateY(-2px);
+    }
+
+    .search-section h5 {
+      color: var(--primary-blue);
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-control {
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      padding: 12px 16px;
+      transition: var(--transition);
+      font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 0.2rem rgba(5, 78, 151, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
+      border: none;
+      border-radius: 10px;
+      padding: 12px 24px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(5, 78, 151, 0.3);
+    }
+
+    /* Items Section */
+    .items-section {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 25px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid #e2e8f0;
+    }
+
+    .items-section h5 {
+      color: var(--primary-blue);
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Enhanced List Items */
+    .list-group {
+      border: none;
+    }
+
     .list-group-item {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: #fafbfc;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--border-radius);
+      margin-bottom: 15px;
+      padding: 20px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .list-group-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: linear-gradient(135deg, var(--accent-orange) 0%, #ff9533 100%);
+      transform: scaleY(0);
+      transition: var(--transition);
+    }
+
+    .list-group-item:hover {
+      background: white;
+      border-color: var(--primary-blue);
+      transform: translateY(-3px);
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    .list-group-item:hover::before {
+      transform: scaleY(1);
+    }
+
+    .item-content h5 {
+      color: var(--primary-blue);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .item-number {
+      color: var(--accent-orange);
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+      background: rgba(255, 122, 0, 0.1);
+      padding: 2px 8px;
       border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    .item-meta {
+      color: #64748b;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Enhanced Status Badges */
+    .badge {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .bg-warning {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+      color: #92400e !important;
+    }
+
+    .bg-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    }
+
+    .bg-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-outline-primary {
+      border-color: var(--primary-blue);
+      color: var(--primary-blue);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .btn-outline-primary:hover {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(5, 78, 151, 0.3);
+    }
+
+    /* Enhanced Pagination */
+    .pagination {
+      margin-top: 30px;
+    }
+
+    .page-link {
+      border-radius: 8px;
+      margin: 0 3px;
+      border: 2px solid #e2e8f0;
+      color: var(--primary-blue);
+      padding: 10px 16px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .page-link:hover {
+      background: var(--primary-blue);
+      border-color: var(--primary-blue);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .page-item.active .page-link {
+      background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
+      border-color: var(--primary-blue);
+    }
+
+    .page-item.disabled .page-link {
+      background: #f8f9fa;
+      border-color: #e2e8f0;
+      color: #6c757d;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: #cbd5e1;
+      margin-bottom: 20px;
+    }
+
+    .empty-state h6 {
+      color: var(--primary-blue);
+      font-weight: 600;
       margin-bottom: 10px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .admin-header {
+        padding: 20px 15px;
+      }
+
+      .admin-header h1 {
+        font-size: 1.8rem;
+      }
+
+      .admin-nav-btns a {
+        margin: 3px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+
+      .dashboard-container {
+        padding: 0 15px;
+      }
+
+      .search-section, .items-section {
+        padding: 20px;
+      }
+
+      .list-group-item {
+        padding: 16px;
+      }
+
+      .item-actions {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+      }
+    }
+
+    /* Loading Animation */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid var(--primary-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
 
 <div class="admin-header text-center">
-  <h1>🛠 Admin Dashboard</h1>
+  <h1><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h1>
+  <p class="lead">Manage your platform with ease and efficiency</p>
+  
   <div class="admin-nav-btns d-flex flex-wrap justify-content-center">
     <a href="{{ url_for('admin_dashboard', status='all') }}" class="btn {{ 'btn-primary' if status == 'all' else 'btn-outline-primary' }}">
-      All Items <span class="count-badge">{{ total_items }}</span>
+      <i class="bi bi-list-ul"></i>
+      All Items 
+      <span class="count-badge">{{ total_items }}</span>
     </a>
     <a href="{{ url_for('admin_dashboard', status='pending') }}" class="btn {{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }}">
-      Pending <span class="count-badge">{{ pending_items }}</span>
+      <i class="bi bi-clock-history"></i>
+      Pending 
+      <span class="count-badge">{{ pending_items }}</span>
     </a>
     <a href="{{ url_for('admin_dashboard', status='approved') }}" class="btn {{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">
-      Approved <span class="count-badge">{{ approved_items }}</span>
+      <i class="bi bi-check-circle"></i>
+      Approved 
+      <span class="count-badge">{{ approved_items }}</span>
     </a>
     <a href="{{ url_for('admin_dashboard', status='rejected') }}" class="btn {{ 'btn-danger' if status == 'rejected' else 'btn-outline-danger' }}">
-      Rejected <span class="count-badge">{{ rejected_items }}</span>
+      <i class="bi bi-x-circle"></i>
+      Rejected 
+      <span class="count-badge">{{ rejected_items }}</span>
     </a>
-    <a href="{{ url_for('approve_items') }}" class="btn btn-outline-secondary">Approve Items</a>
-    <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary">Manage Users</a>
-    <a href="{{ url_for('manage_orders') }}" class="btn btn-outline-secondary">Manage Orders</a>
-    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Logout</a>
-
-    <!-- 
-    <form method="POST" action="{{ url_for('fix_misclassified_items') }}" onsubmit="return confirm('Fix status for misclassified items?')">
-      <button class="btn btn-outline-secondary btn-sm">🔄 Fix Misclassified Items</button>
-    </form>
-
-
-    <form method="POST" action="{{ url_for('fix_missing_credits') }}" onsubmit="return confirm('Fix credit for uncredited items?')">
-    <button class="btn btn-outline-secondary btn-sm">💰 Fix Missing Credits</button>
-    </form>
-    -->
-
-
-
+    <a href="{{ url_for('approve_items') }}" class="btn btn-outline-light">
+      <i class="bi bi-check2-square"></i>
+      Approve Items
+    </a>
+    <a href="{{ url_for('manage_users') }}" class="btn btn-outline-light">
+      <i class="bi bi-people"></i>
+      Manage Users
+    </a>
+    <a href="{{ url_for('manage_orders') }}" class="btn btn-outline-light">
+      <i class="bi bi-box-seam"></i>
+      Manage Orders
+    </a>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-light">
+      <i class="bi bi-box-arrow-right"></i>
+      Logout
+    </a>
   </div>
 </div>
 
 <div class="dashboard-container">
-
-  <!-- Search Form -->
-  <form method="get" action="{{ url_for('admin_dashboard') }}" class="row g-3 align-items-center mb-4">
-    <div class="col-md-6">
-      <input type="text" name="search" class="form-control" placeholder="Search item or uploader" value="{{ search }}">
-    </div>
-    <input type="hidden" name="status" value="{{ status }}">
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-primary w-100">Search</button>
-    </div>
-  </form>
-
-  <h5 class="mb-3">Item Submissions</h5>
-
-  <ul class="list-group">
-    {% for item in items.items %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      <div>
-        <h5><strong>{{ item.name }}</strong><br></h5>
-        <p>Item No: <strong>{{ item.item_number }}</strong></p>
-        <small class="text-muted">by {{ item.user.username }}</small>
+  <!-- Enhanced Search Section -->
+  <div class="search-section">
+    <h5><i class="bi bi-search"></i>Search & Filter</h5>
+    <form method="get" action="{{ url_for('admin_dashboard') }}" class="row g-3 align-items-center">
+      <div class="col-md-8">
+        <div class="position-relative">
+          <i class="bi bi-search position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
+          <input type="text" name="search" class="form-control ps-5" placeholder="Search by item name or uploader username..." value="{{ search }}">
+        </div>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge rounded-pill 
-            {% if item.status == 'pending' %} bg-warning text-dark
-            {% elif item.status == 'approved' %} bg-success
-            {% elif item.status == 'rejected' %} bg-danger
-            {% endif %}">
-          {{ item.status|capitalize }}
-        </span>
-        <a href="{{ url_for('approve_items') }}" class="btn btn-sm btn-outline-primary">Preview</a>
-
+      <input type="hidden" name="status" value="{{ status }}">
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-search me-2"></i>Search
+        </button>
       </div>
-    </li>
-    {% else %}
-    <li class="list-group-item text-center text-muted">No items found.</li>
-    {% endfor %}
-  </ul>
+    </form>
+  </div>
 
-  {% if items.pages > 1 %}
-  <nav class="mt-4" aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-      <li class="page-item {% if not items.has_prev %}disabled{% endif %}">
-        <a class="page-link" href="{{ url_for('admin_dashboard', page=items.prev_num, status=status, search=search) }}">Previous</a>
-      </li>
-      <li class="page-item disabled">
-        <span class="page-link">Page {{ items.page }} of {{ items.pages }}</span>
-      </li>
-      <li class="page-item {% if not items.has_next %}disabled{% endif %}">
-        <a class="page-link" href="{{ url_for('admin_dashboard', page=items.next_num, status=status, search=search) }}">Next</a>
-      </li>
-    </ul>
-  </nav>
-  {% endif %}
+  <!-- Enhanced Items Section -->
+  <div class="items-section">
+    <h5>
+      <i class="bi bi-grid-3x3-gap"></i>
+      Item Submissions 
+      <span class="badge bg-primary ms-2">{{ items.total }} total</span>
+    </h5>
+
+    <div class="list-group">
+      {% for item in items.items %}
+      <div class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="item-content flex-grow-1">
+            <h5><i class="bi bi-box me-2"></i>{{ item.name }}</h5>
+            <div class="item-number">
+              <i class="bi bi-hash"></i>{{ item.item_number }}
+            </div>
+            <div class="item-meta">
+              <i class="bi bi-person-circle"></i>
+              <span>by <strong>{{ item.user.username }}</strong></span>
+            </div>
+          </div>
+          
+          <div class="item-actions">
+            <span class="badge 
+                {% if item.status == 'pending' %} bg-warning text-dark
+                {% elif item.status == 'approved' %} bg-success
+                {% elif item.status == 'rejected' %} bg-danger
+                {% endif %}">
+              {% if item.status == 'pending' %}
+                <i class="bi bi-clock me-1"></i>
+              {% elif item.status == 'approved' %}
+                <i class="bi bi-check-lg me-1"></i>
+              {% elif item.status == 'rejected' %}
+                <i class="bi bi-x-lg me-1"></i>
+              {% endif %}
+              {{ item.status|capitalize }}
+            </span>
+            <a href="{{ url_for('approve_items') }}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye me-1"></i>Preview
+            </a>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h6>No items found</h6>
+        <p>Try adjusting your search criteria or check back later.</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Enhanced Pagination -->
+    {% if items.pages > 1 %}
+    <nav class="mt-4" aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        <li class="page-item {% if not items.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_dashboard', page=items.prev_num, status=status, search=search) }}">
+            <i class="bi bi-chevron-left"></i> Previous
+          </a>
+        </li>
+        
+        {% for page_num in range(1, items.pages + 1) %}
+          {% if page_num == items.page %}
+            <li class="page-item active">
+              <span class="page-link">{{ page_num }}</span>
+            </li>
+          {% elif page_num == 1 or page_num == items.pages or (items.page - 2 <= page_num <= items.page + 2) %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('admin_dashboard', page=page_num, status=status, search=search) }}">{{ page_num }}</a>
+            </li>
+          {% elif page_num == items.page - 3 or page_num == items.page + 3 %}
+            <li class="page-item disabled">
+              <span class="page-link">...</span>
+            </li>
+          {% endif %}
+        {% endfor %}
+        
+        <li class="page-item {% if not items.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin_dashboard', page=items.next_num, status=status, search=search) }}">
+            Next <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+      <div class="text-center text-muted mt-3">
+        <small>
+          Showing {{ ((items.page - 1) * items.per_page) + 1 }} to {{ items.page * items.per_page if items.has_next else items.total }} 
+          of {{ items.total }} items
+        </small>
+      </div>
+    </nav>
+    {% endif %}
+  </div>
 </div>
 
-
-
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Enhanced UX interactions
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add loading states to buttons
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+      button.addEventListener('click', function() {
+        if (this.type === 'submit' || this.href) {
+          this.classList.add('loading');
+          setTimeout(() => {
+            this.classList.remove('loading');
+          }, 3000);
+        }
+      });
+    });
+
+    // Enhance search input with real-time feedback
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        if (this.value.length > 0) {
+          this.style.borderColor = 'var(--accent-orange)';
+        } else {
+          this.style.borderColor = '#e2e8f0';
+        }
+      });
+    }
+
+    // Add smooth scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ctrl/Cmd + K to focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInput?.focus();
+      }
+    });
+
+    // Animate count badges on load
+    const countBadges = document.querySelectorAll('.count-badge');
+    countBadges.forEach(badge => {
+      const count = parseInt(badge.textContent);
+      let current = 0;
+      const increment = count / 30;
+      const timer = setInterval(() => {
+        current += increment;
+        badge.textContent = Math.ceil(current);
+        if (current >= count) {
+          badge.textContent = count;
+          clearInterval(timer);
+        }
+      }, 50);
+    });
+  });
+
+  // Add tooltip functionality
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+</script>
+
 </body>
 </html>
