@@ -3,125 +3,899 @@
 {% block title %}Admin Registration{% endblock %}
 
 {% block content %}
-<style>
-  .register-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background-color: #f1f3f6;
-    font-family: 'Segoe UI', sans-serif;
-  }
-
-  .register-card {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    width: 100%;
-    max-width: 480px;
-    padding: 40px 30px;
-  }
-
-  .register-title {
-    text-align: center;
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #054e97;
-    margin-bottom: 30px;
-  }
-
-  .form-label {
-    font-weight: 500;
-    color: #333;
-    display: block;
-    margin-bottom: 6px;
-  }
-
-  .form-control {
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 15px;
-    width: 100%;
-  }
-
-  .btn-register {
-    background-color: #054e97;
-    color: white;
-    border: none;
-    padding: 10px;
-    font-weight: 600;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
-    width: 100%;
-  }
-
-  .btn-register:hover {
-    background-color: #ff7a00;
-  }
-
-  .footer-note {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.85rem;
-    color: #6c757d;
-  }
-
-  .form-group {
-    margin-bottom: 20px;
-  }
-
-  form {
-    width: 100%;
-  }
-</style>
-
 <div class="register-wrapper">
-  <div class="register-card">
-    <div class="register-title">Admin Registration</div>
-
-    <form method="POST" action="">
-      {{ form.hidden_tag() }}
-
-      <div class="form-group">
-        {{ form.username.label(class="form-label") }}
-        {{ form.username(class="form-control", placeholder="Enter username") }}
-        {% for error in form.username.errors %}
-          <div class="text-danger small mt-1">{{ error }}</div>
-        {% endfor %}
+  <div class="register-container">
+    <!-- Background Elements -->
+    <div class="background-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+    </div>
+    
+    <!-- Registration Card -->
+    <div class="register-card">
+      <!-- Header Section -->
+      <div class="register-header">
+        <div class="admin-icon">
+          <div class="icon-circle">
+            <span class="icon">👤</span>
+          </div>
+        </div>
+        <h1 class="register-title">Create Admin Account</h1>
+        <p class="register-subtitle">Register as an authorized administrator</p>
       </div>
 
-      <div class="form-group">
-        {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control", placeholder="Enter email") }}
-        {% for error in form.email.errors %}
-          <div class="text-danger small mt-1">{{ error }}</div>
-        {% endfor %}
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0% Complete</div>
       </div>
 
-      <div class="form-group">
-        {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control", placeholder="Enter password") }}
-        {% for error in form.password.errors %}
-          <div class="text-danger small mt-1">{{ error }}</div>
-        {% endfor %}
+      <!-- Form Section -->
+      <div class="register-form-section">
+        <form method="POST" action="" class="register-form" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <span class="icon">👨‍💼</span>
+              </div>
+              {{ form.username(class="form-control", autocomplete="username", required=true) }}
+              {{ form.username.label(class="form-label") }}
+              <div class="input-status" id="usernameStatus"></div>
+            </div>
+            {% for error in form.username.errors %}
+              <div class="error-message">
+                <span class="error-icon">⚠️</span>
+                {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <span class="icon">✉️</span>
+              </div>
+              {{ form.email(class="form-control", autocomplete="email", required=true) }}
+              {{ form.email.label(class="form-label") }}
+              <div class="input-status" id="emailStatus"></div>
+            </div>
+            {% for error in form.email.errors %}
+              <div class="error-message">
+                <span class="error-icon">⚠️</span>
+                {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <span class="icon">🔒</span>
+              </div>
+              {{ form.password(class="form-control", autocomplete="new-password", required=true) }}
+              {{ form.password.label(class="form-label") }}
+              <button type="button" class="password-toggle" id="passwordToggle1">
+                <span class="toggle-icon">👁️</span>
+              </button>
+              <div class="password-strength" id="passwordStrength">
+                <div class="strength-bars">
+                  <div class="strength-bar"></div>
+                  <div class="strength-bar"></div>
+                  <div class="strength-bar"></div>
+                  <div class="strength-bar"></div>
+                </div>
+                <div class="strength-text" id="strengthText">Password strength</div>
+              </div>
+            </div>
+            {% for error in form.password.errors %}
+              <div class="error-message">
+                <span class="error-icon">⚠️</span>
+                {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="form-group">
+            <div class="input-wrapper">
+              <div class="input-icon">
+                <span class="icon">🔐</span>
+              </div>
+              {{ form.confirm_password(class="form-control", autocomplete="new-password", required=true) }}
+              {{ form.confirm_password.label(class="form-label") }}
+              <button type="button" class="password-toggle" id="passwordToggle2">
+                <span class="toggle-icon">👁️</span>
+              </button>
+              <div class="input-status" id="confirmStatus"></div>
+            </div>
+            {% for error in form.confirm_password.errors %}
+              <div class="error-message">
+                <span class="error-icon">⚠️</span>
+                {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="form-group">
+            {{ form.submit(class="btn-register") }}
+          </div>
+        </form>
       </div>
 
-      <div class="form-group">
-        {{ form.confirm_password.label(class="form-label") }}
-        {{ form.confirm_password(class="form-control", placeholder="Confirm password") }}
-        {% for error in form.confirm_password.errors %}
-          <div class="text-danger small mt-1">{{ error }}</div>
-        {% endfor %}
+      <!-- Footer Section -->
+      <div class="register-footer">
+        <div class="security-features">
+          <div class="feature">
+            <span class="feature-icon">🔐</span>
+            <span class="feature-text">End-to-end encryption</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">🛡️</span>
+            <span class="feature-text">Secure authentication</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">📊</span>
+            <span class="feature-text">Admin privileges</span>
+          </div>
+        </div>
+        <div class="footer-note">
+          Only authorized personnel are permitted to register as Admin.
+        </div>
       </div>
-
-      <div class="form-group">
-        {{ form.submit(class="btn btn-register") }}
-      </div>
-    </form>
-
-    <div class="footer-note">
-      Only authorized personnel are permitted to register as Admin.
     </div>
   </div>
 </div>
+
+<style>
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+.register-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.register-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Background Shapes */
+.background-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(5, 78, 151, 0.08) 0%, rgba(255, 122, 0, 0.04) 100%);
+  animation: float 8s ease-in-out infinite;
+}
+
+.shape-1 {
+  width: 350px;
+  height: 350px;
+  top: -175px;
+  right: -175px;
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  width: 250px;
+  height: 250px;
+  bottom: -125px;
+  left: -125px;
+  animation-delay: 2s;
+}
+
+.shape-3 {
+  width: 180px;
+  height: 180px;
+  top: 15%;
+  left: 5%;
+  animation-delay: 4s;
+}
+
+.shape-4 {
+  width: 120px;
+  height: 120px;
+  bottom: 20%;
+  right: 10%;
+  animation-delay: 6s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-15px) rotate(120deg); }
+  66% { transform: translateY(10px) rotate(240deg); }
+}
+
+/* Registration Card */
+.register-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  animation: slideInUp 0.7s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Section */
+.register-header {
+  background: linear-gradient(135deg, #054e97 0%, #0369a1 100%);
+  color: white;
+  text-align: center;
+  padding: 35px 30px 30px;
+  position: relative;
+}
+
+.register-header::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: #ff7a00;
+  border-radius: 2px;
+}
+
+.admin-icon {
+  margin-bottom: 18px;
+}
+
+.icon-circle {
+  width: 75px;
+  height: 75px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.icon-circle .icon {
+  font-size: 2rem;
+}
+
+.register-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.register-subtitle {
+  font-size: 0.95rem;
+  margin: 0;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+/* Progress Bar */
+.progress-container {
+  padding: 20px 30px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #054e97, #ff7a00);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Form Section */
+.register-form-section {
+  padding: 30px 30px 25px;
+}
+
+.register-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* Input Styling */
+.input-wrapper {
+  position: relative;
+}
+
+.form-control {
+  width: 100%;
+  padding: 16px 50px 16px 50px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 15px;
+  background: #fafbfc;
+  transition: all 0.3s ease;
+  outline: none;
+  font-weight: 500;
+}
+
+.form-control:focus {
+  border-color: #054e97;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(5, 78, 151, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-control:focus + .form-label {
+  color: #054e97;
+  transform: translateY(-28px) scale(0.85);
+}
+
+.form-control:not(:placeholder-shown) + .form-label {
+  transform: translateY(-28px) scale(0.85);
+  color: #64748b;
+}
+
+.form-label {
+  position: absolute;
+  top: 16px;
+  left: 50px;
+  color: #94a3b8;
+  font-weight: 500;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  transform-origin: left;
+  background: transparent;
+  z-index: 1;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.input-icon .icon {
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  background: #f1f5f9;
+}
+
+.toggle-icon {
+  font-size: 1.1rem;
+  opacity: 0.6;
+}
+
+/* Input Status Indicators */
+.input-status {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  z-index: 2;
+}
+
+/* Password Strength */
+.password-strength {
+  margin-top: 10px;
+}
+
+.strength-bars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.strength-bar {
+  height: 4px;
+  flex: 1;
+  background: #e2e8f0;
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+
+.strength-text {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Password strength states */
+.strength-weak .strength-bar:nth-child(1) { background: #ef4444; }
+.strength-fair .strength-bar:nth-child(1), 
+.strength-fair .strength-bar:nth-child(2) { background: #f97316; }
+.strength-good .strength-bar:nth-child(1), 
+.strength-good .strength-bar:nth-child(2), 
+.strength-good .strength-bar:nth-child(3) { background: #eab308; }
+.strength-strong .strength-bar { background: #22c55e; }
+
+/* Error Messages */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  border-left: 3px solid #dc2626;
+  animation: slideInDown 0.3s ease;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  font-size: 0.9rem;
+}
+
+/* Submit Button */
+.btn-register {
+  width: 100%;
+  background: linear-gradient(135deg, #054e97 0%, #0369a1 100%);
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-register::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-register:hover::before {
+  left: 100%;
+}
+
+.btn-register:hover {
+  background: linear-gradient(135deg, #ff7a00 0%, #ff6b00 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 122, 0, 0.3);
+}
+
+.btn-register:active {
+  transform: translateY(0px);
+}
+
+.btn-register:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Footer Section */
+.register-footer {
+  background: #f8fafc;
+  padding: 25px 30px;
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+}
+
+.security-features {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #059669;
+  font-weight: 500;
+}
+
+.feature-icon {
+  font-size: 1rem;
+}
+
+.footer-note {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .register-wrapper {
+    padding: 15px;
+  }
+  
+  .register-header {
+    padding: 25px 20px 20px;
+  }
+  
+  .register-form-section {
+    padding: 25px 20px 20px;
+  }
+  
+  .register-footer {
+    padding: 20px;
+  }
+  
+  .progress-container {
+    padding: 15px 20px;
+  }
+  
+  .register-title {
+    font-size: 1.6rem;
+  }
+  
+  .form-control {
+    padding: 14px 45px 14px 45px;
+  }
+  
+  .form-label {
+    left: 45px;
+    top: 14px;
+  }
+  
+  .security-features {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shape {
+    display: none;
+  }
+  
+  .register-title {
+    font-size: 1.4rem;
+  }
+  
+  .icon-circle {
+    width: 65px;
+    height: 65px;
+  }
+  
+  .icon-circle .icon {
+    font-size: 1.8rem;
+  }
+  
+  .security-features {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* Loading State */
+.btn-register.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn-register.loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 10px;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form elements
+    const form = document.querySelector('.register-form');
+    const inputs = document.querySelectorAll('.form-control');
+    const submitButton = document.querySelector('.btn-register');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    
+    // Password elements
+    const passwordField = document.querySelector('input[name="password"]');
+    const confirmPasswordField = document.querySelector('input[name="confirm_password"]');
+    const passwordToggle1 = document.getElementById('passwordToggle1');
+    const passwordToggle2 = document.getElementById('passwordToggle2');
+    
+    // Status elements
+    const usernameStatus = document.getElementById('usernameStatus');
+    const emailStatus = document.getElementById('emailStatus');
+    const confirmStatus = document.getElementById('confirmStatus');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('strengthText');
+    
+    // Password toggle functionality
+    function setupPasswordToggle(toggle, field) {
+        if (toggle && field) {
+            toggle.addEventListener('click', function() {
+                const type = field.getAttribute('type') === 'password' ? 'text' : 'password';
+                field.setAttribute('type', type);
+                
+                const icon = this.querySelector('.toggle-icon');
+                icon.textContent = type === 'password' ? '👁️' : '🙈';
+            });
+        }
+    }
+    
+    setupPasswordToggle(passwordToggle1, passwordField);
+    setupPasswordToggle(passwordToggle2, confirmPasswordField);
+    
+    // Password strength checker
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        let feedback = '';
+        
+        if (password.length >= 8) strength++;
+        if (password.match(/[a-z]/)) strength++;
+        if (password.match(/[A-Z]/)) strength++;
+        if (password.match(/[0-9]/)) strength++;
+        if (password.match(/[^a-zA-Z0-9]/)) strength++;
+        
+        passwordStrength.className = 'password-strength';
+        
+        switch (strength) {
+            case 0:
+            case 1:
+                passwordStrength.classList.add('strength-weak');
+                feedback = 'Weak password';
+                break;
+            case 2:
+                passwordStrength.classList.add('strength-fair');
+                feedback = 'Fair password';
+                break;
+            case 3:
+                passwordStrength.classList.add('strength-good');
+                feedback = 'Good password';
+                break;
+            case 4:
+            case 5:
+                passwordStrength.classList.add('strength-strong');
+                feedback = 'Strong password';
+                break;
+        }
+        
+        strengthText.textContent = feedback;
+        return strength;
+    }
+    
+    // Form validation and progress
+    function updateFormProgress() {
+        let completedFields = 0;
+        const totalFields = inputs.length;
+        
+        inputs.forEach(input => {
+            if (input.value.trim() !== '') {
+                completedFields++;
+            }
+        });
+        
+        const progress = Math.round((completedFields / totalFields) * 100);
+        progressFill.style.width = progress + '%';
+        progressText.textContent = progress + '% Complete';
+        
+        // Enable/disable submit button
+        const allFieldsFilled = completedFields === totalFields;
+        const passwordsMatch = passwordField && confirmPasswordField && 
+                             passwordField.value === confirmPasswordField.value;
+        
+        submitButton.disabled = !allFieldsFilled || !passwordsMatch;
+    }
+    
+    // Input validation
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+    
+    function validateUsername(username) {
+        return username.length >= 3 && username.match(/^[a-zA-Z0-9_]+$/);
+    }
+    
+    // Real-time validation
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateFormProgress();
+            
+            // Username validation
+            if (input.name === 'username') {
+                if (input.value.length > 0) {
+                    if (validateUsername(input.value)) {
+                        usernameStatus.textContent = '✅';
+                        input.style.borderColor = '#22c55e';
+                    } else {
+                        usernameStatus.textContent = '❌';
+                        input.style.borderColor = '#ef4444';
+                    }
+                } else {
+                    usernameStatus.textContent = '';
+                    input.style.borderColor = '#e2e8f0';
+                }
+            }
+            
+            // Email validation
+            if (input.name === 'email') {
+                if (input.value.length > 0) {
+                    if (validateEmail(input.value)) {
+                        emailStatus.textContent = '✅';
+                        input.style.borderColor = '#22c55e';
+                    } else {
+                        emailStatus.textContent = '❌';
+                        input.style.borderColor = '#ef4444';
+                    }
+                } else {
+                    emailStatus.textContent = '';
+                    input.style.borderColor = '#e2e8f0';
+                }
+            }
+            
+            // Password strength
+            if (input.name === 'password') {
+                if (input.value.length > 0) {
+                    checkPasswordStrength(input.value);
+                    passwordStrength.style.display = 'block';
+                } else {
+                    passwordStrength.style.display = 'none';
+                }
+            }
+            
+            // Confirm password validation
+            if (input.name === 'confirm_password') {
+                if (input.value.length > 0 && passwordField) {
+                    if (input.value === passwordField.value) {
+                        confirmStatus.textContent = '✅';
+                        input.style.borderColor = '#22c55e';
+                    } else {
+                        confirmStatus.textContent = '❌';
+                        input.style.borderColor = '#ef4444';
+                    }
+                } else {
+                    confirmStatus.textContent = '';
+                    input.style.borderColor = '#e2e8f0';
+                }
+            }
+        });
+        
+        // Floating label animation
+        input.addEventListener('blur', function() {
+            if (this.value === '') {
+                this.classList.remove('has-value');
+            } else {
+                this.classList.add('has-value');
+            }
+        });
+        
+        // Check initial value
+        if (input.value !== '') {
+            input.classList.add('has-value');
+        }
+    });
+    
+    // Form submission
+    if (form) {
+        form.addEventListener('submit', function() {
+            submitButton.classList.add('loading');
+            submitButton.textContent = 'Creating Account...';
+        });
+    }
+    
+    // Focus on first input
+    const firstInput = document.querySelector('.form-control');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Initial progress update
+    updateFormProgress();
+});
+</script>
 {% endblock %}
