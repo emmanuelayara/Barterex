@@ -47,7 +47,7 @@
                             <span class="sort-indicator">↕️</span>
                         </th>
                         <th class="sortable" data-sort="item">
-                            Item Details
+                            Item Name
                             <span class="sort-indicator">↕️</span>
                         </th>
                         <th class="sortable" data-sort="buyer">
@@ -71,7 +71,7 @@
                     <tr class="order-row" data-status="{{ order.status }}" data-order-id="{{ order.id }}">
                         <td class="order-id">
                             <div class="id-wrapper">
-                                <span class="id-hash">#</span>{{ order.id }}
+                                <span class="id-hash">#</span>{{ order.item.item_number }}
                             </div>
                         </td>
                         <td class="item-details">
