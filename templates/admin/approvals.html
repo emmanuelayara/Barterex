@@ -3,54 +3,771 @@
 {% block title %}Pending Approvals{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="text-center mb-5">📝 Pending Item Approvals</h2>
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --orange-gradient: linear-gradient(135deg, #ff7b00 0%, #ff9500 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    --warning-gradient: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --surface: #ffffff;
+    --surface-hover: #f8fafc;
+    --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+    --border-radius: 20px;
+  }
+
+  /* Page Background */
+  .approval-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    position: relative;
+    padding: 40px 0;
+  }
+
+  .approval-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(79, 172, 254, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header Section */
+  .approval-header {
+    text-align: center;
+    margin-bottom: 50px;
+    padding: 40px 30px;
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .approval-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--orange-gradient);
+  }
+
+  .approval-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .approval-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--orange-gradient);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+    box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
+  }
+
+  .approval-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* Statistics Bar */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 40px;
+    padding: 25px;
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 15px 25px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.9));
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+  }
+
+  .stat-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--orange-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 5px;
+  }
+
+  .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Enhanced Card Styling */
+  .approval-card {
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+  }
+
+  .approval-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .approval-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--orange-gradient);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .approval-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  /* Image Container */
+  .card-image-container {
+    height: 240px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .approval-card:hover .card-image {
+    transform: scale(1.05);
+  }
+
+  .image-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  /* Card Content */
+  .enhanced-card-body {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .item-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .item-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  /* Info Grid */
+  .item-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 15px 0;
+  }
+
+  .info-item {
+    padding: 12px 15px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 12px;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+  }
+
+  .info-item.uploader {
+    border-left-color: #667eea;
+  }
+
+  .info-item.category {
+    border-left-color: #ff7b00;
+  }
+
+  .info-item.condition {
+    border-left-color: #11998e;
+  }
+
+  .info-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateX(3px);
+  }
+
+  .info-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+
+  .info-value {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
+
+  .category-badge {
+    display: inline-block;
+    padding: 8px 15px;
+    background: var(--orange-gradient);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(255, 123, 0, 0.3);
+  }
+
+  .condition-badge {
+    display: inline-block;
+    padding: 8px 15px;
+    background: var(--success-gradient);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+  }
+
+  /* Enhanced Form Styling */
+  .appraisal-section {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(255, 123, 0, 0.05));
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 2px solid rgba(102, 126, 234, 0.1);
+  }
+
+  .appraisal-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+  }
+
+  .credit-icon {
+    width: 24px;
+    height: 24px;
+    background: var(--orange-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+  }
+
+  .value-input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: var(--surface);
+    color: var(--text-primary);
+  }
+
+  .value-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .approve-btn {
+    background: var(--success-gradient);
+    color: white;
+    box-shadow: 0 8px 25px rgba(17, 153, 142, 0.3);
+  }
+
+  .approve-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(17, 153, 142, 0.4);
+  }
+
+  .reject-btn {
+    background: var(--danger-gradient);
+    color: white;
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+  }
+
+  .reject-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+  }
+
+  /* Loading States */
+  .action-btn.loading {
+    position: relative;
+    color: transparent;
+  }
+
+  .action-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    margin: 40px 0;
+  }
+
+  .empty-icon {
+    width: 120px;
+    height: 120px;
+    background: var(--accent-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: white;
+    margin: 0 auto 30px;
+    box-shadow: 0 20px 60px rgba(79, 172, 254, 0.3);
+  }
+
+  .empty-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 15px;
+  }
+
+  .empty-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .approval-header h2 {
+      font-size: 2rem;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .approval-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+    }
+
+    .stats-bar {
+      gap: 15px;
+      padding: 20px 15px;
+    }
+
+    .stat-item {
+      padding: 12px 20px;
+    }
+
+    .stat-number {
+      font-size: 1.5rem;
+    }
+
+    .item-info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .enhanced-card-body {
+      padding: 20px;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .action-btn {
+      padding: 12px 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .approval-page {
+      padding: 20px 0;
+    }
+
+    .approval-header {
+      padding: 30px 20px;
+      margin-bottom: 30px;
+    }
+
+    .approval-header h2 {
+      font-size: 1.6rem;
+    }
+
+    .stats-bar {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+    }
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      font-size: 2rem;
+    }
+  }
+
+  /* Animation Classes */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+
+<div class="approval-page">
+  <div class="container">
+    <!-- Enhanced Header -->
+    <div class="approval-header fade-in">
+      <h2>
+        <div class="approval-icon">📝</div>
+        Pending Item Approvals
+      </h2>
+      <p class="approval-subtitle">Review and approve items submitted by users</p>
+    </div>
 
     {% if items %}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {% for item in items %}
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    {% if item.image_url %}
-                    <div style="height: 220px; overflow: hidden; border-top-left-radius: .5rem; border-top-right-radius: .5rem;">
-                        <img src="{{ item.image_url }}" class="img-fluid w-100" alt="{{ item.name }}" style="object-fit: cover; height: 100%; width: 100%;">
-                    </div>
-                    {% endif %}
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-1">{{ item.name }}</h5>
-                        <p class="card-text text-muted small">{{ item.description }}</p>
-
-                        <!-- Context Info -->
-                        <p class="mb-1"><span class="text-muted">Uploader:</span> <strong>{{ item.user.username }}</strong></p>
-                        <p><span class="badge bg-secondary">{{ item.category }}</span></p>
-                        <p style="color: #888; margin-bottom: 5px;"><strong>Condition:</strong> {{ item.condition }}</p>
-
-                        <!-- Approval Form -->
-                        <form method="POST" action="{{ url_for('approve_item', item_id=item.id) }}" class="mt-auto">
-                            <div class="mb-3">
-                                <label for="value_{{ item.id }}" class="form-label fw-semibold">Appraise Value (in credits):</label>
-                                <input type="number" step="0.1" name="value" id="value_{{ item.id }}"
-                                       class="form-control form-control-sm" placeholder="Enter credit value" required>
-                            </div>
-
-                            <div class="d-flex justify-content-between gap-2">
-                                <button type="submit" class="btn btn-success w-100">✅ Approve</button>
-                        </form>
-
-                        <!-- Reject Form -->
-                        <form method="POST" action="{{ url_for('update_item_status') }}">
-                            <input type="hidden" name="item_id" value="{{ item.id }}">
-                            <input type="hidden" name="status" value="rejected">
-                            <button type="submit" class="btn btn-outline-danger w-100">❌ Reject</button>
-                        </form>
-                            </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+      <!-- Statistics Bar -->
+      <div class="stats-bar fade-in">
+        <div class="stat-item">
+          <div class="stat-number">{{ items|length }}</div>
+          <div class="stat-label">Pending Items</div>
         </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ items|selectattr("category", "equalto", "Electronics")|list|length }}</div>
+          <div class="stat-label">Electronics</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ items|selectattr("condition", "equalto", "Excellent")|list|length }}</div>
+          <div class="stat-label">Excellent Condition</div>
+        </div>
+      </div>
+
+      <!-- Items Grid -->
+      <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        {% for item in items %}
+        <div class="col fade-in" style="transition-delay: {{ loop.index0 * 0.1 }}s;">
+          <div class="approval-card">
+            <!-- Enhanced Image Section -->
+            {% if item.image_url %}
+            <div class="card-image-container">
+              <img src="{{ item.image_url }}" class="card-image" alt="{{ item.name }}">
+              <div class="image-overlay">📷 Image</div>
+            </div>
+            {% endif %}
+
+            <div class="enhanced-card-body">
+              <!-- Item Header -->
+              <h5 class="item-title">{{ item.name }}</h5>
+              <p class="item-description">{{ item.description }}</p>
+
+              <!-- Enhanced Info Grid -->
+              <div class="item-info-grid">
+                <div class="info-item uploader">
+                  <div class="info-label">👤 Uploader</div>
+                  <div class="info-value">{{ item.user.username }}</div>
+                </div>
+                <div class="info-item category">
+                  <div class="info-label">📂 Category</div>
+                  <div class="info-value">{{ item.category }}</div>
+                </div>
+              </div>
+
+              <div style="text-align: center; margin: 15px 0;">
+                <span class="condition-badge">⭐ {{ item.condition }}</span>
+              </div>
+
+              <!-- Enhanced Approval Form -->
+              <div class="appraisal-section">
+                <form method="POST" action="{{ url_for('approve_item', item_id=item.id) }}" class="approval-form">
+                  <label for="value_{{ item.id }}" class="appraisal-label">
+                    <span class="credit-icon">💰</span>
+                    Appraise Value (Credits)
+                  </label>
+                  <input 
+                    type="number" 
+                    step="0.1" 
+                    name="value" 
+                    id="value_{{ item.id }}"
+                    class="value-input" 
+                    placeholder="Enter credit value"
+                    min="0.1"
+                    required
+                  >
+
+                  <div class="action-buttons">
+                    <button type="submit" class="action-btn approve-btn">
+                      ✅ Approve
+                    </button>
+                </form>
+
+                <!-- Enhanced Reject Form -->
+                <form method="POST" action="{{ url_for('update_item_status') }}">
+                  <input type="hidden" name="item_id" value="{{ item.id }}">
+                  <input type="hidden" name="status" value="rejected">
+                  <button type="submit" class="action-btn reject-btn">
+                    ❌ Reject
+                  </button>
+                </form>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
     {% else %}
-        <div class="alert alert-info text-center">🎉 No pending items for approval at the moment.</div>
+      <!-- Enhanced Empty State -->
+      <div class="empty-state fade-in">
+        <div class="empty-icon">🎉</div>
+        <h3 class="empty-title">All Caught Up!</h3>
+        <p class="empty-subtitle">No pending items for approval at the moment.<br>Take a well-deserved break! 🚀</p>
+      </div>
     {% endif %}
+  </div>
 </div>
+
+<script>
+  // Enhanced form interactions
+  document.addEventListener('DOMContentLoaded', function() {
+    // Scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    // Observe all fade-in elements
+    document.querySelectorAll('.fade-in').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Enhanced form submissions with loading states
+    document.querySelectorAll('.approval-form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const submitBtn = form.querySelector('.approve-btn');
+        const valueInput = form.querySelector('.value-input');
+        
+        if (!valueInput.value || parseFloat(valueInput.value) <= 0) {
+          e.preventDefault();
+          valueInput.focus();
+          valueInput.style.borderColor = '#ff6b6b';
+          setTimeout(() => {
+            valueInput.style.borderColor = '#e5e7eb';
+          }, 3000);
+          return;
+        }
+
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+      });
+    });
+
+    // Reject form handling
+    document.querySelectorAll('form[action*="update_item_status"]').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const confirmReject = confirm('Are you sure you want to reject this item? This action cannot be undone.');
+        if (!confirmReject) {
+          e.preventDefault();
+          return;
+        }
+
+        const rejectBtn = form.querySelector('.reject-btn');
+        rejectBtn.classList.add('loading');
+        rejectBtn.disabled = true;
+      });
+    });
+
+    // Enhanced input interactions
+    document.querySelectorAll('.value-input').forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'translateY(-3px)';
+        this.parentElement.style.boxShadow = '0 15px 35px rgba(102, 126, 234, 0.15)';
+      });
+
+      input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'translateY(0)';
+        this.parentElement.style.boxShadow = 'none';
+      });
+
+      // Real-time validation
+      input.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        if (value > 0) {
+          this.style.borderColor = '#11998e';
+        } else {
+          this.style.borderColor = '#e5e7eb';
+        }
+      });
+    });
+
+    // Card hover effects
+    document.querySelectorAll('.approval-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-8px) scale(1.02)';
+      });
+
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+      });
+    });
+  });
+</script>
 {% endblock %}
