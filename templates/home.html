@@ -840,6 +840,9 @@
         <div class="menu-actions">
           <a href="/register">Sign Up</a>
           <a href="/upload" class="btn">Upload Item</a>
+          {% if current_user.is_authenticated %}
+          <a href="/dashboard" class="btn">Dashboard</a>
+          {% endif %}
         </div>
       </nav>
     </div>
