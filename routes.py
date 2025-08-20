@@ -243,7 +243,7 @@ def mark_as_read(notification_id):
 @app.route('/profile-settings', methods=['GET', 'POST'])
 @login_required
 def profile_settings():
-    form = ProfileUpdateForm()
+    form = ProfileUpdateForm(obj=current_user)
 
     if request.method == 'POST':
         current_user.email = request.form['email']
