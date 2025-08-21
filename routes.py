@@ -355,30 +355,29 @@ def order_item(item_id):
     # Get seller details
     seller = User.query.get(item.user_id)
 
-
     if not seller or not seller.state:
         flash('This item’s seller does not have a registered state.', 'danger')
         return redirect(url_for('view_item', item_id=item.id))
 
-    # Filter pickup stations in the same state as seller
+    # Filter pickup stations in seller's state
     stations = PickupStation.query.filter_by(state=seller.state).all()
 
     form = OrderForm()
     form.pickup_station.choices = [(s.id, s.name) for s in stations]
 
-    if request.method == 'GET':
-        # Pre-fill delivery address from user profile
+    if request.method == 'GET' and current_user.address:
         form.delivery_address.data = current_user.address
 
     if form.validate_on_submit():
         delivery_method = form.delivery_method.data
         pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
+        delivery_address = form.delivery_address.data if delivery_method == 'delivery' else None
 
         order = Order(
             user_id=current_user.id,
             item_id=item.id,
             delivery_method=delivery_method,
-            delivery_address=form.delivery_address.data if delivery_method == 'delivery' else None,
+            delivery_address=delivery_address,
             pickup_station_id=pickup_station_id
         )
         db.session.add(order)
@@ -387,12 +386,7 @@ def order_item(item_id):
         flash('Your order has been placed successfully!', 'success')
         return redirect(url_for('dashboard'))
 
-    return render_template(
-        'order_item.html',
-        form=form,
-        item=item,
-        stations=stations
-    )
+    return render_template('order_item.html', form=form, item=item, stations=stations)
 
 
 
