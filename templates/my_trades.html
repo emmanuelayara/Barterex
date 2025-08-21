@@ -87,7 +87,7 @@
 
   .page-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #054e97 0%, #054e97 100%);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
@@ -148,7 +148,7 @@
   }
 
   .nav-link.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     color: white;
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   }
@@ -224,7 +224,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
   }
 
   .summary-card:hover {
@@ -241,7 +241,7 @@
     justify-content: center;
     font-size: 24px;
     margin: 0 auto 16px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     color: white;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   }
@@ -284,7 +284,7 @@
   .section-icon {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -441,7 +441,7 @@
   }
 
   .btn-explore {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     color: white;
     padding: 14px 28px;
     border-radius: 12px;
@@ -619,12 +619,6 @@
                     </div>
                   </div>
                 </div>
-
-                <div class="trade-arrow">↓ Received</div>
-
-                <div class="trade-status">
-                  ✅ Completed
-                </div>
               </div>
             </div>
           {% endfor %}
@@ -670,12 +664,6 @@
                       💰 ₦{{ trade.item_received.value }}
                     </div>
                   </div>
-                </div>
-
-                <div class="trade-arrow">↑ Gave Away</div>
-
-                <div class="trade-status">
-                  ✅ Completed
                 </div>
               </div>
             </div>
