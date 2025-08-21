@@ -354,27 +354,26 @@
 
                         <form method="POST" class="fade-in">
                             <!-- Hidden CSRF token would go here -->
-                            <!-- {{ form.hidden_tag() }} -->
+                             {{ form.hidden_tag() }}
 
                             <!-- Delivery Method -->
                             <div class="form-group">
                                 <label class="form-label">
                                     <i class="fas fa-truck text-primary"></i>
                                     Delivery Method
+                                    {{ form.delivery_method.label }}
                                 </label>
-                                <select class="form-select" id="delivery_method" onchange="toggleDeliveryFields()">
-                                    <option value="delivery">Home Delivery</option>
-                                    <option value="pickup">Pickup Station</option>
-                                </select>
+                                 {{ form.delivery_method(class="form-select") }}
                             </div>
 
                             <!-- Delivery Address -->
                             <div id="delivery_address_field" class="form-group">
                                 <label class="form-label">
+                                    {{ form.delivery_address.label }}
                                     <i class="fas fa-map-marker-alt text-success"></i>
                                     Delivery Address
                                 </label>
-                                <input type="text" class="form-control" placeholder="Enter your delivery address" />
+                                {{ form.delivery_address(class="form-control", placeholder="Enter your delivery address") }}
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i>
                                     We'll use your saved profile address by default. Update if necessary.
@@ -386,13 +385,9 @@
                                 <label class="form-label">
                                     <i class="fas fa-store text-warning"></i>
                                     Pickup Station
+                                    {{ form.pickup_station.label }}
                                 </label>
-                                <select class="form-select">
-                                    <option>Select a pickup station</option>
-                                    <option>Station A - Downtown</option>
-                                    <option>Station B - Mall Plaza</option>
-                                    <option>Station C - University Area</option>
-                                </select>
+                                {{ form.pickup_station(class="form-select") }}
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i>
                                     Select a pickup station near you (must be in the same state as the item).
