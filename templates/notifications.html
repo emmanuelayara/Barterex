@@ -87,7 +87,7 @@
 
   .page-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #054e97 0%, #054e97 100%);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
@@ -148,7 +148,7 @@
   }
 
   .nav-link.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     color: white;
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   }
@@ -228,7 +228,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
   }
 
   .summary-card:hover {
@@ -245,7 +245,7 @@
     justify-content: center;
     font-size: 24px;
     margin: 0 auto 16px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     color: white;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   }
@@ -293,7 +293,7 @@
   .container-icon {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -328,7 +328,7 @@
 
   .filter-btn:hover,
   .filter-btn.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     color: white;
   }
 
@@ -460,7 +460,7 @@
   }
 
   .btn-explore {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #667eea, #054e97);
     color: white;
     padding: 14px 28px;
     border-radius: 12px;
@@ -601,20 +601,6 @@
         🔔 Notifications
       </h1>
       <p class="page-subtitle">Stay updated with your latest activity and important updates</p>
-    </div>
-
-    <!-- Notifications Summary -->
-    <div class="notifications-summary">
-      <div class="summary-card">
-        <div class="summary-icon">📬</div>
-        <div class="summary-title">Total Notifications</div>
-        <div class="summary-value">{{ notifications|length }}</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-icon">🔴</div>
-        <div class="summary-title">Unread</div>
-        <div class="summary-value">{{ notifications|selectattr('is_read', 'equalto', false)|list|length }}</div>
-      </div>
     </div>
 
     <!-- Notifications Container -->
