@@ -551,7 +551,7 @@ def admin_dashboard():
     # If search is applied
     if search:
         query = query.join(User).filter(
-            (Item.name.ilike(f"%{search}%")) | (User.username.ilike(f"%{search}%"))
+            (Item.name.ilike(f"%{search}%")) | (User.username.ilike(f"%{search}%")) | (Item.item_number == search)
         )
 
     # Paginate items
