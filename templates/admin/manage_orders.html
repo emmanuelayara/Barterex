@@ -63,7 +63,6 @@
                             Order Date
                             <span class="sort-indicator">↕️</span>
                         </th>
-                        <th class="actions-column">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
@@ -114,13 +113,6 @@
                             <div class="date-info">
                                 <span class="date">{{ order.date_ordered.strftime('%b %d, %Y') }}</span>
                                 <span class="time">{{ order.date_ordered.strftime('%H:%M') }}</span>
-                            </div>
-                        </td>
-                        <td class="actions-cell">
-                            <div class="action-buttons">
-                                <button class="action-btn view-btn" title="View Details">👁️</button>
-                                <button class="action-btn edit-btn" title="Edit Order">✏️</button>
-                                <button class="action-btn more-btn" title="More Options">⋮</button>
                             </div>
                         </td>
                     </tr>

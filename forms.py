@@ -98,3 +98,11 @@ class AdminLoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+
+class PickupStationForm(FlaskForm):
+    name = StringField('Station Name', validators=[DataRequired()])
+    address = StringField('Address', validators=[DataRequired()])
+    state = StringField('State', validators=[DataRequired()])
+    city = StringField('City', validators=[DataRequired()])
+    submit = SubmitField('Add Pickup Station')

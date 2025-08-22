@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
 from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation
-from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm
+from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm
 
 
 # Configuration
@@ -351,18 +351,10 @@ def buy_item(item_id):
 @login_required
 def order_item(item_id):
     item = Item.query.get_or_404(item_id)
-
-    # Get seller details
-    seller = User.query.get(item.user_id)
-
-    if not seller or not seller.state:
-        flash('This item’s seller does not have a registered state.', 'danger')
-        return redirect(url_for('view_item', item_id=item.id))
-
-    # Filter pickup stations in seller's state
-    stations = PickupStation.query.filter_by(state=seller.state).all()
-
     form = OrderForm()
+
+    stations = PickupStation.query.filter_by(state=current_user.state).all()
+
     form.pickup_station.choices = [(s.id, s.name) for s in stations]
 
     if request.method == 'GET' and current_user.address:
@@ -786,34 +778,76 @@ def fix_missing_credits():
     flash(f"{count} item(s) were fixed and credits added to users.", "success")
     return redirect(url_for('admin_dashboard'))
 
-
-@app.route("/admin/pickup-stations/add", methods=["GET", "POST"])
+# Add Station
+@app.route('/admin/pickup-stations/add', methods=['GET', 'POST'])
 @admin_login_required
 def add_pickup_station():
-    if request.method == "POST":
-        name = request.form.get("name")
-        state = request.form.get("state")
-        address = request.form.get("address")
-
-        if not name or not state or not address:
-            flash("All fields are required", "danger")
-            return redirect(url_for("add_pickup_station"))
-
-        new_station = PickupStation(name=name, state=state, address=address)
-        db.session.add(new_station)
+    form = PickupStationForm()
+    if form.validate_on_submit():
+        station = PickupStation(
+            name=form.name.data,
+            address=form.address.data,
+            state=form.state.data,
+            city=form.city.data
+        )
+        db.session.add(station)
         db.session.commit()
-
         flash("Pickup station added successfully!", "success")
-        return redirect(url_for("manage_pickup_stations"))
+        return redirect(url_for('manage_pickup_stations'))
 
-    return render_template("admin/add_pickup_station.html")
+    # Pass both form and stations to template
+    stations = PickupStation.query.all()
+    return render_template(
+        "admin/manage_pickup_stations.html",
+        form=form,
+        stations=stations
+    )
 
 
-@app.route("/admin/pickup-stations")
+# Edit Station
+@app.route('/admin/pickup_stations/edit/<int:station_id>', methods=['GET', 'POST'])
+@admin_login_required
+def edit_pickup_station(station_id):
+    station = PickupStation.query.get_or_404(station_id)
+    form = PickupStationForm(obj=station)  # ✅ bind station data into the form
+
+    if form.validate_on_submit():
+        station.name = form.name.data
+        station.address = form.address.data
+        station.city = form.city.data
+        station.state = form.state.data
+        db.session.commit()
+        flash('Pickup station updated successfully!', 'success')
+        return redirect(url_for('manage_pickup_stations'))
+
+    return render_template(
+        'admin/edit_pickup_station.html',
+        form=form,            # ✅ now template has `form`
+        station=station
+    )
+
+
+# Delete Station
+@app.route('/admin/pickup_stations/delete/<int:station_id>', methods=['POST'])
+def delete_pickup_station(station_id):
+    station = PickupStation.query.get_or_404(station_id)
+    db.session.delete(station)
+    db.session.commit()
+    flash('Pickup Station deleted successfully!', 'danger')
+    return redirect(url_for('manage_pickup_stations'))
+
+# Manage Station
+@app.route('/admin/pickup-stations', methods=['GET'])
 @admin_login_required
 def manage_pickup_stations():
+    form = PickupStationForm()
     stations = PickupStation.query.all()
-    return render_template("admin/manage_pickup_stations.html", stations=stations)
+    return render_template(
+        "admin/manage_pickup_stations.html",
+        form=form,           
+        stations=stations
+    )
+
 
 
 @app.route('/admin/manage_orders')

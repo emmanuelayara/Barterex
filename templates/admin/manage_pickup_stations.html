@@ -1,0 +1,99 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<div class="container">
+    <h1 class="text-center mb-4">Manage Pickup Stations</h1>
+
+    <!-- Add Pickup Station Form -->
+    <div class="card mb-5">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Add New Pickup Station</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_pickup_station') }}">
+                {{ form.hidden_tag() }}
+
+                <div class="form-group mb-3">
+                    {{ form.name.label(class="form-label") }}
+                    {{ form.name(class="form-control", placeholder="Enter station name") }}
+                    {% for error in form.name.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form.address.label(class="form-label") }}
+                    {{ form.address(class="form-control", placeholder="Enter station address") }}
+                    {% for error in form.address.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form.city.label(class="form-label") }}
+                    {{ form.city(class="form-control", placeholder="Enter city") }}
+                    {% for error in form.city.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form.state.label(class="form-label") }}
+                    {{ form.state(class="form-control", placeholder="Enter state") }}
+                    {% for error in form.state.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                {{ form.submit(class="btn btn-success") }}
+            </form>
+        </div>
+    </div>
+
+    <!-- List Pickup Stations -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h3 class="mb-0">All Pickup Stations</h3>
+        </div>
+        <div class="card-body">
+            {% if stations %}
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Station Name</th>
+                        <th>Address</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for station in stations %}
+                    <tr>
+                        <td>{{ station.id }}</td>
+                        <td>{{ station.name }}</td>
+                        <td>{{ station.address }}</td>
+                        <td>{{ station.city }}</td>
+                        <td>{{ station.state }}</td>
+                        <td>
+                            <!-- Edit -->
+                            <a href="{{ url_for('edit_pickup_station', station_id=station.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                            
+                            <!-- Delete -->
+                            <form method="POST" action="{{ url_for('delete_pickup_station', station_id=station.id) }}" style="display:inline-block;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this station?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="text-muted">No pickup stations added yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

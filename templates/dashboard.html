@@ -493,7 +493,7 @@
       <div class="stat-card">
         <div class="stat-icon">💰</div>
         <div class="stat-title">Credit Balance</div>
-        <div class="stat-value">₦{{ current_user.credits }}</div>
+        <div class="stat-value">₦{{ "{:,}".format(current_user.credits) }}</div> 
         <div class="stat-description">Available for transactions</div>
       </div>
 
