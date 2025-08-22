@@ -644,9 +644,9 @@
                         <div class="pickup-station">
                           {{ order.pickup_station.name }}
                           <br>
-                          <small>{{ order.pickup_station.state }}</small>
+                          <small>{{ order.pickup_station.address }}, {{ order.pickup_station.city }}, {{ order.pickup_station.state }}</small>
                         </div>
-                      </div>
+                      </div> 
                     </div>
                   {% elif order.delivery_address %}
                     <div class="detail-row">
