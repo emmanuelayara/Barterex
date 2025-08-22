@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">My Orders</h2>
+
+    {% if orders %}
+        {% for order in orders %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Order #{{ order.id }}</h5>
+                <p><strong>Item:</strong> {{ order.item.name }}</p>
+                <p><strong>Item Number:</strong> {{ order.item.item_number }}</p>
+                <p><strong>Status:</strong> 
+                    <span class="badge 
+                        {% if order.status == 'Pending' %} bg-warning text-dark 
+                        {% elif order.status == 'Completed' %} bg-success 
+                        {% else %} bg-secondary {% endif %}">
+                        {{ order.status }}
+                    </span>
+                </p>
+
+                <p><strong>Delivery Method:</strong> 
+                    {% if order.pickup_station %}
+                        Pickup Station
+                    {% else %}
+                        Home Delivery
+                    {% endif %}
+                </p>
+
+                {% if order.pickup_station %}
+                    <p><strong>Pickup Station:</strong> {{ order.pickup_station.name }} ({{ order.pickup_station.state }})</p>
+                {% else %}
+                    <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                {% endif %}
+
+                <p><strong>Placed on:</strong> {{ order.date_ordered.strftime("%B %d, %Y %I:%M %p") }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>You have not placed any orders yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

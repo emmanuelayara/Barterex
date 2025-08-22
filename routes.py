@@ -153,6 +153,16 @@ def dashboard():
     return render_template('dashboard.html', user=current_user, credits=credits, item_count=item_count, pending_trades=pending_trades, recent_notifications=recent_notifications)
 
 
+@app.route('/my_orders')
+@login_required
+def user_orders():
+    # Fetch all orders belonging to the logged-in user
+    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.date_ordered.desc()).all()
+
+    
+    return render_template('user_orders.html', orders=orders)
+
+
 @app.route('/user-items')
 @login_required
 def user_items():
@@ -363,7 +373,7 @@ def order_item(item_id):
     if form.validate_on_submit():
         delivery_method = form.delivery_method.data
         pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
-        delivery_address = form.delivery_address.data if delivery_method == 'delivery' else None
+        delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
 
         order = Order(
             user_id=current_user.id,
