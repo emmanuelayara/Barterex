@@ -2,7 +2,6 @@
 {% block title %}Delivery{% endblock %}
 
 {% block content %}
-
 <head>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -227,6 +226,11 @@
             transform: translateY(0);
         }
 
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
         .fade-in {
             animation: fadeIn 0.6s ease-out;
         }
@@ -270,6 +274,15 @@
                 opacity: 1;
                 transform: translateX(0);
             }
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
         /* Mobile Responsive */
@@ -318,19 +331,40 @@
 </head>
 <body>
     <div class="main-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-4">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <div class="row g-4 align-items-start">
             <!-- Left Side: Item Image -->
             <div class="col-lg-6">
                 <div class="slide-in-left">
                     <div class="item-image-container">
-                    <div style="flex: 1 1 350px;">
-                    {% if item.image_url %}
-                        <img src="{{ item.image_url }}" alt="{{ item.name }}"
-                            style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" />
-                    {% else %}
-                        <div style="width: 100%; height: 300px; background-color: #eee; border-radius: 10px;"></div>
-                    {% endif %}
+                        {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image" />
+                        {% else %}
+                            <div class="image-placeholder">
+                                <i class="fas fa-image"></i>
+                            </div>
+                        {% endif %}
                     </div>
+                    
+                    <!-- Item Details -->
+                    <div class="mt-4 p-4 bg-white bg-opacity-90 rounded-3">
+                        <h3 class="mb-3">{{ item.name }}</h3>
+                        {% if item.description %}
+                            <p class="text-muted mb-0">{{ item.description }}</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -347,28 +381,41 @@
                             <p class="form-subtitle">Complete the form to confirm your purchase</p>
                         </div>
 
-                        <form method="POST" class="fade-in">
-                            <!-- Hidden CSRF token would go here -->
-                             {{ form.hidden_tag() }}
+                        <form method="POST" id="orderForm" class="fade-in">
+                            {{ form.hidden_tag() }}
 
                             <!-- Delivery Method -->
                             <div class="form-group">
                                 <label class="form-label">
                                     <i class="fas fa-truck text-primary"></i>
-                                    Delivery Method
-                                    {{ form.delivery_method.label }}
+                                    {{ form.delivery_method.label.text }}
                                 </label>
-                                 {{ form.delivery_method(class="form-select") }}
+                                {{ form.delivery_method(class="form-select", id="delivery_method", onchange="toggleDeliveryFields()") }}
+                                {% if form.delivery_method.errors %}
+                                    {% for error in form.delivery_method.errors %}
+                                        <div class="error-message">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
 
                             <!-- Delivery Address -->
                             <div id="delivery_address_field" class="form-group">
                                 <label class="form-label">
-                                    {{ form.delivery_address.label }}
                                     <i class="fas fa-map-marker-alt text-success"></i>
-                                    Delivery Address
+                                    {{ form.delivery_address.label.text }}
                                 </label>
                                 {{ form.delivery_address(class="form-control", placeholder="Enter your delivery address") }}
+                                {% if form.delivery_address.errors %}
+                                    {% for error in form.delivery_address.errors %}
+                                        <div class="error-message">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i>
                                     We'll use your saved profile address by default. Update if necessary.
@@ -379,10 +426,17 @@
                             <div id="pickup_station_field" class="form-group" style="display:none;">
                                 <label class="form-label">
                                     <i class="fas fa-store text-warning"></i>
-                                    Pickup Station
-                                    {{ form.pickup_station.label }}
+                                    {{ form.pickup_station.label.text }}
                                 </label>
                                 {{ form.pickup_station(class="form-select") }}
+                                {% if form.pickup_station.errors %}
+                                    {% for error in form.pickup_station.errors %}
+                                        <div class="error-message">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i>
                                     Select a pickup station near you (must be in the same state as the item).
@@ -390,10 +444,7 @@
                             </div>
 
                             <!-- Submit Button -->
-                            <button type="submit" class="submit-btn">
-                                <i class="fas fa-check-circle me-2"></i>
-                                Confirm & Place Order
-                            </button>
+                            {{ form.submit(class="submit-btn", id="submitBtn") }}
                         </form>
                     </div>
                 </div>
@@ -411,31 +462,30 @@
             if (deliveryMethod === 'delivery') {
                 deliveryField.style.display = 'block';
                 pickupField.style.display = 'none';
-            } else {
+            } else if (deliveryMethod === 'pickup') {
                 deliveryField.style.display = 'none';
                 pickupField.style.display = 'block';
             }
         }
 
-        // Add some interactive animations
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize field visibility
+            toggleDeliveryFields();
+
             // Smooth scrolling for mobile
             const form = document.querySelector('.order-form-container');
             if (window.innerWidth <= 768) {
                 form.style.position = 'static';
             }
 
-            // Add loading state to submit button
-            const submitBtn = document.querySelector('.submit-btn');
-            submitBtn.addEventListener('click', function(e) {
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-                this.disabled = true;
-                
-                // Simulate processing time
-                setTimeout(() => {
-                    this.innerHTML = '<i class="fas fa-check-circle me-2"></i>Order Placed!';
-                    this.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                }, 2000);
+            // Form submission handling
+            const orderForm = document.getElementById('orderForm');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            orderForm.addEventListener('submit', function(e) {
+                // Show loading state
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing Order...';
+                submitBtn.disabled = true;
             });
 
             // Add form validation feedback
@@ -445,11 +495,18 @@
                     if (this.value.trim() !== '') {
                         this.style.borderColor = '#10b981';
                         this.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+                    } else {
+                        this.style.borderColor = '#e5e7eb';
+                        this.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
                     }
+                });
+
+                input.addEventListener('focus', function() {
+                    this.style.borderColor = '#667eea';
+                    this.style.backgroundColor = 'white';
                 });
             });
         });
     </script>
 </body>
-
 {% endblock %}
