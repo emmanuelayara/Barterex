@@ -605,15 +605,21 @@
                       <span class="status-badge 
                         {% if order.status == 'Pending' %}status-pending
                         {% elif order.status == 'Shipped' %}status-shipped
+                        {% elif order.status == 'Out for Delivery' %}status-out-for-delivery
                         {% elif order.status == 'Delivered' %}status-delivered
                         {% elif order.status == 'Cancelled' %}status-cancelled
                         {% else %}status-pending{% endif %}">
-                        {% if order.status == 'Pending' %}⏳
-                        {% elif order.status == 'Shipped' %}🚛
-                        {% elif order.status == 'Delivered' %}✅
-                        {% elif order.status == 'Cancelled' %}❌
-                        {% else %}⏳{% endif %}
-                        {{ order.status }}
+                          {% if order.status == 'Pending' %}
+                              ⏳ Pending
+                          {% elif order.status == 'Shipped' %}
+                              🚚 Shipped
+                          {% elif order.status == 'Out for Delivery' %}
+                              🚚 Out for Delivery
+                          {% elif order.status == 'Delivered' %}
+                              ✅ Delivered
+                          {% elif order.status == 'Cancelled' %}
+                              ❌ Cancelled
+                          {% endif %}
                       </span>
                     </div>
                   </div>

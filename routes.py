@@ -859,7 +859,6 @@ def manage_pickup_stations():
     )
 
 
-
 @app.route('/admin/manage_orders')
 @admin_login_required
 def manage_orders():
@@ -868,3 +867,15 @@ def manage_orders():
     return render_template('admin/manage_orders.html', orders=orders, items=items)
 
 
+@app.route('/admin/update_order_status/<int:order_id>', methods=['POST'])
+def update_order_status(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.status == "Pending":
+        order.status = "Shipped"
+    elif order.status == "Shipped":
+        order.status = "Out for Delivery"
+    elif order.status == "Out for Delivery":
+        order.status = "Delivered"
+    db.session.commit()
+    flash(f"Order status updated to {order.status}", "success")
+    return redirect(url_for('manage_orders'))

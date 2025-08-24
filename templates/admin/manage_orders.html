@@ -59,6 +59,10 @@
                             Status
                             <span class="sort-indicator">↕️</span>
                         </th>
+                        <th class="sortable" data-sort="status">
+                            Update Status
+                            <span class="sort-indicator">↕️</span>
+                        </th>
                         <th class="sortable" data-sort="date">
                             Order Date
                             <span class="sort-indicator">↕️</span>
@@ -103,11 +107,26 @@
                             <span class="status-badge status-{{ order.status|lower }}">
                                 {% if order.status == 'Pending' %}⏳
                                 {% elif order.status == 'Shipped' %}🚛
+                                {% elif order.status == 'Out for Delivery' %}🚚
                                 {% elif order.status == 'Delivered' %}✅
                                 {% elif order.status == 'Cancelled' %}❌
                                 {% endif %}
                                 {{ order.status }}
                             </span>
+                        </td>
+                        <td class="actions-cell">
+                            {% if order.status != 'Delivered' and order.status != 'Cancelled' %}
+                                <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}">
+                                    <button type="submit" class="action-btn">
+                                        {% if order.status == 'Pending' %} Mark as Shipped 🚚
+                                        {% elif order.status == 'Shipped' %} Mark as Out for Delivery 🚚
+                                        {% elif order.status == 'Out for Delivery' %} Mark as Delivered ✅
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="status-complete">✔</span>
+                            {% endif %}
                         </td>
                         <td class="date-cell">
                             <div class="date-info">
