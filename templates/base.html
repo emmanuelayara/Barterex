@@ -471,11 +471,7 @@
 <!-- ✨ MODERN FOOTER -->
 <footer>
     <div style="max-width: 1200px; margin: 0 auto;">
-        <p>&copy; 2025 Barter Express &bull;
-            <a href="{{ url_for('marketplace') }}">Marketplace</a> |
-            <a href="{{ url_for('upload_item') }}">Upload</a> |
-            <a href="{{ url_for('home') }}">Home</a>
-        </p>
+        <p>&copy; {{ current_year if current_year else '2025' }} Barter Express | All rights reserved &bull;</p>
     </div>
 </footer>
 
