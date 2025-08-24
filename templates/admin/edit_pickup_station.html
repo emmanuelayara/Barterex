@@ -1,58 +1,393 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">✏️ Edit Pickup Station</h4>
+<div class="container-fluid px-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light rounded-pill px-4 py-2 shadow-sm">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('manage_pickup_stations') }}" class="text-decoration-none text-primary">
+                    <i class="fas fa-map-marker-alt me-1"></i>Pickup Stations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-edit me-1"></i>Edit Station
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="h3 mb-2 text-gray-800 fw-bold">
+                        <i class="fas fa-edit me-2 text-primary"></i>
+                        Edit Pickup Station
+                    </h1>
+                    <p class="text-muted mb-0">Update station information and location details</p>
                 </div>
-                <div class="card-body">
-                    <form method="POST">
+                <div>
+                    <a href="{{ url_for('manage_pickup_stations') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                        <i class="fas fa-arrow-left"></i>
+                        <span class="d-none d-sm-inline">Back to Stations</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card border-0 shadow-lg">
+                <!-- Card Header -->
+                <div class="card-header bg-gradient border-0 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);">
+                    <div class="position-absolute top-0 end-0 opacity-25">
+                        <i class="fas fa-edit fa-4x"></i>
+                    </div>
+                    <div class="position-relative">
+                        <h4 class="mb-1 fw-bold">
+                            <i class="fas fa-building me-2"></i>
+                            Station Information
+                        </h4>
+                        <small class="opacity-75">Make changes to your pickup station details</small>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body p-4">
+                    <!-- Status Alert -->
+                    <div class="alert alert-info border-0 bg-info-subtle d-flex align-items-center mb-4" role="alert">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        <div class="flex-grow-1">
+                            <strong class="text-info">Editing Mode</strong>
+                            <div class="small text-info-emphasis">All changes will be saved when you click "Update Station"</div>
+                        </div>
+                    </div>
+
+                    <form method="POST" id="editStationForm">
                         {{ form.hidden_tag() }}
 
-                        <div class="form-group mb-3">
-                            {{ form.name.label(class="form-label") }}
-                            {{ form.name(class="form-control", placeholder="Enter station name") }}
+                        <!-- Station Name -->
+                        <div class="mb-4">
+                            {{ form.name.label(class="form-label fw-semibold text-dark mb-2") }}
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-building text-primary"></i>
+                                </span>
+                                {{ form.name(class="form-control border-start-0 ps-2", placeholder="Enter station name") }}
+                            </div>
                             {% for error in form.name.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                                <div class="text-danger small mt-2 d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                </div>
                             {% endfor %}
+                            <div class="form-text">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Choose a clear, recognizable name for easy identification
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            {{ form.address.label(class="form-label") }}
-                            {{ form.address(class="form-control", placeholder="Enter station address") }}
+                        <!-- Address -->
+                        <div class="mb-4">
+                            {{ form.address.label(class="form-label fw-semibold text-dark mb-2") }}
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-map-marker-alt text-primary"></i>
+                                </span>
+                                {{ form.address(class="form-control border-start-0 ps-2", placeholder="Enter complete street address") }}
+                            </div>
                             {% for error in form.address.errors %}
-                                <div class="text-danger small">{{ error }}</div>
+                                <div class="text-danger small mt-2 d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                </div>
                             {% endfor %}
+                            <div class="form-text">
+                                <i class="fas fa-map me-1"></i>
+                                Include street number, street name, and any relevant details
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            {{ form.city.label(class="form-label") }}
-                            {{ form.city(class="form-control") }}
-                            {% for error in form.city.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
+                        <!-- Location Row -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                {{ form.city.label(class="form-label fw-semibold text-dark mb-2") }}
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-city text-primary"></i>
+                                    </span>
+                                    {{ form.city(class="form-control border-start-0 ps-2", placeholder="City name") }}
+                                </div>
+                                {% for error in form.city.errors %}
+                                    <div class="text-danger small mt-2 d-flex align-items-center">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.state.label(class="form-label fw-semibold text-dark mb-2") }}
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-flag text-primary"></i>
+                                    </span>
+                                    {{ form.state(class="form-control border-start-0 ps-2", placeholder="State/Province") }}
+                                </div>
+                                {% for error in form.state.errors %}
+                                    <div class="text-danger small mt-2 d-flex align-items-center">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            {{ form.state.label(class="form-label") }}
-                            {{ form.state(class="form-control") }}
-                            {% for error in form.state.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('manage_pickup_stations') }}" class="btn btn-secondary">⬅ Back</a>
-                            <button type="submit" class="btn btn-success">💾 Update Station</button>
+                        <!-- Action Buttons -->
+                        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-between align-items-stretch align-items-sm-center mt-5 pt-4 border-top">
+                            <a href="{{ url_for('manage_pickup_stations') }}" class="btn btn-outline-secondary btn-lg d-flex align-items-center justify-content-center gap-2 order-2 order-sm-1">
+                                <i class="fas fa-arrow-left"></i>
+                                Cancel & Go Back
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg d-flex align-items-center justify-content-center gap-2 px-4 order-1 order-sm-2">
+                                <i class="fas fa-save"></i>
+                                Update Station
+                            </button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body bg-light">
+                    <h6 class="card-title text-dark mb-3">
+                        <i class="fas fa-question-circle text-info me-2"></i>
+                        Need Help?
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="fas fa-check-circle text-success mt-1"></i>
+                                <div class="small">
+                                    <strong>Station Name:</strong> Use descriptive names like "Downtown Hub" or "Mall Entrance"
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="fas fa-check-circle text-success mt-1"></i>
+                                <div class="small">
+                                    <strong>Address:</strong> Ensure the address is complete and easily locatable
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Enhanced styles for modern look */
+.card {
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.input-group-text {
+    background-color: #f8f9fa !important;
+    border-right: none !important;
+    transition: all 0.3s ease;
+}
+
+.form-control {
+    border-left: none !important;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus + .input-group-text,
+.input-group-text + .form-control:focus {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05) !important;
+}
+
+.btn {
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-success:hover {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.breadcrumb-item a:hover {
+    color: #0056b3 !important;
+}
+
+.alert {
+    border-radius: 10px;
+}
+
+.bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+.text-info-emphasis {
+    color: #0a58ca !important;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.input-group-lg .input-group-text {
+    padding: 0.75rem 1rem;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .breadcrumb {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .input-group-lg .form-control,
+    .input-group-lg .input-group-text {
+        padding: 0.625rem 0.875rem;
+        font-size: 1rem;
+    }
+}
+
+/* Loading state styling */
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editStationForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    // Enhanced form submission with loading state
+    form.addEventListener('submit', function(e) {
+        if (submitBtn) {
+            const originalText = submitBtn.innerHTML;
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+            
+            // Reset button if form validation fails (after a short delay)
+            setTimeout(() => {
+                if (submitBtn.disabled) {
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            }, 5000);
+        }
+    });
+    
+    // Auto-focus first input field
+    const firstInput = form.querySelector('input[type="text"], input[type="email"], textarea, select');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Enhanced input animations
+    const inputs = form.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+    
+    // Form validation feedback
+    const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+    requiredFields.forEach(field => {
+        field.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+        
+        field.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.value.trim()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + S to save
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            submitBtn.click();
+        }
+        
+        // Escape to go back
+        if (e.key === 'Escape') {
+            const backBtn = document.querySelector('a[href*="manage_pickup_stations"]');
+            if (backBtn && confirm('Are you sure you want to leave? Any unsaved changes will be lost.')) {
+                backBtn.click();
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}
