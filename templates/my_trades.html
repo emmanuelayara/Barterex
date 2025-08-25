@@ -575,17 +575,17 @@
       <div class="summary-card">
         <div class="summary-icon">📤</div>
         <div class="summary-title">Trades Initiated</div>
-        <div class="summary-value">{{ sent_trades|length }}</div>
+        <div class="summary-value">{{ sent_trades.items|length }}</div>
       </div>
       <div class="summary-card">
         <div class="summary-icon">📥</div>
         <div class="summary-title">Trades Received</div>
-        <div class="summary-value">{{ received_trades|length }}</div>
+        <div class="summary-value">{{ received_trades.items|length }}</div>
       </div>
       <div class="summary-card">
         <div class="summary-icon">🎯</div>
         <div class="summary-title">Total Trades</div>
-        <div class="summary-value">{{ (sent_trades|length) + (received_trades|length) }}</div>
+        <div class="summary-value">{{ (sent_trades.items|length) + (received_trades.items|length) }}</div>
       </div>
     </div>
 
@@ -623,6 +623,29 @@
             </div>
           {% endfor %}
         </div>
+
+        <!-- Pagination -->
+        {% if sent_trades.pages > 1 %}
+          <div class="pagination-container">
+            {% if sent_trades.has_prev %}
+              <a href="{{ url_for('my_trades', page=sent_trades.prev_num) }}" class="pagination-btn">
+                ← Previous
+              </a>
+            {% endif %}
+            
+            <span class="pagination-info">
+              Page {{ sent_trades.page }} of {{ sent_trades.pages }}
+            </span>
+
+            {% if sent_trades.has_next %}
+              <a href="{{ url_for('my_trades', page=sent_trades.next_num) }}" class="pagination-btn">
+                Next →
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+
       {% else %}
         <div class="empty-state">
           <div class="empty-icon">📤</div>
@@ -669,6 +692,28 @@
             </div>
           {% endfor %}
         </div>
+
+        <!-- Pagination -->
+        {% if received_trades.pages > 1 %}
+          <div class="pagination-container">
+            {% if received_trades.has_prev %}
+              <a href="{{ url_for('my_trades', page=received_trades.prev_num) }}" class="pagination-btn">
+                ← Previous
+              </a>
+            {% endif %}
+            
+            <span class="pagination-info">
+              Page {{ received_trades.page }} of {{ received_trades.pages }}
+            </span>
+
+            {% if received_trades.has_next %}
+              <a href="{{ url_for('my_trades', page=received_trades.next_num) }}" class="pagination-btn">
+                Next →
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
       {% else %}
         <div class="empty-state">
           <div class="empty-icon">📥</div>

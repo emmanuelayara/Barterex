@@ -221,8 +221,11 @@ def edit_item(item_id):
 @app.route('/my-trades')
 @login_required
 def my_trades():
-    sent_trades = Trade.query.filter_by(sender_id=current_user.id).order_by(Trade.timestamp.desc()).all()
-    received_trades = Trade.query.filter_by(receiver_id=current_user.id).order_by(Trade.timestamp.desc()).all()
+
+    page = request.args.get('page', 1, type=int)
+
+    sent_trades = Trade.query.filter_by(sender_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=9)
+    received_trades = Trade.query.filter_by(receiver_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=9)
     return render_template('my_trades.html', sent_trades=sent_trades, received_trades=received_trades)
 
 
@@ -236,7 +239,13 @@ def credit_history():
 @app.route('/notifications')
 @login_required
 def notifications():
-    notes = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
+
+    page = request.args.get('page', 1, type=int)
+
+    notes = Notification.query.filter_by(user_id=current_user.id).order_by(
+        Notification.created_at.desc()
+    ).paginate(page=page, per_page=9)
+
     return render_template('notifications.html', notifications=notes)
 
 

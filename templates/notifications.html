@@ -643,6 +643,28 @@
             </div>
           {% endfor %}
         </div>
+
+        <!-- Pagination -->
+        {% if notifications.pages > 1 %}
+          <div class="pagination-container">
+            {% if notifications.has_prev %}
+              <a href="{{ url_for('notifications', page=notifications.prev_num) }}" class="pagination-btn">
+                ← Previous
+              </a>
+            {% endif %}
+            
+            <span class="pagination-info">
+              Page {{ notifications.page }} of {{ notifications.pages }}
+            </span>
+
+            {% if notifications.has_next %}
+              <a href="{{ url_for('notifications', page=notifications.next_num) }}" class="pagination-btn">
+                Next →
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
       {% else %}
         <div class="empty-state">
           <div class="empty-icon">🔔</div>
