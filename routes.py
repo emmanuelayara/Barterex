@@ -240,15 +240,15 @@ def notifications():
     return render_template('notifications.html', notifications=notes)
 
 
-@app.route('/notifications/read/<int:notification_id>')
+@app.route('/notifications/mark_read/<int:note_id>', methods=['POST'])
 @login_required
-def mark_as_read(notification_id):
-    n = Notification.query.get_or_404(notification_id)
-    if n.user_id != current_user.id:
-        abort(403)
-    n.is_read = True
-    db.session.commit()
-    return redirect(url_for('view_notifications'))
+def mark_notification_read(note_id):
+    note = Notification.query.get_or_404(note_id)
+    if note.user_id == current_user.id:
+        note.is_read = True
+        db.session.commit()
+    return redirect(url_for('notifications'))
+
 
 
 @app.route('/profile-settings', methods=['GET', 'POST'])
@@ -397,6 +397,14 @@ def order_item(item_id):
             pickup_station_id=pickup_station_id
         )
         db.session.add(order)
+
+        new_note = Notification(
+            user_id=current_user.id,
+            message=f"You placed an order for {item.name} via "
+                    f"{'pickup at ' + PickupStation.query.get(pickup_station_id).name if pickup_station_id else 'home delivery'}."
+        )
+        db.session.add(new_note)
+
         db.session.commit()
 
         flash('Your order has been placed successfully!', 'success')
@@ -914,6 +922,19 @@ def update_order_status(order_id):
         order.status = "Out for Delivery"
     elif order.status == "Out for Delivery":
         order.status = "Delivered"
+
+    status_messages = {
+        "Shipped": f"Your order for {order.item.name} has been shipped.",
+        "Out for Delivery": f"Your order for {order.item.name} is out for delivery.",
+        "Delivered": f"Your order for {order.item.name} has been delivered. 🎉",
+    }
+
+    note = Notification(
+        user_id=order.user_id,
+        message=status_messages.get(order.status, f"Order status updated to {order.status}")
+    )
+    db.session.add(note)
+
     db.session.commit()
     flash(f"Order status updated to {order.status}", "success")
     return redirect(url_for('manage_orders'))

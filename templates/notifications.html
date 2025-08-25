@@ -634,7 +634,9 @@
                 <div class="notification-actions">
                   <div class="notification-badge {% if note.is_read %}read{% endif %}"></div>
                   {% if not note.is_read %}
-                    <button class="action-btn">Mark Read</button>
+                    <form method="post" action="{{ url_for('mark_notification_read', note_id=note.id) }}">
+                      <button type="submit" class="action-btn">Mark Read</button>
+                    </form>
                   {% endif %}
                 </div>
               </div>
