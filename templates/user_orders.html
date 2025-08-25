@@ -672,6 +672,27 @@
           {% endfor %}
         </div>
 
+        <!-- Pagination -->
+        {% if orders.pages > 1 %}
+          <div class="pagination-container">
+            {% if orders.has_prev %}
+              <a href="{{ url_for('user_orders', page=orders.prev_num) }}" class="pagination-btn">
+                ← Previous
+              </a>
+            {% endif %}
+            
+            <span class="pagination-info">
+              Page {{ orders.page }} of {{ orders.pages }}
+            </span>
+
+            {% if orders.has_next %}
+              <a href="{{ url_for('user_orders', page=orders.next_num) }}" class="pagination-btn">
+                Next →
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
       {% else %}
         <!-- Empty State -->
         <div class="empty-state">

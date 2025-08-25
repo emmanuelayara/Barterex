@@ -158,9 +158,9 @@ def dashboard():
 @login_required
 def user_orders():
     # Fetch all orders belonging to the logged-in user
-    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.date_ordered.desc()).all()
+    page = request.args.get('page', 1, type=int)
+    orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.date_ordered.desc()).paginate(page=page, per_page=6)
 
-    
     return render_template('user_orders.html', orders=orders)
 
 
