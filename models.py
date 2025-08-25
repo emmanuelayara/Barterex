@@ -54,7 +54,24 @@ class Item(db.Model):
         nullable=False, 
         default=lambda: f"EA-{random.randint(1, 999999999)}"
     )
+    
+    images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
 
+
+
+class ItemImage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    image_url = db.Column(db.String(300), nullable=False)
+    is_primary = db.Column(db.Boolean, default=False)  # Mark primary image
+    order_index = db.Column(db.Integer, default=0)  # For ordering images
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    item = db.relationship('Item', back_populates='images')
+
+    def __repr__(self):
+        return f'<ItemImage {self.id} for Item {self.item_id}>'
+    
 
 
 class Trade(db.Model):

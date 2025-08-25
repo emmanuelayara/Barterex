@@ -14,10 +14,11 @@ from functools import wraps
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 import os
+import time
 from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
-from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation
+from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm
 
 
@@ -306,6 +307,19 @@ def marketplace():
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
 def view_item(item_id):
     item = Item.query.get_or_404(item_id)
+    
+    # Get all images for this item, ordered by order_index
+    item_images = ItemImage.query.filter_by(item_id=item.id).order_by(ItemImage.order_index).all()
+    
+    # If no images in ItemImage table, use the legacy image_url
+    if not item_images and item.image_url:
+        # Create a temporary image object for backward compatibility
+        class TempImage:
+            def __init__(self, url, is_primary=True):
+                self.image_url = url
+                self.is_primary = is_primary
+        
+        item_images = [TempImage(item.image_url)]
 
     related_items = Item.query.filter(
         Item.category == item.category,
@@ -313,7 +327,7 @@ def view_item(item_id):
         Item.is_available == True
     ).limit(5).all()
 
-    return render_template('item_detail.html', item=item, related_items=related_items)
+    return render_template('item_detail.html', item=item, item_images=item_images, related_items=related_items)
 
 
 @app.route('/buy/<int:item_id>', methods=['POST', 'GET'])
@@ -402,19 +416,10 @@ def upload_item():
 
     form = UploadItemForm()
     if form.validate_on_submit():
-        file = form.image.data  # file field from your form
-
-        image_url = None
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(image_path)
-            image_url = f"/{image_path}"  # Public path to be stored in DB
-
+        # Create the item first
         new_item = Item(
             name=form.name.data,
             description=form.description.data,
-            image_url=image_url,
             condition=form.condition.data,
             category=form.category.data,
             user_id=current_user.id,
@@ -424,11 +429,44 @@ def upload_item():
             status='pending'
         )
         db.session.add(new_item)
-        db.session.commit()
-        flash("Item submitted for approval!", "info")
-        return redirect(url_for('marketplace'))
+        db.session.flush()  # Get the item ID without committing
+        
+        # Handle multiple image uploads
+        uploaded_images = []
+        if form.images.data:
+            for index, file in enumerate(form.images.data):
+                if file and allowed_file(file.filename):
+                    # Generate unique filename
+                    filename = secure_filename(file.filename)
+                    unique_filename = f"{new_item.id}_{index}_{int(time.time())}_{filename}"
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                    file.save(image_path)
+                    
+                    # Create ItemImage record
+                    item_image = ItemImage(
+                        item_id=new_item.id,
+                        image_url=f"/{image_path}",
+                        is_primary=(index == 0),  # First image is primary
+                        order_index=index
+                    )
+                    db.session.add(item_image)
+                    uploaded_images.append(item_image)
+        
+        # Set the main image_url to the first uploaded image for backward compatibility
+        if uploaded_images:
+            new_item.image_url = uploaded_images[0].image_url
+        
+        try:
+            db.session.commit()
+            flash(f"Item submitted for approval with {len(uploaded_images)} images!", "info")
+            return redirect(url_for('marketplace'))
+        except Exception as e:
+            db.session.rollback()
+            flash("Error uploading item. Please try again.", "danger")
+            return redirect(url_for('upload_item'))
 
     return render_template('upload.html', form=form)
+
 
 
 @app.route('/request_trade/<int:item_id>', methods=['POST'])

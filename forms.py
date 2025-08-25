@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField, FileField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField, FileField, IntegerField, MultipleFileField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, Optional
 from flask_wtf.file import FileAllowed
 from models import User, Admin
@@ -57,7 +57,10 @@ class UploadItemForm(FlaskForm):
         ("Health & Wellness", "Health & Wellness"),
         ("Automotive", "Automotive")
     ], validators=[DataRequired()])
-    image = FileField('Upload Image', validators=[FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!'), DataRequired()])
+    # Changed to support multiple files
+    images = MultipleFileField('Upload Images (Max 6)', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')
+    ])
     submit = SubmitField('Submit Item')
 
 

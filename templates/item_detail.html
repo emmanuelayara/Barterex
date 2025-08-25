@@ -70,7 +70,8 @@
     min-height: 600px;
   }
 
-  .image-section {
+  /* Slideshow Section */
+  .slideshow-section {
     position: relative;
     background: #f8fafc;
     display: flex;
@@ -79,18 +80,50 @@
     overflow: hidden;
   }
 
-  .item-image {
+  .slideshow-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slideshow-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .slideshow-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .slide {
+    min-width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .slide img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
   }
 
-  .item-image:hover {
+  .slide img:hover {
     transform: scale(1.05);
   }
 
-  .image-placeholder {
+  .slide-placeholder {
     width: 100%;
     height: 100%;
     display: flex;
@@ -101,7 +134,47 @@
     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
   }
 
-  .image-badge {
+  /* Navigation Arrows */
+  .slideshow-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  .slideshow-nav:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .slideshow-nav.prev {
+    left: 20px;
+  }
+
+  .slideshow-nav.next {
+    right: 20px;
+  }
+
+  .slideshow-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(0.9);
+  }
+
+  /* Image Counter */
+  .image-counter {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -109,11 +182,77 @@
     color: white;
     padding: 8px 12px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 600;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+  }
+
+  /* Thumbnail Navigation */
+  .thumbnail-nav {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+    max-width: 90%;
+    overflow-x: auto;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
     backdrop-filter: blur(10px);
   }
 
+  .thumbnail-nav::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .thumbnail-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 2px;
+  }
+
+  .thumbnail {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .thumbnail.active {
+    border-color: #10b981;
+    transform: scale(1.1);
+  }
+
+  .thumbnail:hover {
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: scale(1.05);
+  }
+
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* Info Section */
   .info-section {
     padding: 40px;
     display: flex;
@@ -375,7 +514,7 @@
       grid-template-columns: 1fr;
     }
 
-    .image-section {
+    .slideshow-section {
       min-height: 400px;
     }
 
@@ -405,6 +544,25 @@
       grid-template-columns: 1fr;
       gap: 16px;
     }
+
+    .slideshow-nav {
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+    }
+
+    .slideshow-nav.prev {
+      left: 10px;
+    }
+
+    .slideshow-nav.next {
+      right: 10px;
+    }
+
+    .thumbnail {
+      width: 40px;
+      height: 40px;
+    }
   }
 
   @media (max-width: 480px) {
@@ -433,6 +591,16 @@
       padding: 14px 20px;
       font-size: 1rem;
     }
+
+    .thumbnail-nav {
+      bottom: 10px;
+      max-width: 95%;
+    }
+
+    .thumbnail {
+      width: 35px;
+      height: 35px;
+    }
   }
 
   /* Loading animation */
@@ -446,20 +614,118 @@
     background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
     background-size: 800px 104px;
   }
+
+  /* Fullscreen modal */
+  .fullscreen-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+  }
+
+  .fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fullscreen-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+
+  .fullscreen-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+  }
+
+  .fullscreen-close {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .fullscreen-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
 </style>
 
+<div class="page-container">
+  <div class="main-content">
     <!-- Item Details Container -->
     <div class="item-container">
       <div class="item-layout">
-        <!-- Image Section -->
-        <div class="image-section">
-          {% if item.image_url %}
-            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image">
-            <div class="image-badge">📸 High Quality</div>
-          {% else %}
-            <div class="image-placeholder">📦</div>
-            <div class="image-badge">📷 No Image</div>
-          {% endif %}
+        <!-- Slideshow Section -->
+        <div class="slideshow-section">
+          <div class="slideshow-container">
+            {% if item_images and item_images|length > 0 %}
+              <div class="slideshow-wrapper">
+                <div class="slideshow-track" id="slideshowTrack">
+                  {% for image in item_images %}
+                    <div class="slide">
+                      {% if image.image_url %}
+                        <img src="{{ image.image_url }}" alt="{{ item.name }} - Image {{ loop.index }}" onclick="openFullscreen('{{ image.image_url }}')">
+                      {% else %}
+                        <div class="slide-placeholder">📦</div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+              
+              <!-- Navigation arrows (only show if more than 1 image) -->
+              {% if item_images|length > 1 %}
+                <button class="slideshow-nav prev" id="prevBtn" onclick="previousSlide()">‹</button>
+                <button class="slideshow-nav next" id="nextBtn" onclick="nextSlide()">›</button>
+              {% endif %}
+              
+              <!-- Image counter -->
+              <div class="image-counter">
+                <span id="currentSlide">1</span> / {{ item_images|length }}
+              </div>
+              
+              <!-- Thumbnail navigation (only show if more than 1 image) -->
+              {% if item_images|length > 1 %}
+                <div class="thumbnail-nav">
+                  {% for image in item_images %}
+                    <div class="thumbnail {% if loop.first %}active{% endif %}" onclick="goToSlide({{ loop.index0 }})">
+                      {% if image.image_url %}
+                        <img src="{{ image.image_url }}" alt="Thumbnail {{ loop.index }}">
+                      {% else %}
+                        <div class="thumbnail-placeholder">📦</div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              
+            {% else %}
+              <!-- Fallback for no images -->
+              <div class="slide-placeholder">📦</div>
+              <div class="image-counter">📷 No Images</div>
+            {% endif %}
+          </div>
         </div>
 
         <!-- Info Section -->
@@ -474,6 +740,11 @@
               <div class="meta-tag">
                 ⚡ {{ item.condition }}
               </div>
+              {% if item_images and item_images|length > 1 %}
+                <div class="meta-tag">
+                  📸 {{ item_images|length }} Photos
+                </div>
+              {% endif %}
             </div>
 
             <div class="location-info">
@@ -543,9 +814,194 @@
   </div>
 </div>
 
+<!-- Fullscreen Modal -->
+<div class="fullscreen-modal" id="fullscreenModal" onclick="closeFullscreen()">
+  <div class="fullscreen-content" onclick="event.stopPropagation()">
+    <button class="fullscreen-close" onclick="closeFullscreen()">×</button>
+    <img class="fullscreen-image" id="fullscreenImage" src="" alt="Fullscreen view">
+  </div>
+</div>
+
 <script>
-  // Add smooth loading effect for images
+  let currentSlideIndex = 0;
+  const totalSlides = {{ item_images|length if item_images else 0 }};
+
+  // Slideshow functionality
+  function updateSlideshow() {
+    if (totalSlides <= 1) return;
+    
+    const track = document.getElementById('slideshowTrack');
+    const currentSlideCounter = document.getElementById('currentSlide');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (track) {
+      track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+    }
+    
+    if (currentSlideCounter) {
+      currentSlideCounter.textContent = currentSlideIndex + 1;
+    }
+    
+    // Update thumbnail active state
+    thumbnails.forEach((thumb, index) => {
+      if (index === currentSlideIndex) {
+        thumb.classList.add('active');
+      } else {
+        thumb.classList.remove('active');
+      }
+    });
+    
+    // Update navigation button states
+    if (prevBtn) {
+      prevBtn.disabled = currentSlideIndex === 0;
+    }
+    if (nextBtn) {
+      nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+    }
+  }
+
+  function nextSlide() {
+    if (currentSlideIndex < totalSlides - 1) {
+      currentSlideIndex++;
+      updateSlideshow();
+    }
+  }
+
+  function previousSlide() {
+    if (currentSlideIndex > 0) {
+      currentSlideIndex--;
+      updateSlideshow();
+    }
+  }
+
+  function goToSlide(index) {
+    currentSlideIndex = index;
+    updateSlideshow();
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (totalSlides <= 1) return;
+    
+    switch(e.key) {
+      case 'ArrowLeft':
+        previousSlide();
+        break;
+      case 'ArrowRight':
+        nextSlide();
+        break;
+    }
+  });
+
+  // Touch/Swipe support for mobile
+  let startX = 0;
+  let startY = 0;
+  let isDragging = false;
+
+  const slideshowSection = document.querySelector('.slideshow-section');
+  
+  if (slideshowSection && totalSlides > 1) {
+    slideshowSection.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isDragging = true;
+    }, { passive: true });
+
+    slideshowSection.addEventListener('touchmove', function(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+    }, { passive: false });
+
+    slideshowSection.addEventListener('touchend', function(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      // Only trigger swipe if horizontal movement is greater than vertical
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (Math.abs(diffX) > 50) { // Minimum swipe distance
+          if (diffX > 0) {
+            nextSlide(); // Swipe left = next slide
+          } else {
+            previousSlide(); // Swipe right = previous slide
+          }
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Fullscreen functionality
+  function openFullscreen(imageSrc) {
+    const modal = document.getElementById('fullscreenModal');
+    const image = document.getElementById('fullscreenImage');
+    
+    if (modal && image) {
+      image.src = imageSrc;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeFullscreen() {
+    const modal = document.getElementById('fullscreenModal');
+    
+    if (modal) {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Close fullscreen with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeFullscreen();
+    }
+  });
+
+  // Auto-slideshow (optional - uncomment to enable)
+
+  let autoSlideInterval;
+  
+  function startAutoSlide() {
+    if (totalSlides <= 1) return;
+    
+    autoSlideInterval = setInterval(() => {
+      if (currentSlideIndex < totalSlides - 1) {
+        nextSlide();
+      } else {
+        currentSlideIndex = 0;
+        updateSlideshow();
+      }
+    }, 4000); // Change slide every 4 seconds
+  }
+  
+  function stopAutoSlide() {
+    if (autoSlideInterval) {
+      clearInterval(autoSlideInterval);
+    }
+  }
+  
+  // Start auto-slideshow on page load
+  document.addEventListener('DOMContentLoaded', startAutoSlide);
+  
+  // Pause auto-slideshow on hover
+  if (slideshowSection) {
+    slideshowSection.addEventListener('mouseenter', stopAutoSlide);
+    slideshowSection.addEventListener('mouseleave', startAutoSlide);
+  }
+
+
+  // Initialize slideshow
   document.addEventListener('DOMContentLoaded', function() {
+    updateSlideshow();
+    
+    // Add smooth loading effect for images
     const images = document.querySelectorAll('img[src]');
     
     images.forEach(img => {
@@ -560,7 +1016,7 @@
           this.classList.remove('loading-shimmer');
           // Replace with placeholder
           const placeholder = document.createElement('div');
-          placeholder.className = 'image-placeholder';
+          placeholder.className = 'slide-placeholder';
           placeholder.innerHTML = '📦';
           this.parentNode.replaceChild(placeholder, this);
         });
