@@ -767,9 +767,9 @@
           </div>
 
           <div class="action-section">
-            <form method="POST" action="{{ url_for('buy_item', item_id=item.id) }}">
+            <form method="POST" action="{{ url_for('add_to_cart', item_id=item.id) }}">
               <button type="submit" class="trade-button">
-                🔄 Trade Now with Credits
+                🛒 Add to Cart
               </button>
             </form>
           </div>

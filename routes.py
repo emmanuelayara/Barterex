@@ -1,7 +1,8 @@
 from flask import (
     Flask, render_template, redirect, url_for, request, 
     flash, session,
-    abort
+    abort,
+    current_app
 )
 
 from flask_sqlalchemy import SQLAlchemy
@@ -18,8 +19,34 @@ import time
 from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
-from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage
+from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage, Cart, CartItem
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm
+
+
+# Utility function for cart management
+from datetime import datetime
+
+def get_or_create_cart(user_id):
+    cart = Cart.query.filter_by(user_id=user_id).first()
+    if not cart:
+        cart = Cart(user_id=user_id, created_at=datetime.utcnow(), updated_at=datetime.utcnow())
+        db.session.add(cart)
+        db.session.commit()
+    return cart
+
+
+def get_total_cost(self):
+    """Calculate total cost of all items in cart"""
+    return sum(cart_item.item.value for cart_item in self.items if cart_item.item.is_available)
+
+def get_item_count(self):
+    """Get count of items in cart"""
+    return len([item for item in self.items if item.item.is_available])
+
+def clear(self):
+    """Remove all items from cart"""
+    CartItem.query.filter_by(cart_id=self.id).delete()
+    db.session.commit()
 
 
 # Configuration
@@ -339,90 +366,6 @@ def view_item(item_id):
     return render_template('item_detail.html', item=item, item_images=item_images, related_items=related_items)
 
 
-@app.route('/buy/<int:item_id>', methods=['POST', 'GET'])
-@login_required
-def buy_item(item_id):
-    item = Item.query.get_or_404(item_id)
-
-    if not item.is_available:
-        flash("This item is no longer available.", "danger")
-        return redirect(url_for('marketplace'))
-
-    if item.user_id == current_user.id:
-        flash("You already own this item.", "info")
-        return redirect(url_for('marketplace'))
-
-    if current_user.credits < item.value:
-        flash("Insufficient credits to buy this item.", "danger")
-        return redirect(url_for('marketplace'))
-
-    # Deduct credits and mark item as sold
-    current_user.credits -= item.value
-    item.owner_id = current_user.id
-    item.is_available = False
-
-    # ✅ Record the trade
-    trade = Trade(
-        sender_id=current_user.id,          # Buyer
-        receiver_id=item.user_id,           # Seller
-        item_id=item.id,
-        item_given_id=None,
-        item_received_id=item.id,
-        status='completed'
-    )
-    db.session.add(trade)
-    db.session.commit()
-
-    flash(f"You have successfully bought '{item.name}'. Please choose your delivery method.", "success")
-
-    # ✅ Redirect to order page immediately after purchase
-    return redirect(url_for('order_item', item_id=item.id))
-
-
-
-@app.route('/order_item/<int:item_id>', methods=['GET', 'POST'])
-@login_required
-def order_item(item_id):
-    item = Item.query.get_or_404(item_id)
-    form = OrderForm()
-
-    stations = PickupStation.query.filter_by(state=current_user.state).all()
-
-    form.pickup_station.choices = [(s.id, s.name) for s in stations]
-
-    if request.method == 'GET' and current_user.address:
-        form.delivery_address.data = current_user.address
-
-    if form.validate_on_submit():
-        delivery_method = form.delivery_method.data
-        pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
-        delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
-
-        order = Order(
-            user_id=current_user.id,
-            item_id=item.id,
-            delivery_method=delivery_method,
-            delivery_address=delivery_address,
-            pickup_station_id=pickup_station_id
-        )
-        db.session.add(order)
-
-        new_note = Notification(
-            user_id=current_user.id,
-            message=f"You placed an order for {item.name} via "
-                    f"{'pickup at ' + PickupStation.query.get(pickup_station_id).name if pickup_station_id else 'home delivery'}."
-        )
-        db.session.add(new_note)
-
-        db.session.commit()
-
-        flash('Your order has been placed successfully!', 'success')
-        return redirect(url_for('dashboard'))
-
-    return render_template('order_item.html', form=form, item=item, stations=stations)
-
-
-
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_item():
@@ -486,42 +429,302 @@ def upload_item():
 
 
 
-@app.route('/request_trade/<int:item_id>', methods=['POST'])
+    # Updated Routes using database-backed cart
+
+@app.route('/add_to_cart/<int:item_id>', methods=['POST', 'GET'])
 @login_required
-def request_trade(item_id):
+def add_to_cart(item_id):
     item = Item.query.get_or_404(item_id)
 
     if not item.is_available:
-        flash("This item has already been traded or removed.", "danger")
+        flash("This item is no longer available.", "danger")
         return redirect(url_for('marketplace'))
 
     if item.user_id == current_user.id:
-        flash("You cannot trade your own item.", "info")
+        flash("You cannot add your own item to cart.", "info")
         return redirect(url_for('marketplace'))
 
-    if current_user.credits < item.value:
-        flash("You do not have enough credits to trade for this item.", "danger")
-        return redirect(url_for('marketplace'))
+    # Get or create cart for current user
+    cart = get_or_create_cart(current_user.id)
 
-    # Create Trade Record
-    trade = Trade(
-        item_id=item.id,
-        sender_id=current_user.id,
-        receiver_id=item.user_id,
-        status='completed'
-    )
-    db.session.add(trade)
+    # Check if item is already in cart
+    existing_cart_item = CartItem.query.filter_by(cart_id=cart.id, item_id=item_id).first()
+    if existing_cart_item:
+        flash("This item is already in your cart.", "info")
+        return redirect(url_for('view_cart'))
 
-    # Deduct user's credits
-    current_user.credits -= item.value
-
-    # Mark item as traded
-    item.is_available = False
-    item.status = 'traded'
-
+    # Add item to cart
+    cart_item = CartItem(cart_id=cart.id, item_id=item_id)
+    db.session.add(cart_item)
+    
+    # Update cart timestamp
+    cart.updated_at = datetime.utcnow()
     db.session.commit()
-    flash("Trade completed successfully!", "success")
-    return redirect(url_for('my_trades'))
+
+    flash(f"'{item.name}' has been added to your cart.", "success")
+    return redirect(url_for('view_cart'))
+
+
+@app.route('/cart')
+@login_required
+def view_cart():
+    cart = Cart.query.filter_by(user_id=current_user.id).first()
+    
+    if not cart:
+        cart_items = []
+        total_cost = 0
+    else:
+        # Only show items that are still available
+        cart_items = [ci for ci in cart.items if ci.item.is_available]
+        total_cost = cart.get_total_cost()
+        
+        # Remove unavailable items from cart
+        unavailable_items = [ci for ci in cart.items if not ci.item.is_available]
+        if unavailable_items:
+            for ci in unavailable_items:
+                db.session.delete(ci)
+            db.session.commit()
+            if len(unavailable_items) == 1:
+                flash("1 item was removed from your cart as it's no longer available.", "warning")
+            else:
+                flash(f"{len(unavailable_items)} items were removed from your cart as they're no longer available.", "warning")
+    
+    return render_template('cart.html', cart_items=cart_items, total_cost=total_cost)
+
+
+@app.route('/remove_from_cart/<int:item_id>', methods=['POST'])
+@login_required
+def remove_from_cart(item_id):
+    cart = Cart.query.filter_by(user_id=current_user.id).first()
+    
+    if cart:
+        cart_item = CartItem.query.filter_by(cart_id=cart.id, item_id=item_id).first()
+        if cart_item:
+            db.session.delete(cart_item)
+            cart.updated_at = datetime.utcnow()
+            db.session.commit()
+            flash("Item removed from cart.", "success")
+    
+    return redirect(url_for('view_cart'))
+
+
+@app.route('/clear_cart', methods=['POST'])
+@login_required
+def clear_cart():
+    cart = Cart.query.filter_by(user_id=current_user.id).first()
+    
+    if cart:
+        cart.clear()
+        flash("Cart cleared.", "success")
+    
+    return redirect(url_for('view_cart'))
+
+
+@app.route('/checkout')
+@login_required
+def checkout():
+    cart = Cart.query.filter_by(user_id=current_user.id).first()
+    
+    if not cart or not cart.items:
+        flash("Your cart is empty.", "info")
+        return redirect(url_for('marketplace'))
+    
+    # Filter available items
+    available_items = [ci for ci in cart.items if ci.item.is_available]
+    
+    if not available_items:
+        flash("No available items in your cart.", "info")
+        return redirect(url_for('view_cart'))
+    
+    total_cost = sum(ci.item.value for ci in available_items)
+    
+    # Check if user has sufficient credits
+    if current_user.credits < total_cost:
+        flash(f"Insufficient credits. You need {total_cost} credits but only have {current_user.credits}.", "danger")
+        return redirect(url_for('view_cart'))
+    
+    return render_template('checkout.html', cart_items=available_items, total_cost=total_cost)
+
+
+
+@app.route('/process_checkout', methods=['POST'])
+@login_required
+def process_checkout():
+    cart = Cart.query.filter_by(user_id=current_user.id).first()
+
+    if not cart or not cart.items:
+        flash("Your cart is empty.", "info")
+        return redirect(url_for('marketplace'))
+
+    # Only items that are still available
+    available = [ci for ci in cart.items if ci.item and ci.item.is_available]
+    if not available:
+        flash("No available items in your cart.", "info")
+        return redirect(url_for('view_cart'))
+
+    total_cost = sum(ci.item.value for ci in available)
+
+    # Final credit check (single total)
+    if current_user.credits < total_cost:
+        flash(
+            f"Insufficient credits. You need {total_cost} credits but only have {current_user.credits}.",
+            "danger"
+        )
+        return redirect(url_for('view_cart'))
+
+    purchased_items = []
+    failed_names = []
+
+    try:
+        # Process purchases
+        for ci in available:
+            item = ci.item
+
+            # Guard again, just in case
+            if not item.is_available:
+                failed_names.append(item.name)
+                continue
+
+            # Capture seller before we change owner
+            seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
+
+            # Deduct credits and transfer
+            current_user.credits -= item.value
+            item.user_id = current_user.id
+            item.is_available = False
+
+            # Record trade
+            trade = Trade(
+                sender_id=current_user.id,
+                receiver_id=seller_id,
+                item_id=item.id,
+                item_given_id=None,
+                item_received_id=item.id,
+                status='completed'
+            )
+            db.session.add(trade)
+
+            purchased_items.append(item)
+
+        # Remove purchased items from cart explicitly
+        for ci in list(cart.items):
+            if ci.item in purchased_items:
+                db.session.delete(ci)
+
+        db.session.commit()
+
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Checkout failed")
+        flash("Something went wrong while processing your purchase. Please try again.", "danger")
+        return redirect(url_for('view_cart'))
+
+    # Flash summaries
+    if purchased_items:
+        names = ", ".join(i.name for i in purchased_items[:3])
+        more = len(purchased_items) - 3
+        if more > 0:
+            names += f" +{more} more"
+        flash(f"Successfully purchased: {names}", "success")
+    if failed_names:
+        flash(f"Failed to purchase: {', '.join(failed_names)} (no longer available)", "warning")
+
+    if not purchased_items:
+        # Nothing purchased; back to cart
+        return redirect(url_for('view_cart'))
+
+    # Queue delivery setup and go to first item
+    session['pending_delivery_items'] = [i.id for i in purchased_items]
+    # No need to track an index; the list is enough
+    first_item_id = purchased_items[0].id
+    flash("Now set up delivery for your purchased items.", "info")
+    return redirect(url_for('order_item', item_id=first_item_id))
+
+
+
+@app.route('/order_item/<int:item_id>', methods=['GET', 'POST'])
+@login_required
+def order_item(item_id):
+    item = Item.query.get_or_404(item_id)
+    form = OrderForm()
+
+    # Must own the item now
+    if item.user_id != current_user.id:
+        flash("You don't own this item. Please purchase it first.", "danger")
+        return redirect(url_for('marketplace'))
+
+    stations = PickupStation.query.filter_by(state=current_user.state).all()
+    form.pickup_station.choices = [(s.id, s.name) for s in stations]
+
+    if request.method == 'GET' and current_user.address:
+        form.delivery_address.data = current_user.address
+
+    if form.validate_on_submit():
+        delivery_method = form.delivery_method.data
+        pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
+        delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
+
+        order = Order(
+            user_id=current_user.id,
+            item_id=item.id,
+            delivery_method=delivery_method,
+            delivery_address=delivery_address,
+            pickup_station_id=pickup_station_id
+        )
+        db.session.add(order)
+
+        # Build a safe message (avoid None lookups inline)
+        pickup_name = None
+        if pickup_station_id:
+            ps = PickupStation.query.get(pickup_station_id)
+            pickup_name = ps.name if ps else None
+
+        msg = f"You set up delivery for {item.name} via "
+        msg += f"pickup at {pickup_name}" if pickup_name else "home delivery"
+
+        db.session.add(Notification(user_id=current_user.id, message=msg))
+        db.session.commit()
+
+        flash(f"Delivery set up successfully for {item.name}!", "success")
+
+        # Rotate remaining items
+        pending = session.get('pending_delivery_items', [])
+        if item_id in pending:
+            pending.remove(item_id)
+            session['pending_delivery_items'] = pending
+
+        if pending:
+            next_item_id = pending[0]
+            flash("Please set up delivery for your next item.", "info")
+            return redirect(url_for('order_item', item_id=next_item_id))
+
+        # All done
+        session.pop('pending_delivery_items', None)
+        flash("All deliveries have been set up successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    items_remaining = len(session.get('pending_delivery_items', []) or [])
+    return render_template(
+        'order_item.html',
+        form=form,
+        item=item,
+        stations=stations,
+        items_remaining=items_remaining
+    )
+
+
+
+# Context processor to make cart info available in templates
+@app.context_processor
+def inject_cart_info():
+    if current_user.is_authenticated:
+        cart = Cart.query.filter_by(user_id=current_user.id).first()
+        if cart:
+            cart_count = cart.get_item_count()
+        else:
+            cart_count = 0
+        return {'cart_count': cart_count}
+    return {'cart_count': 0}
 
 
 # ---------------------- ADMIN AUTH ---------------------- #

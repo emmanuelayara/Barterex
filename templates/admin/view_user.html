@@ -1,49 +1,247 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
-<div class="container py-5">
-    <h2 class="mb-4 text-primary">User Profile</h2>
-
-    <div class="card shadow-sm p-4 mb-4">
-        <h4 class="card-title">{{ user.username }}</h4>
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Credits:</strong> <span class="badge bg-success">{{ user.credits }}</span></p>
-        <p><strong>Address:</strong> {{ user.address or 'Not Provided' }}</p>
-        <p><strong>City:</strong> {{ user.city or 'Not Provided' }}</p>
-        <p><strong>State:</strong> {{ user.state or 'Not Provided' }}</p>
-        <p><strong>Phone Number:</strong> {{ user.phone_number or 'Not Provided' }}</p>
-        <p><strong>Date Joined:</strong> {{ user.date_created.strftime('%B %d, %Y') if user.date_created else 'Unknown' }}</p>
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 mb-1 text-dark fw-bold">User Profile</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('manage_users') }}" class="text-decoration-none text-muted">
+                            <i class="fas fa-users me-1"></i>Users
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active text-primary" aria-current="page">{{ user.username }}</li>
+                </ol>
+            </nav>
+        </div>
+        <a 
+            href="{{ url_for('manage_users') }}" 
+            class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+            style="transition: all 0.3s ease;"
+            onmouseover="this.style.backgroundColor='#007BFF'; this.style.color='white'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.3)';" 
+            onmouseout="this.style.backgroundColor='transparent'; this.style.color='#007BFF'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <i class="fas fa-arrow-left"></i>
+            Back to Users
+        </a>
     </div>
 
     <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card text-center shadow-sm bg-light">
-                <div class="card-body">
-                    <h5 class="card-title">Items Uploaded</h5>
-                    <p class="display-6 text-primary">{{ items_uploaded }}</p>
+        <!-- Main Profile Card -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-gradient text-white d-flex align-items-center gap-3" 
+                     style="background: linear-gradient(135deg, #007BFF 0%, #0056b3 100%);">
+                    <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4"
+                         style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; backdrop-filter: blur(10px);">
+                        {{ user.username[0].upper() }}
+                    </div>
+                    <div>
+                        <h4 class="mb-1 fw-bold">{{ user.username }}</h4>
+                        <p class="mb-0 opacity-75">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            Member since {{ user.date_created.strftime('%B %d, %Y') if user.date_created else 'Unknown' }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <!-- Contact Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted text-uppercase fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fas fa-address-card text-primary"></i>
+                                Contact Information
+                            </h6>
+                            <div class="info-group mb-3">
+                                <label class="text-muted small fw-semibold mb-1">Email Address</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-envelope text-primary"></i>
+                                    <span class="text-dark">{{ user.email }}</span>
+                                </div>
+                            </div>
+                            <div class="info-group mb-3">
+                                <label class="text-muted small fw-semibold mb-1">Phone Number</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-phone text-primary"></i>
+                                    <span class="text-dark">{{ user.phone_number or 'Not Provided' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted text-uppercase fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                Address Information
+                            </h6>
+                            <div class="info-group mb-3">
+                                <label class="text-muted small fw-semibold mb-1">Street Address</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-home text-primary"></i>
+                                    <span class="text-dark">{{ user.address or 'Not Provided' }}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="info-group mb-3">
+                                        <label class="text-muted small fw-semibold mb-1">City</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-city text-primary"></i>
+                                            <span class="text-dark">{{ user.city or 'Not Provided' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="info-group mb-3">
+                                        <label class="text-muted small fw-semibold mb-1">State</label>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-flag text-primary"></i>
+                                            <span class="text-dark">{{ user.state or 'Not Provided' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-center shadow-sm bg-light">
-                <div class="card-body">
-                    <h5 class="card-title">Items Traded</h5>
-                    <p class="display-6 text-success">{{ items_traded }}</p>
+
+        <!-- Stats Sidebar -->
+        <div class="col-xl-4 col-lg-5">
+            <!-- Credits Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
+                             style="width: 80px; height: 80px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <i class="fas fa-coins text-white fs-2"></i>
+                        </div>
+                    </div>
+                    <h6 class="text-muted text-uppercase fw-bold mb-2">Available Credits</h6>
+                    <h2 class="text-success fw-bold mb-0">{{ user.credits }}</h2>
+                    <small class="text-muted">Credits in account</small>
+                </div>
+            </div>
+
+            <!-- Activity Stats -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="fas fa-chart-bar text-primary"></i>
+                        Activity Overview
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Items Uploaded -->
+                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle"
+                                 style="width: 45px; height: 45px; background: rgba(0,123,255,0.1);">
+                                <i class="fas fa-upload text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Items Uploaded</h6>
+                                <small class="text-muted">Total items posted</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-0 text-primary fw-bold">{{ items_uploaded }}</h5>
+                        </div>
+                    </div>
+
+                    <!-- Items Traded -->
+                    <div class="d-flex align-items-center justify-content-between p-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle"
+                                 style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                                <i class="fas fa-handshake text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Items Traded</h6>
+                                <small class="text-muted">Successful trades</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-0 text-success fw-bold">{{ items_traded }}</h5>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-        <a 
-        href="{{ url_for('manage_users') }}" 
-        class="btn mt-4" 
-        style="background-color: #007BFF; color: white; border-color: #007BFF;" 
-        onmouseover="this.style.backgroundColor='#ff7a00'; this.style.borderColor='#ff7a00'; this.style.color='white';" 
-        onmouseout="this.style.backgroundColor='#007BFF'; this.style.borderColor='#007BFF'; this.style.color='white';">
-        ← Back to User List
-        </a>
-
-
 </div>
+
+<style>
+    .card {
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    .info-group {
+        transition: all 0.2s ease;
+        padding: 8px 12px;
+        border-radius: 8px;
+    }
+    
+    .info-group:hover {
+        background-color: rgba(0,123,255,0.05);
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        font-weight: bold;
+    }
+    
+    .bg-gradient {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .bg-gradient::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        pointer-events: none;
+    }
+    
+    .avatar-circle {
+        position: relative;
+        z-index: 1;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .card-header .d-flex {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        
+        .row.g-4 .col-md-6:last-child {
+            margin-top: 1rem;
+        }
+    }
+</style>
 
 {% endblock %}

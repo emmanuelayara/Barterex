@@ -140,3 +140,44 @@ class CreditTransaction(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', back_populates='transactions')  # Assuming User has a transactions relationship
     
+
+
+# Cart Database Models
+class Cart(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='cart_items')
+    items = db.relationship('CartItem', backref='cart', cascade='all, delete-orphan')
+
+
+    def get_total_cost(self):
+        """Calculate total cost of all items in cart"""
+        return sum(cart_item.item.value for cart_item in self.items if cart_item.item.is_available)
+
+    def get_item_count(self):
+        """Get count of items in cart"""
+        return len([item for item in self.items if item.item.is_available])
+    
+    def clear(self):
+        """Remove all items from cart"""
+        CartItem.query.filter_by(cart_id=self.id).delete()
+        db.session.commit()
+    
+
+
+class CartItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cart_id = db.Column(db.Integer, db.ForeignKey('cart.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)  # For future use if you want multiple quantities
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    item = db.relationship('Item', backref='cart_items')
+    
+    # Composite unique constraint to prevent duplicate items in same cart
+    __table_args__ = (db.UniqueConstraint('cart_id', 'item_id', name='unique_cart_item'),)
