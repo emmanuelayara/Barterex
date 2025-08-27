@@ -110,15 +110,25 @@ class Trade(db.Model):
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
     delivery_method = db.Column(db.String(20), nullable=False)
     delivery_address = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default="Pending")
     date_ordered = db.Column(db.DateTime, default=db.func.now())
     pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
+
+    user = db.relationship('User', back_populates='orders')
     pickup_station = db.relationship('PickupStation', backref='orders')
-    item = db.relationship('Item', backref='orders')
-    user = db.relationship('User', back_populates='orders')  # Assuming User has a orders relationship
+    items = db.relationship('OrderItem', back_populates='order', cascade="all, delete-orphan")
+
+
+class OrderItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+
+    order = db.relationship('Order', back_populates='items')
+    item = db.relationship('Item')
+
 
 
 class PickupStation(db.Model):

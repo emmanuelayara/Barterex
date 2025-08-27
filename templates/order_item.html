@@ -345,6 +345,8 @@
             {% endif %}
         {% endwith %}
 
+
+        {% for item in items %}
         <div class="row g-4 align-items-start">
             <!-- Left Side: Item Image -->
             <div class="col-lg-6">
@@ -368,6 +370,7 @@
                     </div>
                 </div>
             </div>
+            {% endfor %}
 
             <!-- Right Side: Order Form -->
             <div class="col-lg-6">

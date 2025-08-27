@@ -566,111 +566,103 @@
       <p class="page-subtitle">Track your orders and delivery status</p>
     </div>
 
-    <!-- Orders Container -->
-    <div class="orders-container">
-      {% if orders %}
-        <div class="orders-grid">
-          {% for order in orders %}
-            <div class="order-card">
-              <!-- Order Header -->
-              <div class="order-header">
-                <div class="order-number">
-                  📋 Order Details
-                  <div class="order-id">
-                    🏷️ #{{ order.id }}
-                  </div>
+<!-- Orders Container -->
+<div class="orders-container">
+  {% if orders %}
+    <div class="orders-grid">
+      {% for order in orders %}
+        <div class="order-card">
+          <!-- Order Header -->
+          <div class="order-header">
+            <div class="order-number">
+              📋 Order Details
+              <div class="order-id">
+                🏷️ #{{ order.id }}
+              </div>
+            </div>
+            <div class="order-date">
+              📅 {{ order.date_ordered.strftime("%B %d, %Y at %I:%M %p") }}
+            </div>
+          </div>
+
+          <!-- Order Content -->
+          <div class="order-content">
+            <!-- Items in this Order -->
+            <div class="order-items">
+              {% for order_item in order.order_items %}
+                <div class="order-item">
+                  <div class="item-name">{{ order_item.item.name }}</div>
+                  <div class="item-number">🏷️ Item #{{ order_item.item.item_number }}</div>
+                  <div class="item-qty">Qty: {{ order_item.quantity }}</div>
                 </div>
-                <div class="order-date">
-                  📅 {{ order.date_ordered.strftime("%B %d, %Y at %I:%M %p") }}
+              {% endfor %}
+            </div>
+
+            <!-- Order Details -->
+            <div class="order-details">
+              <div class="detail-row">
+                <div class="detail-label">📊 Status</div>
+                <div class="detail-value">
+                  <span class="status-badge 
+                    {% if order.status == 'Pending' %}status-pending
+                    {% elif order.status == 'Shipped' %}status-shipped
+                    {% elif order.status == 'Out for Delivery' %}status-out-for-delivery
+                    {% elif order.status == 'Delivered' %}status-delivered
+                    {% elif order.status == 'Cancelled' %}status-cancelled
+                    {% else %}status-pending{% endif %}">
+                      {% if order.status == 'Pending' %}
+                          ⏳ Pending
+                      {% elif order.status == 'Shipped' %}
+                          🚚 Shipped
+                      {% elif order.status == 'Out for Delivery' %}
+                          🎁 Out for Delivery
+                      {% elif order.status == 'Delivered' %}
+                          ✅ Delivered
+                      {% elif order.status == 'Cancelled' %}
+                          ❌ Cancelled
+                      {% endif %}
+                  </span>
                 </div>
               </div>
 
-              <!-- Order Content -->
-              <div class="order-content">
-                <!-- Item Information -->
-                <div class="order-item">
-                  <div class="item-name">{{ order.item.name }}</div>
-                  <div class="item-number">
-                    🏷️ Item #{{ order.item.item_number }}
-                  </div>
-                </div>
-
-                <!-- Order Details -->
-                <div class="order-details">
-                  <div class="detail-row">
-                    <div class="detail-label">
-                      📊 Status
-                    </div>
-                    <div class="detail-value">
-                      <span class="status-badge 
-                        {% if order.status == 'Pending' %}status-pending
-                        {% elif order.status == 'Shipped' %}status-shipped
-                        {% elif order.status == 'Out for Delivery' %}status-out-for-delivery
-                        {% elif order.status == 'Delivered' %}status-delivered
-                        {% elif order.status == 'Cancelled' %}status-cancelled
-                        {% else %}status-pending{% endif %}">
-                          {% if order.status == 'Pending' %}
-                              ⏳ Pending
-                          {% elif order.status == 'Shipped' %}
-                              🚚 Shipped
-                          {% elif order.status == 'Out for Delivery' %}
-                              🎁 Out for Delivery
-                          {% elif order.status == 'Delivered' %}
-                              ✅ Delivered
-                          {% elif order.status == 'Cancelled' %}
-                              ❌ Cancelled
-                          {% endif %}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="detail-row">
-                    <div class="detail-label">
-                      🚚 Delivery Method
-                    </div>
-                    <div class="detail-value">
-                      {% if order.delivery_method == 'pickup' %}
-                        <span class="delivery-method method-pickup">
-                          🏪 Pickup Station
-                        </span>
-                      {% else %}
-                        <span class="delivery-method method-delivery">
-                          🚚 Home Delivery
-                        </span>
-                      {% endif %}
-                    </div>
-                  </div>
-
-                  {% if order.pickup_station %}
-                    <div class="detail-row">
-                      <div class="detail-label">
-                        📍 Pickup Location
-                      </div>
-                      <div class="detail-value">
-                        <div class="pickup-station">
-                          {{ order.pickup_station.name }}
-                          <br>
-                          <small>{{ order.pickup_station.address }}, {{ order.pickup_station.city }}, {{ order.pickup_station.state }}</small>
-                        </div>
-                      </div> 
-                    </div>
-                  {% elif order.delivery_address %}
-                    <div class="detail-row">
-                      <div class="detail-label">
-                        🏠 Delivery Address
-                      </div>
-                      <div class="detail-value">
-                        <div class="delivery-address">
-                          {{ order.delivery_address }}
-                        </div>
-                      </div>
-                    </div>
+              <div class="detail-row">
+                <div class="detail-label">🚚 Delivery Method</div>
+                <div class="detail-value">
+                  {% if order.delivery_method == 'pickup' %}
+                    <span class="delivery-method method-pickup">🏪 Pickup Station</span>
+                  {% else %}
+                    <span class="delivery-method method-delivery">🚚 Home Delivery</span>
                   {% endif %}
                 </div>
               </div>
+
+              {% if order.pickup_station %}
+                <div class="detail-row">
+                  <div class="detail-label">📍 Pickup Location</div>
+                  <div class="detail-value">
+                    <div class="pickup-station">
+                      {{ order.pickup_station.name }}
+                      <br>
+                      <small>{{ order.pickup_station.address }}, {{ order.pickup_station.city }}, {{ order.pickup_station.state }}</small>
+                    </div>
+                  </div> 
+                </div>
+              {% elif order.delivery_address %}
+                <div class="detail-row">
+                  <div class="detail-label">🏠 Delivery Address</div>
+                  <div class="detail-value">
+                    <div class="delivery-address">
+                      {{ order.delivery_address }}
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
             </div>
-          {% endfor %}
+          </div>
         </div>
+      {% endfor %}
+    </div>
+
 
         <!-- Pagination -->
         {% if orders.pages > 1 %}

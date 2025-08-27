@@ -19,7 +19,7 @@ import time
 from werkzeug.utils import secure_filename
 
 from app import app, login_manager, db
-from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage, Cart, CartItem
+from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage, Cart, CartItem, OrderItem
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm
 
 
@@ -615,105 +615,63 @@ def process_checkout():
         flash("Your cart is empty.", "info")
         return redirect(url_for('marketplace'))
 
-    # Only items that are still available
     available = [ci for ci in cart.items if ci.item and ci.item.is_available]
     if not available:
         flash("No available items in your cart.", "info")
         return redirect(url_for('view_cart'))
 
     total_cost = sum(ci.item.value for ci in available)
-
-    # Final credit check (single total)
     if current_user.credits < total_cost:
-        flash(
-            f"Insufficient credits. You need {total_cost} credits but only have {current_user.credits}.",
-            "danger"
-        )
+        flash(f"Insufficient credits. You need {total_cost}, but only have {current_user.credits}.", "danger")
         return redirect(url_for('view_cart'))
 
-    purchased_items = []
-    failed_names = []
-
     try:
-        # Process purchases
+        purchased_items = []
         for ci in available:
             item = ci.item
-
-            # Guard again, just in case
             if not item.is_available:
-                failed_names.append(item.name)
                 continue
 
-            # Capture seller before we change owner
             seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
-
-            # Deduct credits and transfer
             current_user.credits -= item.value
             item.user_id = current_user.id
             item.is_available = False
 
-            # Record trade
-            trade = Trade(
+            db.session.add(Trade(
                 sender_id=current_user.id,
                 receiver_id=seller_id,
                 item_id=item.id,
-                item_given_id=None,
                 item_received_id=item.id,
                 status='completed'
-            )
-            db.session.add(trade)
+            ))
 
             purchased_items.append(item)
-
-        # Remove purchased items from cart explicitly
-        for ci in list(cart.items):
-            if ci.item in purchased_items:
-                db.session.delete(ci)
+            db.session.delete(ci)
 
         db.session.commit()
 
     except Exception:
         db.session.rollback()
-        current_app.logger.exception("Checkout failed")
-        flash("Something went wrong while processing your purchase. Please try again.", "danger")
+        flash("Something went wrong while processing your purchase.", "danger")
         return redirect(url_for('view_cart'))
-
-    # Flash summaries
-    if purchased_items:
-        names = ", ".join(i.name for i in purchased_items[:3])
-        more = len(purchased_items) - 3
-        if more > 0:
-            names += f" +{more} more"
-        flash(f"Successfully purchased: {names}", "success")
-    if failed_names:
-        flash(f"Failed to purchase: {', '.join(failed_names)} (no longer available)", "warning")
 
     if not purchased_items:
-        # Nothing purchased; back to cart
         return redirect(url_for('view_cart'))
 
-    # Queue delivery setup and go to first item
-    session['pending_delivery_items'] = [i.id for i in purchased_items]
-    # No need to track an index; the list is enough
-    first_item_id = purchased_items[0].id
+    # Save purchased items in session and redirect to ONE delivery form
+    session['pending_order_items'] = [i.id for i in purchased_items]
     flash("Now set up delivery for your purchased items.", "info")
-    return redirect(url_for('order_item', item_id=first_item_id))
+    return redirect(url_for('order_item'))
 
 
 
-@app.route('/order_item/<int:item_id>', methods=['GET', 'POST'])
+@app.route('/order_item', methods=['GET', 'POST'])
 @login_required
-def order_item(item_id):
-    item = Item.query.get_or_404(item_id)
+def order_item():
     form = OrderForm()
-
-    # Must own the item now
-    if item.user_id != current_user.id:
-        flash("You don't own this item. Please purchase it first.", "danger")
-        return redirect(url_for('marketplace'))
-
     stations = PickupStation.query.filter_by(state=current_user.state).all()
     form.pickup_station.choices = [(s.id, s.name) for s in stations]
+    items = Item.query.all()
 
     if request.method == 'GET' and current_user.address:
         form.delivery_address.data = current_user.address
@@ -723,53 +681,27 @@ def order_item(item_id):
         pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
         delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
 
+        # Create one order
         order = Order(
             user_id=current_user.id,
-            item_id=item.id,
             delivery_method=delivery_method,
             delivery_address=delivery_address,
             pickup_station_id=pickup_station_id
         )
         db.session.add(order)
 
-        # Build a safe message (avoid None lookups inline)
-        pickup_name = None
-        if pickup_station_id:
-            ps = PickupStation.query.get(pickup_station_id)
-            pickup_name = ps.name if ps else None
+        # Attach all purchased items to this order
+        for item_id in session.get('pending_order_items', []):
+            db.session.add(OrderItem(order=order, item_id=item_id))
 
-        msg = f"You set up delivery for {item.name} via "
-        msg += f"pickup at {pickup_name}" if pickup_name else "home delivery"
-
-        db.session.add(Notification(user_id=current_user.id, message=msg))
+        db.session.add(Notification(user_id=current_user.id, message="Delivery set up successfully"))
         db.session.commit()
 
-        flash(f"Delivery set up successfully for {item.name}!", "success")
-
-        # Rotate remaining items
-        pending = session.get('pending_delivery_items', [])
-        if item_id in pending:
-            pending.remove(item_id)
-            session['pending_delivery_items'] = pending
-
-        if pending:
-            next_item_id = pending[0]
-            flash("Please set up delivery for your next item.", "info")
-            return redirect(url_for('order_item', item_id=next_item_id))
-
-        # All done
-        session.pop('pending_delivery_items', None)
-        flash("All deliveries have been set up successfully!", "success")
+        session.pop('pending_order_items', None)
+        flash("Delivery set up successfully for your purchased items!", "success")
         return redirect(url_for('dashboard'))
 
-    items_remaining = len(session.get('pending_delivery_items', []) or [])
-    return render_template(
-        'order_item.html',
-        form=form,
-        item=item,
-        stations=stations,
-        items_remaining=items_remaining
-    )
+    return render_template('order_item.html', form=form, stations=stations, items=items)
 
 
 
@@ -1194,10 +1126,13 @@ def update_order_status(order_id):
     elif order.status == "Out for Delivery":
         order.status = "Delivered"
 
+
+    item_names = ", ".join([f"{oi.item.name}" for oi in order.items])
+
     status_messages = {
-        "Shipped": f"Your order for {order.item.name} has been shipped.",
-        "Out for Delivery": f"Your order for {order.item.name} is out for delivery.",
-        "Delivered": f"Your order for {order.item.name} has been delivered. 🎉",
+        "Shipped": f"Your order for {item_names} has been shipped.",
+        "Out for Delivery": f"Your order for {item_names} is out for delivery.",
+        "Delivered": f"Your order for {item_names} has been delivered. 🎉",
     }
 
     note = Notification(

@@ -70,72 +70,76 @@
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
-                    {% for order in orders %}
-                    <tr class="order-row" data-status="{{ order.status }}" data-order-id="{{ order.id }}">
-                        <td class="order-id">
-                            <div class="id-wrapper">
-                                <span class="id-hash">#</span>{{ order.item.item_number }}
-                            </div>
-                        </td>
-                        <td class="item-details">
-                            <div class="item-info">
-                                <span class="item-name">{{ order.item.name }}</span>
-                            </div>
-                        </td>
-                        <td class="buyer-info">
-                            <div class="buyer-details">
-                                <span class="buyer-name">{{ order.user.username }}</span>
-                            </div>
-                        </td>
-                        <td class="delivery-info">
-                            <div class="delivery-method">
-                                <span class="method-badge method-{{ order.delivery_method }}">
-                                    {% if order.delivery_method == 'pickup' %}🏪{% else %}🚚{% endif %}
-                                    {{ order.delivery_method|title }}
-                                </span>
-                            </div>
-                            <div class="delivery-details">
-                                {% if order.delivery_method == 'pickup' %}
-                                    <span class="pickup-location">{{ order.pickup_station.name }}</span>
-                                    <span class="pickup-state">({{ order.pickup_station.state }})</span>
-                                {% else %}
-                                    <span class="delivery-address">{{ order.delivery_address }}</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="status-cell">
-                            <span class="status-badge status-{{ order.status|lower }}">
-                                {% if order.status == 'Pending' %}⏳
-                                {% elif order.status == 'Shipped' %}🚛
-                                {% elif order.status == 'Out for Delivery' %}🚚
-                                {% elif order.status == 'Delivered' %}✅
-                                {% elif order.status == 'Cancelled' %}❌
-                                {% endif %}
-                                {{ order.status }}
-                            </span>
-                        </td>
-                        <td class="actions-cell">
-                            {% if order.status != 'Delivered' and order.status != 'Cancelled' %}
-                                <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}">
-                                    <button type="submit" class="action-btn">
-                                        {% if order.status == 'Pending' %} Mark as Shipped 🚚
-                                        {% elif order.status == 'Shipped' %} Mark as Out for Delivery 🚚
-                                        {% elif order.status == 'Out for Delivery' %} Mark as Delivered ✅
-                                        {% endif %}
-                                    </button>
-                                </form>
-                            {% else %}
-                                <span class="status-complete">✔</span>
+                {% for order in orders %}
+                <tr class="order-row" data-status="{{ order.status }}" data-order-id="{{ order.id }}">
+                    <td class="order-id">
+                    <div class="id-wrapper">
+                        <span class="id-hash">#</span>{{ order.id }}
+                    </div>
+                    </td>
+                    <td class="item-details">
+                    <div class="item-info">
+                        <ul>
+                        {% for order_item in order.items %}
+                            <li>{{ order_item.item.item_number }} × {{ order_item.item.name }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    </td>
+                    <td class="buyer-info">
+                    <div class="buyer-details">
+                        <span class="buyer-name">{{ order.user.username }}</span>
+                    </div>
+                    </td>
+                    <td class="delivery-info">
+                    <div class="delivery-method">
+                        <span class="method-badge method-{{ order.delivery_method }}">
+                        {% if order.delivery_method == 'pickup' %}🏪{% else %}🚚{% endif %}
+                        {{ order.delivery_method|title }}
+                        </span>
+                    </div>
+                    <div class="delivery-details">
+                        {% if order.delivery_method == 'pickup' %}
+                        <span class="pickup-location">{{ order.pickup_station.name }}</span>
+                        <span class="pickup-state">({{ order.pickup_station.state }})</span>
+                        {% else %}
+                        <span class="delivery-address">{{ order.delivery_address }}</span>
+                        {% endif %}
+                    </div>
+                    </td>
+                    <td class="status-cell">
+                    <span class="status-badge status-{{ order.status|lower }}">
+                        {% if order.status == 'Pending' %}⏳
+                        {% elif order.status == 'Shipped' %}🚛
+                        {% elif order.status == 'Out for Delivery' %}🚚
+                        {% elif order.status == 'Delivered' %}✅
+                        {% elif order.status == 'Cancelled' %}❌
+                        {% endif %}
+                        {{ order.status }}
+                    </span>
+                    </td>
+                    <td class="actions-cell">
+                    {% if order.status != 'Delivered' and order.status != 'Cancelled' %}
+                        <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}">
+                        <button type="submit" class="action-btn">
+                            {% if order.status == 'Pending' %} Mark as Shipped 🚚
+                            {% elif order.status == 'Shipped' %} Mark as Out for Delivery 🚚
+                            {% elif order.status == 'Out for Delivery' %} Mark as Delivered ✅
                             {% endif %}
-                        </td>
-                        <td class="date-cell">
-                            <div class="date-info">
-                                <span class="date">{{ order.date_ordered.strftime('%b %d, %Y') }}</span>
-                                <span class="time">{{ order.date_ordered.strftime('%H:%M') }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                        </button>
+                        </form>
+                    {% else %}
+                        <span class="status-complete">✔</span>
+                    {% endif %}
+                    </td>
+                    <td class="date-cell">
+                    <div class="date-info">
+                        <span class="date">{{ order.date_ordered.strftime('%b %d, %Y') }}</span>
+                        <span class="time">{{ order.date_ordered.strftime('%H:%M') }}</span>
+                    </div>
+                    </td>
+                </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
