@@ -345,41 +345,228 @@
             font-weight: 500;
         }
 
+        /* Enhanced Mobile Responsiveness */
         @media (max-width: 768px) {
             .navbar-nav {
                 display: none;
             }
 
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-
-            .form-group {
-                margin-bottom: 24px;
+            .main-content {
+                padding: 15px 10px;
+                margin-top: 70px;
+                min-height: calc(100vh - 70px);
             }
 
             .login-container {
-                padding: 30px 25px;
-                margin: 10px;
-                max-width: 480px;
+                padding: 25px 20px;
+                margin: 0 5px;
+                max-width: 100%;
+                border-radius: 20px;
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            }
+
+            .login-container:hover {
+                transform: none;
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            }
+
+            .form-header {
+                margin-bottom: 25px;
             }
 
             .form-header h2 {
-                font-size: 28px;
+                font-size: 24px;
+                margin-bottom: 6px;
             }
 
-            .main-content {
-                padding: 20px 10px;
-                margin-top: 60px; /* Reduced margin for mobile */
+            .form-header p {
+                font-size: 14px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 18px;
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-label {
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+
+            .form-input {
+                padding: 14px 16px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+
+            .forgot-password {
+                margin-bottom: 20px;
+                text-align: center;
+            }
+
+            .forgot-password a {
+                font-size: 13px;
+            }
+
+            .remember-me {
+                margin-bottom: 20px;
+                justify-content: center;
+            }
+
+            .custom-checkbox {
+                width: 18px;
+                height: 18px;
+                margin-right: 10px;
+            }
+
+            .checkbox-label {
+                font-size: 13px;
+            }
+
+            .submit-button {
+                padding: 14px;
+                font-size: 15px;
+                border-radius: 10px;
+                margin-bottom: 25px;
+            }
+
+            .divider {
+                margin: 25px 0;
+            }
+
+            .divider span {
+                padding: 0 15px;
+                font-size: 13px;
+            }
+
+            .social-buttons {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .social-btn {
+                padding: 12px;
+                font-size: 14px;
+                border-radius: 8px;
+            }
+
+            .social-login {
+                margin-bottom: 20px;
+            }
+
+            .form-footer {
+                padding-top: 20px;
+            }
+
+            .form-footer p {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .register-link {
+                font-size: 14px;
             }
 
             .navbar-content {
                 padding: 0 15px;
             }
+        }
 
-            .social-buttons {
-                grid-template-columns: 1fr;
+        /* Extra small screens (phones in portrait mode) */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 10px 8px;
+                margin-top: 60px;
+            }
+
+            .login-container {
+                padding: 20px 16px;
+                margin: 0;
+                border-radius: 16px;
+            }
+
+            .form-header h2 {
+                font-size: 22px;
+            }
+
+            .form-header p {
+                font-size: 13px;
+            }
+
+            .form-input {
+                padding: 12px 14px;
+                font-size: 15px;
+            }
+
+            .submit-button {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .divider span {
+                padding: 0 12px;
+                font-size: 12px;
+            }
+
+            .social-btn {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+
+        /* Landscape mode for small screens */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .main-content {
+                margin-top: 50px;
+                min-height: calc(100vh - 50px);
+                padding: 10px;
+            }
+
+            .login-container {
+                padding: 20px;
+            }
+
+            .form-header {
+                margin-bottom: 20px;
+            }
+
+            .form-header h2 {
+                font-size: 22px;
+            }
+
+            .form-row {
+                gap: 15px;
+                margin-bottom: 15px;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            .forgot-password,
+            .remember-me {
+                margin-bottom: 15px;
+            }
+
+            .submit-button {
+                margin-bottom: 20px;
+            }
+
+            .divider {
+                margin: 20px 0;
+            }
+
+            .social-login {
+                margin-bottom: 15px;
+            }
+
+            .form-footer {
+                padding-top: 15px;
             }
         }
 
@@ -404,6 +591,32 @@
             left: 0;
             right: 0;
             z-index: 1000;
+        }
+
+        /* Touch-friendly improvements for mobile */
+        @media (max-width: 768px) {
+            .form-input:focus {
+                transform: none;
+            }
+
+            .submit-button:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            .social-btn:hover {
+                transform: none;
+            }
+
+            /* Improve tap targets */
+            .custom-checkbox,
+            .checkbox-label,
+            .forgot-password a,
+            .register-link {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
         }
     </style>
 </head>
