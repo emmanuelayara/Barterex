@@ -466,34 +466,113 @@
     color: var(--text-primary);
   }
 
-  /* Mobile responsiveness - Fixed to show 2 columns */
+  /* Enhanced Mobile Responsiveness */
   @media (max-width: 768px) {
-    .marketplace-container {
-      padding: 0 20px;
+    .marketplace-page {
+      padding: 20px 0;
     }
 
+    .marketplace-container {
+      padding: 0 15px;
+    }
+
+    /* Optimized Hero Section for Mobile */
     .marketplace-header {
-      padding: 40px 20px;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
+      padding: 30px 20px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     }
 
     .marketplace-header h1 {
-      font-size: 2.2rem;
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      line-height: 1.2;
     }
 
+    .marketplace-header p {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      max-width: 100%;
+    }
+
+    /* Compact Filter Section */
     .filter-section {
-      padding: 30px 20px;
+      padding: 20px 15px;
+      margin-bottom: 25px;
+      border-radius: 16px;
+    }
+
+    .filter-header {
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filter-header h3 {
+      font-size: 1.1rem;
+    }
+
+    .filter-icon {
+      width: 32px;
+      height: 32px;
+      font-size: 1rem;
     }
 
     .filter-form {
       grid-template-columns: 1fr;
-      gap: 20px;
+      gap: 15px;
     }
 
-    /* Fixed: Show 2 items side by side on mobile */
+    .form-group label {
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      padding: 12px 15px;
+      font-size: 0.9rem;
+      border-radius: 12px;
+    }
+
+    .form-input:focus, .form-select:focus {
+      transform: none;
+    }
+
+    .filter-btn {
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      border-radius: 12px;
+    }
+
+    /* Results Section */
+    .results-info {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+    }
+
+    .results-count {
+      font-size: 0.9rem;
+    }
+
+    .view-toggle {
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    .view-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Grid Layout - 2 columns */
     .marketplace-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 15px;
+      margin-bottom: 40px;
     }
 
     .marketplace-grid.compact {
@@ -501,12 +580,26 @@
       gap: 12px;
     }
 
+    /* Compact Item Cards */
     .marketplace-item {
       border-radius: 16px;
     }
 
+    .marketplace-item:hover {
+      transform: none;
+      box-shadow: 0 8px 25px var(--primary-light);
+    }
+
     .item-image-container {
       height: 140px;
+    }
+
+    .item-badge {
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      border-radius: 15px;
     }
 
     .item-content {
@@ -516,6 +609,7 @@
     .item-title {
       font-size: 1rem;
       margin-bottom: 10px;
+      line-height: 1.2;
     }
 
     .item-value {
@@ -530,7 +624,7 @@
 
     .btn-primary {
       padding: 10px 15px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
 
     .btn-secondary {
@@ -538,50 +632,103 @@
       height: 40px;
     }
 
-    .results-info {
-      flex-direction: column;
-      gap: 15px;
-      text-align: center;
-      padding: 15px 20px;
+    /* Empty State */
+    .empty-state {
+      padding: 40px 20px;
+      border-radius: 16px;
     }
 
+    .empty-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+
+    .empty-title {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .empty-description {
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    /* Pagination */
     .pagination {
       flex-wrap: wrap;
       gap: 10px;
       padding: 20px 15px;
+      margin-top: 40px;
+      border-radius: 16px;
     }
 
     .pagination-btn {
       padding: 10px 15px;
+      font-size: 0.85rem;
+    }
+
+    .pagination-info {
+      padding: 0 10px;
       font-size: 0.9rem;
     }
   }
 
+  /* Extra Small Screens */
   @media (max-width: 480px) {
     .marketplace-container {
-      padding: 0 15px;
+      padding: 0 10px;
     }
 
+    /* Hero Section Further Optimized */
     .marketplace-header {
-      padding: 30px 15px;
+      padding: 25px 15px;
+      margin-bottom: 25px;
+      border-radius: 16px;
     }
 
     .marketplace-header h1 {
-      font-size: 1.8rem;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
     }
 
+    .marketplace-header p {
+      font-size: 0.85rem;
+    }
+
+    /* Filter Section */
     .filter-section {
-      padding: 20px 15px;
+      padding: 15px 12px;
+      margin-bottom: 20px;
     }
 
-    /* Keep 2 columns even on very small screens */
+    .filter-header h3 {
+      font-size: 1rem;
+    }
+
+    .filter-icon {
+      width: 28px;
+      height: 28px;
+      font-size: 0.9rem;
+    }
+
+    .form-input, .form-select {
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .filter-btn {
+      padding: 10px 15px;
+      font-size: 0.85rem;
+    }
+
+    /* Grid remains 2 columns */
     .marketplace-grid {
-      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
 
     .marketplace-grid.compact {
-      grid-template-columns: repeat(2, 1fr);
       gap: 10px;
     }
 
@@ -590,21 +737,11 @@
     }
 
     .item-content {
-      padding: 12px 8px;
+      padding: 12px 10px;
     }
 
     .item-title {
       font-size: 0.9rem;
-      line-height: 1.2;
-    }
-
-    .item-details {
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .item-detail {
-      font-size: 0.8rem;
     }
 
     .item-value {
@@ -619,6 +756,39 @@
 
     .btn-secondary {
       height: 36px;
+    }
+
+    .results-info {
+      padding: 12px 15px;
+    }
+
+    .pagination {
+      padding: 15px 10px;
+    }
+  }
+
+  /* Landscape Orientation for Mobile */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .marketplace-header {
+      padding: 20px 15px;
+      margin-bottom: 20px;
+    }
+
+    .marketplace-header h1 {
+      font-size: 1.6rem;
+    }
+
+    .filter-section {
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .marketplace-grid {
+      margin-bottom: 30px;
+    }
+
+    .pagination {
+      margin-top: 30px;
     }
   }
 
@@ -658,6 +828,29 @@
   @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
+  }
+
+  /* Touch-friendly improvements for mobile */
+  @media (max-width: 768px) {
+    /* Disable hover effects on touch devices */
+    .marketplace-item:hover img {
+      transform: none;
+    }
+
+    .filter-btn:hover,
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: none;
+    }
+
+    /* Improve touch targets */
+    .view-btn,
+    .pagination-btn {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 </style>
 
