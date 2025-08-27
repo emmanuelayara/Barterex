@@ -55,7 +55,8 @@ class UploadItemForm(FlaskForm):
         ("Toys & Games", "Toys & Games"),
         ("Books & Stationery", "Books & Stationery"),
         ("Health & Wellness", "Health & Wellness"),
-        ("Automotive", "Automotive")
+        ("Automotive", "Automotive"), 
+        ("Phones & Gadgets", "Phones & Gadgets")
     ], validators=[DataRequired()])
     # Changed to support multiple files
     images = MultipleFileField('Upload Images (Max 6)', validators=[

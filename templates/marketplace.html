@@ -701,7 +701,7 @@
             {% set categories = [
               "Electronics", "Fashion / Clothing", "Footwear", "Home & Kitchen", "Beauty & Personal Care",
               "Sports & Outdoors", "Groceries", "Furniture", "Toys & Games", "Books & Stationery",
-              "Health & Wellness", "Automotive"
+              "Health & Wellness", "Automotive", "Phones & Gadgets"
             ] %}
             {% for cat in categories %}
               <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>

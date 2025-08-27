@@ -82,9 +82,16 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         # Hash the password
-        form.password.data = generate_password_hash(form.password.data)
-        # Logic to create a new user and add to DB
-        user = User(username=form.username.data, email=form.email.data, password_hash=form.password.data)
+        hashed_password = generate_password_hash(form.password.data)
+
+        # New user with signup bonus
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            password_hash=hashed_password,
+            credits=5000,         # 🎁 Beta signup bonus
+            first_login=True      # Mark so we can show flash later
+        )
         db.session.add(user)
         db.session.commit()
         flash('Registration successful. Please log in.', 'success')
@@ -93,7 +100,59 @@ def register():
 
 
 
+""" @app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        # Hash the password
+        form.password.data = generate_password_hash(form.password.data)
+        # Logic to create a new user and add to DB
+        user = User(username=form.username.data, email=form.email.data, password_hash=form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Registration successful. Please log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)  """
+
+
 @app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        user = User.query.filter_by(username=username).first()
+
+        if user:
+            if user.is_banned:
+                return render_template(
+                    "banned.html",
+                    reason=user.ban_reason,
+                    unban_requested=user.unban_requested
+                )
+
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+
+            # First login bonus message
+            if user.first_login:
+                flash(
+                    "🎉 Welcome Beta Tester! You've been given 5000 credits as a signup bonus. "
+                    "Please complete your profile to continue using the platform.",
+                    "success"
+                )
+                user.first_login = False
+                db.session.commit()
+            else:
+                flash('Login successful!', 'success')
+
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password.', 'danger')
+    return render_template('login.html', form=form)
+
+
+""" @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -110,7 +169,7 @@ def login():
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password.', 'danger')
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form) """
 
 
 @app.route('/banned')

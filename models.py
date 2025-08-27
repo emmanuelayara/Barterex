@@ -14,11 +14,18 @@ class User(db.Model, UserMixin):
     city = db.Column(db.String(50))
     state = db.Column(db.String(50))
     password_hash = db.Column(db.String(128), nullable=False)
+    
+    # Credits & first login flag
     credits = db.Column(db.Integer, default=0)
+    first_login = db.Column(db.Boolean, default=True)
+
+    # Admin/ban fields
     is_admin = db.Column(db.Boolean, default=False)
     is_banned = db.Column(db.Boolean, default=False)
     ban_reason = db.Column(db.Text, nullable=True)
     unban_requested = db.Column(db.Boolean, default=False)
+
+    # Relationships
     items = db.relationship('Item', back_populates='user', lazy=True)
     transactions = db.relationship('CreditTransaction', back_populates='user', lazy=True)
     notifications = db.relationship('Notification', back_populates='user', lazy=True)
