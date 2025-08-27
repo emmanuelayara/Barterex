@@ -21,7 +21,7 @@
       /* Gradients with brand colors */
       --primary-gradient: linear-gradient(135deg, #054e97 0%, #054e97 100%);
       --accent-gradient: linear-gradient(135deg, #ff7a00 0%, #ff8c00 100%);
-      --hero-gradient: linear-gradient(135deg, #054e97 0%, #ff7a00 100%);
+      --hero-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
       --glass-bg: rgba(255, 255, 255, 0.1);
       --glass-border: rgba(255, 255, 255, 0.2);
       
@@ -940,7 +940,6 @@
       <nav class="nav-links" id="navLinks">
         <div class="menu-actions">
           <a href="/register">Sign Up</a>
-          <a href="/login">Log In</a>
           {% if current_user.is_authenticated %}
           <a href="/dashboard" class="btn">Dashboard</a>
           {% endif %}
