@@ -488,7 +488,6 @@ def upload_item():
 
 
 
-    # Updated Routes using database-backed cart
 
 @app.route('/add_to_cart/<int:item_id>', methods=['POST', 'GET'])
 @login_required
