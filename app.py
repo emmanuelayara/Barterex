@@ -7,10 +7,7 @@ from flask_migrate import Migrate
 from datetime import datetime
 from flask_mail import Mail, Message
 
-
 app = Flask(__name__)
-
-mail = Mail(app)
 
 UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -22,24 +19,22 @@ app.config['SECRET_KEY'] = 'super-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///barter.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
+# ✅ Mail config
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your_email@gmail.com'
-app.config['MAIL_PASSWORD'] = 'your_password_or_app_password'
+app.config['MAIL_USERNAME'] = 'newwavecareers@gmail.com'       # change this
+app.config['MAIL_PASSWORD'] = 'drzd rowo aklm ktkd'           # app password (not Gmail login)
+app.config['MAIL_DEFAULT_SENDER'] = ('BarterEx Notifications', 'newwavecareers@gmail.com')
 
-
-# os.environ.get('DATABASE_URL')
-#'sqlite:///barter.db'
-# postgresql://barter_n7gd_user:txVmlNLLM5YFzI1bkCc28ixYSWTCfcKQ@dpg-d248b2ffte5s73ar0ba0-a.oregon-postgres.render.com/barter_n7gd
-
+# ✅ Initialize extensions
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-
 migrate = Migrate(app, db)
+mail = Mail(app)
 
+# Import routes and models
 from routes import *
 from models import *
 

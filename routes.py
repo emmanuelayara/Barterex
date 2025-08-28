@@ -69,29 +69,36 @@ def load_user(user_id):
 
 
 def create_notification(user_id, message):
-    # Save in-app notification
+    # Save notification in DB
     notification = Notification(user_id=user_id, message=message)
     db.session.add(notification)
     db.session.commit()
 
-    # Fetch the user to get their email
+    # Get the user email
     user = User.query.get(user_id)
     if user and user.email:
         try:
-            # Prepare the email
             msg = Message(
-                subject="Mail for Barterex",
-                sender="newwavecareers@gmail.com",   # update to your app's sender
-                recipients=[user.email]
+                subject="New Notification from BarterEx",
+                recipients=[user.email],
+                body=message
             )
-            msg.body = message
-
-            # Send the email
             mail.send(msg)
-
         except Exception as e:
-            # You may want to log this instead of print in production
             print(f"Email failed: {e}")
+
+
+
+@app.route('/test_email')
+def test_email():
+    msg = Message(
+        subject="Hello from BarterEx",
+        recipients=["your_test_email@gmail.com"],
+        body="If you see this, Flask-Mail is working!"
+    )
+    mail.send(msg)
+    return "Test email sent!"
+
 
 
 @app.route('/')
