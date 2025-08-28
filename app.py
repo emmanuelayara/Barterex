@@ -4,10 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
+from datetime import datetime
+from flask_mail import Mail, Message
 
 
 app = Flask(__name__)
 
+mail = Mail(app)
 
 UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -18,6 +21,13 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # Max size: 2MB
 app.config['SECRET_KEY'] = 'super-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///barter.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your_email@gmail.com'
+app.config['MAIL_PASSWORD'] = 'your_password_or_app_password'
 
 
 # os.environ.get('DATABASE_URL')

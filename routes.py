@@ -18,9 +18,12 @@ import os
 import time
 from werkzeug.utils import secure_filename
 
-from app import app, login_manager, db
+from flask_mail import Mail, Message
+from app import app, login_manager, db, mail
 from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage, Cart, CartItem, OrderItem
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm
+
+mail = Mail(app)
 
 
 # Utility function for cart management
@@ -66,9 +69,29 @@ def load_user(user_id):
 
 
 def create_notification(user_id, message):
+    # Save in-app notification
     notification = Notification(user_id=user_id, message=message)
     db.session.add(notification)
     db.session.commit()
+
+    # Fetch the user to get their email
+    user = User.query.get(user_id)
+    if user and user.email:
+        try:
+            # Prepare the email
+            msg = Message(
+                subject="New Notification",
+                sender="noreply@yourapp.com",   # update to your app's sender
+                recipients=[user.email]
+            )
+            msg.body = message
+
+            # Send the email
+            mail.send(msg)
+
+        except Exception as e:
+            # You may want to log this instead of print in production
+            print(f"Email failed: {e}")
 
 
 @app.route('/')
