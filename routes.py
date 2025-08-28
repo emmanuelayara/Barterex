@@ -80,8 +80,8 @@ def create_notification(user_id, message):
         try:
             # Prepare the email
             msg = Message(
-                subject="New Notification",
-                sender="noreply@yourapp.com",   # update to your app's sender
+                subject="Mail for Barterex",
+                sender="newwavecareers@gmail.com",   # update to your app's sender
                 recipients=[user.email]
             )
             msg.body = message
