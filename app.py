@@ -25,7 +25,7 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'newwavecareers@gmail.com'       # change this
 app.config['MAIL_PASSWORD'] = 'drzd rowo aklm ktkd'           # app password (not Gmail login)
-app.config['MAIL_DEFAULT_SENDER'] = ('Barter Express Notifications', 'newwavecareers@gmail.com')
+app.config['MAIL_DEFAULT_SENDER'] = ('Barter Express (Barterex)', 'newwavecareers@gmail.com')
 
 # ✅ Initialize extensions
 db = SQLAlchemy(app)

@@ -79,7 +79,7 @@ def create_notification(user_id, message):
     if user and user.email:
         try:
             msg = Message(
-                subject="New Notification from Barter Express",
+                subject="New notification from Barter Express",
                 recipients=[user.email],
                 body=message
             )
@@ -124,8 +124,21 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
+
+        # ✅ Send personalized welcome email
+        msg = Message(
+            subject="🎉 Welcome to Barterex!",
+            sender="newwavecareers@gmail.com",
+            recipients=[user.email]
+        )
+        # Render the HTML template and inject username
+        msg.html = render_template("emails/welcome_email.html", username=user.username)
+
+        mail.send(msg)
+
         flash('Registration successful. Please log in.', 'success')
         return redirect(url_for('login'))
+
     return render_template('register.html', form=form)
 
 
