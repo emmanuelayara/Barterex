@@ -1,13 +1,13 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-2 py-md-4">
     <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="h3 mb-1 text-dark fw-bold">User Profile</h2>
+    <div class="d-flex justify-content-between align-items-start align-items-md-center mb-3 mb-md-4 flex-column flex-md-row gap-2 gap-md-0">
+        <div class="w-100 w-md-auto">
+            <h2 class="h4 h3-md mb-1 text-dark fw-bold">User Profile</h2>
             <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
+                <ol class="breadcrumb mb-0 small">
                     <li class="breadcrumb-item">
                         <a href="{{ url_for('manage_users') }}" class="text-decoration-none text-muted">
                             <i class="fas fa-users me-1"></i>Users
@@ -19,87 +19,90 @@
         </div>
         <a 
             href="{{ url_for('manage_users') }}" 
-            class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
-            style="transition: all 0.3s ease;"
+            class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 align-self-start align-self-md-center"
+            style="transition: all 0.3s ease; white-space: nowrap;"
             onmouseover="this.style.backgroundColor='#007BFF'; this.style.color='white'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.3)';" 
             onmouseout="this.style.backgroundColor='transparent'; this.style.color='#007BFF'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
             <i class="fas fa-arrow-left"></i>
-            Back to Users
+            <span class="d-none d-sm-inline">Back to Users</span>
+            <span class="d-sm-none">Back</span>
         </a>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-3 g-md-4">
         <!-- Main Profile Card -->
-        <div class="col-xl-8 col-lg-7">
+        <div class="col-12 col-lg-8">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-gradient text-white d-flex align-items-center gap-3" 
+                <div class="card-header bg-gradient text-white d-flex align-items-center gap-2 gap-md-3 p-3 p-md-4" 
                      style="background: linear-gradient(135deg, #007BFF 0%, #0056b3 100%);">
-                    <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4"
-                         style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; backdrop-filter: blur(10px);">
+                    <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                         style="width: 45px; height: 45px; background: rgba(255,255,255,0.2); border-radius: 50%; backdrop-filter: blur(10px); font-size: 1.1rem;">
                         {{ user.username[0].upper() }}
                     </div>
-                    <div>
-                        <h4 class="mb-1 fw-bold">{{ user.username }}</h4>
-                        <p class="mb-0 opacity-75">
-                            <i class="fas fa-calendar-alt me-2"></i>
-                            Member since {{ user.date_created.strftime('%B %d, %Y') if user.date_created else 'Unknown' }}
+                    <div class="flex-grow-1 min-width-0">
+                        <h4 class="mb-1 fw-bold h5 h4-md text-truncate">{{ user.username }}</h4>
+                        <p class="mb-0 opacity-75 small">
+                            <i class="fas fa-calendar-alt me-1 me-md-2"></i>
+                            <span class="d-none d-sm-inline">Member since</span>
+                            <span class="d-sm-none">Since</span>
+                            {{ user.date_created.strftime('%m/%d/%Y') if user.date_created else 'Unknown' }}
                         </p>
                     </div>
                 </div>
                 
-                <div class="card-body p-4">
-                    <div class="row g-4">
+                <div class="card-body p-3 p-md-4">
+                    <div class="row g-3 g-md-4">
                         <!-- Contact Information -->
-                        <div class="col-md-6">
-                            <h6 class="text-muted text-uppercase fw-bold mb-3 d-flex align-items-center gap-2">
+                        <div class="col-12 col-md-6">
+                            <h6 class="text-muted text-uppercase fw-bold mb-2 mb-md-3 d-flex align-items-center gap-2 small">
                                 <i class="fas fa-address-card text-primary"></i>
                                 Contact Information
                             </h6>
-                            <div class="info-group mb-3">
+                            <div class="info-group mb-2 mb-md-3">
                                 <label class="text-muted small fw-semibold mb-1">Email Address</label>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="fas fa-envelope text-primary"></i>
-                                    <span class="text-dark">{{ user.email }}</span>
+                                    <i class="fas fa-envelope text-primary small"></i>
+                                    <span class="text-dark small text-truncate">{{ user.email }}</span>
                                 </div>
                             </div>
-                            <div class="info-group mb-3">
+                            <div class="info-group mb-2 mb-md-3">
                                 <label class="text-muted small fw-semibold mb-1">Phone Number</label>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="fas fa-phone text-primary"></i>
-                                    <span class="text-dark">{{ user.phone_number or 'Not Provided' }}</span>
+                                    <i class="fas fa-phone text-primary small"></i>
+                                    <span class="text-dark small">{{ user.phone_number or 'Not Provided' }}</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Address Information -->
-                        <div class="col-md-6">
-                            <h6 class="text-muted text-uppercase fw-bold mb-3 d-flex align-items-center gap-2">
+                        <div class="col-12 col-md-6">
+                            <h6 class="text-muted text-uppercase fw-bold mb-2 mb-md-3 d-flex align-items-center gap-2 small">
                                 <i class="fas fa-map-marker-alt text-primary"></i>
                                 Address Information
                             </h6>
-                            <div class="info-group mb-3">
+                            <div class="info-group mb-2 mb-md-3">
                                 <label class="text-muted small fw-semibold mb-1">Street Address</label>
                                 <div class="d-flex align-items-center gap-2">
-                                    <i class="fas fa-home text-primary"></i>
-                                    <span class="text-dark">{{ user.address or 'Not Provided' }}</span>
+                                    <i class="fas fa-home text-primary small"></i>
+                                    <span class="text-dark small">{{ user.address or 'Not Provided' }}</span>
                                 </div>
                             </div>
-                            <div class="row">
+                            <div class="row g-2">
                                 <div class="col-6">
-                                    <div class="info-group mb-3">
+                                    <div class="info-group mb-2 mb-md-3">
                                         <label class="text-muted small fw-semibold mb-1">City</label>
                                         <div class="d-flex align-items-center gap-2">
-                                            <i class="fas fa-city text-primary"></i>
-                                            <span class="text-dark">{{ user.city or 'Not Provided' }}</span>
+                                            <i class="fas fa-city text-primary small"></i>
+                                            <span class="text-dark small text-truncate">{{ user.city or 'Not Provided' }}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="info-group mb-3">
+                                    <div class="info-group mb-2 mb-md-3">
                                         <label class="text-muted small fw-semibold mb-1">State</label>
                                         <div class="d-flex align-items-center gap-2">
-                                            <i class="fas fa-flag text-primary"></i>
-                                            <span class="text-dark">{{ user.state or 'Not Provided' }}</span>
+                                            <i class="fas fa-flag text-primary small"></i>
+                                            <span class="text-dark small text-truncate">{{ user.state or 'Not Provided' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -111,62 +114,62 @@
         </div>
 
         <!-- Stats Sidebar -->
-        <div class="col-xl-4 col-lg-5">
+        <div class="col-12 col-lg-4">
             <!-- Credits Card -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body text-center p-4">
-                    <div class="mb-3">
+            <div class="card border-0 shadow-sm mb-3 mb-md-4">
+                <div class="card-body text-center p-3 p-md-4">
+                    <div class="mb-2 mb-md-3">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
-                             style="width: 80px; height: 80px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                            <i class="fas fa-coins text-white fs-2"></i>
+                             style="width: 60px; height: 60px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <i class="fas fa-coins text-white fs-3 fs-2-md"></i>
                         </div>
                     </div>
-                    <h6 class="text-muted text-uppercase fw-bold mb-2">Available Credits</h6>
-                    <h2 class="text-success fw-bold mb-0">{{ user.credits }}</h2>
+                    <h6 class="text-muted text-uppercase fw-bold mb-1 mb-md-2 small">Available Credits</h6>
+                    <h2 class="text-success fw-bold mb-0 h3 h2-md">{{ user.credits }}</h2>
                     <small class="text-muted">Credits in account</small>
                 </div>
             </div>
 
             <!-- Activity Stats -->
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-light border-0">
-                    <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                <div class="card-header bg-light border-0 p-2 p-md-3">
+                    <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2 small">
                         <i class="fas fa-chart-bar text-primary"></i>
                         Activity Overview
                     </h6>
                 </div>
                 <div class="card-body p-0">
                     <!-- Items Uploaded -->
-                    <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex align-items-center justify-content-center rounded-circle"
-                                 style="width: 45px; height: 45px; background: rgba(0,123,255,0.1);">
-                                <i class="fas fa-upload text-primary"></i>
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                 style="width: 35px; height: 35px; background: rgba(0,123,255,0.1);">
+                                <i class="fas fa-upload text-primary small"></i>
                             </div>
-                            <div>
-                                <h6 class="mb-0 fw-semibold">Items Uploaded</h6>
+                            <div class="min-width-0 flex-grow-1">
+                                <h6 class="mb-0 fw-semibold small text-truncate">Items Uploaded</h6>
                                 <small class="text-muted">Total items posted</small>
                             </div>
                         </div>
-                        <div class="text-end">
-                            <h5 class="mb-0 text-primary fw-bold">{{ items_uploaded }}</h5>
+                        <div class="text-end flex-shrink-0">
+                            <h5 class="mb-0 text-primary fw-bold h6 h5-md">{{ items_uploaded }}</h5>
                         </div>
                     </div>
 
                     <!-- Items Traded -->
-                    <div class="d-flex align-items-center justify-content-between p-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="d-flex align-items-center justify-content-center rounded-circle"
-                                 style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
-                                <i class="fas fa-handshake text-success"></i>
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                 style="width: 35px; height: 35px; background: rgba(40,167,69,0.1);">
+                                <i class="fas fa-handshake text-success small"></i>
                             </div>
-                            <div>
-                                <h6 class="mb-0 fw-semibold">Items Traded</h6>
+                            <div class="min-width-0 flex-grow-1">
+                                <h6 class="mb-0 fw-semibold small text-truncate">Items Traded</h6>
                                 <small class="text-muted">Successful trades</small>
                             </div>
                         </div>
-                        <div class="text-end">
-                            <h5 class="mb-0 text-success fw-bold">{{ items_traded }}</h5>
+                        <div class="text-end flex-shrink-0">
+                            <h5 class="mb-0 text-success fw-bold h6 h5-md">{{ items_traded }}</h5>
                         </div>
                     </div>
                 </div>
@@ -180,19 +183,28 @@
         transition: all 0.3s ease;
     }
     
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    @media (min-width: 768px) {
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+        }
     }
     
     .info-group {
         transition: all 0.2s ease;
-        padding: 8px 12px;
-        border-radius: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
     }
     
-    .info-group:hover {
-        background-color: rgba(0,123,255,0.05);
+    @media (min-width: 768px) {
+        .info-group {
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        
+        .info-group:hover {
+            background-color: rgba(0,123,255,0.05);
+        }
     }
     
     .breadcrumb-item + .breadcrumb-item::before {
@@ -221,26 +233,63 @@
         z-index: 1;
     }
     
-    @media (max-width: 768px) {
+    .min-width-0 {
+        min-width: 0;
+    }
+    
+    /* Responsive typography utilities */
+    @media (min-width: 768px) {
+        .h3-md { font-size: calc(1.3rem + .6vw) !important; }
+        .h4-md { font-size: calc(1.275rem + .3vw) !important; }
+        .h2-md { font-size: calc(1.325rem + .9vw) !important; }
+        .h5-md { font-size: 1.25rem !important; }
+        .fs-2-md { font-size: calc(1.325rem + .9vw) !important; }
+    }
+    
+    /* Mobile specific styles */
+    @media (max-width: 767.98px) {
         .container-fluid {
-            padding-left: 15px;
-            padding-right: 15px;
+            padding-left: 12px;
+            padding-right: 12px;
         }
         
-        .d-flex.justify-content-between {
-            flex-direction: column;
-            gap: 1rem;
+        /* Ensure text doesn't overflow */
+        .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
-        .card-header .d-flex {
-            flex-direction: column;
-            text-align: center;
-            gap: 1rem;
+        /* Make cards less padded on mobile */
+        .card-body {
+            padding: 1rem !important;
         }
         
-        .row.g-4 .col-md-6:last-child {
+        /* Smaller gaps on mobile */
+        .gap-2 {
+            gap: 0.5rem !important;
+        }
+    }
+    
+    /* Medium screens */
+    @media (min-width: 768px) and (max-width: 991.98px) {
+        .col-lg-8, .col-lg-4 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .col-lg-4 {
             margin-top: 1rem;
         }
+    }
+    
+    /* Ensure proper flex behavior */
+    .flex-shrink-0 {
+        flex-shrink: 0 !important;
+    }
+    
+    .flex-grow-1 {
+        flex-grow: 1 !important;
     }
 </style>
 

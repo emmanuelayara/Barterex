@@ -552,56 +552,304 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .order-management-container {
         padding: 15px;
     }
     
     .page-header {
+        padding: 20px;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .title-icon {
+        font-size: 1.6rem;
+    }
+    
+    .stat-card {
+        min-width: 100px;
+        padding: 16px 20px;
+    }
+    
+    .stat-number {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .order-management-container {
+        padding: 10px;
+    }
+    
+    .page-header {
         flex-direction: column;
-        gap: 20px;
+        gap: 16px;
         align-items: stretch;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        gap: 8px;
+    }
+    
+    .title-icon {
+        font-size: 1.4rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .header-stats {
+        justify-content: center;
+        gap: 12px;
+    }
+    
+    .stat-card {
+        min-width: 80px;
+        padding: 12px 16px;
+    }
+    
+    .stat-number {
+        font-size: 1.4rem;
+        margin-bottom: 2px;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
     }
     
     .filters-section {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
+        margin-bottom: 20px;
     }
     
     .search-box {
         min-width: unset;
     }
     
+    .search-input {
+        padding: 10px 40px 10px 14px;
+        font-size: 13px;
+    }
+    
     .filter-buttons {
-        justify-content: center;
+        justify-content: flex-start;
+        gap: 6px;
+    }
+    
+    .filter-btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
     }
     
     .orders-table {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+    }
+    
+    .orders-table thead th {
+        padding: 12px 8px;
+        font-size: 0.8rem;
     }
     
     .orders-table td {
-        padding: 12px 8px;
+        padding: 10px 6px;
     }
     
     .delivery-info {
-        min-width: 150px;
+        min-width: 120px;
+    }
+    
+    .method-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+    
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+    
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
 }
 
 @media (max-width: 480px) {
-    .page-title {
-        font-size: 1.5rem;
+    .order-management-container {
+        padding: 8px;
     }
     
-    .action-buttons {
-        flex-direction: column;
-        gap: 4px;
+    .page-header {
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .page-title {
+        font-size: 1.3rem;
+        gap: 6px;
+    }
+    
+    .title-icon {
+        font-size: 1.2rem;
+    }
+    
+    .page-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .header-stats {
+        gap: 8px;
+    }
+    
+    .stat-card {
+        min-width: 70px;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+    
+    .stat-number {
+        font-size: 1.2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+    }
+    
+    .search-input {
+        padding: 9px 35px 9px 12px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+    
+    .search-icon {
+        right: 12px;
+        font-size: 0.9rem;
+    }
+    
+    .filter-btn {
+        padding: 7px 12px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+    
+    .table-container {
+        border-radius: 12px;
+    }
+    
+    .orders-table {
+        font-size: 0.8rem;
+    }
+    
+    .orders-table thead th {
+        padding: 10px 6px;
+        font-size: 0.75rem;
+    }
+    
+    .orders-table td {
+        padding: 8px 4px;
+    }
+    
+    .order-id {
+        font-size: 0.8rem;
+    }
+    
+    .delivery-info {
+        min-width: 100px;
+    }
+    
+    .delivery-details {
+        font-size: 0.75rem;
     }
     
     .method-badge, .status-badge {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        gap: 4px;
+    }
+    
+    .action-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+    
+    .date-info .date {
+        font-size: 0.8rem;
+    }
+    
+    .date-info .time {
+        font-size: 0.7rem;
+    }
+    
+    .empty-state {
+        padding: 40px 15px;
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.1rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+    .page-title {
+        font-size: 1.1rem;
+    }
+    
+    .title-icon {
+        font-size: 1rem;
+    }
+    
+    .stat-card {
+        min-width: 60px;
+        padding: 8px 10px;
+    }
+    
+    .stat-number {
+        font-size: 1rem;
+    }
+    
+    .stat-label {
+        font-size: 0.65rem;
+    }
+    
+    .filter-btn {
+        padding: 6px 10px;
         font-size: 0.75rem;
-        padding: 3px 8px;
+    }
+    
+    .orders-table thead th {
+        padding: 8px 4px;
+        font-size: 0.7rem;
+    }
+    
+    .orders-table td {
+        padding: 6px 3px;
+    }
+    
+    .method-badge, .status-badge {
+        font-size: 0.6rem;
+        padding: 2px 5px;
     }
 }
 </style>

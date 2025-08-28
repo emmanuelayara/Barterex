@@ -25,14 +25,14 @@
       min-height: 100vh;
     }
 
-    /* Enhanced Admin Header */
+    /* Enhanced Admin Header - Mobile Optimized */
     .admin-header {
       background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
-      padding: 30px 20px;
+      padding: 20px 15px;
       color: white;
       border-bottom: 4px solid var(--accent-orange);
-      border-radius: 0 0 24px 24px;
-      margin-bottom: 30px;
+      border-radius: 0 0 16px 16px;
+      margin-bottom: 20px;
       box-shadow: var(--card-shadow-hover);
       position: relative;
       overflow: hidden;
@@ -50,8 +50,8 @@
     }
 
     .admin-header h1 {
-      font-size: 2.2rem;
-      margin-bottom: 20px;
+      font-size: 1.75rem;
+      margin-bottom: 10px;
       font-weight: 700;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       position: relative;
@@ -59,33 +59,35 @@
     }
 
     .admin-header .lead {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       opacity: 0.9;
-      margin-bottom: 25px;
+      margin-bottom: 15px;
       position: relative;
       z-index: 2;
     }
 
-    /* Enhanced Navigation Buttons */
+    /* Enhanced Navigation Buttons - Mobile Optimized */
     .admin-nav-btns {
       position: relative;
       z-index: 2;
     }
 
     .admin-nav-btns a {
-      margin: 5px;
-      padding: 12px 20px;
-      border-radius: var(--border-radius);
+      margin: 3px;
+      padding: 8px 12px;
+      border-radius: 8px;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
       text-decoration: none;
       transition: var(--transition);
       backdrop-filter: blur(10px);
       border: 2px solid transparent;
       position: relative;
       overflow: hidden;
+      font-size: 0.85rem;
+      min-height: 36px;
     }
 
     .admin-nav-btns a::before {
@@ -108,17 +110,19 @@
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
-    /* Enhanced Count Badge */
+    /* Enhanced Count Badge - Mobile Optimized */
     .count-badge {
       background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
       color: var(--primary-blue);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 0.8rem;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
       font-weight: 700;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
       animation: pulse-badge 2s infinite;
+      min-width: 20px;
+      text-align: center;
     }
 
     @keyframes pulse-badge {
@@ -130,15 +134,15 @@
     .dashboard-container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 15px;
     }
 
     /* Enhanced Search Section */
     .search-section {
       background: white;
       border-radius: var(--border-radius);
-      padding: 25px;
-      margin-bottom: 30px;
+      padding: 20px;
+      margin-bottom: 20px;
       box-shadow: var(--card-shadow);
       border: 1px solid #e2e8f0;
       transition: var(--transition);
@@ -152,18 +156,19 @@
     .search-section h5 {
       color: var(--primary-blue);
       font-weight: 600;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      font-size: 1.1rem;
     }
 
     .form-control {
-      border-radius: 10px;
+      border-radius: 8px;
       border: 2px solid #e2e8f0;
-      padding: 12px 16px;
+      padding: 10px 14px;
       transition: var(--transition);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     .form-control:focus {
@@ -175,10 +180,11 @@
     .btn-primary {
       background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
       border: none;
-      border-radius: 10px;
-      padding: 12px 24px;
+      border-radius: 8px;
+      padding: 10px 20px;
       font-weight: 600;
       transition: var(--transition);
+      font-size: 0.9rem;
     }
 
     .btn-primary:hover {
@@ -190,7 +196,7 @@
     .items-section {
       background: white;
       border-radius: var(--border-radius);
-      padding: 25px;
+      padding: 20px;
       box-shadow: var(--card-shadow);
       border: 1px solid #e2e8f0;
     }
@@ -198,10 +204,11 @@
     .items-section h5 {
       color: var(--primary-blue);
       font-weight: 600;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      font-size: 1.1rem;
     }
 
     /* Enhanced List Items */
@@ -213,8 +220,8 @@
       background: #fafbfc;
       border: 2px solid #e2e8f0;
       border-radius: var(--border-radius);
-      margin-bottom: 15px;
-      padding: 20px;
+      margin-bottom: 12px;
+      padding: 16px;
       transition: var(--transition);
       position: relative;
       overflow: hidden;
@@ -247,6 +254,7 @@
       color: var(--primary-blue);
       margin-bottom: 8px;
       font-weight: 600;
+      font-size: 1rem;
     }
 
     .item-number {
@@ -258,11 +266,12 @@
       border-radius: 6px;
       display: inline-block;
       margin-bottom: 8px;
+      font-size: 0.8rem;
     }
 
     .item-meta {
       color: #64748b;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       gap: 5px;
@@ -270,9 +279,9 @@
 
     /* Enhanced Status Badges */
     .badge {
-      font-size: 0.8rem;
-      padding: 6px 12px;
-      border-radius: 20px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 16px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -295,16 +304,17 @@
     .item-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .btn-outline-primary {
       border-color: var(--primary-blue);
       color: var(--primary-blue);
-      border-radius: 8px;
-      padding: 8px 16px;
+      border-radius: 6px;
+      padding: 6px 12px;
       font-weight: 600;
       transition: var(--transition);
+      font-size: 0.8rem;
     }
 
     .btn-outline-primary:hover {
@@ -316,17 +326,18 @@
 
     /* Enhanced Pagination */
     .pagination {
-      margin-top: 30px;
+      margin-top: 20px;
     }
 
     .page-link {
-      border-radius: 8px;
-      margin: 0 3px;
+      border-radius: 6px;
+      margin: 0 2px;
       border: 2px solid #e2e8f0;
       color: var(--primary-blue);
-      padding: 10px 16px;
+      padding: 8px 12px;
       font-weight: 600;
       transition: var(--transition);
+      font-size: 0.85rem;
     }
 
     .page-link:hover {
@@ -350,54 +361,245 @@
     /* Empty State */
     .empty-state {
       text-align: center;
-      padding: 60px 20px;
+      padding: 40px 20px;
       color: #64748b;
     }
 
     .empty-state i {
-      font-size: 4rem;
+      font-size: 3rem;
       color: #cbd5e1;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .empty-state h6 {
       color: var(--primary-blue);
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      font-size: 1rem;
     }
 
-    /* Responsive Design */
-    @media (max-width: 768px) {
+    /* Mobile-Specific Responsive Design */
+    @media (max-width: 575.98px) {
       .admin-header {
-        padding: 20px 15px;
+        padding: 15px 10px;
+        margin-bottom: 15px;
+        border-radius: 0 0 12px 12px;
       }
 
       .admin-header h1 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+      }
+
+      .admin-header .lead {
+        font-size: 0.875rem;
+        margin-bottom: 12px;
       }
 
       .admin-nav-btns a {
-        margin: 3px;
-        padding: 10px 16px;
-        font-size: 0.9rem;
+        margin: 2px;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        gap: 4px;
+        min-height: 32px;
+      }
+
+      .admin-nav-btns a i {
+        font-size: 0.8rem;
+      }
+
+      .count-badge {
+        padding: 1px 6px;
+        font-size: 0.65rem;
+        border-radius: 10px;
+        min-width: 18px;
       }
 
       .dashboard-container {
-        padding: 0 15px;
+        padding: 0 10px;
       }
 
       .search-section, .items-section {
-        padding: 20px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 10px;
+      }
+
+      .search-section h5, .items-section h5 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+      }
+
+      .form-control {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        border-radius: 6px;
+      }
+
+      .btn-primary {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        border-radius: 6px;
       }
 
       .list-group-item {
-        padding: 16px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+      }
+
+      .item-content h5 {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+      }
+
+      .item-number {
+        font-size: 0.75rem;
+        padding: 1px 6px;
+        margin-bottom: 6px;
+      }
+
+      .item-meta {
+        font-size: 0.8rem;
+      }
+
+      .badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 12px;
       }
 
       .item-actions {
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         align-items: stretch;
+      }
+
+      .btn-outline-primary {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+        text-align: center;
+      }
+
+      .page-link {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        margin: 0 1px;
+      }
+
+      .empty-state {
+        padding: 30px 15px;
+      }
+
+      .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+      }
+
+      .empty-state h6 {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+      }
+
+      .empty-state p {
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (min-width: 576px) and (max-width: 767.98px) {
+      .admin-header {
+        padding: 18px 12px;
+      }
+
+      .admin-header h1 {
+        font-size: 1.6rem;
+      }
+
+      .admin-nav-btns a {
+        margin: 2px;
+        padding: 7px 11px;
+        font-size: 0.82rem;
+      }
+
+      .dashboard-container {
+        padding: 0 12px;
+      }
+
+      .search-section, .items-section {
+        padding: 18px;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 991.98px) {
+      .admin-header {
+        padding: 25px 18px;
+        margin-bottom: 25px;
+      }
+
+      .admin-header h1 {
+        font-size: 2rem;
+        margin-bottom: 15px;
+      }
+
+      .admin-nav-btns a {
+        padding: 9px 14px;
+        font-size: 0.9rem;
+      }
+
+      .dashboard-container {
+        padding: 0 18px;
+      }
+
+      .search-section, .items-section {
+        padding: 22px;
+        margin-bottom: 25px;
+      }
+    }
+
+    /* Desktop styles remain the same */
+    @media (min-width: 992px) {
+      .admin-header {
+        padding: 30px 20px;
+        margin-bottom: 30px;
+        border-radius: 0 0 24px 24px;
+      }
+
+      .admin-header h1 {
+        font-size: 2.2rem;
+        margin-bottom: 20px;
+      }
+
+      .admin-header .lead {
+        font-size: 1.1rem;
+        margin-bottom: 25px;
+      }
+
+      .admin-nav-btns a {
+        margin: 5px;
+        padding: 12px 20px;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        gap: 10px;
+      }
+
+      .count-badge {
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        border-radius: 20px;
+      }
+
+      .dashboard-container {
+        padding: 0 20px;
+      }
+
+      .search-section, .items-section {
+        padding: 25px;
+        margin-bottom: 30px;
+      }
+
+      .list-group-item {
+        padding: 20px;
+        margin-bottom: 15px;
       }
     }
 
@@ -429,49 +631,58 @@
 <body>
 
 <div class="admin-header text-center">
-  <h1><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h1>
+  <h1><i class="bi bi-speedometer2 me-2 d-none d-sm-inline"></i>Admin Dashboard</h1>
   <p class="lead">Manage your platform with ease and efficiency</p>
   
   <div class="admin-nav-btns d-flex flex-wrap justify-content-center">
     <a href="{{ url_for('admin_dashboard', status='all') }}" class="btn {{ 'btn-primary' if status == 'all' else 'btn-outline-primary' }}">
       <i class="bi bi-list-ul"></i>
-      All Items 
+      <span class="d-none d-sm-inline">All Items</span>
+      <span class="d-inline d-sm-none">All</span>
       <span class="count-badge">{{ total_items }}</span>
     </a>
     <a href="{{ url_for('admin_dashboard', status='pending') }}" class="btn {{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }}">
       <i class="bi bi-clock-history"></i>
-      Pending 
+      <span class="d-none d-sm-inline">Pending</span>
+      <span class="d-inline d-sm-none">Pending</span>
       <span class="count-badge">{{ pending_items }}</span>
     </a>
     <a href="{{ url_for('admin_dashboard', status='approved') }}" class="btn {{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">
       <i class="bi bi-check-circle"></i>
-      Approved 
+      <span class="d-none d-sm-inline">Approved</span>
+      <span class="d-inline d-sm-none">OK</span>
       <span class="count-badge">{{ approved_items }}</span>
     </a>
     <a href="{{ url_for('admin_dashboard', status='rejected') }}" class="btn {{ 'btn-danger' if status == 'rejected' else 'btn-outline-danger' }}">
       <i class="bi bi-x-circle"></i>
-      Rejected 
+      <span class="d-none d-sm-inline">Rejected</span>
+      <span class="d-inline d-sm-none">X</span>
       <span class="count-badge">{{ rejected_items }}</span>
     </a>
     <a href="{{ url_for('approve_items') }}" class="btn btn-outline-light">
       <i class="bi bi-check2-square"></i>
-      Approve Items
+      <span class="d-none d-sm-inline">Approve Items</span>
+      <span class="d-inline d-sm-none">Approve</span>
     </a>
     <a href="{{ url_for('manage_users') }}" class="btn btn-outline-light">
       <i class="bi bi-people"></i>
-      Manage Users
+      <span class="d-none d-sm-inline">Manage Users</span>
+      <span class="d-inline d-sm-none">Users</span>
     </a>
     <a href="{{ url_for('manage_orders') }}" class="btn btn-outline-light">
       <i class="bi bi-box-seam"></i>
-      Manage Orders
+      <span class="d-none d-sm-inline">Manage Orders</span>
+      <span class="d-inline d-sm-none">Orders</span>
     </a>
     <a href="{{ url_for('manage_pickup_stations') }}" class="btn btn-outline-light">
       <i class="bi bi-geo-alt"></i>
-      Manage Pickup Stations
+      <span class="d-none d-sm-inline">Manage Pickup Stations</span>
+      <span class="d-inline d-sm-none">Stations</span>
     </a>
     <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-light">
       <i class="bi bi-box-arrow-right"></i>
-      Logout
+      <span class="d-none d-sm-inline">Logout</span>
+      <span class="d-inline d-sm-none">Out</span>
     </a>
   </div>
 </div>
@@ -552,7 +763,7 @@
       <ul class="pagination justify-content-center">
         <li class="page-item {% if not items.has_prev %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_dashboard', page=items.prev_num, status=status, search=search) }}">
-            <i class="bi bi-chevron-left"></i> Previous
+            <i class="bi bi-chevron-left"></i> <span class="d-none d-sm-inline">Previous</span>
           </a>
         </li>
         
@@ -574,7 +785,7 @@
         
         <li class="page-item {% if not items.has_next %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin_dashboard', page=items.next_num, status=status, search=search) }}">
-            Next <i class="bi bi-chevron-right"></i>
+            <span class="d-none d-sm-inline">Next</span> <i class="bi bi-chevron-right"></i>
           </a>
         </li>
       </ul>
@@ -633,14 +844,16 @@
       });
     });
 
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-      // Ctrl/Cmd + K to focus search
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInput?.focus();
-      }
-    });
+    // Add keyboard shortcuts (desktop only)
+    if (window.innerWidth >= 768) {
+      document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          searchInput?.focus();
+        }
+      });
+    }
 
     // Animate count badges on load
     const countBadges = document.querySelectorAll('.count-badge');
