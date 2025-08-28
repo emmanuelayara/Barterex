@@ -79,7 +79,7 @@ def create_notification(user_id, message):
     if user and user.email:
         try:
             msg = Message(
-                subject="New Notification from BarterEx",
+                subject="New Notification from Barter Express",
                 recipients=[user.email],
                 body=message
             )
@@ -700,7 +700,10 @@ def order_item():
     form = OrderForm()
     stations = PickupStation.query.filter_by(state=current_user.state).all()
     form.pickup_station.choices = [(s.id, s.name) for s in stations]
-    items = Item.query.all()
+
+    # Only fetch current purchased items
+    pending_item_ids = session.get('pending_order_items', [])
+    items = Item.query.filter(Item.id.in_(pending_item_ids)).all()
 
     if request.method == 'GET' and current_user.address:
         form.delivery_address.data = current_user.address
@@ -720,11 +723,30 @@ def order_item():
         db.session.add(order)
 
         # Attach all purchased items to this order
-        for item_id in session.get('pending_order_items', []):
+        for item_id in pending_item_ids:
             db.session.add(OrderItem(order=order, item_id=item_id))
 
-        db.session.add(Notification(user_id=current_user.id, message="Delivery set up successfully"))
-        db.session.commit()
+        db.session.commit()  # ✅ commit before notification
+
+        # --- Personalized Notification ---
+        if delivery_method == "pickup":
+            station = PickupStation.query.get(pickup_station_id)
+            extra_info = f"Pickup Station: {station.name}, {station.address}" if station else ""
+        else:
+            extra_info = f"Delivery Address: {delivery_address}"
+
+        # Item names for notification
+        item_names = [item.name for item in items]
+        if len(item_names) == 1:
+            item_info = f"Item: '{item_names[0]}'"
+        else:
+            item_info = f"Items: {', '.join(item_names)}"
+
+        create_notification(
+            current_user.id,
+            f"📦 Your order has been set up for delivery via {delivery_method}. {item_info}. {extra_info}"
+        )
+        # --- End Notification ---
 
         session.pop('pending_order_items', None)
         flash("Delivery set up successfully for your purchased items!", "success")
@@ -991,7 +1013,7 @@ def approve_item(item_id):
 
 
         if item.status == 'approved':
-            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is: ₦{item.user.credits} credits.")
+            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is: ₦{item.user.credits:,} credits.")
         else:
             create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected.")
 
