@@ -21,9 +21,23 @@ from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message
 from app import app, login_manager, db, mail
 from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage, Cart, CartItem, OrderItem
-from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm
+from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm, ForgotPasswordForm, ResetPasswordForm
 
 mail = Mail(app)
+
+from itsdangerous import URLSafeTimedSerializer
+
+def generate_reset_token(email, expires_sec=3600):
+    s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return s.dumps(email, salt='password-reset-salt')
+
+def verify_reset_token(token, expires_sec=3600):
+    s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = s.loads(token, salt='password-reset-salt', max_age=expires_sec)
+    except Exception:
+        return None
+    return email
 
 
 # Utility function for cart management
@@ -213,6 +227,55 @@ def login():
         else:
             flash('Invalid username or password.', 'danger')
     return render_template('login.html', form=form) """
+
+
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            token = generate_reset_token(user.email)
+            reset_url = url_for('reset_password', token=token, _external=True)
+
+            msg = Message(
+                subject="🔑 Reset Your Password",
+                sender="newwavecareers@gmail.com",
+                recipients=[user.email]
+            )
+            msg.html = render_template(
+                "emails/reset_password_email.html",
+                username=user.username,
+                reset_url=reset_url
+            )
+            mail.send(msg)
+
+        flash('If that email exists, a reset link has been sent.', 'info')
+        return redirect(url_for('login'))
+
+    return render_template('forgot_password.html', form=form)
+
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    email = verify_reset_token(token)
+    if not email:
+        flash('The reset link is invalid or has expired.', 'danger')
+        return redirect(url_for('forgot_password'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.password_hash = generate_password_hash(form.password.data)
+            db.session.commit()
+            flash('Your password has been updated! Please log in.', 'success')
+            return redirect(url_for('login'))
+
+    return render_template('reset_password.html', form=form)
+
 
 
 @app.route('/banned')

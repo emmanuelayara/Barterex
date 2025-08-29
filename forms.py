@@ -75,9 +75,14 @@ class OrderForm(FlaskForm):
     submit = SubmitField("Place Order")
 
 
-class PasswordResetRequestForm(FlaskForm):
+class ForgotPasswordForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
-    submit = SubmitField('Request Password Reset')
+    submit = SubmitField('Reset Password')
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Update Password')
 
 
 # ------------------ ADMIN FORMS ------------------ #
