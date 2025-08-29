@@ -103,18 +103,6 @@ def create_notification(user_id, message):
 
 
 
-@app.route('/test_email')
-def test_email():
-    msg = Message(
-        subject="Hello from BarterEx",
-        recipients=["your_test_email@gmail.com"],
-        body="If you see this, Flask-Mail is working!"
-    )
-    mail.send(msg)
-    return "Test email sent!"
-
-
-
 @app.route('/')
 def home():
     trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()  # 3 rows x 2 cols
@@ -142,7 +130,7 @@ def register():
         # ✅ Send personalized welcome email
         msg = Message(
             subject="🎉 Welcome to Barterex!",
-            sender="newwavecareers@gmail.com",
+            sender="info.barterex@gmail.com",
             recipients=[user.email]
         )
         # Render the HTML template and inject username
@@ -241,7 +229,7 @@ def forgot_password():
 
             msg = Message(
                 subject="🔑 Reset Your Password",
-                sender="newwavecareers@gmail.com",
+                sender="info.barterex@gmail.com",
                 recipients=[user.email]
             )
             msg.html = render_template(
