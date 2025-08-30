@@ -6,84 +6,6 @@
     box-sizing: border-box;
   }
 
-  .nav-toggle {
-    display: none;
-    background: none;
-    border: none;
-    padding: 12px 0;
-    cursor: pointer;
-    font-size: 16px;
-    color: #4a5568;
-    width: 100%;
-    text-align: center;
-    transition: all 0.3s ease;
-  }
-
-  .nav-toggle:hover {
-    color: #ff7a00;
-  }
-
-  /* Update your existing mobile media query */
-  @media (max-width: 768px) {
-    .nav-toggle {
-      display: block;
-    }
-
-    .nav-menu {
-      display: none;
-      flex-direction: column;
-      gap: 0;
-      padding: 0 0 12px 0;
-      min-height: auto;
-      opacity: 0;
-      max-height: 0;
-      overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .nav-menu.show {
-      display: flex;
-      opacity: 1;
-      max-height: 300px;
-      animation: slideDown 0.3s ease-out;
-    }
-
-    .nav-item {
-      width: 100%;
-      margin: 2px 0;
-    }
-
-    .nav-link {
-      width: 100%;
-      justify-content: center;
-      margin: 0;
-      padding: 12px 16px;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    .nav-link:hover {
-      transform: none;
-      box-shadow: 0 2px 8px rgba(255, 122, 0, 0.15);
-    }
-
-    .nav-link.active:hover {
-      transform: none;
-      box-shadow: 0 2px 15px rgba(255, 122, 0, 0.3);
-    }
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   .page-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
@@ -99,6 +21,7 @@
     top: 0;
     z-index: 100;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    border-radius: 0 0 20px 20px;
   }
 
   .nav-container {
@@ -109,34 +32,38 @@
 
   .nav-menu {
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
     list-style: none;
     margin: 0;
     padding: 0;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     min-height: 50px;
   }
 
   .nav-item {
     margin: 2px 0;
+    flex: 1;
   }
 
   .nav-link {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     color: #4a5568;
     text-decoration: none;
     padding: 10px 14px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: 500;
     font-size: 13px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     background: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    width: 100%;
+    text-align: center;
   }
 
   .nav-link:hover {
@@ -144,28 +71,33 @@
     color: #ff7a00;
     transform: translateY(-1px);
     box-shadow: 0 3px 10px rgba(255, 122, 0, 0.15);
+    border-radius: 12px;
   }
 
   .nav-link.active {
     background: linear-gradient(135deg, #ff7a00, #ff7a00);
     color: white;
     box-shadow: 0 3px 15px rgba(255, 122, 0, 0.3);
+    border-radius: 12px;
   }
 
   .nav-link.active:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 20px rgba(255, 122, 0, 0.4);
+    border-radius: 12px;
   }
 
   .nav-link.logout {
     background: rgba(239, 68, 68, 0.1);
     color: #dc2626;
     border-color: rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
   }
 
   .nav-link.logout:hover {
     background: rgba(239, 68, 68, 0.2);
     color: #b91c1c;
+    border-radius: 12px;
   }
 
   .main-content {
@@ -199,7 +131,7 @@
   .profile-container {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 24px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
@@ -211,7 +143,7 @@
 
   .profile-form {
     background: white;
-    border-radius: 14px;
+    border-radius: 20px;
     padding: 32px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
     border: 1px solid rgba(226, 232, 240, 0.8);
@@ -227,6 +159,7 @@
     right: 0;
     height: 3px;
     background: linear-gradient(135deg, #ff7a00, #ff7a00);
+    border-radius: 20px 20px 0 0;
   }
 
   .form-header {
@@ -279,7 +212,7 @@
   .form-control {
     width: 100%;
     padding: 12px 16px 12px 40px;
-    border-radius: 10px;
+    border-radius: 12px;
     border: 2px solid #e2e8f0;
     background: #fff;
     font-size: 14px;
@@ -292,10 +225,12 @@
     border-color: #ff7a00;
     box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
     transform: translateY(-1px);
+    border-radius: 12px;
   }
 
   .form-control:hover {
     border-color: #cbd5e0;
+    border-radius: 12px;
   }
 
   .form-control::placeholder {
@@ -311,6 +246,7 @@
     color: #a0aec0;
     pointer-events: none;
     z-index: 1;
+    border-radius: 12px;
   }
 
   .form-actions {
@@ -323,7 +259,7 @@
     color: white;
     padding: 12px 36px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -346,11 +282,13 @@
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     transition: left 0.5s;
+    border-radius: 12px;
   }
 
   .btn-submit:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 15px rgba(255, 122, 0, 0.3);
+    border-radius: 12px;
   }
 
   .btn-submit:hover::before {
@@ -390,7 +328,7 @@
   .flash-message {
     padding: 12px 16px;
     margin-bottom: 10px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -402,24 +340,63 @@
     background: rgba(16, 185, 129, 0.1);
     color: #059669;
     border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
   }
 
   .flash-error {
     background: rgba(239, 68, 68, 0.1);
     color: #dc2626;
     border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
   }
 
   /* Mobile Responsive Design */
   @media (max-width: 768px) {
+    .top-nav {
+      border-radius: 0 0 16px 16px;
+    }
+
     .nav-menu {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-evenly;
+      flex-wrap: nowrap;
       gap: 3px;
       min-height: 45px;
     }
     
+    .nav-item {
+      flex: 1;
+    }
+    
     .nav-link {
-      padding: 8px 12px;
-      font-size: 12px;
+      flex-direction: column;
+      text-align: center;
+      width: 100%;
+      padding: 8px 6px;
+      font-size: 10px;
+      gap: 2px;
+      border-radius: 10px;
+    }
+
+    .nav-link:hover {
+      border-radius: 10px;
+    }
+
+    .nav-link.active {
+      border-radius: 10px;
+    }
+
+    .nav-link.active:hover {
+      border-radius: 10px;
+    }
+
+    .nav-link.logout {
+      border-radius: 10px;
+    }
+
+    .nav-link.logout:hover {
+      border-radius: 10px;
     }
 
     .main-content {
@@ -436,12 +413,16 @@
 
     .profile-container {
       padding: 16px;
-      border-radius: 12px;
+      border-radius: 16px;
     }
 
     .profile-form {
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 16px;
+    }
+
+    .profile-form::before {
+      border-radius: 16px 16px 0 0;
     }
 
     .form-row {
@@ -460,32 +441,77 @@
     .form-control {
       padding: 10px 14px 10px 36px;
       font-size: 14px;
+      border-radius: 10px;
+    }
+
+    .form-control:focus {
+      border-radius: 10px;
+    }
+
+    .form-control:hover {
+      border-radius: 10px;
     }
 
     .input-icon {
       left: 12px;
       font-size: 0.9rem;
+      border-radius: 10px;
     }
 
     .btn-submit {
       width: 100%;
       padding: 12px 20px;
       min-width: auto;
+      border-radius: 10px;
+    }
+
+    .btn-submit:hover {
+      border-radius: 10px;
+    }
+
+    .btn-submit::before {
+      border-radius: 10px;
+    }
+
+    .flash-message {
+      border-radius: 10px;
+    }
+
+    .flash-success {
+      border-radius: 10px;
+    }
+
+    .flash-error {
+      border-radius: 10px;
     }
   }
 
   @media (max-width: 480px) {
-    .nav-menu {
-      flex-direction: column;
-      gap: 4px;
-      padding: 8px 0;
+    .nav-link {
+      padding: 6px 4px;
+      font-size: 8px;
+      gap: 1px;
+      border-radius: 8px;
     }
 
-    .nav-link {
-      width: 100%;
-      max-width: 260px;
-      justify-content: center;
-      padding: 10px 14px;
+    .nav-link:hover {
+      border-radius: 8px;
+    }
+
+    .nav-link.active {
+      border-radius: 8px;
+    }
+
+    .nav-link.active:hover {
+      border-radius: 8px;
+    }
+
+    .nav-link.logout {
+      border-radius: 8px;
+    }
+
+    .nav-link.logout:hover {
+      border-radius: 8px;
     }
 
     .page-title {
@@ -496,8 +522,17 @@
       font-size: 0.85rem;
     }
 
+    .profile-container {
+      border-radius: 14px;
+    }
+
     .profile-form {
       padding: 16px;
+      border-radius: 14px;
+    }
+
+    .profile-form::before {
+      border-radius: 14px 14px 0 0;
     }
 
     .form-header {
@@ -511,30 +546,73 @@
     .form-control {
       padding: 10px 12px 10px 32px;
       font-size: 14px;
+      border-radius: 8px;
+    }
+
+    .form-control:focus {
+      border-radius: 8px;
+    }
+
+    .form-control:hover {
+      border-radius: 8px;
     }
 
     .input-icon {
       left: 10px;
       font-size: 0.85rem;
+      border-radius: 8px;
     }
 
     .btn-submit {
       padding: 10px 16px;
       font-size: 0.9rem;
+      border-radius: 8px;
+    }
+
+    .btn-submit:hover {
+      border-radius: 8px;
+    }
+
+    .btn-submit::before {
+      border-radius: 8px;
+    }
+
+    .flash-message {
+      border-radius: 8px;
+    }
+
+    .flash-success {
+      border-radius: 8px;
+    }
+
+    .flash-error {
+      border-radius: 8px;
     }
   }
 
   @media (max-width: 360px) {
+    .nav-link {
+      padding: 5px 2px;
+      font-size: 7px;
+      gap: 1px;
+    }
+
     .main-content {
       padding: 16px 8px;
     }
 
     .profile-container {
       padding: 12px;
+      border-radius: 12px;
     }
 
     .profile-form {
       padding: 14px;
+      border-radius: 12px;
+    }
+
+    .profile-form::before {
+      border-radius: 12px 12px 0 0;
     }
 
     .page-title {
@@ -549,43 +627,42 @@
 
 <div class="page-container">
   <!-- Top Navigation -->
-<nav class="top-nav">
-  <div class="nav-container">
-    <!-- Mobile menu toggle button (only visible on mobile) -->
-    <button class="nav-toggle" onclick="toggleNav()">
-      <span id="toggle-text">☰ Menu</span>
-    </button>
-    
-    <ul class="nav-menu" id="navMenu">
-      <li class="nav-item">
-        <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
-          📦 My Items
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
-          🔄 My Trades
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('user_orders') }}" class="nav-link {% if request.endpoint == 'user_orders' %}active{% endif %}">
-          💳 My Orders
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
-          🔔 Notifications
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
-          👤 Profile
-        </a>
-      </li>
-    </ul>
-  </div>
-</nav>
-
+  <nav class="top-nav">
+    <div class="nav-container">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
+            <span>📦</span>
+            <span>My Items</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
+            <span>🔄</span>
+            <span>My Trades</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('user_orders') }}" class="nav-link {% if request.endpoint == 'user_orders' %}active{% endif %}">
+            <span>💳</span>
+            <span>My Orders</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
+            <span>🔔</span>
+            <span>Notifications</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
+            <span>👤</span>
+            <span>Profile</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
 
   <!-- Main Content -->
   <div class="main-content">
@@ -772,43 +849,6 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
-
-  function toggleNav() {
-    const navMenu = document.getElementById('navMenu');
-    const toggleText = document.getElementById('toggle-text');
-    
-    navMenu.classList.toggle('show');
-    
-    if (navMenu.classList.contains('show')) {
-      toggleText.textContent = '✕ Close';
-    } else {
-      toggleText.textContent = '☰ Menu';
-    }
-  }
-
-  // Close menu when clicking on a nav link (mobile)
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        const navMenu = document.getElementById('navMenu');
-        const toggleText = document.getElementById('toggle-text');
-        navMenu.classList.remove('show');
-        toggleText.textContent = '☰ Menu';
-      }
-    });
-  });
-
-  // Close menu when window is resized to desktop
-  window.addEventListener('resize', () => {
-    const navMenu = document.getElementById('navMenu');
-    const toggleText = document.getElementById('toggle-text');
-    
-    if (window.innerWidth > 768) {
-      navMenu.classList.remove('show');
-      toggleText.textContent = '☰ Menu';
-    }
-  });
-
 </script>
 
 {% endblock %}
