@@ -802,9 +802,9 @@ def order_item():
         # Item names for notification
         item_names = [item.name for item in items]
         if len(item_names) == 1:
-            item_info = f"Item: '{item_names[0]}'"
+            item_info = f"Item: '{item_names[0]}' keep using Barterex for seamless trading."
         else:
-            item_info = f"Items: {', '.join(item_names)}"
+            item_info = f"Items: {', '.join(item_names)} keep using Barterex for seamless trading."
 
         create_notification(
             current_user.id,
@@ -1055,7 +1055,7 @@ def edit_user(user_id):
 @app.route('/admin/approvals')
 @admin_login_required
 def approve_items():
-    items = Item.query.filter_by(is_approved=False).all()
+    items = Item.query.filter_by(status='pending').all()
     return render_template('admin/approvals.html', items=items)
 
 
@@ -1077,9 +1077,9 @@ def approve_item(item_id):
 
 
         if item.status == 'approved':
-            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is: ₦{item.user.credits:,} credits.")
+            create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is: ₦{item.user.credits:,} credits. Keep using Barterex for seamless trading.")
         else:
-            create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected.")
+            create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected because: {item.rejection_reason}. Keep using Barterex for seamless trading.")
 
 
         db.session.commit()
@@ -1094,13 +1094,19 @@ def approve_item(item_id):
 @admin_login_required
 def reject_item(item_id):
     item = Item.query.get_or_404(item_id)
+    reason = request.form.get("rejection_reason")  # from form input
+
     item.is_approved = False
     item.is_available = False
     item.status = 'rejected'
+    item.rejection_reason = reason
 
     db.session.commit()
-    flash('Item rejected.', 'warning')
+
+    # Notify user (assuming you have some send_notification + email setup)
+    flash(f'Item rejected. Reason: {reason}', 'warning')
     return redirect(url_for('admin_dashboard'))
+
 
 
 @app.route('/admin/update-status', methods=['POST'])

@@ -48,6 +48,7 @@ class Item(db.Model):
     is_available = db.Column(db.Boolean, default=False)
     is_approved = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(50), default='pending') 
+    rejection_reason = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_user'), nullable=False)
     user = db.relationship('User', back_populates='items')
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"

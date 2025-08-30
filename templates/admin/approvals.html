@@ -18,17 +18,17 @@
     --text-secondary: #6b7280;
     --surface: #ffffff;
     --surface-hover: #f8fafc;
-    --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
-    --border-radius: 20px;
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
+    --border-radius: 10px;
   }
 
   /* Page Background */
   .approval-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     position: relative;
-    padding: 20px 0;
+    padding: 15px 0;
   }
 
   .approval-page::before {
@@ -39,9 +39,9 @@
     width: 100%;
     height: 100%;
     background: 
-      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 40% 80%, rgba(79, 172, 254, 0.1) 0%, transparent 50%);
+      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(79, 172, 254, 0.03) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
   }
@@ -51,15 +51,16 @@
     z-index: 1;
     padding-left: 15px;
     padding-right: 15px;
+    max-width: 1400px;
   }
 
-  /* Header Section - Mobile Optimized */
+  /* Compact Header */
   .approval-header {
     text-align: center;
-    margin-bottom: 30px;
-    padding: 25px 20px;
+    margin-bottom: 18px;
+    padding: 18px 15px;
     background: var(--surface);
-    border-radius: 16px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow-soft);
     position: relative;
     overflow: hidden;
@@ -71,15 +72,15 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 4px;
+    height: 2px;
     background: var(--orange-gradient);
   }
 
   .approval-header h2 {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -87,93 +88,94 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
   .approval-icon {
-    width: 45px;
-    height: 45px;
+    width: 30px;
+    height: 30px;
     background: var(--orange-gradient);
-    border-radius: 12px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 0.9rem;
     color: white;
-    box-shadow: 0 8px 32px rgba(255, 123, 0, 0.3);
+    box-shadow: 0 3px 12px rgba(255, 123, 0, 0.25);
     flex-shrink: 0;
   }
 
   .approval-subtitle {
-    font-size: 1rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.2;
   }
 
-  /* Statistics Bar - Mobile Optimized */
+  /* Compact Statistics Bar */
   .stats-bar {
     display: flex;
     justify-content: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    padding: 20px 15px;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 12px 8px;
     background: var(--surface);
-    border-radius: 16px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow-soft);
     flex-wrap: wrap;
   }
 
   .stat-item {
     text-align: center;
-    padding: 12px 18px;
-    border-radius: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.9));
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.03);
     transition: all 0.3s ease;
-    min-width: 80px;
+    min-width: 50px;
   }
 
   .stat-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   }
 
   .stat-number {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: 700;
     background: var(--orange-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 4px;
+    margin-bottom: 1px;
   }
 
   .stat-label {
     color: var(--text-secondary);
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1.2;
+    letter-spacing: 0.3px;
+    line-height: 1;
   }
 
-  /* Enhanced Card Styling - Mobile Optimized */
+  /* Ultra Compact Card */
   .approval-card {
     background: var(--surface);
-    border-radius: 16px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.03);
     transition: all 0.3s ease;
     overflow: hidden;
     position: relative;
     height: 100%;
+    max-height: 350px;
   }
 
   .approval-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
   }
 
@@ -183,7 +185,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 3px;
+    height: 2px;
     background: var(--orange-gradient);
     transform: scaleX(0);
     transition: transform 0.3s ease;
@@ -193,9 +195,9 @@
     transform: scaleX(1);
   }
 
-  /* Image Container - Mobile Optimized */
+  /* Ultra Compact Image */
   .card-image-container {
-    height: 200px;
+    height: 90px;
     overflow: hidden;
     position: relative;
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -209,159 +211,150 @@
   }
 
   .approval-card:hover .card-image {
-    transform: scale(1.05);
+    transform: scale(1.02);
   }
 
   .image-overlay {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0, 0, 0, 0.7);
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.6);
     color: white;
-    padding: 4px 8px;
-    border-radius: 16px;
-    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 6px;
+    font-size: 0.6rem;
     font-weight: 600;
   }
 
-  /* Card Content - Mobile Optimized */
+  /* Ultra Compact Card Content */
   .enhanced-card-body {
-    padding: 20px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
   }
 
   .item-title {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.1rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
-    line-height: 1.3;
+    line-height: 1.1;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .item-description {
     color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.4;
+    font-size: 0.7rem;
+    line-height: 1.2;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin: 0;
   }
 
-  /* Info Grid - Mobile Optimized */
-  .item-info-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin: 12px 0;
+  /* Ultra Compact Info Row */
+  .item-info-row {
+    display: flex;
+    gap: 4px;
+    margin: 6px 0;
   }
 
-  .info-item {
-    padding: 10px 12px;
-    background: rgba(102, 126, 234, 0.05);
-    border-radius: 10px;
-    border-left: 3px solid;
+  .info-chip {
+    padding: 3px 6px;
+    background: rgba(102, 126, 234, 0.06);
+    border-radius: 4px;
+    border-left: 2px solid;
     transition: all 0.3s ease;
+    flex: 1;
+    min-width: 0;
   }
 
-  .info-item.uploader {
+  .info-chip.uploader {
     border-left-color: #667eea;
   }
 
-  .info-item.category {
+  .info-chip.category {
     border-left-color: #ff7b00;
   }
 
-  .info-item.condition {
-    border-left-color: #11998e;
-  }
-
-  .info-item:hover {
+  .info-chip:hover {
     background: rgba(102, 126, 234, 0.1);
-    transform: translateX(3px);
   }
 
-  .info-label {
-    font-size: 0.75rem;
+  .chip-label {
+    font-size: 0.6rem;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    letter-spacing: 0.2px;
+    margin-bottom: 1px;
   }
 
-  .info-value {
-    font-weight: 700;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-  }
-
-  .category-badge {
-    display: inline-block;
-    padding: 6px 12px;
-    background: var(--orange-gradient);
-    color: white;
-    border-radius: 16px;
-    font-size: 0.8rem;
+  .chip-value {
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 15px rgba(255, 123, 0, 0.3);
+    color: var(--text-primary);
+    font-size: 0.65rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .condition-badge {
     display: inline-block;
-    padding: 6px 12px;
+    padding: 3px 6px;
     background: var(--success-gradient);
     color: white;
-    border-radius: 16px;
-    font-size: 0.8rem;
+    border-radius: 8px;
+    font-size: 0.6rem;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+    box-shadow: 0 2px 6px rgba(17, 153, 142, 0.2);
+    margin: 4px 0;
   }
 
-  /* Enhanced Form Styling - Mobile Optimized */
+  /* Compact Form */
   .appraisal-section {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(255, 123, 0, 0.05));
-    border-radius: 12px;
-    padding: 16px;
-    margin-top: 15px;
-    border: 2px solid rgba(102, 126, 234, 0.1);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03), rgba(255, 123, 0, 0.03));
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 6px;
+    border: 1px solid rgba(102, 126, 234, 0.08);
   }
 
   .appraisal-label {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
+    gap: 3px;
+    font-size: 0.7rem;
   }
 
   .credit-icon {
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
     background: var(--orange-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 0.75rem;
+    font-size: 0.55rem;
   }
 
   .value-input {
     width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 10px;
-    font-size: 0.9rem;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    font-size: 0.75rem;
     font-weight: 600;
     transition: all 0.3s ease;
     background: var(--surface);
@@ -371,58 +364,109 @@
   .value-input:focus {
     outline: none;
     border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    transform: translateY(-2px);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.08);
   }
 
-  /* Action Buttons - Mobile Optimized */
+  /* Collapsible Rejection Form */
+  .rejection-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    margin-top: 6px;
+  }
+
+  .rejection-section.active {
+    max-height: 120px;
+    opacity: 1;
+  }
+
+  .rejection-textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    resize: vertical;
+    min-height: 40px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+  }
+
+  .rejection-textarea:focus {
+    outline: none;
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.08);
+  }
+
+  /* Compact Action Buttons */
   .action-buttons {
     display: flex;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 4px;
+    margin-top: 6px;
   }
 
   .action-btn {
     flex: 1;
-    padding: 12px 16px;
+    padding: 6px 8px;
     border: none;
-    border-radius: 10px;
+    border-radius: 5px;
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.65rem;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 3px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.2px;
     position: relative;
     overflow: hidden;
-    min-height: 44px;
+    min-height: 26px;
   }
 
   .approve-btn {
     background: var(--success-gradient);
     color: white;
-    box-shadow: 0 8px 25px rgba(17, 153, 142, 0.3);
+    box-shadow: 0 3px 12px rgba(17, 153, 142, 0.25);
   }
 
   .approve-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(17, 153, 142, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 18px rgba(17, 153, 142, 0.35);
   }
 
   .reject-btn {
     background: var(--danger-gradient);
     color: white;
-    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.25);
   }
 
   .reject-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 18px rgba(255, 107, 107, 0.35);
+  }
+
+  .reject-btn.active {
+    background: #6b7280;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
+  }
+
+  .submit-rejection-btn {
+    background: var(--danger-gradient);
+    color: white;
+    margin-top: 6px;
+    width: 100%;
+  }
+
+  .cancel-rejection-btn {
+    background: #6b7280;
+    color: white;
+    margin-top: 4px;
+    width: 100%;
   }
 
   /* Loading States */
@@ -434,10 +478,10 @@
   .action-btn.loading::after {
     content: '';
     position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 2px solid transparent;
-    border-top: 2px solid white;
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid transparent;
+    border-top: 1.5px solid white;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -447,48 +491,48 @@
     100% { transform: rotate(360deg); }
   }
 
-  /* Empty State - Mobile Optimized */
+  /* Compact Empty State */
   .empty-state {
     text-align: center;
-    padding: 60px 30px;
+    padding: 30px 15px;
     background: var(--surface);
-    border-radius: 16px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow-soft);
-    margin: 30px 0;
+    margin: 15px 0;
   }
 
   .empty-icon {
-    width: 80px;
-    height: 80px;
+    width: 50px;
+    height: 50px;
     background: var(--accent-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     color: white;
-    margin: 0 auto 25px;
-    box-shadow: 0 20px 60px rgba(79, 172, 254, 0.3);
+    margin: 0 auto 15px;
+    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.25);
   }
 
   .empty-title {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 12px;
+    margin-bottom: 6px;
   }
 
   .empty-subtitle {
     color: var(--text-secondary);
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: 0.85rem;
+    line-height: 1.3;
   }
 
-  /* Mobile-Specific Responsive Design */
+  /* Mobile Responsive */
   @media (max-width: 575.98px) {
     .approval-page {
-      padding: 15px 0;
+      padding: 10px 0;
     }
 
     .container {
@@ -497,313 +541,193 @@
     }
 
     .approval-header {
-      margin-bottom: 20px;
-      padding: 20px 15px;
-      border-radius: 12px;
+      margin-bottom: 12px;
+      padding: 12px 10px;
     }
 
     .approval-header h2 {
-      font-size: 1.5rem;
-      margin-bottom: 10px;
+      font-size: 1.1rem;
       flex-direction: column;
-      gap: 8px;
+      gap: 5px;
     }
 
     .approval-icon {
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
-      border-radius: 10px;
+      width: 26px;
+      height: 26px;
+      font-size: 0.8rem;
     }
 
     .approval-subtitle {
-      font-size: 0.9rem;
+      font-size: 0.75rem;
     }
 
     .stats-bar {
-      gap: 10px;
-      padding: 15px 10px;
-      margin-bottom: 20px;
-      border-radius: 12px;
+      gap: 6px;
+      padding: 10px 6px;
+      margin-bottom: 12px;
     }
 
     .stat-item {
-      padding: 10px 14px;
-      border-radius: 10px;
-      min-width: 70px;
+      padding: 4px 8px;
+      min-width: 40px;
     }
 
     .stat-number {
-      font-size: 1.3rem;
-      margin-bottom: 3px;
+      font-size: 0.9rem;
     }
 
     .stat-label {
-      font-size: 0.7rem;
+      font-size: 0.6rem;
     }
 
     .card-image-container {
-      height: 160px;
+      height: 70px;
     }
 
     .enhanced-card-body {
-      padding: 16px;
-      gap: 10px;
+      padding: 8px;
+      gap: 4px;
     }
 
     .item-title {
-      font-size: 1rem;
+      font-size: 0.75rem;
     }
 
     .item-description {
-      font-size: 0.85rem;
-      -webkit-line-clamp: 2;
+      font-size: 0.65rem;
     }
 
-    .info-item {
-      padding: 8px 10px;
-      border-radius: 8px;
+    .chip-label {
+      font-size: 0.55rem;
     }
 
-    .info-label {
-      font-size: 0.7rem;
-      margin-bottom: 3px;
-    }
-
-    .info-value {
-      font-size: 0.8rem;
+    .chip-value {
+      font-size: 0.6rem;
     }
 
     .condition-badge {
-      padding: 5px 10px;
-      font-size: 0.75rem;
-      border-radius: 12px;
+      padding: 2px 5px;
+      font-size: 0.55rem;
     }
 
     .appraisal-section {
-      padding: 12px;
-      border-radius: 10px;
-      margin-top: 12px;
+      padding: 6px;
     }
 
     .appraisal-label {
-      font-size: 0.85rem;
-      margin-bottom: 6px;
-      gap: 5px;
+      font-size: 0.65rem;
     }
 
     .credit-icon {
-      width: 18px;
-      height: 18px;
-      font-size: 0.7rem;
+      width: 12px;
+      height: 12px;
+      font-size: 0.5rem;
     }
 
     .value-input {
-      padding: 10px 14px;
-      font-size: 0.85rem;
-      border-radius: 8px;
+      padding: 5px 6px;
+      font-size: 0.7rem;
     }
 
-    .action-buttons {
-      gap: 6px;
-      margin-top: 12px;
-      flex-direction: column;
+    .rejection-textarea {
+      padding: 5px 6px;
+      font-size: 0.65rem;
+      min-height: 35px;
     }
 
     .action-btn {
-      padding: 10px 14px;
-      font-size: 0.8rem;
-      border-radius: 8px;
-      gap: 5px;
-      min-height: 40px;
+      padding: 5px 6px;
+      font-size: 0.6rem;
+      min-height: 24px;
     }
 
     .empty-state {
-      padding: 40px 20px;
-      border-radius: 12px;
-      margin: 20px 0;
+      padding: 20px 10px;
     }
 
     .empty-icon {
-      width: 60px;
-      height: 60px;
-      font-size: 2rem;
-      margin-bottom: 20px;
-    }
-
-    .empty-title {
-      font-size: 1.3rem;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
       margin-bottom: 10px;
     }
 
+    .empty-title {
+      font-size: 1rem;
+    }
+
     .empty-subtitle {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
   }
 
   @media (min-width: 576px) and (max-width: 767.98px) {
+    .card-image-container {
+      height: 80px;
+    }
+
+    .enhanced-card-body {
+      padding: 9px;
+    }
+  }
+
+  @media (min-width: 768px) {
     .approval-page {
       padding: 18px 0;
     }
 
     .approval-header {
-      padding: 22px 18px;
-      margin-bottom: 25px;
+      padding: 20px 18px;
+      margin-bottom: 20px;
     }
 
     .approval-header h2 {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
     }
 
     .approval-icon {
-      width: 42px;
-      height: 42px;
-      font-size: 1.3rem;
+      width: 32px;
+      height: 32px;
+      font-size: 1rem;
     }
 
     .stats-bar {
-      padding: 18px 12px;
-      gap: 12px;
-    }
-
-    .enhanced-card-body {
-      padding: 18px;
-    }
-
-    .item-info-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-  }
-
-  @media (min-width: 768px) and (max-width: 991.98px) {
-    .approval-header {
-      padding: 30px 25px;
-      margin-bottom: 35px;
-    }
-
-    .approval-header h2 {
-      font-size: 2rem;
-      margin-bottom: 15px;
-    }
-
-    .stats-bar {
-      padding: 22px 18px;
-      margin-bottom: 35px;
-    }
-
-    .item-info-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
-  /* Desktop styles remain mostly the same but with some optimizations */
-  @media (min-width: 992px) {
-    .approval-page {
-      padding: 40px 0;
-    }
-
-    .approval-header {
-      margin-bottom: 50px;
-      padding: 40px 30px;
-      border-radius: var(--border-radius);
-    }
-
-    .approval-header h2 {
-      font-size: 2.5rem;
-      margin-bottom: 15px;
-      gap: 15px;
-    }
-
-    .approval-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: 16px;
-      font-size: 1.8rem;
-    }
-
-    .approval-subtitle {
-      font-size: 1.1rem;
-    }
-
-    .stats-bar {
-      gap: 30px;
-      margin-bottom: 40px;
-      padding: 25px;
-      border-radius: var(--border-radius);
-    }
-
-    .stat-item {
-      padding: 15px 25px;
-      border-radius: 15px;
-    }
-
-    .stat-number {
-      font-size: 2rem;
-      margin-bottom: 5px;
-    }
-
-    .stat-label {
-      font-size: 0.9rem;
-    }
-
-    .approval-card {
-      border-radius: var(--border-radius);
+      padding: 14px 12px;
+      margin-bottom: 20px;
     }
 
     .card-image-container {
-      height: 240px;
+      height: 95px;
     }
 
     .enhanced-card-body {
-      padding: 25px;
-      gap: 15px;
+      padding: 11px;
+      gap: 7px;
     }
 
-    .item-title {
-      font-size: 1.3rem;
+    .approval-card {
+      max-height: 370px;
     }
+  }
 
-    .item-description {
-      font-size: 0.95rem;
-      -webkit-line-clamp: 3;
-    }
+  /* Grid optimization */
+  .row {
+    --bs-gutter-x: 12px;
+    --bs-gutter-y: 12px;
+  }
 
-    .item-info-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin: 15px 0;
-    }
-
-    .empty-state {
-      padding: 80px 40px;
-      margin: 40px 0;
-      border-radius: var(--border-radius);
-    }
-
-    .empty-icon {
-      width: 120px;
-      height: 120px;
-      font-size: 3rem;
-      margin-bottom: 30px;
-    }
-
-    .empty-title {
-      font-size: 1.8rem;
-      margin-bottom: 15px;
-    }
-
-    .empty-subtitle {
-      font-size: 1.1rem;
-      line-height: 1.6;
+  @media (max-width: 575.98px) {
+    .row {
+      --bs-gutter-x: 8px;
+      --bs-gutter-y: 8px;
     }
   }
 
   /* Animation Classes */
   .fade-in {
     opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.6s ease;
+    transform: translateY(15px);
+    transition: all 0.4s ease;
   }
 
   .fade-in.visible {
@@ -814,7 +738,7 @@
 
 <div class="approval-page">
   <div class="container">
-    <!-- Enhanced Header -->
+    <!-- Compact Header -->
     <div class="approval-header fade-in">
       <h2>
         <div class="approval-icon">📝</div>
@@ -824,11 +748,11 @@
     </div>
 
     {% if items %}
-      <!-- Statistics Bar -->
+      <!-- Compact Statistics -->
       <div class="stats-bar fade-in">
         <div class="stat-item">
           <div class="stat-number">{{ items|length }}</div>
-          <div class="stat-label">Pending Items</div>
+          <div class="stat-label">Pending</div>
         </div>
         <div class="stat-item">
           <div class="stat-number">{{ items|selectattr("category", "equalto", "Electronics")|list|length }}</div>
@@ -836,50 +760,50 @@
         </div>
         <div class="stat-item">
           <div class="stat-number">{{ items|selectattr("condition", "equalto", "Excellent")|list|length }}</div>
-          <div class="stat-label">Excellent Condition</div>
+          <div class="stat-label">Excellent</div>
         </div>
       </div>
 
-      <!-- Items Grid -->
-      <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+      <!-- Ultra Compact Items Grid -->
+      <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-2">
         {% for item in items %}
-        <div class="col fade-in" style="transition-delay: {{ loop.index0 * 0.1 }}s;">
+        <div class="col fade-in" style="transition-delay: {{ loop.index0 * 0.03 }}s;">
           <div class="approval-card">
-            <!-- Enhanced Image Section -->
+            <!-- Ultra Compact Image -->
             {% if item.image_url %}
             <div class="card-image-container">
               <img src="{{ item.image_url }}" class="card-image" alt="{{ item.name }}">
-              <div class="image-overlay">📷 Image</div>
+              <div class="image-overlay">📷</div>
             </div>
             {% endif %}
 
             <div class="enhanced-card-body">
-              <!-- Item Header -->
+              <!-- Compact Item Header -->
               <h5 class="item-title">{{ item.name }}</h5>
               <p class="item-description">{{ item.description }}</p>
 
-              <!-- Enhanced Info Grid -->
-              <div class="item-info-grid">
-                <div class="info-item uploader">
-                  <div class="info-label">👤 Uploader</div>
-                  <div class="info-value">{{ item.user.username }}</div>
+              <!-- Ultra Compact Info Row -->
+              <div class="item-info-row">
+                <div class="info-chip uploader">
+                  <div class="chip-label">👤 User</div>
+                  <div class="chip-value">{{ item.user.username }}</div>
                 </div>
-                <div class="info-item category">
-                  <div class="info-label">📂 Category</div>
-                  <div class="info-value">{{ item.category }}</div>
+                <div class="info-chip category">
+                  <div class="chip-label">📂 Cat</div>
+                  <div class="chip-value">{{ item.category }}</div>
                 </div>
               </div>
 
-              <div style="text-align: center; margin: 15px 0;">
+              <div style="text-align: center;">
                 <span class="condition-badge">⭐ {{ item.condition }}</span>
               </div>
 
-              <!-- Enhanced Approval Form -->
+              <!-- Compact Form -->
               <div class="appraisal-section">
                 <form method="POST" action="{{ url_for('approve_item', item_id=item.id) }}" class="approval-form">
                   <label for="value_{{ item.id }}" class="appraisal-label">
                     <span class="credit-icon">💰</span>
-                    Appraise Value (Credits)
+                    Credits
                   </label>
                   <input 
                     type="number" 
@@ -887,7 +811,7 @@
                     name="value" 
                     id="value_{{ item.id }}"
                     class="value-input" 
-                    placeholder="Enter credit value"
+                    placeholder="Value"
                     min="0.1"
                     required
                   >
@@ -896,17 +820,30 @@
                     <button type="submit" class="action-btn approve-btn">
                       ✅ Approve
                     </button>
+                    <button type="button" class="action-btn reject-btn" onclick="toggleRejectForm({{ item.id }})">
+                      ❌ Reject
+                    </button>
+                  </div>
                 </form>
 
-                <!-- Enhanced Reject Form -->
-                <form method="POST" action="{{ url_for('update_item_status') }}">
-                  <input type="hidden" name="item_id" value="{{ item.id }}">
-                  <input type="hidden" name="status" value="rejected">
-                  <button type="submit" class="action-btn reject-btn">
-                    ❌ Reject
-                  </button>
-                </form>
-                  </div>
+                <!-- Collapsible Rejection Form -->
+                <div class="rejection-section" id="rejection_{{ item.id }}">
+                  <form method="POST" action="{{ url_for('reject_item', item_id=item.id) }}" class="rejection-form">
+                    <textarea 
+                      name="rejection_reason" 
+                      placeholder="Enter rejection reason..."
+                      rows="2"
+                      class="rejection-textarea"
+                      required
+                    ></textarea>
+                    <button type="submit" class="action-btn submit-rejection-btn">
+                      Submit Rejection
+                    </button>
+                    <button type="button" class="action-btn cancel-rejection-btn" onclick="toggleRejectForm({{ item.id }})">
+                      Cancel
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -914,23 +851,51 @@
         {% endfor %}
       </div>
     {% else %}
-      <!-- Enhanced Empty State -->
+      <!-- Compact Empty State -->
       <div class="empty-state fade-in">
         <div class="empty-icon">🎉</div>
         <h3 class="empty-title">All Caught Up!</h3>
-        <p class="empty-subtitle">No pending items for approval at the moment.<br>Take a well-deserved break! 🚀</p>
+        <p class="empty-subtitle">No pending items for approval at the moment.<br>Take a well-deserved break!</p>
       </div>
     {% endif %}
   </div>
 </div>
 
 <script>
+  // Toggle reject form functionality
+  function toggleRejectForm(itemId) {
+    const rejectionSection = document.getElementById(`rejection_${itemId}`);
+    const rejectBtn = document.querySelector(`[onclick="toggleRejectForm(${itemId})"]`);
+    
+    if (rejectionSection.classList.contains('active')) {
+      // Hide rejection form
+      rejectionSection.classList.remove('active');
+      rejectBtn.classList.remove('active');
+      rejectBtn.innerHTML = '❌ Reject';
+      
+      // Clear textarea
+      const textarea = rejectionSection.querySelector('textarea');
+      textarea.value = '';
+    } else {
+      // Show rejection form
+      rejectionSection.classList.add('active');
+      rejectBtn.classList.add('active');
+      rejectBtn.innerHTML = '↩️ Cancel';
+      
+      // Focus textarea after animation
+      setTimeout(() => {
+        const textarea = rejectionSection.querySelector('textarea');
+        textarea.focus();
+      }, 300);
+    }
+  }
+
   // Enhanced form interactions
   document.addEventListener('DOMContentLoaded', function() {
     // Scroll animations
     const observerOptions = {
       threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
+      rootMargin: '0px 0px -20px 0px'
     };
 
     const observer = new IntersectionObserver(function(entries) {
@@ -946,7 +911,7 @@
       observer.observe(el);
     });
 
-    // Enhanced form submissions with loading states
+    // Enhanced approval form submissions
     document.querySelectorAll('.approval-form').forEach(form => {
       form.addEventListener('submit', function(e) {
         const submitBtn = form.querySelector('.approve-btn');
