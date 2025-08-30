@@ -6,84 +6,6 @@
     box-sizing: border-box;
   }
 
-  .nav-toggle {
-    display: none;
-    background: none;
-    border: none;
-    padding: 15px 0;
-    cursor: pointer;
-    font-size: 18px;
-    color: #4a5568;
-    width: 100%;
-    text-align: center;
-    transition: all 0.3s ease;
-  }
-
-  .nav-toggle:hover {
-    color: #ff7a00;
-  }
-
-  /* Update your existing mobile media query */
-  @media (max-width: 768px) {
-    .nav-toggle {
-      display: block;
-    }
-
-    .nav-menu {
-      display: none;
-      flex-direction: column;
-      gap: 0;
-      padding: 0 0 15px 0;
-      min-height: auto;
-      opacity: 0;
-      max-height: 0;
-      overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .nav-menu.show {
-      display: flex;
-      opacity: 1;
-      max-height: 400px;
-      animation: slideDown 0.3s ease-out;
-    }
-
-    .nav-item {
-      width: 100%;
-      margin: 4px 0;
-    }
-
-    .nav-link {
-      width: 100%;
-      justify-content: center;
-      margin: 0;
-      padding: 15px 20px;
-      border-radius: 8px;
-      font-size: 15px;
-    }
-
-    .nav-link:hover {
-      transform: none;
-      box-shadow: 0 2px 8px rgba(255, 122, 0, 0.15);
-    }
-
-    .nav-link.active:hover {
-      transform: none;
-      box-shadow: 0 2px 15px rgba(255, 122, 0, 0.3);
-    }
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   .page-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
@@ -99,6 +21,7 @@
     top: 0;
     z-index: 100;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 20px 20px;
   }
 
   .nav-container {
@@ -109,23 +32,25 @@
 
   .nav-menu {
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
     list-style: none;
     margin: 0;
     padding: 0;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     min-height: 55px;
   }
 
   .nav-item {
+    flex: 1;
     margin: 2px 0;
   }
 
   .nav-link {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     color: #4a5568;
     text-decoration: none;
@@ -137,6 +62,8 @@
     position: relative;
     background: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    width: 100%;
+    text-align: center;
   }
 
   .nav-link:hover {
@@ -144,28 +71,33 @@
     color: #ff7a00;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 122, 0, 0.15);
+    border-radius: 12px;
   }
 
   .nav-link.active {
     background: linear-gradient(135deg, #ff7a00, #ff7a00);
     color: white;
     box-shadow: 0 4px 20px rgba(255, 122, 0, 0.3);
+    border-radius: 12px;
   }
 
   .nav-link.active:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 25px rgba(255, 122, 0, 0.4);
+    border-radius: 12px;
   }
 
   .nav-link.logout {
     background: rgba(239, 68, 68, 0.1);
     color: #dc2626;
     border-color: rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
   }
 
   .nav-link.logout:hover {
     background: rgba(239, 68, 68, 0.2);
     color: #b91c1c;
+    border-radius: 12px;
   }
 
   .main-content {
@@ -216,7 +148,7 @@
 
   .item-card {
     background: white;
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 0;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -235,11 +167,13 @@
     background: linear-gradient(135deg, #ff7a00, #ff7a00);
     opacity: 0;
     transition: opacity 0.3s ease;
+    border-radius: 20px 20px 0 0;
   }
 
   .item-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 16px 35px rgba(0, 0, 0, 0.12);
+    border-radius: 20px;
   }
 
   .item-card:hover::before {
@@ -256,6 +190,7 @@
     justify-content: center;
     color: #94a3b8;
     font-size: 2.5rem;
+    border-radius: 12px;
   }
 
   .item-content {
@@ -280,7 +215,7 @@
     background: rgba(255, 122, 0, 0.1);
     color: #ff7a00;
     padding: 3px 10px;
-    border-radius: 16px;
+    border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 500;
     gap: 3px;
@@ -311,7 +246,7 @@
     align-items: center;
     gap: 4px;
     padding: 5px 10px;
-    border-radius: 16px;
+    border-radius: 12px;
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -335,7 +270,7 @@
 
   .btn {
     padding: 8px 14px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 500;
     text-decoration: none;
@@ -352,17 +287,20 @@
   .btn-edit {
     background: linear-gradient(135deg, #ff7a00, #ff7a00);
     color: white;
+    border-radius: 12px;
   }
 
   .btn-edit:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+    border-radius: 12px;
   }
 
   .btn-locked {
     background: rgba(107, 114, 128, 0.1);
     color: #6b7280;
     cursor: not-allowed;
+    border-radius: 12px;
   }
 
   .empty-state {
@@ -375,6 +313,7 @@
     font-size: 3rem;
     margin-bottom: 16px;
     opacity: 0.5;
+    border-radius: 12px;
   }
 
   .empty-title {
@@ -409,6 +348,7 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(255, 122, 0, 0.3);
     color: white;
+    border-radius: 12px;
   }
 
   .pagination-container {
@@ -440,6 +380,7 @@
     color: #ff7a00;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 122, 0, 0.15);
+    border-radius: 12px;
   }
 
   .pagination-info {
@@ -449,17 +390,54 @@
     padding: 0 10px;
   }
 
-  /* Mobile Specific Improvements */
+  /* Mobile Responsive Breakpoints */
   @media (max-width: 768px) {
+    .top-nav {
+      border-radius: 0 0 16px 16px;
+    }
+
     .nav-menu {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-evenly;
+      flex-wrap: nowrap;
       gap: 3px;
       min-height: 50px;
+      padding: 5px 0;
+    }
+    
+    .nav-item {
+      flex: 1;
     }
     
     .nav-link {
-      padding: 8px 12px;
-      font-size: 12px;
-      gap: 4px;
+      flex-direction: column;
+      text-align: center;
+      width: 100%;
+      padding: 6px 4px;
+      font-size: 10px;
+      gap: 2px;
+      border-radius: 10px;
+    }
+
+    .nav-link:hover {
+      border-radius: 10px;
+    }
+
+    .nav-link.active {
+      border-radius: 10px;
+    }
+
+    .nav-link.active:hover {
+      border-radius: 10px;
+    }
+
+    .nav-link.logout {
+      border-radius: 10px;
+    }
+
+    .nav-link.logout:hover {
+      border-radius: 10px;
     }
 
     .main-content {
@@ -480,31 +458,91 @@
     }
 
     .items-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .item-card {
+      border-radius: 16px;
+    }
+
+    .item-card:hover {
+      border-radius: 16px;
+    }
+
+    .item-card::before {
+      border-radius: 16px 16px 0 0;
     }
 
     .item-image {
-      height: 140px;
-      font-size: 2rem;
+      height: 120px;
+      font-size: 1.8rem;
+      border-radius: 10px;
     }
 
     .item-content {
-      padding: 16px;
+      padding: 12px;
     }
 
     .item-title {
-      font-size: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .item-number {
+      border-radius: 10px;
+      font-size: 0.65rem;
+      padding: 2px 6px;
     }
 
     .item-description {
-      font-size: 0.8rem;
-      min-height: 36px;
+      font-size: 0.75rem;
+      min-height: 30px;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+    }
+
+    .status-badge {
+      border-radius: 10px;
+      font-size: 0.6rem;
+      padding: 3px 6px;
     }
 
     .btn {
-      padding: 7px 12px;
-      font-size: 0.75rem;
+      padding: 6px 8px;
+      font-size: 0.7rem;
+      border-radius: 10px;
+    }
+
+    .btn-edit {
+      border-radius: 10px;
+    }
+
+    .btn-edit:hover {
+      border-radius: 10px;
+    }
+
+    .btn-locked {
+      border-radius: 10px;
+    }
+
+    .btn-upload {
+      border-radius: 10px;
+    }
+
+    .btn-upload:hover {
+      border-radius: 10px;
+    }
+
+    .pagination-btn {
+      border-radius: 10px;
+    }
+
+    .pagination-btn:hover {
+      border-radius: 10px;
+    }
+
+    .empty-icon {
+      border-radius: 10px;
     }
 
     .pagination-container {
@@ -523,19 +561,31 @@
   }
 
   @media (max-width: 480px) {
-    .nav-menu {
-      flex-direction: column;
-      gap: 6px;
-      padding: 10px 0;
-      min-height: 45px;
+    .nav-link {
+      font-size: 8px;
+      padding: 4px 2px;
+      gap: 1px;
+      border-radius: 8px;
     }
 
-    .nav-link {
-      width: 100%;
-      max-width: 280px;
-      justify-content: center;
-      padding: 10px 16px;
-      font-size: 13px;
+    .nav-link:hover {
+      border-radius: 8px;
+    }
+
+    .nav-link.active {
+      border-radius: 8px;
+    }
+
+    .nav-link.active:hover {
+      border-radius: 8px;
+    }
+
+    .nav-link.logout {
+      border-radius: 8px;
+    }
+
+    .nav-link.logout:hover {
+      border-radius: 8px;
     }
 
     .main-content {
@@ -552,28 +602,86 @@
 
     .items-container {
       padding: 16px 10px;
+      border-radius: 14px;
     }
 
     .items-grid {
-      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .item-card {
+      border-radius: 14px;
+    }
+
+    .item-card:hover {
+      border-radius: 14px;
+    }
+
+    .item-card::before {
+      border-radius: 14px 14px 0 0;
     }
 
     .item-image {
-      height: 130px;
-      font-size: 1.8rem;
+      height: 100px;
+      font-size: 1.5rem;
+      border-radius: 8px;
     }
 
     .item-content {
-      padding: 14px;
+      padding: 10px;
     }
 
     .item-title {
-      font-size: 0.95rem;
+      font-size: 0.85rem;
+    }
+
+    .item-number {
+      border-radius: 8px;
     }
 
     .item-description {
-      font-size: 0.75rem;
-      min-height: 32px;
+      font-size: 0.7rem;
+      min-height: 28px;
+    }
+
+    .status-badge {
+      border-radius: 8px;
+    }
+
+    .btn {
+      border-radius: 8px;
+    }
+
+    .btn-edit {
+      border-radius: 8px;
+    }
+
+    .btn-edit:hover {
+      border-radius: 8px;
+    }
+
+    .btn-locked {
+      border-radius: 8px;
+    }
+
+    .btn-upload {
+      border-radius: 8px;
+    }
+
+    .btn-upload:hover {
+      border-radius: 8px;
+    }
+
+    .pagination-btn {
+      border-radius: 8px;
+    }
+
+    .pagination-btn:hover {
+      border-radius: 8px;
+    }
+
+    .empty-icon {
+      border-radius: 8px;
     }
 
     .empty-state {
@@ -589,75 +697,99 @@
     }
   }
 
-  /* Extra small screens */
-  @media (max-width: 320px) {
+  @media (max-width: 360px) {
+    .nav-link {
+      font-size: 7px;
+      padding: 3px 1px;
+    }
+
+    .items-grid {
+      gap: 8px;
+    }
+
     .page-title {
       font-size: 1.375rem;
     }
     
     .items-container {
       padding: 14px 8px;
+      border-radius: 12px;
+    }
+
+    .item-card {
+      border-radius: 12px;
+    }
+
+    .item-card:hover {
+      border-radius: 12px;
+    }
+
+    .item-card::before {
+      border-radius: 12px 12px 0 0;
     }
     
     .item-image {
-      height: 120px;
-      font-size: 1.6rem;
+      height: 90px;
+      font-size: 1.3rem;
     }
     
     .item-content {
-      padding: 12px;
+      padding: 8px;
     }
 
     .item-title {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+    }
+
+    .item-description {
+      font-size: 0.65rem;
     }
 
     .btn {
-      padding: 6px 10px;
-      font-size: 0.7rem;
+      padding: 4px 6px;
+      font-size: 0.65rem;
     }
   }
 </style>
 
 <div class="page-container">
   <!-- Top Navigation -->
-<nav class="top-nav">
-  <div class="nav-container">
-    <!-- Mobile menu toggle button (only visible on mobile) -->
-    <button class="nav-toggle" onclick="toggleNav()">
-      <span id="toggle-text">☰ Menu</span>
-    </button>
-    
-    <ul class="nav-menu" id="navMenu">
-      <li class="nav-item">
-        <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
-          📦 My Items
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
-          🔄 My Trades
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('user_orders') }}" class="nav-link {% if request.endpoint == 'user_orders' %}active{% endif %}">
-          💳 My Orders
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
-          🔔 Notifications
-        </a>
-      </li>
-      <li class="nav-item">
-        <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
-          👤 Profile
-        </a>
-      </li>
-    </ul>
-  </div>
-</nav>
-
+  <nav class="top-nav">
+    <div class="nav-container">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
+            <span>📦</span>
+            <span>My Items</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
+            <span>🔄</span>
+            <span>My Trades</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('user_orders') }}" class="nav-link {% if request.endpoint == 'user_orders' %}active{% endif %}">
+            <span>💳</span>
+            <span>My Orders</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
+            <span>🔔</span>
+            <span>Notifications</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
+            <span>👤</span>
+            <span>Profile</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
 
   <!-- Main Content -->
   <div class="main-content">
@@ -756,43 +888,5 @@
     </div>
   </div>
 </div>
-
-<script>
-  function toggleNav() {
-    const navMenu = document.getElementById('navMenu');
-    const toggleText = document.getElementById('toggle-text');
-    
-    navMenu.classList.toggle('show');
-    
-    if (navMenu.classList.contains('show')) {
-      toggleText.textContent = '✕ Close';
-    } else {
-      toggleText.textContent = '☰ Menu';
-    }
-  }
-
-  // Close menu when clicking on a nav link (mobile)
-  document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        const navMenu = document.getElementById('navMenu');
-        const toggleText = document.getElementById('toggle-text');
-        navMenu.classList.remove('show');
-        toggleText.textContent = '☰ Menu';
-      }
-    });
-  });
-
-  // Close menu when window is resized to desktop
-  window.addEventListener('resize', () => {
-    const navMenu = document.getElementById('navMenu');
-    const toggleText = document.getElementById('toggle-text');
-    
-    if (window.innerWidth > 768) {
-      navMenu.classList.remove('show');
-      toggleText.textContent = '☰ Menu';
-    }
-  });
-</script>
 
 {% endblock %}
