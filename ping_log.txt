@@ -1,0 +1,5 @@
+2025-08-30 13:28:10,436 - INFO - Starting ping job for https://barterex.onrender.com
+2025-08-30 13:28:46,859 - INFO - Ping job completed
+2025-08-30 13:34:27,792 - INFO - Starting ping job for https://barterex.onrender.com
+2025-08-30 13:34:29,402 - INFO - SUCCESS: Pinged https://barterex.onrender.com - Status: 200
+2025-08-30 13:34:29,403 - INFO - Ping job completed successfully
