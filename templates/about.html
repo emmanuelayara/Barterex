@@ -1,0 +1,595 @@
+{% extends 'base.html' %}
+{% block title %}About Us - Barter Express{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* About Page Styles */
+        .about-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            margin-bottom: 5rem;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            border-radius: 2px;
+        }
+
+        .hero-section h1 {
+            color: #054e97;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .hero-section .subtitle {
+            color: #666;
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        /* Content Sections */
+        .content-section {
+            background: white;
+            margin-bottom: 3rem;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            position: relative;
+        }
+
+        .content-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+            color: white;
+            padding: 2rem 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.2));
+        }
+
+        .section-header h2 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-header i {
+            font-size: 2.5rem;
+            color: #ff7a00;
+        }
+
+        .section-content {
+            padding: 3rem;
+        }
+
+        .section-content p {
+            color: #555;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            text-align: justify;
+        }
+
+        .section-content strong {
+            color: #054e97;
+            font-weight: 600;
+        }
+
+        /* Product Features List */
+        .features-list {
+            list-style: none;
+            margin: 2rem 0;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f0 100%);
+            border-radius: 10px;
+            border-left: 4px solid #ff7a00;
+            transition: transform 0.3s ease;
+        }
+
+        .features-list li:hover {
+            transform: translateX(10px);
+        }
+
+        .features-list li::before {
+            content: '✓';
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .features-list li span {
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        /* Goals Grid */
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .goal-item {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f0 100%);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 122, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .goal-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 122, 0, 0.2);
+            border-color: #ff7a00;
+        }
+
+        .goal-icon {
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+        }
+
+        .goal-item h3 {
+            color: #054e97;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .goal-item p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* Process Steps */
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .step-item {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-item h4 {
+            color: #054e97;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .step-item p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+            color: white;
+            padding: 4rem 3rem;
+            text-align: center;
+            border-radius: 20px;
+            margin: 4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 122, 0, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            color: white;
+            padding: 1.2rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 10px 30px rgba(255, 122, 0, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 122, 0, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .cta-button i {
+            margin-right: 0.5rem;
+        }
+
+        /* Animations */
+        .content-section {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .content-section:nth-child(1) { animation-delay: 0.1s; }
+        .content-section:nth-child(2) { animation-delay: 0.2s; }
+        .content-section:nth-child(3) { animation-delay: 0.3s; }
+        .content-section:nth-child(4) { animation-delay: 0.4s; }
+        .content-section:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .about-container {
+                padding: 2rem 1rem;
+            }
+
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-section .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .section-header {
+                padding: 1.5rem 2rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.8rem;
+            }
+
+            .section-content {
+                padding: 2rem;
+            }
+
+            .goals-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .process-steps {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .cta-section {
+                padding: 3rem 2rem;
+            }
+
+            .cta-section h2 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.5rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .features-list li {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
+
+            .features-list li::before {
+                margin-right: 0;
+                margin-bottom: 0.5rem;
+            }
+
+            .cta-section h2 {
+                font-size: 1.8rem;
+            }
+
+            .cta-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<!-- About Us Page Content -->
+<div class="about-container">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1>About Us</h1>
+        <p class="subtitle">Redefining trade in the digital age through smart, seamless, and fair exchange</p>
+    </div>
+
+    <!-- Who We Are Section -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-users"></i>
+                Who We Are
+            </h2>
+        </div>
+        <div class="section-content">
+            <p>Welcome to <strong>Barter Express</strong>, the company behind <strong>Barterex</strong> – a modern trade-by-barter platform designed to bring smart, seamless, and fair exchange to today's world. We believe that value should not be limited to money alone, and that people deserve a safe, efficient, and transparent way to trade goods and services directly.</p>
+        </div>
+    </div>
+
+    <!-- Our Product Section -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-rocket"></i>
+                Our Product – Barterex
+            </h2>
+        </div>
+        <div class="section-content">
+            <p><strong>Barterex</strong> is more than just a trading app – it's a marketplace where users exchange items, earn credits, and unlock access to other items they truly need. Instead of wasting resources or letting items gather dust, users can put their goods into circulation, get rewarded, and trade smarter.</p>
+            
+            <p>With <strong>Barterex</strong>, you:</p>
+            <ul class="features-list">
+                <li><span>List items you no longer need.</span></li>
+                <li><span>Earn credits when your items are approved and traded.</span></li>
+                <li><span>Use credits to get items from other users.</span></li>
+                <li><span>Enjoy secure approvals and fair valuations from our admin team.</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Our Goals Section -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-target"></i>
+                Our Goals
+            </h2>
+        </div>
+        <div class="section-content">
+            <p>Our mission is to <strong>redefine trade in the digital age</strong> by making barter as easy as shopping online. We aim to:</p>
+            
+            <div class="goals-grid">
+                <div class="goal-item">
+                    <div class="goal-icon">
+                        <i class="fas fa-hand-holding-heart"></i>
+                    </div>
+                    <h3>Empower People</h3>
+                    <p>Extract value from what you already own and make every item count in your trading journey.</p>
+                </div>
+                
+                <div class="goal-item">
+                    <div class="goal-icon">
+                        <i class="fas fa-recycle"></i>
+                    </div>
+                    <h3>Reduce Waste</h3>
+                    <p>Give items a second life by keeping them in circulation and reducing environmental impact.</p>
+                </div>
+                
+                <div class="goal-item">
+                    <div class="goal-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3>Financial Inclusivity</h3>
+                    <p>Create an alternative to cash transactions that's accessible to everyone, everywhere.</p>
+                </div>
+                
+                <div class="goal-item">
+                    <div class="goal-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h3>Build Trust</h3>
+                    <p>Foster communities where fair exchange and mutual respect fuel everyday living.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How We Achieve This Section -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-cogs"></i>
+                How We Achieve This
+            </h2>
+        </div>
+        <div class="section-content">
+            <div class="process-steps">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <h4>Technology-Driven Platform</h4>
+                    <p>Built with simplicity, security, and reliability at its core for seamless user experience.</p>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <h4>Fair Valuation System</h4>
+                    <p>Every item is assessed and assigned a credit value for balanced and equitable exchanges.</p>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <h4>User-Friendly Experience</h4>
+                    <p>From signup to trading, we ensure the process is simple, transparent, and rewarding.</p>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <h4>Community & Feedback</h4>
+                    <p>Active engagement with users during beta testing and beyond for continuous improvement.</p>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">5</div>
+                    <h4>Growth & Expansion</h4>
+                    <p>Committed to scaling across regions and introducing features that make barter smarter.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Our Dedication Section -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>
+                <i class="fas fa-heart"></i>
+                Our Dedication
+            </h2>
+        </div>
+        <div class="section-content">
+            <p>At Barter Express, growth is not just about numbers – it's about <strong>impact</strong>. We are committed to:</p>
+            
+            <ul class="features-list">
+                <li><span>Innovating constantly to stay ahead of user needs and market trends.</span></li>
+                <li><span>Listening to our users and incorporating their feedback into every update.</span></li>
+                <li><span>Encouraging smarter, sustainable trading practices that benefit everyone.</span></li>
+                <li><span>Building a platform that evolves with the needs of our growing community.</span></li>
+            </ul>
+            
+            <p>We are not just building a product – we are building a <strong>movement</strong> towards smarter, fairer, and more sustainable exchanges.</p>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="cta-section">
+        <h2>Ready to Join the Movement?</h2>
+        <p>✨ <em>Barter Express is here to change the way you trade. With Barterex, every item counts, every trade matters, and every user is part of something bigger.</em></p>
+        <a href="#" class="cta-button">
+            <i class="fas fa-question-circle"></i>
+            Learn More - Visit FAQ
+        </a>
+    </div>
+</div>
+
+{% endblock %}
