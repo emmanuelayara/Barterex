@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% block title %}Contact Us{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Contact Page Styles */
+        .contact-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .contact-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .contact-header h1 {
+            color: #054e97;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .contact-header p {
+            color: #666;
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .contact-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .contact-info {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+        }
+
+        .contact-info h2 {
+            color: #054e97;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f0 100%);
+            border-radius: 15px;
+            border-left: 4px solid #ff7a00;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 122, 0, 0.2);
+        }
+
+        .info-icon {
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.5rem;
+            flex-shrink: 0;
+            box-shadow: 0 5px 15px rgba(255, 122, 0, 0.3);
+        }
+
+        .info-content h3 {
+            color: #054e97;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .info-content p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .info-content a {
+            color: #ff7a00;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .info-content a:hover {
+            color: #054e97;
+            text-decoration: underline;
+        }
+
+        .quick-actions {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+        }
+
+        .quick-actions h2 {
+            color: #054e97;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-button {
+            display: block;
+            width: 100%;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 122, 0, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .action-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .action-button:hover::before {
+            left: 100%;
+        }
+
+        .action-button i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .whatsapp-btn {
+            background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+        }
+
+        .whatsapp-btn:hover {
+            box-shadow: 0 15px 40px rgba(37, 211, 102, 0.4);
+            color: white;
+        }
+
+        .faq-btn {
+            background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+        }
+
+        .faq-btn:hover {
+            box-shadow: 0 15px 40px rgba(5, 78, 151, 0.4);
+            color: white;
+        }
+
+        .contact-form {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f0 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 2px dashed #ff7a00;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .contact-form h3 {
+            color: #054e97;
+            margin-bottom: 1rem;
+        }
+
+        .contact-form p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-button {
+            background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(5, 78, 151, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .contact-header h1 {
+                font-size: 2rem;
+            }
+
+            .contact-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .contact-container {
+                padding: 2rem 1rem;
+            }
+
+            .contact-info,
+            .quick-actions {
+                padding: 2rem;
+            }
+
+            .info-item {
+                padding: 1rem;
+            }
+
+            .info-icon {
+                width: 40px;
+                height: 40px;
+                margin-right: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .contact-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .contact-info h2,
+            .quick-actions h2 {
+                font-size: 1.5rem;
+            }
+
+            .info-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .info-icon {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Page Load Animation */
+        .contact-container {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Staggered animations for content cards */
+        .contact-info {
+            animation: fadeInLeft 0.8s ease 0.2s both;
+        }
+
+        .quick-actions {
+            animation: fadeInRight 0.8s ease 0.4s both;
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<!-- Contact Page Content -->
+<div class="contact-container">
+    <div class="contact-header">
+        <h1>Get In Touch</h1>
+        <p>We're here to help! Reach out to us through any of the channels below and we'll get back to you as soon as possible.</p>
+    </div>
+
+    <div class="contact-content">
+        <!-- Contact Information -->
+        <div class="contact-info">
+            <h2>
+                <i class="fas fa-info-circle"></i>
+                Contact Information
+            </h2>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="info-content">
+                    <h3>Address</h3>
+                    <p>123 Trade Street<br>
+                    Ebute Ikorodu, Lagos<br>
+                    Nigeria</p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="info-content">
+                    <h3>Email</h3>
+                    <p><a href="mailto:info.barterex@gmail.com">info.barterex@gmail.com</a></p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <div class="info-content">
+                    <h3>Phone Number</h3>
+                    <p><a href="tel:+2349012949173">+234 901 294 9173</a></p>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="info-content">
+                    <h3>Business Hours</h3>
+                    <p>Monday - Friday: 9:00 AM - 5:00 PM<br>
+                    Saturday: 10:00 AM - 4:00 PM<br>
+                    Sunday: Closed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h2>
+                <i class="fas fa-rocket"></i>
+                Quick Actions
+            </h2>
+
+            <a href="https://wa.me/2348155708920?text=Hello%20Barterex,%20I%20need%20assistance" class="action-button whatsapp-btn" target="_blank">
+                <i class="fab fa-whatsapp"></i>
+                Message us on WhatsApp
+            </a>
+
+            <a href="/faq" class="action-button faq-btn">
+                <i class="fas fa-question-circle"></i>
+                Visit our FAQ
+            </a>
+
+            <a href="mailto:info.barterex@gmail.com" class="action-button">
+                <i class="fas fa-paper-plane"></i>
+                Send us an Email
+            </a>
+
+            <div class="contact-form">
+                <h3>Need More Help?</h3>
+                <p>For detailed inquiries or technical support, use our contact form for a personalized response.</p>
+                <button class="form-button" onclick="window.location.href='/contact-form'">
+                    <i class="fas fa-edit"></i>
+                    Open Contact Form
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

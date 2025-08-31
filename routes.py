@@ -109,6 +109,11 @@ def home():
     return render_template('home.html', trending_items=trending_items)
 
 
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
