@@ -348,80 +348,259 @@
             }
         }
 
-        /* Responsive Design */
+        /* Mobile Responsive Design - Aggressive Size Reduction */
         @media (max-width: 768px) {
             .about-container {
-                padding: 2rem 1rem;
+                padding: 1.5rem 0.8rem;
+            }
+
+            .hero-section {
+                margin-bottom: 2rem;
+            }
+
+            .hero-section::before {
+                width: 60px;
+                height: 3px;
+                top: -1rem;
             }
 
             .hero-section h1 {
-                font-size: 2.5rem;
+                font-size: 1.8rem;
+                margin-bottom: 0.8rem;
             }
 
             .hero-section .subtitle {
-                font-size: 1.1rem;
+                font-size: 0.95rem;
+            }
+
+            .content-section {
+                margin-bottom: 1.5rem;
+                border-radius: 12px;
             }
 
             .section-header {
-                padding: 1.5rem 2rem;
+                padding: 1rem 1.2rem;
             }
 
             .section-header h2 {
-                font-size: 1.8rem;
+                font-size: 1.2rem;
+                gap: 0.5rem;
+            }
+
+            .section-header i {
+                font-size: 1.3rem;
             }
 
             .section-content {
-                padding: 2rem;
+                padding: 1.2rem;
+            }
+
+            .section-content p {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+                text-align: left;
+            }
+
+            .features-list {
+                margin: 1rem 0;
+            }
+
+            .features-list li {
+                padding: 0.8rem;
+                margin-bottom: 0.8rem;
+                border-radius: 8px;
+            }
+
+            .features-list li::before {
+                width: 24px;
+                height: 24px;
+                margin-right: 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .features-list li span {
+                font-size: 0.9rem;
             }
 
             .goals-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                margin: 1rem 0;
+            }
+
+            .goal-item {
+                padding: 1rem;
+                border-radius: 10px;
+            }
+
+            .goal-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .goal-item h3 {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .goal-item p {
+                font-size: 0.85rem;
             }
 
             .process-steps {
                 grid-template-columns: 1fr;
-                gap: 2rem;
+                gap: 1.2rem;
+                margin: 1rem 0;
+            }
+
+            .step-number {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .step-item h4 {
+                font-size: 1rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .step-item p {
+                font-size: 0.85rem;
             }
 
             .cta-section {
-                padding: 3rem 2rem;
+                padding: 2rem 1.2rem;
+                margin: 2rem 0;
+                border-radius: 12px;
             }
 
             .cta-section h2 {
-                font-size: 2rem;
+                font-size: 1.5rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .cta-section p {
+                font-size: 0.95rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .cta-button {
+                padding: 0.9rem 1.8rem;
+                font-size: 0.9rem;
+                border-radius: 25px;
             }
         }
 
+        /* Extra small screens */
         @media (max-width: 480px) {
+            .about-container {
+                padding: 1rem 0.5rem;
+            }
+
             .hero-section h1 {
-                font-size: 2rem;
+                font-size: 1.5rem;
+            }
+
+            .hero-section .subtitle {
+                font-size: 0.85rem;
+            }
+
+            .section-header {
+                padding: 0.8rem 1rem;
             }
 
             .section-header h2 {
-                font-size: 1.5rem;
+                font-size: 1rem;
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 0.3rem;
+                text-align: center;
+            }
+
+            .section-header i {
+                font-size: 1.2rem;
+            }
+
+            .section-content {
+                padding: 1rem;
+            }
+
+            .section-content p {
+                font-size: 0.85rem;
             }
 
             .features-list li {
+                padding: 0.6rem;
                 flex-direction: column;
                 text-align: center;
-                padding: 1.5rem;
             }
 
             .features-list li::before {
                 margin-right: 0;
                 margin-bottom: 0.5rem;
+                width: 20px;
+                height: 20px;
+                font-size: 0.7rem;
+            }
+
+            .features-list li span {
+                font-size: 0.85rem;
+            }
+
+            .goals-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .goal-item {
+                padding: 0.8rem;
+            }
+
+            .goal-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+
+            .goal-item h3 {
+                font-size: 0.9rem;
+            }
+
+            .goal-item p {
+                font-size: 0.8rem;
+            }
+
+            .step-number {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+
+            .step-item h4 {
+                font-size: 0.9rem;
+            }
+
+            .step-item p {
+                font-size: 0.8rem;
+            }
+
+            .cta-section {
+                padding: 1.5rem 1rem;
             }
 
             .cta-section h2 {
-                font-size: 1.8rem;
+                font-size: 1.3rem;
+            }
+
+            .cta-section p {
+                font-size: 0.85rem;
             }
 
             .cta-button {
-                padding: 1rem 2rem;
-                font-size: 1rem;
+                padding: 0.8rem 1.5rem;
+                font-size: 0.85rem;
             }
         }
     </style>
@@ -584,7 +763,7 @@
     <!-- Call to Action -->
     <div class="cta-section">
         <h2>Ready to Join the Movement?</h2>
-        <p>✨ <em>Barter Express is here to change the way you trade. With Barterex, every item counts, every trade matters, and every user is part of something bigger.</em></p>
+        <p><em>Barter Express is here to change the way you trade. With Barterex, every item counts, every trade matters, and every user is part of something bigger.</em></p>
         <a href="#" class="cta-button">
             <i class="fas fa-question-circle"></i>
             Learn More - Visit FAQ
