@@ -192,8 +192,7 @@ def login():
             # First login bonus message
             if user.first_login:
                 flash(
-                    "🎉 Welcome Beta Tester! You've been given 5000 credits as a signup bonus. "
-                    "Please complete your profile to continue using the platform.",
+                    "Welcome Beta Tester! You've been given 5000 credits as a signup bonus. ",
                     "success"
                 )
                 user.first_login = False
