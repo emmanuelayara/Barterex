@@ -16,7 +16,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # Max size: 2MB
 
 app.config['SECRET_KEY'] = 'ORdt0qCDzsPf5jDFgQNFQeAZRQrro7nq'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://barterex_user:ORdt0qCDzsPf5jDFgQNFQeAZRQrro7nq@dpg-d2rjiujipnbc73d2pskg-a.oregon-postgres.render.com/barterex'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///barter.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # ✅ Mail config
