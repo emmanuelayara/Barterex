@@ -568,6 +568,83 @@
     .related-title {
       font-size: 1.2rem;
     }
+
+    /* Mobile Related Items - Horizontal Scroll */
+    .related-grid {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .related-grid::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .related-grid::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+    }
+
+    .related-grid::-webkit-scrollbar-thumb {
+      background: rgba(255, 122, 0, 0.5);
+      border-radius: 2px;
+    }
+
+    .related-grid::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 122, 0, 0.8);
+    }
+
+    .related-item {
+      min-width: 160px;
+      max-width: 160px;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    }
+
+    .related-image {
+      height: 100px;
+      font-size: 1.4rem;
+    }
+
+    .related-content {
+      padding: 12px;
+    }
+
+    .related-name {
+      font-size: 0.85rem;
+      line-height: 1.2;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .related-price {
+      font-size: 0.8rem;
+    }
+
+    /* Add scroll indicator for mobile */
+    .related-section::after {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.3), transparent);
+      margin-top: 10px;
+      border-radius: 1px;
+    }
+
+    /* Disable hover effects on mobile */
+    .related-item:hover {
+      transform: none;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+      border-color: rgba(226, 232, 240, 0.8);
+    }
   }
 
   @media (max-width: 480px) {
@@ -619,12 +696,26 @@
       padding: 18px 14px;
     }
 
+    .related-item {
+      min-width: 140px;
+      max-width: 140px;
+    }
+
     .related-image {
-      height: 120px;
+      height: 90px;
+      font-size: 1.2rem;
     }
 
     .related-content {
-      padding: 14px;
+      padding: 10px;
+    }
+
+    .related-name {
+      font-size: 0.8rem;
+    }
+
+    .related-price {
+      font-size: 0.75rem;
     }
 
     .slideshow-nav {
@@ -636,6 +727,10 @@
     .image-counter {
       font-size: 0.75rem;
       padding: 5px 8px;
+    }
+
+    .related-title {
+      font-size: 1.1rem;
     }
   }
 
@@ -668,6 +763,12 @@
 
     .related-section {
       padding: 30px;
+    }
+
+    .related-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      border-color: rgba(255, 122, 0, 0.3);
     }
   }
 
@@ -746,10 +847,6 @@
     }
 
     .slide img:hover {
-      transform: none;
-    }
-
-    .related-item:hover {
       transform: none;
     }
 
@@ -997,6 +1094,32 @@
       startY = e.touches[0].clientY;
       isDragging = true;
     }, { passive: true });
+
+    slideshowSection.addEventListener('touchmove', function(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+    }, { passive: false });
+
+    slideshowSection.addEventListener('touchend', function(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      // Only trigger swipe if horizontal movement is greater than vertical
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (Math.abs(diffX) > 50) { // Minimum swipe distance
+          if (diffX > 0) {
+            nextSlide(); // Swipe left = next slide
+          } else {
+            previousSlide(); // Swipe right = previous slide
+          }
+        }
+      }
+    }, { passive: true });
   }
 
   // Fullscreen functionality
@@ -1028,7 +1151,6 @@
   });
 
   // Auto-slideshow (optional - uncomment to enable)
-
   let autoSlideInterval;
   
   function startAutoSlide() {
@@ -1124,31 +1246,31 @@
     }
   `;
   document.head.appendChild(style);
+
+  // Add smooth scroll behavior to related items on mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    const relatedGrid = document.querySelector('.related-grid');
+    
+    if (relatedGrid && window.innerWidth <= 768) {
+      // Add touch scrolling enhancement
+      let isScrolling = false;
+      let scrollTimeout;
+
+      relatedGrid.addEventListener('scroll', function() {
+        isScrolling = true;
+        
+        // Clear timeout if it exists
+        clearTimeout(scrollTimeout);
+        
+        // Set a timeout to run after scrolling ends
+        scrollTimeout = setTimeout(function() {
+          isScrolling = false;
+        }, 150);
+      });
+
+      // Add scroll snap enhancement for better UX
+      relatedGrid.style.scrollBehavior = 'smooth';
+    }
+  });
 </script>
 {% endblock %}
-
-    slideshowSection.addEventListener('touchmove', function(e) {
-      if (!isDragging) return;
-      e.preventDefault();
-    }, { passive: false });
-
-    slideshowSection.addEventListener('touchend', function(e) {
-      if (!isDragging) return;
-      isDragging = false;
-      
-      const endX = e.changedTouches[0].clientX;
-      const endY = e.changedTouches[0].clientY;
-      const diffX = startX - endX;
-      const diffY = startY - endY;
-      
-      // Only trigger swipe if horizontal movement is greater than vertical
-      if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (Math.abs(diffX) > 50) { // Minimum swipe distance
-          if (diffX > 0) {
-            nextSlide(); // Swipe left = next slide
-          } else {
-            previousSlide(); // Swipe right = previous slide
-          }
-        }
-      }
-    }, { passive: true });
