@@ -13,7 +13,7 @@ class User(db.Model, UserMixin):
     address = db.Column(db.String(255))
     city = db.Column(db.String(50))
     state = db.Column(db.String(50))
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
     
     # Credits & first login flag
     credits = db.Column(db.Integer, default=0)
