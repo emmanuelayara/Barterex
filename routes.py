@@ -773,19 +773,18 @@ def order_item():
     form = OrderForm()
     stations = PickupStation.query.filter_by(state=current_user.state).all()
     form.pickup_station.choices = [(s.id, s.name) for s in stations]
-
     # Only fetch current purchased items
     pending_item_ids = session.get('pending_order_items', [])
     items = Item.query.filter(Item.id.in_(pending_item_ids)).all()
-
+    
     if request.method == 'GET' and current_user.address:
         form.delivery_address.data = current_user.address
-
+    
     if form.validate_on_submit():
         delivery_method = form.delivery_method.data
         pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
         delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
-
+        
         # Create one order
         order = Order(
             user_id=current_user.id,
@@ -794,37 +793,59 @@ def order_item():
             pickup_station_id=pickup_station_id
         )
         db.session.add(order)
-
+        
         # Attach all purchased items to this order
         for item_id in pending_item_ids:
             db.session.add(OrderItem(order=order, item_id=item_id))
-
-        db.session.commit()  # ✅ commit before notification
-
+        
+        db.session.commit()  # ✅ commit before notification and email
+        
         # --- Personalized Notification ---
         if delivery_method == "pickup":
             station = PickupStation.query.get(pickup_station_id)
             extra_info = f"Pickup Station: {station.name}, {station.address}" if station else ""
         else:
             extra_info = f"Delivery Address: {delivery_address}"
-
+        
         # Item names for notification
         item_names = [item.name for item in items]
         if len(item_names) == 1:
             item_info = f"Item: '{item_names[0]}' keep using Barterex for seamless trading."
         else:
             item_info = f"Items: {', '.join(item_names)} keep using Barterex for seamless trading."
-
+        
         create_notification(
             current_user.id,
             f"📦 Your order has been set up for delivery via {delivery_method}. {item_info}. {extra_info}"
         )
-        # --- End Notification ---
-
+        
+        # ✅ Send order confirmation email using template
+        msg = Message(
+            subject="📦 Order Confirmation - Barterex",
+            sender="info.barterex@gmail.com",
+            recipients=[current_user.email]
+        )
+        
+        # Prepare data for email template
+        email_data = {
+            'username': current_user.username,
+            'order_id': order.id,
+            'items': items,
+            'delivery_method': delivery_method,
+            'delivery_address': delivery_address,
+            'pickup_station': PickupStation.query.get(pickup_station_id) if pickup_station_id else None,
+            'order_date': order.created_at.strftime('%B %d, %Y at %I:%M %p') if hasattr(order, 'created_at') else 'Today'
+        }
+        
+        # Render the HTML template and inject order data
+        msg.html = render_template("emails/order_confirmation.html", **email_data)
+        mail.send(msg)
+        # --- End Email ---
+        
         session.pop('pending_order_items', None)
-        flash("Delivery set up successfully for your purchased items!", "success")
+        flash("Delivery set up successfully for your purchased items! Confirmation email sent.", "success")
         return redirect(url_for('dashboard'))
-
+    
     return render_template('order_item.html', form=form, stations=stations, items=items)
 
 
