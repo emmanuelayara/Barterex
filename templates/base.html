@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* ========================================
+           CONSISTENT BASE STYLES - ALWAYS LOADED
+           ======================================== */
+        
+        /* CSS Variables - Always Available */
         :root {
             --primary-blue: #054e97;
             --primary-orange: #ff7a00;
@@ -17,48 +22,60 @@
             --gray-100: #f8fafc;
             --gray-200: #e2e8f0;
             --gray-300: #cbd5e1;
-            --gray-600: #054e97;
-            --gray-900: #cbd5e1;
-            --shadow-sm: 0 1px 2px 0 #cbd5e1;
-            --shadow-md: 0 4px 6px -1px #cbd5e1, 0 2px 4px -1px #cbd5e1;
-            --shadow-lg: 0 10px 15px -3px #cbd5e1, 0 4px 6px -2px #cbd5e1;
-            --shadow-xl: 0 20px 25px -5px #cbd5e1, 0 10px 10px -5px #cbd5e1;
+            --gray-600: #475569;
+            --gray-900: #1e293b;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
+        /* Universal Reset */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-
-        
+        /* Base Body Styles */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             background-color: var(--gray-100);
+            color: #333;
+            min-height: 100vh;
         }
 
-        /* ✨ MODERN NAVIGATION BAR */
-        nav {
+        /* ========================================
+           NAVBAR STYLES - ISOLATED & CONSISTENT
+           ======================================== */
+        
+        .barterex-navbar {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid #cbd5e1;
+            border-bottom: 1px solid rgba(203, 213, 225, 0.2);
             box-shadow: var(--shadow-lg);
             position: sticky;
             top: 0;
             z-index: 1000;
             transition: all 0.3s ease;
+            width: 100%;
+            font-family: inherit;
         }
 
-        .nav-container {
+        .barterex-navbar * {
+            box-sizing: border-box;
+        }
+
+        .barterex-navbar .nav-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 1rem;
+            width: 100%;
         }
 
-        .nav-header {
+        .barterex-navbar .nav-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -66,8 +83,8 @@
             position: relative;
         }
 
-        /* 🎨 LOGO STYLING */
-        .logo-link {
+        /* Logo Styles */
+        .barterex-navbar .logo-link {
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -82,7 +99,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .logo-link:hover {
+        .barterex-navbar .logo-link:hover {
             background: var(--primary-orange);
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(255, 122, 0, 0.3);
@@ -90,34 +107,39 @@
             text-decoration: none;
         }
 
-        .logo-img {
+        .barterex-navbar .logo-img {
             height: 32px;
             width: auto;
             filter: brightness(1.1);
             transition: all 0.3s ease;
         }
 
-        .logo-text {
+        .barterex-navbar .logo-text {
             font-weight: 800;
             background: linear-gradient(45deg, var(--white), var(--gray-200));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            color: var(--white); /* Fallback for unsupported browsers */
         }
 
-        /* 🔗 NAVIGATION LINKS */
-        .nav-links {
+        /* Navigation Links */
+        .barterex-navbar .nav-links {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             list-style: none;
+            margin: 0;
+            padding: 0;
         }
 
-        .nav-item {
+        .barterex-navbar .nav-item {
             position: relative;
+            margin: 0;
+            padding: 0;
         }
 
-        .nav-link {
+        .barterex-navbar .nav-link {
             color: var(--white);
             text-decoration: none;
             font-weight: 500;
@@ -131,9 +153,10 @@
             overflow: hidden;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
         }
 
-        .nav-link::before {
+        .barterex-navbar .nav-link::before {
             content: '';
             position: absolute;
             top: 0;
@@ -144,11 +167,12 @@
             transition: left 0.5s ease;
         }
 
-        .nav-link:hover::before {
+        .barterex-navbar .nav-link:hover::before {
             left: 100%;
         }
 
-        .nav-link:hover {
+        .barterex-navbar .nav-link:hover,
+        .barterex-navbar .nav-link:focus {
             background: var(--primary-orange);
             color: var(--white);
             text-decoration: none;
@@ -157,24 +181,24 @@
             border-color: var(--primary-orange);
         }
 
-        .nav-link.active {
+        .barterex-navbar .nav-link.active {
             background: var(--primary-orange);
             color: var(--white);
             box-shadow: 0 4px 15px rgba(255, 122, 0, 0.4);
             border-color: var(--primary-orange);
         }
 
-        .nav-link i {
+        .barterex-navbar .nav-link i {
             font-size: 0.9rem;
             transition: transform 0.3s ease;
         }
 
-        .nav-link:hover i {
+        .barterex-navbar .nav-link:hover i {
             transform: scale(1.1);
         }
 
-        /* 🍔 HAMBURGER MENU */
-        .hamburger {
+        /* Hamburger Menu */
+        .barterex-navbar .hamburger {
             display: none;
             flex-direction: column;
             gap: 4px;
@@ -186,12 +210,12 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .hamburger:hover {
+        .barterex-navbar .hamburger:hover {
             background: var(--primary-orange);
             transform: scale(1.05);
         }
 
-        .hamburger-line {
+        .barterex-navbar .hamburger-line {
             width: 25px;
             height: 3px;
             background: var(--white);
@@ -199,22 +223,22 @@
             transition: all 0.3s ease;
         }
 
-        .hamburger.active .hamburger-line:nth-child(1) {
+        .barterex-navbar .hamburger.active .hamburger-line:nth-child(1) {
             transform: rotate(45deg) translate(6px, 6px);
         }
 
-        .hamburger.active .hamburger-line:nth-child(2) {
+        .barterex-navbar .hamburger.active .hamburger-line:nth-child(2) {
             opacity: 0;
             transform: translateX(-10px);
         }
 
-        .hamburger.active .hamburger-line:nth-child(3) {
+        .barterex-navbar .hamburger.active .hamburger-line:nth-child(3) {
             transform: rotate(-45deg) translate(6px, -6px);
         }
 
-        /* 📱 MOBILE RESPONSIVE */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .nav-links {
+            .barterex-navbar .nav-links {
                 position: absolute;
                 top: 100%;
                 left: 0;
@@ -230,20 +254,22 @@
                 visibility: hidden;
                 transition: all 0.3s ease;
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
+                z-index: 999;
+                width: 100%;
             }
 
-            .nav-links.active {
+            .barterex-navbar .nav-links.active {
                 transform: translateY(0);
                 opacity: 1;
                 visibility: visible;
             }
 
-            .nav-item {
+            .barterex-navbar .nav-item {
                 width: 100%;
                 margin: 0.25rem 0;
             }
 
-            .nav-link {
+            .barterex-navbar .nav-link {
                 width: 100%;
                 justify-content: flex-start;
                 padding: 1rem 1.25rem;
@@ -251,46 +277,31 @@
                 border-radius: 12px;
             }
 
-            .hamburger {
+            .barterex-navbar .hamburger {
                 display: flex;
             }
 
-            .logo-link {
+            .barterex-navbar .logo-link {
                 padding: 0.5rem 0.75rem;
                 font-size: 1.1rem;
             }
 
-            .logo-img {
+            .barterex-navbar .logo-img {
                 height: 28px;
             }
         }
 
-        /* 🎯 ADDITIONAL EFFECTS */
-        .nav-indicator {
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            height: 3px;
-            background: var(--primary-orange);
-            border-radius: 2px 2px 0 0;
-            transition: all 0.3s ease;
-            opacity: 0;
-        }
-
-        .nav-link:hover .nav-indicator,
-        .nav-link.active .nav-indicator {
-            opacity: 1;
-            width: 100%;
-        }
-
-        /* ✨ SCROLL EFFECT */
-        nav.scrolled {
+        /* Scroll Effect */
+        .barterex-navbar.scrolled {
             background: rgba(5, 78, 151, 0.95);
             backdrop-filter: blur(20px);
             box-shadow: var(--shadow-xl);
         }
 
-        /* 🎨 MAIN CONTENT STYLING */
+        /* ========================================
+           MAIN CONTENT STYLES
+           ======================================== */
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -298,7 +309,7 @@
             min-height: calc(100vh - 200px);
         }
 
-        /* 📜 FLASH MESSAGES */
+        /* Flash Messages */
         .flash {
             padding: 1rem 1.5rem;
             margin: 1rem 0;
@@ -306,30 +317,84 @@
             border-left: 4px solid;
             box-shadow: var(--shadow-md);
             animation: slideIn 0.3s ease;
+            font-weight: 500;
         }
 
         .flash.success {
-            background: #ff7a00;
+            background: #f0fdf4;
             color: #166534;
             border-color: #22c55e;
         }
 
         .flash.error {
-            background: #ff7a00;
+            background: #fef2f2;
             color: #dc2626;
             border-color: #ef4444;
         }
 
         .flash.warning {
-            background: #ff7a00;
+            background: #fffbeb;
             color: #d97706;
             border-color: #f59e0b;
         }
 
         .flash.info {
-            background: #ff7a00;
+            background: #eff6ff;
             color: #2563eb;
             border-color: #3b82f6;
+        }
+
+        /* Bootstrap Alert Compatibility */
+        .alert {
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 12px;
+            border-left: 4px solid;
+            box-shadow: var(--shadow-md);
+            animation: slideIn 0.3s ease;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #22c55e;
+        }
+
+        .alert-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #ef4444;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            color: #d97706;
+            border-color: #f59e0b;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        .btn-close {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
         }
 
         @keyframes slideIn {
@@ -343,13 +408,17 @@
             }
         }
 
-        /* 🦶 FOOTER */
+        /* ========================================
+           FOOTER STYLES
+           ======================================== */
+        
         footer {
             background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-600) 100%);
             color: var(--white);
             padding: 2rem 1rem;
             text-align: center;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: auto;
         }
 
         footer a {
@@ -363,7 +432,27 @@
             text-shadow: 0 0 8px var(--primary-orange);
         }
 
-        /* 🌙 DARK MODE ENHANCEMENTS */
+        /* ========================================
+           UTILITY CLASSES
+           ======================================== */
+        
+        .mb-4 {
+            margin-bottom: 1.5rem;
+        }
+
+        .fade {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .show {
+            display: block;
+        }
+
+        /* ========================================
+           DARK MODE SUPPORT
+           ======================================== */
+        
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--gray-900);
@@ -371,9 +460,25 @@
             }
             
             .container {
-                background: #cbd5e1;
+                background: rgba(30, 41, 59, 0.8);
                 border-radius: 20px;
                 backdrop-filter: blur(10px);
+            }
+        }
+
+        /* ========================================
+           PRINT STYLES
+           ======================================== */
+        
+        @media print {
+            .barterex-navbar,
+            footer {
+                display: none;
+            }
+            
+            body {
+                background: white;
+                color: black;
             }
         }
     </style>
@@ -381,7 +486,7 @@
 <body>
 
 <!-- ✨ MODERN NAVIGATION -->
-<nav id="navbar">
+<nav id="navbar" class="barterex-navbar">
     <div class="nav-container">
         <div class="nav-header">
             <a href="{{ url_for('home') }}" class="logo-link">
@@ -400,7 +505,6 @@
                     <a href="{{ url_for('marketplace') }}" class="nav-link">
                         <i class="fas fa-store"></i>
                         <span>Marketplace</span>
-                        <div class="nav-indicator"></div>
                     </a>
                 </li>
                 {% if current_user.is_authenticated %}
@@ -408,28 +512,24 @@
                         <a href="{{ url_for('upload_item') }}" class="nav-link">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span>Upload</span>
-                            <div class="nav-indicator"></div>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('dashboard') }}" class="nav-link">
                             <i class="fas fa-tachometer-alt"></i>
                             <span>Dashboard</span>
-                            <div class="nav-indicator"></div>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('view_cart') }}" class="nav-link">
                             <i class="fas fa-shopping-cart"></i>
                             <span>View Cart</span>
-                            <div class="nav-indicator"></div>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('logout') }}" class="nav-link">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Logout</span>
-                            <div class="nav-indicator"></div>
                         </a>
                     </li>
                 {% else %}
@@ -437,14 +537,12 @@
                         <a href="{{ url_for('login') }}" class="nav-link">
                             <i class="fas fa-sign-in-alt"></i>
                             <span>Login</span>
-                            <div class="nav-indicator"></div>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('register') }}" class="nav-link">
                             <i class="fas fa-user-plus"></i>
                             <span>Register</span>
-                            <div class="nav-indicator"></div>
                         </a>
                     </li>
                 {% endif %}
@@ -455,25 +553,25 @@
 
 <!-- ✨ PAGE CONTENT -->
 <div class="container">
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mb-4">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" onclick="this.parentElement.style.display='none'">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
     {% block content %}
-    <!-- Demo content -->
+    <!-- Default content -->
     <div style="padding: 2rem; text-align: center;">
-        <h1 style="color: #054e97; margin-bottom: 1rem;">Welcome to Barterex</h1>
-        <p style="color: #6b7280; font-size: 1.1rem;">Your modern marketplace for trading and bartering</p>
+        <h1 style="color: var(--primary-blue); margin-bottom: 1rem;">Welcome to Barterex</h1>
+        <p style="color: var(--gray-600); font-size: 1.1rem;">Your modern marketplace for trading and bartering</p>
     </div>
     {% endblock %}
 </div>
@@ -481,11 +579,15 @@
 <!-- ✨ MODERN FOOTER -->
 <footer>
     <div style="max-width: 1200px; margin: 0 auto;">
-        <p>&copy; {{ current_year if current_year else '2025' }} Barter Express | All rights reserved &bull;</p>
+        <p>&copy; {{ current_year if current_year else '2025' }} Barter Express | All rights reserved</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8;">
+            Built with ❤️ for seamless trading experiences
+        </p>
     </div>
 </footer>
 
 <script>
+    // Navbar functionality
     function toggleMenu() {
         const navLinks = document.getElementById('navLinks');
         const hamburger = document.getElementById('hamburger');
@@ -495,7 +597,7 @@
     }
 
     // Close mobile menu when clicking on a link
-    document.querySelectorAll('.nav-link').forEach(link => {
+    document.querySelectorAll('.barterex-navbar .nav-link').forEach(link => {
         link.addEventListener('click', () => {
             const navLinks = document.getElementById('navLinks');
             const hamburger = document.getElementById('hamburger');
@@ -520,12 +622,26 @@
     // Add active class to current page
     document.addEventListener('DOMContentLoaded', () => {
         const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.nav-link');
+        const navLinks = document.querySelectorAll('.barterex-navbar .nav-link');
         
         navLinks.forEach(link => {
             if (link.getAttribute('href') === currentPath) {
                 link.classList.add('active');
             }
+        });
+
+        // Auto-hide alerts after 5 seconds
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.parentNode.removeChild(alert);
+                    }
+                }, 300);
+            }, 5000);
         });
     });
 
@@ -540,6 +656,38 @@
             hamburger.classList.remove('active');
         }
     });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Performance optimization: Lazy load images
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
 </script>
 
 </body>
