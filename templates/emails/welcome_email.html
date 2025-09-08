@@ -8,18 +8,19 @@
     /* Base styles for light mode */
     body {
       margin: 0;
-      padding: 0;
-      background-color: #ffffff;
+      padding: 20px;
+      background-color: #f8f9fa;
       font-family: Arial, sans-serif;
-      color: #ff7a00;
+      color: #333333;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #054e97;
+      background-color: #ffffff;
       padding: 30px; 
       border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(5, 78, 151, 0.1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e9ecef;
     }
     .logo {
       text-align: center;
@@ -43,11 +44,12 @@
     p {
       font-size: 16px;
       line-height: 1.6;
-      color: #ffffff;
+      color: #333333;
       margin-bottom: 15px;
     }
     strong {
-      color: #ff7a00;
+      color: #054e97;
+      font-weight: bold;
     }
     .highlight-box {
       background-color: rgba(255, 122, 0, 0.1);
@@ -64,7 +66,7 @@
       padding: 0;
     }
     .checklist li {
-      color: #ffffff;
+      color: #333333;
       font-size: 16px;
       line-height: 1.6;
       margin-bottom: 8px;
@@ -78,11 +80,11 @@
       top: 0;
     }
     .reward-section {
-      background-color: rgba(255, 122, 0, 0.15);
+      background-color: rgba(255, 122, 0, 0.05);
       padding: 20px;
       border-radius: 8px;
       margin: 25px 0;
-      border: 2px solid rgba(255, 122, 0, 0.3);
+      border: 2px solid rgba(255, 122, 0, 0.2);
     }
     .cta {
       text-align: center;
@@ -90,7 +92,7 @@
     }
     .cta a {
       background-color: #ff7a00;
-      color: #054e97 !important;
+      color: #ffffff !important;
       padding: 14px 28px;
       border-radius: 6px;
       text-decoration: none;
@@ -110,19 +112,22 @@
     }
     .cta .secondary:hover {
       background-color: #ff7a00;
-      color: #054e97 !important;
+      color: #ffffff !important;
     }
     .footer {
       margin-top: 40px;
       text-align: center;
       font-size: 13px;
-      color: rgba(255, 255, 255, 0.7);
+      color: #6c757d;
+      border-top: 1px solid #e9ecef;
+      padding-top: 20px;
     }
 
     /* Mobile Responsive Styles - Aggressive Size Reduction */
     @media only screen and (max-width: 600px) {
       body {
-        padding: 0 !important;
+        padding: 10px !important;
+        background-color: #ffffff;
       }
       
       .container {
@@ -132,6 +137,8 @@
         margin: 0 !important;
         border-radius: 0 !important;
         box-sizing: border-box;
+        box-shadow: none !important;
+        border: none !important;
       }
       
       .logo {
@@ -208,7 +215,7 @@
       .footer {
         margin-top: 25px !important;
         font-size: 12px !important;
-        padding: 0 5px !important;
+        padding: 15px 5px 0 5px !important;
       }
     }
 
@@ -261,27 +268,40 @@
       }
     }
 
-    /* Dark Mode Styles - maintains the same brand color scheme */
+    /* Dark Mode Styles - Clean and readable */
     @media (prefers-color-scheme: dark) {
       body {
-        background-color: #000000;
+        background-color: #1a1a1a;
+        color: #ffffff;
       }
       .container {
-        background-color: #054e97;
-        box-shadow: 0 2px 10px rgba(5, 78, 151, 0.3);
+        background-color: #2d2d2d;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        border: 1px solid #404040;
       }
       h1, h2 {
         color: #ff7a00;
       }
       p {
-        color: #ffffff;
+        color: #e9e9e9;
+      }
+      .checklist li {
+        color: #e9e9e9;
       }
       strong {
-        color: #ff7a00;
+        color: #54a3ff;
+      }
+      .highlight-box {
+        background-color: rgba(255, 122, 0, 0.15);
+        border-left: 4px solid #ff7a00;
+      }
+      .reward-section {
+        background-color: rgba(255, 122, 0, 0.1);
+        border: 2px solid rgba(255, 122, 0, 0.3);
       }
       .cta a {
         background-color: #ff7a00;
-        color: #054e97 !important;
+        color: #ffffff !important;
       }
       .cta a:hover {
         background-color: #e56900;
@@ -293,10 +313,11 @@
       }
       .cta .secondary:hover {
         background-color: #ff7a00;
-        color: #054e97 !important;
+        color: #ffffff !important;
       }
       .footer {
-        color: rgba(255, 255, 255, 0.7);
+        color: #b3b3b3;
+        border-top: 1px solid #404040;
       }
     }
   </style>
