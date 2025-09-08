@@ -1019,7 +1019,7 @@
   document.querySelectorAll('.marketplace-item').forEach((item, index) => {
     item.style.opacity = '0';
     item.style.transform = 'translateY(30px)';
-    item.style.transition = `all 0.6s ease ${index * 0.1}s`;
+    item.style.transition = `all 0.6s ease ${index * 0.0001}s`;
     observer.observe(item);
   });
 </script>
