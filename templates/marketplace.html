@@ -162,6 +162,64 @@
     box-shadow: 0 0 0 3px var(--primary-light);
   }
 
+  /* Price filter specific styles */
+  .price-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .price-range-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .price-custom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .price-input {
+    padding: 8px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+  }
+
+  .price-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+
+  .price-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .toggle-btn {
+    padding: 6px 12px;
+    border: 2px solid var(--primary-light);
+    background: var(--surface);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-btn.active {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+  }
+
   .filter-btn {
     background: var(--primary-gradient);
     color: white;
@@ -180,6 +238,28 @@
   .filter-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px var(--primary-medium);
+  }
+
+  .clear-filters-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 12px 20px;
+    border: 2px solid var(--primary-light);
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .clear-filters-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-2px);
   }
 
   /* Results info with brand styling */
@@ -482,7 +562,6 @@
       padding: 0 15px;
     }
 
-    /* Optimized Hero Section for Mobile */
     .marketplace-header {
       margin-bottom: 20px;
       padding: 20px 15px;
@@ -498,26 +577,10 @@
       font-size: 0.9rem;
     }
 
-    /* Compact Filter Section */
     .filter-section {
       padding: 15px;
       margin-bottom: 20px;
       border-radius: 12px;
-    }
-
-    .filter-header {
-      gap: 8px;
-      margin-bottom: 15px;
-    }
-
-    .filter-header h3 {
-      font-size: 1rem;
-    }
-
-    .filter-icon {
-      width: 30px;
-      height: 30px;
-      font-size: 1rem;
     }
 
     .filter-form {
@@ -525,74 +588,30 @@
       gap: 12px;
     }
 
-    .form-group label {
-      font-size: 0.75rem;
-      margin-bottom: 4px;
+    .price-range-selector,
+    .price-custom {
+      grid-template-columns: 1fr;
+      gap: 8px;
     }
 
-    .form-input, .form-select {
-      padding: 10px 12px;
-      font-size: 0.85rem;
-      border-radius: 10px;
+    .price-toggle {
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
-    .filter-btn {
-      padding: 10px 16px;
-      font-size: 0.85rem;
-      border-radius: 10px;
-    }
-
-    /* Results Section */
-    .results-info {
-      flex-direction: column;
-      gap: 10px;
-      text-align: center;
-      padding: 12px 15px;
-      margin-bottom: 15px;
-      border-radius: 10px;
-    }
-
-    .results-count {
-      font-size: 0.8rem;
-    }
-
-    .view-toggle {
-      padding: 2px;
-      border-radius: 8px;
-    }
-
-    .view-btn {
-      padding: 5px 10px;
+    .toggle-btn {
+      padding: 4px 8px;
       font-size: 0.75rem;
     }
 
-    /* Grid Layout - 2 columns on mobile */
     .marketplace-grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       margin-bottom: 30px;
     }
 
-    .marketplace-grid.compact {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-
-    /* Compact Item Cards */
-    .marketplace-item {
-      border-radius: 12px;
-    }
-
     .item-image-container {
       height: 120px;
-    }
-
-    .item-badge {
-      top: 8px;
-      right: 8px;
-      padding: 3px 6px;
-      font-size: 0.65rem;
-      border-radius: 12px;
     }
 
     .item-content {
@@ -608,227 +627,22 @@
       font-size: 1.1rem;
       margin-bottom: 10px;
     }
-
-    .item-actions {
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .btn-primary {
-      padding: 8px 12px;
-      font-size: 0.75rem;
-      border-radius: 8px;
-    }
-
-    .btn-secondary {
-      width: 100%;
-      height: 36px;
-      border-radius: 8px;
-    }
-
-    /* Empty State */
-    .empty-state {
-      padding: 30px 20px;
-      border-radius: 12px;
-    }
-
-    .empty-icon {
-      width: 50px;
-      height: 50px;
-      font-size: 1.3rem;
-      margin-bottom: 12px;
-    }
-
-    .empty-title {
-      font-size: 1.1rem;
-      margin-bottom: 6px;
-    }
-
-    .empty-description {
-      font-size: 0.8rem;
-      margin-bottom: 15px;
-    }
-
-    /* Pagination */
-    .pagination {
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 15px 12px;
-      margin-top: 30px;
-      border-radius: 12px;
-    }
-
-    .pagination-btn {
-      padding: 8px 12px;
-      font-size: 0.8rem;
-      border-radius: 8px;
-    }
-
-    .pagination-info {
-      padding: 0 8px;
-      font-size: 0.8rem;
-    }
   }
 
-  /* Extra Small Screens */
   @media (max-width: 480px) {
-    .marketplace-container {
-      padding: 0 10px;
+    .price-toggle {
+      grid-template-columns: repeat(2, 1fr);
     }
 
-    .marketplace-header {
-      padding: 15px 12px;
-      margin-bottom: 15px;
-      border-radius: 12px;
-    }
-
-    .marketplace-header h1 {
-      font-size: 1.2rem;
-      margin-bottom: 8px;
-    }
-
-    .marketplace-header p {
-      font-size: 0.8rem;
-    }
-
-    .filter-section {
-      padding: 12px 10px;
-      margin-bottom: 15px;
-    }
-
-    .filter-header h3 {
-      font-size: 0.9rem;
-    }
-
-    .filter-icon {
-      width: 26px;
-      height: 26px;
-      font-size: 0.9rem;
-    }
-
-    .form-input, .form-select {
-      padding: 8px 10px;
-      font-size: 0.8rem;
-    }
-
-    .filter-btn {
-      padding: 8px 12px;
-      font-size: 0.8rem;
-    }
-
-    .marketplace-grid {
-      gap: 10px;
-    }
-
-    .marketplace-grid.compact {
-      gap: 8px;
-    }
-
-    .item-image-container {
-      height: 100px;
-    }
-
-    .item-content {
-      padding: 10px 8px;
-    }
-
-    .item-title {
-      font-size: 0.8rem;
-      margin-bottom: 6px;
-    }
-
-    .item-value {
-      font-size: 1rem;
-      margin-bottom: 8px;
-    }
-
-    .btn-primary {
-      padding: 6px 10px;
+    .toggle-btn {
+      padding: 6px 8px;
       font-size: 0.7rem;
     }
-
-    .btn-secondary {
-      height: 32px;
-    }
-
-    .results-info {
-      padding: 10px 12px;
-    }
-
-    .pagination {
-      padding: 12px 8px;
-    }
-  }
-
-  /* Touch-friendly improvements for mobile */
-  @media (max-width: 768px) {
-    /* Disable hover effects on touch devices */
-    .marketplace-item:hover {
-      transform: none;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .marketplace-item:hover img {
-      transform: none;
-    }
-
-    .filter-btn:hover,
-    .btn-primary:hover,
-    .btn-secondary:hover,
-    .pagination-btn:hover {
-      transform: none;
-    }
-
-    /* Improve touch targets */
-    .view-btn,
-    .pagination-btn {
-      min-height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  }
-
-  /* Loading animation with brand colors */
-  .loading-card {
-    background: var(--surface);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: var(--shadow-soft);
-    border: 1px solid var(--primary-light);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .loading-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
-    animation: shimmer 2s infinite;
-  }
-
-  @keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
-  }
-
-  .loading-placeholder {
-    background: var(--primary-light);
-    border-radius: 8px;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
   }
 </style>
 
-  
+<div class="marketplace-page">
+  <div class="marketplace-container">
     <!-- Modern Header -->
     <div class="marketplace-header">
       <h1>🛒 Explore the Marketplace</h1>
@@ -878,10 +692,58 @@
         </div>
 
         <div class="form-group">
+          <label>💰 Price Filter</label>
+          <div class="price-filter-group">
+            <!-- Price Range Toggle -->
+            <div class="price-toggle">
+              <button type="button" class="toggle-btn {% if not request.args.get('price_range') and not request.args.get('min_price') and not request.args.get('max_price') %}active{% endif %}" onclick="togglePriceFilter('all')">All</button>
+              <button type="button" class="toggle-btn" onclick="togglePriceFilter('range')">Range</button>
+              <button type="button" class="toggle-btn" onclick="togglePriceFilter('custom')">Custom</button>
+            </div>
+
+            <!-- Predefined Price Ranges -->
+            <div id="priceRangeSelector" class="price-range-selector" style="display: none;">
+              <select name="price_range" id="price_range" class="form-select">
+                <option value="">Select Price Range</option>
+                <option value="under-1000" {% if request.args.get('price_range') == 'under-1000' %}selected{% endif %}>Under ₦1,000</option>
+                <option value="1000-5000" {% if request.args.get('price_range') == '1000-5000' %}selected{% endif %}>₦1,000 - ₦5,000</option>
+                <option value="5000-10000" {% if request.args.get('price_range') == '5000-10000' %}selected{% endif %}>₦5,000 - ₦10,000</option>
+                <option value="10000-25000" {% if request.args.get('price_range') == '10000-25000' %}selected{% endif %}>₦10,000 - ₦25,000</option>
+                <option value="25000-50000" {% if request.args.get('price_range') == '25000-50000' %}selected{% endif %}>₦25,000 - ₦50,000</option>
+                <option value="over-50000" {% if request.args.get('price_range') == 'over-50000' %}selected{% endif %}>Over ₦50,000</option>
+              </select>
+            </div>
+
+            <!-- Custom Price Inputs -->
+            <div id="customPrice" class="price-custom" style="display: none;">
+              <input type="number" 
+                     name="min_price" 
+                     placeholder="Min Price (₦)"
+                     value="{{ request.args.get('min_price', '') }}"
+                     class="price-input"
+                     min="0"
+                     step="100" />
+              <input type="number" 
+                     name="max_price" 
+                     placeholder="Max Price (₦)"
+                     value="{{ request.args.get('max_price', '') }}"
+                     class="price-input"
+                     min="0"
+                     step="100" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
           <label>&nbsp;</label>
-          <button type="submit" class="filter-btn">
-            🔍 Filter Results
-          </button>
+          <div style="display: flex; gap: 10px;">
+            <button type="submit" class="filter-btn">
+              🔍 Filter Results
+            </button>
+            <a href="{{ url_for('marketplace') }}" class="clear-filters-btn">
+              🔄 Clear All
+            </a>
+          </div>
         </div>
       </form>
     </div>
@@ -890,7 +752,7 @@
     <div class="results-info">
       <div class="results-count">
         <strong>{{ items.total }}</strong> items found
-        {% if request.args.get('search') or request.args.get('condition') or request.args.get('category') %}
+        {% if request.args.get('search') or request.args.get('condition') or request.args.get('category') or request.args.get('price_range') or request.args.get('min_price') or request.args.get('max_price') %}
           • Filtered results
         {% endif %}
       </div>
@@ -915,7 +777,7 @@
           
           <div class="item-content">
             <h4 class="item-title">{{ item.name }}</h4>
-            <div class="item-value">₦{{ item.value }}</div>
+            <div class="item-value">₦{{ "{:,.0f}".format(item.value) if item.value else 'Price not set' }}</div>
             
             <div class="item-actions">
               <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary">
@@ -942,7 +804,7 @@
     {% if items.pages > 1 %}
     <div class="pagination">
       {% if items.has_prev %}
-        <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}" 
+        <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
            class="pagination-btn">
           ← Previous
         </a>
@@ -953,15 +815,43 @@
       </div>
 
       {% if items.has_next %}
-        <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category')) }}" 
+        <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
            class="pagination-btn">
           Next →
         </a>
       {% endif %}
     </div>
     {% endif %}
+  </div>
+</div>
 
 <script>
+  let currentPriceFilter = 'all';
+
+  function togglePriceFilter(filterType) {
+    // Update button states
+    document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Hide all price filter sections
+    document.getElementById('priceRangeSelector').style.display = 'none';
+    document.getElementById('customPrice').style.display = 'none';
+    
+    // Clear form values
+    document.getElementById('price_range').value = '';
+    document.querySelector('input[name="min_price"]').value = '';
+    document.querySelector('input[name="max_price"]').value = '';
+    
+    // Show appropriate section
+    if (filterType === 'range') {
+      document.getElementById('priceRangeSelector').style.display = 'block';
+    } else if (filterType === 'custom') {
+      document.getElementById('customPrice').style.display = 'block';
+    }
+    
+    currentPriceFilter = filterType;
+  }
+
   function toggleView(viewType) {
     const grid = document.getElementById('itemsGrid');
     const buttons = document.querySelectorAll('.view-btn');
@@ -978,11 +868,93 @@
     }
   }
 
-  // Search suggestions
+  // Initialize price filter based on current URL parameters
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const priceRange = urlParams.get('price_range');
+    const minPrice = urlParams.get('min_price');
+    const maxPrice = urlParams.get('max_price');
+    
+    if (priceRange) {
+      // Show range selector and mark range button as active
+      document.querySelector('.toggle-btn[onclick="togglePriceFilter(\'range\')"]').classList.add('active');
+      document.querySelector('.toggle-btn[onclick="togglePriceFilter(\'all\')"]').classList.remove('active');
+      document.getElementById('priceRangeSelector').style.display = 'block';
+      currentPriceFilter = 'range';
+    } else if (minPrice || maxPrice) {
+      // Show custom inputs and mark custom button as active
+      document.querySelector('.toggle-btn[onclick="togglePriceFilter(\'custom\')"]').classList.add('active');
+      document.querySelector('.toggle-btn[onclick="togglePriceFilter(\'all\')"]').classList.remove('active');
+      document.getElementById('customPrice').style.display = 'block';
+      currentPriceFilter = 'custom';
+    }
+  });
+
+  // Form validation for custom price inputs
+  document.querySelector('form').addEventListener('submit', function(e) {
+    if (currentPriceFilter === 'custom') {
+      const minPrice = parseFloat(document.querySelector('input[name="min_price"]').value) || 0;
+      const maxPrice = parseFloat(document.querySelector('input[name="max_price"]').value) || 0;
+      
+      if (maxPrice > 0 && minPrice > maxPrice) {
+        e.preventDefault();
+        alert('Minimum price cannot be greater than maximum price.');
+        return false;
+      }
+    }
+    
+    // Add loading state
+    const button = this.querySelector('.filter-btn');
+    button.innerHTML = '⏳ Searching...';
+    button.disabled = true;
+  });
+
+  // Auto-format price inputs with thousand separators
+  document.querySelectorAll('.price-input').forEach(input => {
+    input.addEventListener('input', function() {
+      let value = this.value.replace(/,/g, '');
+      if (value && !isNaN(value)) {
+        this.value = parseInt(value).toLocaleString();
+      }
+    });
+    
+    // Remove formatting on focus for easier editing
+    input.addEventListener('focus', function() {
+      this.value = this.value.replace(/,/g, '');
+    });
+    
+    // Re-add formatting on blur
+    input.addEventListener('blur', function() {
+      let value = this.value.replace(/,/g, '');
+      if (value && !isNaN(value)) {
+        this.value = parseInt(value).toLocaleString();
+      }
+    });
+  });
+
+  // Clear specific filter sections when switching
+  document.querySelector('select[name="price_range"]').addEventListener('change', function() {
+    if (this.value) {
+      // Clear custom inputs when range is selected
+      document.querySelector('input[name="min_price"]').value = '';
+      document.querySelector('input[name="max_price"]').value = '';
+    }
+  });
+
+  document.querySelectorAll('.price-input').forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value) {
+        // Clear range selector when custom input is used
+        document.querySelector('select[name="price_range"]').value = '';
+      }
+    });
+  });
+
+  // Search suggestions (placeholder for future enhancement)
   const searchInput = document.getElementById('search');
   if (searchInput) {
     searchInput.addEventListener('input', function() {
-      // Add search suggestions logic here
+      // Add search suggestions logic here in the future
     });
   }
 
@@ -991,13 +963,6 @@
     btn.addEventListener('click', function() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-  });
-
-  // Add loading states
-  document.querySelector('.filter-form').addEventListener('submit', function() {
-    const button = this.querySelector('.filter-btn');
-    button.innerHTML = '⏳ Searching...';
-    button.disabled = true;
   });
 
   // Intersection Observer for animations
@@ -1021,6 +986,28 @@
     item.style.transform = 'translateY(30px)';
     item.style.transition = `all 0.6s ease ${index * 0.0001}s`;
     observer.observe(item);
+  });
+
+  // Price range quick select buttons (optional enhancement)
+  function selectPriceRange(min, max) {
+    document.querySelector('input[name="min_price"]').value = min;
+    document.querySelector('input[name="max_price"]').value = max;
+    document.querySelector('select[name="price_range"]').value = '';
+    togglePriceFilter('custom');
+  }
+
+  // Add keyboard shortcuts for common actions
+  document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('search').focus();
+    }
+    
+    // Escape to clear search
+    if (e.key === 'Escape' && document.activeElement === document.getElementById('search')) {
+      document.getElementById('search').value = '';
+    }
   });
 </script>
 {% endblock %}

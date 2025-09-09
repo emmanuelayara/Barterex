@@ -485,6 +485,11 @@ def marketplace():
     condition_filter = request.args.get('condition')
     category_filter = request.args.get('category')
     search = request.args.get('search', '')
+    
+    # New price filtering parameters
+    min_price = request.args.get('min_price', type=float)
+    max_price = request.args.get('max_price', type=float)
+    price_range = request.args.get('price_range')  # For predefined ranges
 
     filters = [Item.is_approved == True, Item.is_available == True]
 
@@ -496,6 +501,35 @@ def marketplace():
 
     if search:
         filters.append(Item.name.ilike(f'%{search}%'))
+
+    # Price filtering logic
+    if price_range:
+        # Handle predefined price ranges
+        if price_range == 'under-1000':
+            filters.append(Item.value < 1000)
+        elif price_range == '1000-5000':
+            filters.append(Item.value >= 1000)
+            filters.append(Item.value <= 5000)
+        elif price_range == '5000-10000':
+            filters.append(Item.value >= 5000)
+            filters.append(Item.value <= 10000)
+        elif price_range == '10000-25000':
+            filters.append(Item.value >= 10000)
+            filters.append(Item.value <= 25000)
+        elif price_range == '25000-50000':
+            filters.append(Item.value >= 25000)
+            filters.append(Item.value <= 50000)
+        elif price_range == 'over-50000':
+            filters.append(Item.value > 50000)
+    else:
+        # Handle custom min/max price inputs
+        if min_price is not None:
+            filters.append(Item.value >= min_price)
+        if max_price is not None:
+            filters.append(Item.value <= max_price)
+
+    # Only include items with actual values (not None)
+    filters.append(Item.value.isnot(None))
 
     items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=1000)
 
