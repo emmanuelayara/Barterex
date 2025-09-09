@@ -552,91 +552,377 @@
     font-size: 0.85rem;
   }
 
-  /* Mobile Responsiveness */
+  /* Mobile Responsiveness - Enhanced */
   @media (max-width: 768px) {
     .marketplace-page {
-      padding: 15px 0;
+      padding: 10px 0;
     }
 
     .marketplace-container {
-      padding: 0 15px;
+      padding: 0 12px;
     }
 
     .marketplace-header {
       margin-bottom: 20px;
-      padding: 20px 15px;
+      padding: 20px 16px;
       border-radius: 16px;
     }
 
     .marketplace-header h1 {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       margin-bottom: 10px;
     }
 
     .marketplace-header p {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      line-height: 1.4;
     }
 
     .filter-section {
-      padding: 15px;
+      padding: 16px;
       margin-bottom: 20px;
       border-radius: 12px;
     }
 
+    .filter-header {
+      margin-bottom: 16px;
+      gap: 10px;
+    }
+
+    .filter-header h3 {
+      font-size: 1.1rem;
+    }
+
+    .filter-icon {
+      width: 32px;
+      height: 32px;
+      font-size: 1rem;
+    }
+
     .filter-form {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+    }
+
+    .form-input, .form-select {
+      padding: 14px 16px;
+      font-size: 16px; /* Prevent zoom on iOS */
+      border-radius: 10px;
+    }
+
+    /* Price filter mobile improvements */
+    .price-range-selector {
       grid-template-columns: 1fr;
       gap: 12px;
     }
 
-    .price-range-selector,
     .price-custom {
       grid-template-columns: 1fr;
-      gap: 8px;
+      gap: 12px;
     }
 
     .price-toggle {
-      flex-wrap: wrap;
-      gap: 6px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
     .toggle-btn {
-      padding: 4px 8px;
-      font-size: 0.75rem;
+      padding: 10px 8px;
+      font-size: 0.8rem;
+      text-align: center;
+      border-radius: 8px;
     }
 
-    .marketplace-grid {
-      grid-template-columns: repeat(2, 1fr);
+    .price-input {
+      padding: 12px 16px;
+      font-size: 16px; /* Prevent zoom on iOS */
+      border-radius: 8px;
+    }
+
+    /* Button improvements for mobile */
+    .filter-btn, .clear-filters-btn {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 0.9rem;
+      border-radius: 10px;
+      justify-content: center;
+    }
+
+    .form-group:last-child {
+      grid-column: 1;
+    }
+
+    .form-group:last-child > div {
+      display: flex;
+      flex-direction: column;
       gap: 12px;
+    }
+
+    /* Results info mobile */
+    .results-info {
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .results-count {
+      font-size: 0.9rem;
+    }
+
+    .view-toggle {
+      align-self: center;
+    }
+
+    /* Grid improvements for mobile */
+    .marketplace-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
       margin-bottom: 30px;
     }
 
+    .marketplace-grid.compact {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    /* Item card mobile improvements */
+    .marketplace-item {
+      border-radius: 12px;
+      margin-bottom: 0;
+    }
+
     .item-image-container {
-      height: 120px;
+      height: 200px;
+    }
+
+    .marketplace-grid.compact .item-image-container {
+      height: 140px;
+    }
+
+    .item-badge {
+      top: 8px;
+      right: 8px;
+      padding: 4px 8px;
+      font-size: 0.65rem;
     }
 
     .item-content {
-      padding: 12px 10px;
+      padding: 16px;
+    }
+
+    .marketplace-grid.compact .item-content {
+      padding: 12px;
     }
 
     .item-title {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .marketplace-grid.compact .item-title {
       font-size: 0.9rem;
       margin-bottom: 8px;
     }
 
     .item-value {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+    }
+
+    .marketplace-grid.compact .item-value {
+      font-size: 1rem;
       margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      padding: 12px 16px;
+      font-size: 0.85rem;
+    }
+
+    .marketplace-grid.compact .btn-primary {
+      padding: 8px 12px;
+      font-size: 0.75rem;
+    }
+
+    /* Empty state mobile */
+    .empty-state {
+      padding: 40px 20px;
+    }
+
+    .empty-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 1.3rem;
+    }
+
+    .empty-title {
+      font-size: 1.1rem;
+    }
+
+    .empty-description {
+      font-size: 0.85rem;
+    }
+
+    /* Pagination mobile */
+    .pagination {
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .pagination-info {
+      order: -1;
+      padding: 0;
+      font-size: 0.8rem;
+    }
+
+    .pagination-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 12px 20px;
     }
   }
 
+  /* Small mobile devices */
   @media (max-width: 480px) {
+    .marketplace-container {
+      padding: 0 8px;
+    }
+
+    .marketplace-header {
+      padding: 16px 12px;
+    }
+
+    .marketplace-header h1 {
+      font-size: 1.2rem;
+    }
+
+    .filter-section {
+      padding: 12px;
+    }
+
+    .filter-header h3 {
+      font-size: 1rem;
+    }
+
     .price-toggle {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .price-toggle .toggle-btn:last-child {
+      grid-column: 1 / -1;
     }
 
     .toggle-btn {
-      padding: 6px 8px;
-      font-size: 0.7rem;
+      padding: 8px 6px;
+      font-size: 0.75rem;
+    }
+
+    .marketplace-grid.compact {
+      grid-template-columns: 1fr;
+    }
+
+    .item-image-container {
+      height: 180px;
+    }
+
+    .item-content {
+      padding: 14px;
+    }
+
+    .item-title {
+      font-size: 0.95rem;
+    }
+
+    .item-value {
+      font-size: 1.1rem;
+    }
+
+    .results-info {
+      padding: 12px;
+    }
+
+    .view-toggle {
+      transform: scale(0.9);
+    }
+  }
+
+  /* Landscape mobile optimization */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .marketplace-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .marketplace-grid.compact {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .item-image-container {
+      height: 160px;
+    }
+
+    .marketplace-grid.compact .item-image-container {
+      height: 120px;
+    }
+  }
+
+  /* Focus improvements for mobile */
+  @media (max-width: 768px) {
+    .form-input:focus, .form-select:focus {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .filter-btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.95);
+    }
+
+    /* Better touch targets */
+    .toggle-btn {
+      min-height: 44px;
+    }
+
+    .view-btn {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    .pagination-btn {
+      min-height: 44px;
+    }
+  }
+
+  /* Accessibility improvements */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .form-input, .form-select {
+      border-width: 3px;
+    }
+
+    .marketplace-item {
+      border-width: 3px;
     }
   }
 </style>
@@ -905,8 +1191,15 @@
     
     // Add loading state
     const button = this.querySelector('.filter-btn');
+    const originalText = button.innerHTML;
     button.innerHTML = '⏳ Searching...';
     button.disabled = true;
+    
+    // Reset button after a delay (in case of client-side navigation)
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }, 3000);
   });
 
   // Auto-format price inputs with thousand separators
@@ -965,28 +1258,30 @@
     });
   });
 
-  // Intersection Observer for animations
-  const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-  };
+  // Intersection Observer for animations (disabled on mobile for performance)
+  if (window.innerWidth > 768) {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
 
-  const observer = new IntersectionObserver(function(entries) {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity = '1';
-        entry.target.style.transform = 'translateY(0)';
-      }
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    // Observe marketplace items
+    document.querySelectorAll('.marketplace-item').forEach((item, index) => {
+      item.style.opacity = '0';
+      item.style.transform = 'translateY(30px)';
+      item.style.transition = `all 0.6s ease ${index * 0.1}s`;
+      observer.observe(item);
     });
-  }, observerOptions);
-
-  // Observe marketplace items
-  document.querySelectorAll('.marketplace-item').forEach((item, index) => {
-    item.style.opacity = '0';
-    item.style.transform = 'translateY(30px)';
-    item.style.transition = `all 0.6s ease ${index * 0.0001}s`;
-    observer.observe(item);
-  });
+  }
 
   // Price range quick select buttons (optional enhancement)
   function selectPriceRange(min, max) {
@@ -1009,5 +1304,97 @@
       document.getElementById('search').value = '';
     }
   });
+
+  // Touch gestures for mobile (swipe for view toggle)
+  if ('ontouchstart' in window) {
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', function(e) {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', function(e) {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      const swipeThreshold = 50;
+      const diff = touchStartX - touchEndX;
+
+      if (Math.abs(diff) > swipeThreshold) {
+        const grid = document.getElementById('itemsGrid');
+        const buttons = document.querySelectorAll('.view-btn');
+        
+        if (diff > 0 && !grid.classList.contains('compact')) {
+          // Swipe left - switch to compact view
+          grid.classList.add('compact');
+          buttons.forEach(btn => btn.classList.remove('active'));
+          document.querySelector('.view-btn[onclick="toggleView(\'compact\')"]').classList.add('active');
+        } else if (diff < 0 && grid.classList.contains('compact')) {
+          // Swipe right - switch to grid view
+          grid.classList.remove('compact');
+          buttons.forEach(btn => btn.classList.remove('active'));
+          document.querySelector('.view-btn[onclick="toggleView(\'grid\')"]').classList.add('active');
+        }
+      }
+    }
+  }
+
+  // Prevent form submission on enter key for filter inputs (mobile keyboard)
+  document.querySelectorAll('.form-input, .form-select').forEach(input => {
+    input.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        // Allow form submission for search input
+        if (this.id === 'search') {
+          return true;
+        }
+        // Prevent for other inputs and focus next element
+        e.preventDefault();
+        const form = this.closest('form');
+        const inputs = form.querySelectorAll('.form-input, .form-select');
+        const currentIndex = Array.from(inputs).indexOf(this);
+        if (currentIndex < inputs.length - 1) {
+          inputs[currentIndex + 1].focus();
+        } else {
+          this.blur();
+        }
+      }
+    });
+  });
+
+  // Mobile-specific improvements
+  if (window.innerWidth <= 768) {
+    // Reduce animation intensity for better performance
+    document.querySelectorAll('.marketplace-item').forEach(item => {
+      item.style.transition = 'all 0.2s ease';
+    });
+
+    // Optimize scroll behavior
+    let isScrolling = false;
+    window.addEventListener('scroll', function() {
+      if (!isScrolling) {
+        window.requestAnimationFrame(function() {
+          // Add scroll-based optimizations here
+          isScrolling = false;
+        });
+        isScrolling = true;
+      }
+    });
+
+    // Improve button feedback
+    document.querySelectorAll('button, .btn-primary, .btn-secondary').forEach(btn => {
+      btn.addEventListener('touchstart', function() {
+        this.style.transform = 'scale(0.95)';
+      });
+      
+      btn.addEventListener('touchend', function() {
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 100);
+      });
+    });
+  }
 </script>
 {% endblock %}
