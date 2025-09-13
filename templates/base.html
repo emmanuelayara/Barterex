@@ -299,14 +299,29 @@
         }
 
         /* ========================================
-           MAIN CONTENT STYLES
+           MAIN CONTENT STYLES - UPDATED FOR FULL WIDTH
            ======================================== */
         
+        /* Default container for pages that need padding */
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem 1rem;
             min-height: calc(100vh - 200px);
+        }
+
+        /* Full-width container for pages that need to touch screen edges */
+        .container-fullwidth {
+            width: 100%;
+            padding: 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Flash Messages - needs some padding even in full-width */
+        .flash-messages {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
         }
 
         /* Flash Messages */
@@ -551,30 +566,30 @@
     </div>
 </nav>
 
-<!-- ✨ PAGE CONTENT -->
-<div class="container">
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="mb-4">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" onclick="this.parentElement.style.display='none'">&times;</button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+<!-- ✨ FLASH MESSAGES (with padding even for full-width pages) -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages mb-4">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" onclick="this.parentElement.style.display='none'">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
 
-    {% block content %}
-    <!-- Default content -->
+<!-- ✨ PAGE CONTENT -->
+{% block content %}
+<!-- Default content -->
+<div class="container">
     <div style="padding: 2rem; text-align: center;">
         <h1 style="color: var(--primary-blue); margin-bottom: 1rem;">Welcome to Barterex</h1>
         <p style="color: var(--gray-600); font-size: 1.1rem;">Your modern marketplace for trading and bartering</p>
     </div>
-    {% endblock %}
 </div>
+{% endblock %}
 
 <!-- ✨ MODERN FOOTER -->
 <footer>

@@ -15,6 +15,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         /* Contact Page Styles */
@@ -22,6 +23,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 4rem 2rem;
+            width: 100%;
         }
 
         .contact-header {
@@ -48,17 +50,19 @@
             grid-template-columns: 1fr 1fr;
             gap: 4rem;
             align-items: start;
+            width: 100%;
         }
 
-        .contact-info {
+        .contact-info, .quick-actions {
             background: white;
             padding: 3rem;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(5, 78, 151, 0.1);
             border: 1px solid rgba(255, 122, 0, 0.1);
+            width: 100%;
         }
 
-        .contact-info h2 {
+        .contact-info h2, .quick-actions h2 {
             color: #054e97;
             font-size: 2rem;
             margin-bottom: 2rem;
@@ -119,23 +123,6 @@
         .info-content a:hover {
             color: #054e97;
             text-decoration: underline;
-        }
-
-        .quick-actions {
-            background: white;
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(5, 78, 151, 0.1);
-            border: 1px solid rgba(255, 122, 0, 0.1);
-        }
-
-        .quick-actions h2 {
-            color: #054e97;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
         .action-button {
@@ -238,10 +225,11 @@
             box-shadow: 0 10px 25px rgba(5, 78, 151, 0.3);
         }
 
-        /* Mobile Responsive Design */
+        /* Mobile Responsive Design - Stack elements vertically */
         @media (max-width: 768px) {
             .contact-container {
-                padding: 1.5rem 1rem;
+                padding: 2rem 1rem;
+                max-width: 100%;
             }
 
             .contact-header {
@@ -249,93 +237,76 @@
             }
 
             .contact-header h1 {
-                font-size: 1.8rem;
+                font-size: 2rem;
             }
 
             .contact-header p {
                 font-size: 1rem;
             }
 
-            /* Keep side-by-side layout on mobile */
+            /* Single column layout on mobile */
             .contact-content {
-                grid-template-columns: 1fr 1fr;
-                gap: 1rem;
+                grid-template-columns: 1fr;
+                gap: 2rem;
             }
 
             .contact-info,
             .quick-actions {
-                padding: 1.5rem;
+                padding: 2rem;
+                width: 100%;
             }
 
             .contact-info h2,
             .quick-actions h2 {
-                font-size: 1.2rem;
-                margin-bottom: 1rem;
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
             }
 
             .info-item {
-                padding: 1rem;
-                margin-bottom: 1rem;
+                padding: 1.25rem;
+                margin-bottom: 1.5rem;
             }
 
             .info-icon {
-                width: 35px;
-                height: 35px;
+                width: 40px;
+                height: 40px;
                 margin-right: 1rem;
             }
 
-            .info-icon i {
-                font-size: 0.9rem;
-            }
-
             .info-content h3 {
-                font-size: 1rem;
+                font-size: 1.1rem;
             }
 
             .info-content p {
-                font-size: 0.85rem;
-                line-height: 1.4;
+                font-size: 0.9rem;
+                line-height: 1.5;
             }
 
             .action-button {
-                padding: 1rem;
-                font-size: 0.9rem;
-                margin-bottom: 1rem;
-            }
-
-            .action-button i {
+                padding: 1.25rem;
                 font-size: 1rem;
+                margin-bottom: 1.25rem;
             }
 
             .contact-form {
                 padding: 1.5rem;
-                margin-top: 1rem;
-            }
-
-            .contact-form h3 {
-                font-size: 1rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .contact-form p {
-                font-size: 0.85rem;
-                margin-bottom: 1rem;
+                margin-top: 1.25rem;
             }
 
             .form-button {
-                padding: 0.8rem 1.5rem;
-                font-size: 0.9rem;
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
             }
         }
 
         /* Extra small screens */
         @media (max-width: 480px) {
             .contact-container {
-                padding: 1rem 0.5rem;
+                padding: 1.5rem 0.75rem;
             }
 
             .contact-header h1 {
-                font-size: 1.5rem;
+                font-size: 1.75rem;
             }
 
             .contact-header p {
@@ -343,76 +314,70 @@
             }
 
             .contact-content {
-                gap: 0.8rem;
+                gap: 1.5rem;
             }
 
             .contact-info,
             .quick-actions {
-                padding: 1rem;
+                padding: 1.5rem;
             }
 
             .contact-info h2,
             .quick-actions h2 {
-                font-size: 1rem;
-                gap: 0.3rem;
-            }
-
-            .contact-info h2 i,
-            .quick-actions h2 i {
-                font-size: 0.9rem;
+                font-size: 1.25rem;
             }
 
             .info-item {
-                padding: 0.8rem;
-                border-radius: 10px;
+                padding: 1rem;
+                border-radius: 12px;
             }
 
             .info-icon {
-                width: 30px;
-                height: 30px;
-                margin-right: 0.8rem;
+                width: 35px;
+                height: 35px;
+                margin-right: 0.75rem;
             }
 
             .info-icon i {
-                font-size: 0.8rem;
+                font-size: 0.9rem;
             }
 
             .info-content h3 {
-                font-size: 0.9rem;
-                margin-bottom: 0.3rem;
+                font-size: 1rem;
+                margin-bottom: 0.25rem;
             }
 
             .info-content p {
-                font-size: 0.8rem;
+                font-size: 0.85rem;
             }
 
             .action-button {
-                padding: 0.8rem;
-                font-size: 0.8rem;
-                border-radius: 10px;
+                padding: 1rem;
+                font-size: 0.9rem;
+                border-radius: 12px;
             }
 
             .action-button i {
-                font-size: 0.9rem;
-                margin-right: 0.3rem;
+                font-size: 1rem;
+                margin-right: 0.4rem;
             }
 
             .contact-form {
-                padding: 1rem;
-                border-radius: 10px;
+                padding: 1.25rem;
+                border-radius: 12px;
             }
 
             .contact-form h3 {
-                font-size: 0.9rem;
+                font-size: 1rem;
             }
 
             .contact-form p {
-                font-size: 0.8rem;
+                font-size: 0.85rem;
             }
 
             .form-button {
-                padding: 0.7rem 1rem;
-                font-size: 0.8rem;
+                padding: 0.875rem 1.25rem;
+                font-size: 0.9rem;
             }
         }
 
