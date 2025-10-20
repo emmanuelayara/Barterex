@@ -103,7 +103,7 @@ def create_notification(user_id, message):
 
 
 
-@app.route('/')
+@app.route('/home')
 def home():
     trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()  # 3 rows x 2 cols
     return render_template('home.html', trending_items=trending_items)
@@ -479,7 +479,7 @@ def profile_settings():
 
 # ---------------------- MARKETPLACE ---------------------- #
 
-@app.route('/marketplace')
+@app.route('/')
 def marketplace():
     page = request.args.get('page', 1, type=int)
     condition_filter = request.args.get('condition')
