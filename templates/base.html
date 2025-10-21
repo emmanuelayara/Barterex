@@ -48,21 +48,24 @@
         }
 
         /* ========================================
-           COMPACT ICON-ONLY NAVBAR
+           COMPACT ICON-ONLY NAVBAR - LOCKED SIZING
            ======================================== */
         
         .barterex-navbar {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(203, 213, 225, 0.2);
-            box-shadow: var(--shadow-lg);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            width: 100%;
-            font-family: inherit;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid rgba(203, 213, 225, 0.2) !important;
+            box-shadow: var(--shadow-lg) !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+            transition: all 0.3s ease !important;
+            width: 100% !important;
+            font-family: inherit !important;
+            /* Force consistent height */
+            min-height: 60px !important;
+            max-height: 60px !important;
         }
 
         .barterex-navbar * {
@@ -750,20 +753,22 @@
                 <li class="nav-item">
                     <a href="{{ url_for('marketplace') }}" class="nav-link" data-tooltip="Marketplace">
                         <i class="fas fa-store"></i>
-                        <span>Marketplace</span>
                     </a>
                 </li>
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a href="{{ url_for('upload_item') }}" class="nav-link" data-tooltip="Upload Item">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Upload Item</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="nav-link" data-tooltip="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('view_cart') }}" class="nav-link" data-tooltip="Shopping Cart">
                             <i class="fas fa-shopping-cart"></i>
-                            <span>Cart</span>
                         </a>
                     </li>
                     <li class="nav-item">
