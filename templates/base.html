@@ -591,7 +591,6 @@
 </div>
 {% endblock %}
 
-<!-- ✨ MODERN FOOTER -->
 <!-- Replace your current footer with this bottom navigation -->
 
 <!-- ✨ BOTTOM NAVIGATION BAR (replaces footer) -->
@@ -620,11 +619,8 @@
             </a>
         {% else %}
             <!-- Show minimal footer for non-authenticated users -->
-            <div style="max-width: 1200px; margin: 0 auto;">
-                <p>&copy; {{ current_year if current_year else '2025' }} Barter Express | All rights reserved</p>
-                <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8;">
-                    Built with ❤️ for seamless trading experiences
-                </p>
+            <div class="bottom-footer">
+                <p>&copy; 2025 Barter Express | <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a></p>
             </div>
         {% endif %}
     </div>
