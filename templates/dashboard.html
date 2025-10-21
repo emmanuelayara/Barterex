@@ -635,46 +635,12 @@
   }
 </style>
 
-<div class="dashboard-container">
-  <!-- Top Navigation -->
-  <nav class="top-nav">
-    <div class="nav-container">
-      <ul class="nav-menu">
-        <li class="nav-item">
-          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
-            📦 My Items
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
-            🔄 My Trades
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('user_orders') }}" class="nav-link {% if request.endpoint == 'user_orders' %}active{% endif %}">
-            💳 My Orders
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
-            🔔 Notifications
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
-            👤 Profile
-          </a>
-        </li>
-      </ul>
-    </div>
-  </nav>
 
   <!-- Main Content -->
   <div class="main-content">
     <!-- Welcome Section -->
     <div class="welcome-section">
       <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
-      <p class="welcome-subtitle">{{ current_user.email }}</p>
     </div>
 
     <!-- Stats Grid -->
@@ -691,27 +657,29 @@
         <div class="stat-title">Items Listed</div>
         <div class="stat-value">{{ item_count }}</div>
         <div class="stat-description">No of Items listed for trade</div>
-      </div>
+      </div> 
 
-      <div class="stat-card">
-        <div class="stat-icon">📍</div>
-        <div class="stat-title">Address</div>
-        <div class="stat-value" style="font-size: 0.70rem; line-height: 1.3;">
-          {% if current_user.address %}
-            {{ current_user.address }}
-          {% else %}
-            Not Set
-          {% endif %}
-        </div>
-        <div class="stat-description">
-          {% if current_user.city or current_user.state %}
-            {{ current_user.city or '' }}{% if current_user.city and current_user.state %}, {% endif %}{{ current_user.state or '' }}
-          {% else %}
-            Please update your address for efficient trading
-          {% endif %}
+      <a href="{{ url_for('profile_settings') }}">
+        <div class="stat-card">
+          <div class="stat-icon">📍</div>
+          <div class="stat-title">Address</div>
+          <div class="stat-value" style="font-size: 0.70rem; line-height: 1.3;">
+            {% if current_user.address %}
+              {{ current_user.address }}
+            {% else %}
+              Not Set
+            {% endif %}
+          </div>
+          <div class="stat-description">
+            {% if current_user.city or current_user.state %}
+              {{ current_user.city or '' }}{% if current_user.city and current_user.state %}, {% endif %}{{ current_user.state or '' }}
+            {% else %}
+              Please update your address for efficient trading
+            {% endif %}
+          </div>
         </div>
       </div>
-    </div>
+      </a>
 
     <!-- Recent Notifications -->
     <div class="notifications-section">
