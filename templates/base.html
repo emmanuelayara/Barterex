@@ -116,12 +116,14 @@
         }
 
         .barterex-navbar .logo-text {
-            font-weight: 800;
-            background: linear-gradient(45deg, var(--white), var(--gray-200));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            color: var(--white); /* Fallback */
+            font-weight: 800 !important;
+            background: linear-gradient(45deg, var(--white), var(--gray-200)) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            color: var(--white) !important; /* Fallback */
+            display: inline-block !important; /* Keep visible on mobile */
+            font-size: inherit !important;
         }
 
         /* Icon-Only Navigation */
