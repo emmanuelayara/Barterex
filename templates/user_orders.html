@@ -788,39 +788,7 @@
   }
 </style>
 
-<div class="page-container">
-  <!-- Top Navigation -->
-  <nav class="top-nav">
-    <div class="nav-container">
-      <ul class="nav-menu">
-        <li class="nav-item">
-          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
-            📦 My Items
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
-            🔄 My Trades
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('user_orders') }}" class="nav-link {% if request.endpoint == 'user_orders' %}active{% endif %}">
-            💳 My Orders
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
-            🔔 Notifications
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
-            👤 Profile
-          </a>
-        </li>
-      </ul>
-    </div>
-  </nav>
+
 
   <!-- Main Content -->
   <div class="main-content">
