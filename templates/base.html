@@ -22,8 +22,8 @@
             --gray-100: #f8fafc;
             --gray-200: #e2e8f0;
             --gray-300: #cbd5e1;
-            --gray-600: #475569;
-            --gray-900: whitesmoke;
+            --gray-600: #054e97;
+            --gray-900: #054e97;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -48,7 +48,7 @@
         }
 
         /* ========================================
-           COMPACT ICON-ONLY NAVBAR
+           ENHANCED DESKTOP-OPTIMIZED NAVBAR
            ======================================== */
         
         .barterex-navbar {
@@ -121,12 +121,12 @@
             -webkit-background-clip: text !important;
             -webkit-text-fill-color: transparent !important;
             background-clip: text !important;
-            color: var(--white) !important; /* Fallback */
-            display: inline-block !important; /* Keep visible on mobile */
+            color: var(--white) !important;
+            display: inline-block !important;
             font-size: inherit !important;
         }
 
-        /* Icon-Only Navigation */
+        /* Icon-Only Navigation (Mobile) / Icon+Text (Desktop) */
         .barterex-navbar .nav-links {
             display: flex;
             align-items: center;
@@ -155,19 +155,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 0;
             position: relative;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             min-width: 40px;
             height: 40px;
+            white-space: nowrap;
         }
 
         .barterex-navbar .nav-link i {
             font-size: 1.1rem;
             transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
-        /* Tooltip on hover */
+        /* Hide text on mobile */
+        .barterex-navbar .nav-link .nav-text {
+            display: none;
+        }
+
+        /* Tooltip on hover (Mobile only) */
         .barterex-navbar .nav-link::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -228,7 +236,7 @@
             transform: scale(1.15);
         }
 
-        /* Responsive Design */
+        /* Mobile Responsive Design */
         @media (max-width: 380px) {
             .barterex-navbar .nav-container {
                 padding: 0.4rem 0.5rem;
@@ -274,6 +282,7 @@
             }
         }
 
+        /* Tablet Styles */
         @media (min-width: 768px) {
             .barterex-navbar .nav-container {
                 padding: 0.75rem 1.5rem;
@@ -303,13 +312,16 @@
             }
         }
 
+        /* Desktop Styles - Show Text + Icons */
         @media (min-width: 1024px) {
             .barterex-navbar .nav-container {
                 max-width: 1400px;
+                padding: 0.75rem 2rem;
             }
 
             .barterex-navbar .logo-link {
-                font-size: 1.25rem;
+                padding: 0.6rem 1.25rem;
+                font-size: 1.35rem;
             }
 
             .barterex-navbar .logo-img {
@@ -317,21 +329,89 @@
             }
 
             .barterex-navbar .nav-links {
+                gap: 0.75rem;
+            }
+
+            /* Show text labels on desktop */
+            .barterex-navbar .nav-link {
+                padding: 0.65rem 1.25rem;
+                min-width: auto;
+                height: auto;
                 gap: 0.6rem;
+                font-size: 0.95rem;
+            }
+
+            .barterex-navbar .nav-link .nav-text {
+                display: inline-block;
+                font-weight: 600;
+                letter-spacing: 0.3px;
+            }
+
+            .barterex-navbar .nav-link i {
+                font-size: 1.1rem;
+            }
+
+            /* Hide tooltips on desktop since we show text */
+            .barterex-navbar .nav-link::after,
+            .barterex-navbar .nav-link::before {
+                display: none;
+            }
+
+            .barterex-navbar .nav-link:hover i {
+                transform: translateX(-2px) scale(1.1);
+            }
+
+            body {
+                padding-bottom: 0;
+            }
+        }
+
+        /* Large Desktop Optimization */
+        @media (min-width: 1280px) {
+            .barterex-navbar .nav-container {
+                max-width: 1600px;
+                padding: 0.85rem 3rem;
+            }
+
+            .barterex-navbar .logo-link {
+                padding: 0.7rem 1.5rem;
+                font-size: 1.45rem;
+            }
+
+            .barterex-navbar .logo-img {
+                height: 36px;
+            }
+
+            .barterex-navbar .nav-links {
+                gap: 1rem;
             }
 
             .barterex-navbar .nav-link {
-                padding: 0.75rem;
-                min-width: 46px;
-                height: 46px;
+                padding: 0.75rem 1.5rem;
+                font-size: 1rem;
+                gap: 0.7rem;
             }
 
             .barterex-navbar .nav-link i {
                 font-size: 1.2rem;
             }
+        }
 
-            body {
-                padding-bottom: 0;
+        /* Ultra-wide Desktop */
+        @media (min-width: 1920px) {
+            .barterex-navbar .nav-container {
+                max-width: 1800px;
+                padding: 1rem 4rem;
+            }
+
+            .barterex-navbar .nav-links {
+                gap: 1.25rem;
+            }
+
+            .barterex-navbar .nav-link {
+                padding: 0.85rem 1.75rem;
+                font-size: 1.05rem;
+                gap: 0.8rem;
             }
         }
 
@@ -598,11 +678,11 @@
 
         @media (min-width: 1024px) {
             .bottom-nav {
-                position: relative;
-                bottom: auto;
+                position: fixed;
+                bottom: 0;
                 background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-600) 100%);
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: none;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
                 padding: 0.5rem 0;
             }
             
@@ -739,7 +819,7 @@
 </head>
 <body>
 
-<!-- COMPACT ICON-ONLY NAVBAR -->
+<!-- ENHANCED NAVBAR - Icon-only on Mobile, Icon+Text on Desktop -->
 <nav id="navbar" class="barterex-navbar">
     <div class="nav-container">
         <div class="nav-header">
@@ -752,33 +832,39 @@
                 <li class="nav-item">
                     <a href="{{ url_for('marketplace') }}" class="nav-link" data-tooltip="Marketplace">
                         <i class="fas fa-store"></i>
+                        <span class="nav-text">Marketplace</span>
                     </a>
                 </li>
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a href="{{ url_for('upload_item') }}" class="nav-link" data-tooltip="Upload Item">
                             <i class="fas fa-cloud-upload-alt"></i>
+                            <span class="nav-text">Upload</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('view_cart') }}" class="nav-link" data-tooltip="Shopping Cart">
                             <i class="fas fa-shopping-cart"></i>
+                            <span class="nav-text">Cart</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('logout') }}" class="nav-link" data-tooltip="Logout">
                             <i class="fas fa-sign-out-alt"></i>
+                            <span class="nav-text">Logout</span>
                         </a>
                     </li>
                 {% else %}
                     <li class="nav-item">
                         <a href="{{ url_for('login') }}" class="nav-link" data-tooltip="Login">
                             <i class="fas fa-sign-in-alt"></i>
+                            <span class="nav-text">Login</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ url_for('register') }}" class="nav-link" data-tooltip="Register">
                             <i class="fas fa-user-plus"></i>
+                            <span class="nav-text">Register</span>
                         </a>
                     </li>
                 {% endif %}

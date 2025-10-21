@@ -625,51 +625,14 @@
   }
 </style>
 
-<div class="page-container">
-  <!-- Top Navigation -->
-  <nav class="top-nav">
-    <div class="nav-container">
-      <ul class="nav-menu">
-        <li class="nav-item">
-          <a href="{{ url_for('user_items') }}" class="nav-link {% if request.endpoint == 'user_items' %}active{% endif %}">
-            <span>📦</span>
-            <span>My Items</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('my_trades') }}" class="nav-link {% if request.endpoint == 'my_trades' %}active{% endif %}">
-            <span>🔄</span>
-            <span>My Trades</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('user_orders') }}" class="nav-link {% if request.endpoint == 'user_orders' %}active{% endif %}">
-            <span>💳</span>
-            <span>My Orders</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('notifications') }}" class="nav-link {% if request.endpoint == 'notifications' %}active{% endif %}">
-            <span>🔔</span>
-            <span>Notifications</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="{{ url_for('profile_settings') }}" class="nav-link {% if request.endpoint == 'profile_settings' %}active{% endif %}">
-            <span>👤</span>
-            <span>Profile</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </nav>
+
+
 
   <!-- Main Content -->
   <div class="main-content">
     <!-- Page Header -->
     <div class="page-header">
-      <h1 class="page-title">Profile Settings</h1>
-      <p class="page-subtitle">Update your personal information and preferences</p>
+      <strong class="page-subtitle" style="color: #054e97;">Update your personal information and preferences</strong>
     </div>
 
     <!-- Profile Container -->
