@@ -346,213 +346,130 @@
             font-weight: 500;
         }
 
-        /* Mobile Optimizations */
+        /* Mobile Optimizations - SIGNIFICANTLY REDUCED SIZES */
         @media (max-width: 768px) {
             .navbar-nav {
                 display: none;
             }
 
             .main-content {
-                padding: 15px 10px;
-                margin-top: 60px;
-                min-height: calc(100vh - 60px);
+                padding: 8px 5px;
+                margin-top: 50px;
+                min-height: calc(100vh - 50px);
             }
 
             .login-container {
-                padding: 25px 20px;
-                margin: 0 5px;
+                padding: 16px 14px;
+                margin: 0 3px;
                 max-width: 100%;
-                border-radius: 16px;
-                box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+                border-radius: 12px;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             }
 
             .login-container:hover {
                 transform: none;
-                box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             }
 
             .form-header {
-                margin-bottom: 20px;
+                margin-bottom: 12px;
             }
 
             .form-header h2 {
-                font-size: 22px;
-                margin-bottom: 4px;
+                font-size: 18px;
+                margin-bottom: 2px;
             }
 
             .form-header p {
-                font-size: 13px;
+                font-size: 11px;
             }
 
             .form-row {
-                gap: 16px;
-                margin-bottom: 18px;
+                gap: 10px;
+                margin-bottom: 10px;
             }
 
             .form-group {
-                margin-bottom: 18px;
+                margin-bottom: 10px;
             }
 
             .form-label {
-                font-size: 12px;
-                margin-bottom: 5px;
+                font-size: 10px;
+                margin-bottom: 3px;
+                letter-spacing: 0.3px;
             }
 
             .form-input {
-                padding: 12px 14px;
-                font-size: 16px;
-                border-radius: 8px;
+                padding: 9px 10px;
+                font-size: 14px;
+                border-radius: 6px;
+                border-width: 1.5px;
+            }
+
+            .error-message {
+                font-size: 10px;
+                margin-top: 2px;
             }
 
             .forgot-password {
-                margin-bottom: 18px;
+                margin-bottom: 10px;
                 text-align: center;
             }
 
             .forgot-password a {
-                font-size: 12px;
-            }
-
-            .remember-me {
-                margin-bottom: 18px;
-            }
-
-            .custom-checkbox {
-                width: 16px;
-                height: 16px;
-                margin-right: 8px;
-            }
-
-            .checkbox-label {
-                font-size: 12px;
-            }
-
-            .submit-button {
-                padding: 12px;
-                font-size: 14px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-            }
-
-            .divider {
-                margin: 20px 0;
-            }
-
-            .divider span {
-                padding: 0 12px;
-                font-size: 12px;
-            }
-
-            .social-buttons {
-                gap: 10px;
-            }
-
-            .social-btn {
-                padding: 10px;
-                font-size: 13px;
-                border-radius: 6px;
-            }
-
-            .social-login {
-                margin-bottom: 18px;
-            }
-
-            .form-footer {
-                padding-top: 18px;
-            }
-
-            .form-footer p {
-                font-size: 13px;
-                margin-bottom: 8px;
-            }
-
-            .register-link {
-                font-size: 13px;
-            }
-        }
-
-        /* Extra small screens (phones in portrait mode) */
-        @media (max-width: 480px) {
-            .main-content {
-                padding: 10px 8px;
-                margin-top: 50px;
-            }
-
-            .login-container {
-                padding: 20px 15px;
-                margin: 0;
-                border-radius: 14px;
-            }
-
-            .form-header h2 {
-                font-size: 20px;
-            }
-
-            .form-header p {
-                font-size: 12px;
-            }
-
-            .form-input {
-                padding: 11px 12px;
-                font-size: 16px;
-            }
-
-            .submit-button {
-                padding: 11px;
-                font-size: 13px;
-            }
-
-            .divider span {
-                padding: 0 10px;
                 font-size: 11px;
             }
 
-            .social-btn {
-                padding: 9px;
-                font-size: 12px;
-            }
-        }
-
-        /* Landscape mode for small screens */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .main-content {
-                margin-top: 40px;
-                min-height: calc(100vh - 40px);
-                padding: 8px;
-            }
-
-            .login-container {
-                padding: 18px;
-            }
-
-            .form-header {
-                margin-bottom: 15px;
-            }
-
-            .form-header h2 {
-                font-size: 20px;
-            }
-
-            .form-row {
-                gap: 12px;
-                margin-bottom: 12px;
-            }
-
-            .form-group {
-                margin-bottom: 12px;
-            }
-
-            .forgot-password,
             .remember-me {
-                margin-bottom: 12px;
+                margin-bottom: 10px;
+            }
+
+            .custom-checkbox {
+                width: 14px;
+                height: 14px;
+                margin-right: 6px;
+            }
+
+            .custom-checkbox.checked::after {
+                font-size: 9px;
+            }
+
+            .checkbox-label {
+                font-size: 11px;
             }
 
             .submit-button {
-                margin-bottom: 15px;
+                padding: 10px;
+                font-size: 12px;
+                border-radius: 6px;
+                margin-bottom: 12px;
+                letter-spacing: 0.3px;
             }
 
             .divider {
-                margin: 15px 0;
+                margin: 12px 0;
+            }
+
+            .divider span {
+                padding: 0 8px;
+                font-size: 10px;
+            }
+
+            .social-buttons {
+                gap: 8px;
+            }
+
+            .social-btn {
+                padding: 8px;
+                font-size: 11px;
+                border-radius: 6px;
+                gap: 6px;
+                border-width: 1.5px;
+            }
+
+            .social-btn svg {
+                width: 16px;
+                height: 16px;
             }
 
             .social-login {
@@ -561,6 +478,208 @@
 
             .form-footer {
                 padding-top: 12px;
+            }
+
+            .form-footer p {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+
+            .register-link {
+                font-size: 11px;
+            }
+        }
+
+        /* Extra small screens (phones in portrait mode) - EVEN SMALLER */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 6px 4px;
+                margin-top: 45px;
+            }
+
+            .login-container {
+                padding: 14px 12px;
+                margin: 0;
+                border-radius: 10px;
+            }
+
+            .form-header {
+                margin-bottom: 10px;
+            }
+
+            .form-header h2 {
+                font-size: 16px;
+            }
+
+            .form-header p {
+                font-size: 10px;
+            }
+
+            .form-row {
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+
+            .form-group {
+                margin-bottom: 8px;
+            }
+
+            .form-label {
+                font-size: 9px;
+                margin-bottom: 2px;
+            }
+
+            .form-input {
+                padding: 8px 9px;
+                font-size: 13px;
+            }
+
+            .error-message {
+                font-size: 9px;
+            }
+
+            .forgot-password {
+                margin-bottom: 8px;
+            }
+
+            .forgot-password a {
+                font-size: 10px;
+            }
+
+            .remember-me {
+                margin-bottom: 8px;
+            }
+
+            .custom-checkbox {
+                width: 13px;
+                height: 13px;
+                margin-right: 5px;
+            }
+
+            .custom-checkbox.checked::after {
+                font-size: 8px;
+            }
+
+            .checkbox-label {
+                font-size: 10px;
+            }
+
+            .submit-button {
+                padding: 9px;
+                font-size: 11px;
+                margin-bottom: 10px;
+            }
+
+            .divider {
+                margin: 10px 0;
+            }
+
+            .divider span {
+                padding: 0 6px;
+                font-size: 9px;
+            }
+
+            .social-btn {
+                padding: 7px;
+                font-size: 10px;
+            }
+
+            .social-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            .social-login {
+                margin-bottom: 10px;
+            }
+
+            .form-footer {
+                padding-top: 10px;
+            }
+
+            .form-footer p {
+                font-size: 10px;
+                margin-bottom: 5px;
+            }
+
+            .register-link {
+                font-size: 10px;
+            }
+        }
+
+        /* Landscape mode for small screens - COMPACT */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .main-content {
+                margin-top: 35px;
+                min-height: calc(100vh - 35px);
+                padding: 6px;
+            }
+
+            .login-container {
+                padding: 12px;
+            }
+
+            .form-header {
+                margin-bottom: 8px;
+            }
+
+            .form-header h2 {
+                font-size: 16px;
+            }
+
+            .form-header p {
+                font-size: 10px;
+            }
+
+            .form-row {
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+
+            .form-group {
+                margin-bottom: 8px;
+            }
+
+            .form-label {
+                font-size: 9px;
+                margin-bottom: 2px;
+            }
+
+            .form-input {
+                padding: 7px 8px;
+                font-size: 13px;
+            }
+
+            .forgot-password,
+            .remember-me {
+                margin-bottom: 8px;
+            }
+
+            .submit-button {
+                margin-bottom: 10px;
+                padding: 8px;
+                font-size: 11px;
+            }
+
+            .divider {
+                margin: 8px 0;
+            }
+
+            .divider span {
+                font-size: 9px;
+            }
+
+            .social-login {
+                margin-bottom: 8px;
+            }
+
+            .social-btn {
+                padding: 6px;
+                font-size: 10px;
+            }
+
+            .form-footer {
+                padding-top: 8px;
             }
         }
 
@@ -606,12 +725,12 @@
                 transform: none;
             }
 
-            /* Improve tap targets */
+            /* Improve tap targets - ADJUSTED FOR SMALLER SIZES */
             .custom-checkbox,
             .checkbox-label,
             .forgot-password a,
             .register-link {
-                min-height: 44px;
+                min-height: 36px;
                 display: flex;
                 align-items: center;
             }
@@ -619,7 +738,7 @@
             .forgot-password a,
             .register-link {
                 justify-content: center;
-                padding: 5px;
+                padding: 4px;
             }
         }
     </style>
