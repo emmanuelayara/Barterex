@@ -1140,6 +1140,7 @@
           
           <div class="item-content">
             <h4 class="item-title">{{ item.name }}</h4>
+            <div class="item-location" style="color: #054e97;"><span class="item-location">{{ item.location }}</span></div>
             <div class="item-value">₦{{ "{:,.0f}".format(item.value) if item.value else 'Price not set' }}</div>
             
             <div class="item-actions">
