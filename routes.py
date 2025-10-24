@@ -480,6 +480,7 @@ def profile_settings():
 # ---------------------- MARKETPLACE ---------------------- #
 
 @app.route('/')
+@app.route('/marketplace')
 def marketplace():
     page = request.args.get('page', 1, type=int)
     condition_filter = request.args.get('condition')
