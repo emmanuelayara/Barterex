@@ -12,8 +12,8 @@
             --accent-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
             --glass-bg: rgba(255, 255, 255, 0.25);
             --glass-border: rgba(255, 255, 255, 0.18);
-            --shadow-soft: 0 8px 32px rgba(31, 38, 135, 0.37);
-            --shadow-hover: 0 15px 35px rgba(31, 38, 135, 0.4);
+            --shadow-soft: 0 4px 16px rgba(31, 38, 135, 0.2);
+            --shadow-hover: 0 6px 20px rgba(31, 38, 135, 0.25);
         }
 
         body {
@@ -31,58 +31,70 @@
         }
 
         .cart-container {
-            max-width: 1200px;
-            margin: 2rem auto;
+            max-width: 1400px;
+            margin: 1rem auto;
             padding: 0 1rem;
+        }
+
+        .cart-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 1rem;
+            align-items: start;
         }
 
         .glass-container {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
+            border-radius: 16px;
             border: 1px solid var(--glass-border);
             box-shadow: var(--shadow-soft);
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.25rem;
         }
 
         .cart-header {
-            text-align: center;
-            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
         }
 
         .cart-title {
-            font-size: 2.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .cart-subtitle {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 1.1rem;
+            margin: 0;
         }
 
         .cart-actions {
-            text-align: center;
-            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .item-count {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.875rem;
+            font-weight: 500;
         }
 
         .clear-cart-btn {
             background: #ef4444;
             color: white;
             border: none;
-            border-radius: 12px;
-            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            padding: 0.375rem 0.75rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            margin-left: 1rem;
+            white-space: nowrap;
         }
 
         .clear-cart-btn:hover {
@@ -90,64 +102,87 @@
             transform: scale(1.05);
         }
 
+        .cart-items-grid {
+            display: grid;
+            gap: 0.75rem;
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .cart-items-grid::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .cart-items-grid::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .cart-items-grid::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
         .cart-item {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            display: flex;
+            border-radius: 12px;
+            padding: 0.875rem;
+            display: grid;
+            grid-template-columns: 60px 1fr auto;
             align-items: center;
-            gap: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            gap: 0.875rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
         }
 
         .cart-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
 
         .item-image {
-            width: 80px;
-            height: 80px;
-            border-radius: 12px;
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
             object-fit: cover;
             background: var(--accent-gradient);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 2rem;
+            font-size: 1.5rem;
         }
 
         .item-details {
-            flex: 1;
+            min-width: 0;
         }
 
         .item-name {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 600;
             color: #1a202c;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .item-price {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: #ff7a00;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .item-meta {
             display: flex;
-            gap: 1rem;
-            margin-top: 0.5rem;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         .meta-info {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             color: #6b7280;
             display: flex;
             align-items: center;
@@ -159,11 +194,12 @@
             color: white;
             border: none;
             border-radius: 8px;
-            padding: 0.5rem 1rem;
+            padding: 0.375rem 0.625rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             font-weight: 500;
+            white-space: nowrap;
         }
 
         .remove-btn:hover {
@@ -173,58 +209,64 @@
 
         .cart-summary {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 2rem;
-            text-align: center;
+            border-radius: 16px;
+            padding: 1.25rem;
+            position: sticky;
+            top: 1rem;
             box-shadow: var(--shadow-soft);
         }
 
         .summary-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 600;
             color: #1a202c;
-            margin-bottom: 1rem;
+            margin-bottom: 0.875rem;
         }
 
         .total-cost {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 1rem;
+            margin-bottom: 0.875rem;
         }
 
         .credit-balance {
             color: #6b7280;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
         }
 
         .sufficient-credits {
             color: #ff7a00;
             font-weight: 600;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
         }
 
         .insufficient-credits {
             color: #dc2626;
             font-weight: 600;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
         }
 
         .checkout-btn {
             width: 100%;
-            padding: 1rem 2rem;
+            padding: 0.875rem 1.5rem;
             background: var(--primary-gradient);
             color: white;
             border: none;
-            border-radius: 16px;
-            font-size: 1.2rem;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            margin-bottom: 1rem;
+            margin-bottom: 0.625rem;
         }
 
         .checkout-btn::before {
@@ -244,7 +286,7 @@
 
         .checkout-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(255, 122, 0, 0.4);
+            box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4);
         }
 
         .checkout-btn:disabled {
@@ -255,12 +297,12 @@
 
         .continue-shopping-btn {
             width: 100%;
-            padding: 0.75rem 2rem;
+            padding: 0.625rem 1.5rem;
             background: transparent;
             color: #6b7280;
             border: 2px solid #e5e7eb;
-            border-radius: 16px;
-            font-size: 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -277,209 +319,92 @@
 
         .empty-cart {
             text-align: center;
-            padding: 4rem 2rem;
+            padding: 3rem 1.5rem;
             color: rgba(255, 255, 255, 0.8);
         }
 
         .empty-cart-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+            font-size: 3.5rem;
+            margin-bottom: 0.875rem;
             opacity: 0.5;
         }
 
         .empty-cart-text {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         .browse-btn {
-            padding: 1rem 2rem;
+            padding: 0.875rem 1.75rem;
             background: var(--accent-gradient);
             color: white;
             border: none;
-            border-radius: 16px;
-            font-size: 1.1rem;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             text-decoration: none;
             transition: all 0.3s ease;
+            display: inline-block;
         }
 
         .browse-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 122, 0, 0.4);
+            box-shadow: 0 6px 16px rgba(255, 122, 0, 0.4);
             color: white;
             text-decoration: none;
         }
 
-        /* Mobile-first responsive design */
-        @media (max-width: 768px) {
-            .cart-container {
-                margin: 1rem auto;
-                padding: 0 0.75rem;
-            }
-
-            .glass-container {
-                padding: 1.25rem;
-                border-radius: 20px;
-                margin-bottom: 1rem;
-            }
-
-            .cart-header {
-                margin-bottom: 1.5rem;
-            }
-
-            .cart-title {
-                font-size: 1.8rem;
-            }
-
-            .cart-subtitle {
-                font-size: 0.9rem;
-            }
-
-            .cart-actions {
-                margin-bottom: 1.5rem;
-            }
-
-            .cart-actions span {
-                font-size: 0.8rem;
-                display: block;
-                margin-bottom: 0.5rem;
-            }
-
-            .clear-cart-btn {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.8rem;
-                margin-left: 0;
-            }
-
-            .cart-item {
-                padding: 1rem;
-                flex-direction: column;
-                text-align: center;
-                gap: 0.75rem;
-                margin-bottom: 0.75rem;
-            }
-
-            .item-image {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-            }
-
-            .item-name {
-                font-size: 1rem;
-                margin-bottom: 0.4rem;
-            }
-
-            .item-price {
-                font-size: 0.95rem;
-                justify-content: center;
-            }
-
-            .item-meta {
-                justify-content: center;
-                gap: 0.75rem;
-                flex-wrap: wrap;
-                margin-top: 0.4rem;
-            }
-
-            .meta-info {
-                font-size: 0.8rem;
-            }
-
-            .remove-btn {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.8rem;
+        /* Tablet and Mobile Responsive */
+        @media (max-width: 992px) {
+            .cart-layout {
+                grid-template-columns: 1fr;
             }
 
             .cart-summary {
-                padding: 1.25rem;
-                border-radius: 16px;
+                position: relative;
+                top: 0;
             }
 
-            .summary-title {
-                font-size: 1.2rem;
-                margin-bottom: 0.75rem;
-            }
-
-            .total-cost {
-                font-size: 1.8rem;
-                margin-bottom: 0.75rem;
-            }
-
-            .credit-balance {
-                font-size: 0.9rem;
-                margin-bottom: 1rem;
-            }
-
-            .checkout-btn {
-                padding: 0.875rem 1.5rem;
-                font-size: 1rem;
-                margin-bottom: 0.75rem;
-            }
-
-            .continue-shopping-btn {
-                padding: 0.75rem 1.5rem;
-                font-size: 0.9rem;
-            }
-
-            .empty-cart {
-                padding: 2.5rem 1rem;
-            }
-
-            .empty-cart-icon {
-                font-size: 3rem;
-                margin-bottom: 0.75rem;
-            }
-
-            .empty-cart-text {
-                font-size: 1.2rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .browse-btn {
-                padding: 0.875rem 1.5rem;
-                font-size: 1rem;
+            .cart-items-grid {
+                max-height: none;
             }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
             .cart-container {
+                padding: 0 0.75rem;
                 margin: 0.75rem auto;
-                padding: 0 0.5rem;
             }
 
             .glass-container {
                 padding: 1rem;
-                border-radius: 16px;
+                border-radius: 12px;
+            }
+
+            .cart-header {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
             .cart-title {
-                font-size: 1.6rem;
+                font-size: 1.5rem;
             }
 
-            .cart-subtitle {
-                font-size: 0.85rem;
-            }
-
-            .cart-actions span {
-                font-size: 0.75rem;
-            }
-
-            .clear-cart-btn {
-                padding: 0.35rem 0.7rem;
-                font-size: 0.75rem;
+            .cart-actions {
+                width: 100%;
+                justify-content: space-between;
             }
 
             .cart-item {
-                padding: 0.875rem;
+                grid-template-columns: 50px 1fr auto;
                 gap: 0.625rem;
+                padding: 0.75rem;
             }
 
             .item-image {
                 width: 50px;
                 height: 50px;
-                font-size: 1.2rem;
+                font-size: 1.25rem;
             }
 
             .item-name {
@@ -487,11 +412,7 @@
             }
 
             .item-price {
-                font-size: 0.85rem;
-            }
-
-            .item-meta {
-                gap: 0.5rem;
+                font-size: 0.875rem;
             }
 
             .meta-info {
@@ -499,8 +420,8 @@
             }
 
             .remove-btn {
-                padding: 0.35rem 0.7rem;
-                font-size: 0.75rem;
+                padding: 0.3rem 0.5rem;
+                font-size: 0.7rem;
             }
 
             .cart-summary {
@@ -512,11 +433,7 @@
             }
 
             .total-cost {
-                font-size: 1.6rem;
-            }
-
-            .credit-balance {
-                font-size: 0.8rem;
+                font-size: 1.75rem;
             }
 
             .checkout-btn {
@@ -526,11 +443,11 @@
 
             .continue-shopping-btn {
                 padding: 0.625rem 1.25rem;
-                font-size: 0.85rem;
+                font-size: 0.8rem;
             }
 
             .empty-cart {
-                padding: 2rem 0.75rem;
+                padding: 2rem 1rem;
             }
 
             .empty-cart-icon {
@@ -542,28 +459,62 @@
             }
 
             .browse-btn {
-                padding: 0.75rem 1.25rem;
+                padding: 0.75rem 1.5rem;
                 font-size: 0.9rem;
             }
         }
 
-        @media (max-width: 360px) {
+        @media (max-width: 480px) {
+            .cart-container {
+                padding: 0 0.5rem;
+                margin: 0.5rem auto;
+            }
+
             .glass-container {
                 padding: 0.875rem;
             }
 
             .cart-title {
-                font-size: 1.4rem;
+                font-size: 1.375rem;
+            }
+
+            .item-count {
+                font-size: 0.8rem;
+            }
+
+            .clear-cart-btn {
+                padding: 0.3rem 0.625rem;
+                font-size: 0.75rem;
+            }
+
+            .cart-items-grid {
+                gap: 0.625rem;
             }
 
             .cart-item {
-                padding: 0.75rem;
+                padding: 0.625rem;
             }
 
             .item-image {
                 width: 45px;
                 height: 45px;
-                font-size: 1rem;
+                font-size: 1.1rem;
+            }
+
+            .item-name {
+                font-size: 0.85rem;
+            }
+
+            .item-price {
+                font-size: 0.8rem;
+            }
+
+            .item-meta {
+                gap: 0.5rem;
+            }
+
+            .meta-info {
+                font-size: 0.65rem;
             }
 
             .cart-summary {
@@ -571,18 +522,17 @@
             }
 
             .total-cost {
-                font-size: 1.4rem;
+                font-size: 1.5rem;
             }
 
-            .checkout-btn,
+            .checkout-btn {
+                padding: 0.625rem 1rem;
+                font-size: 0.85rem;
+            }
+
             .continue-shopping-btn {
-                padding: 0.625rem 1rem;
-                font-size: 0.8rem;
-            }
-
-            .browse-btn {
-                padding: 0.625rem 1rem;
-                font-size: 0.8rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -590,120 +540,106 @@
 
 <body>
     <div class="cart-container">
-
-
-        <div class="glass-container">
-            <div class="cart-header">
-                <h1 class="cart-title">Your Cart</h1>
-                <p class="cart-subtitle">Review your items before checkout</p>
-            </div>
-
-            {% if cart_items %}
-                <!-- Cart Actions -->
-                <div class="cart-actions">
-                    <span style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem;">
-                        {{ cart_items|length }} item{{ 's' if cart_items|length != 1 else '' }} in cart
-                    </span>
-                    <form method="POST" action="{{ url_for('clear_cart') }}" style="display: inline;">
-                        <button type="submit" class="clear-cart-btn" onclick="return confirm('Are you sure you want to clear your entire cart?')">
-                            <i class="fas fa-trash"></i>
-                            Clear Cart
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Cart Items -->
-                {% for cart_item in cart_items %}
-                <div class="cart-item">
-                    {% if cart_item.item.image_url %}
-                        <img src="{{ cart_item.item.image_url }}" alt="{{ cart_item.item.name }}" class="item-image">
-                    {% else %}
-                        <div class="item-image">📦</div>
-                    {% endif %}
-                    
-                    <div class="item-details">
-                        <div class="item-name">{{ cart_item.item.name }}</div>
-                        <div class="item-price">
-                            <i class="fas fa-coins"></i>
-                            {{ cart_item.item.value }} Credits
-                        </div>
-                        <div class="item-meta">
-                            <div class="meta-info">
-                                <i class="fas fa-tag"></i>
-                                {{ cart_item.item.category }}
-                            </div>
-                            <div class="meta-info">
-                                <i class="fas fa-map-marker-alt"></i>
-                                {{ cart_item.item.location }}
-                            </div>
-                            <div class="meta-info">
-                                <i class="fas fa-clock"></i>
-                                Added {{ cart_item.added_at.strftime('%b %d') }}
-                            </div>
+        {% if cart_items %}
+            <div class="cart-layout">
+                <!-- Cart Items Section -->
+                <div class="glass-container">
+                    <div class="cart-header">
+                        <h1 class="cart-title">Your Cart</h1>
+                        <div class="cart-actions">
+                            <span class="item-count">
+                                {{ cart_items|length }} item{{ 's' if cart_items|length != 1 else '' }}
+                            </span>
+                            <form method="POST" action="{{ url_for('clear_cart') }}" style="display: inline;">
+                                <button type="submit" class="clear-cart-btn" onclick="return confirm('Are you sure you want to clear your entire cart?')">
+                                    <i class="fas fa-trash"></i> Clear
+                                </button>
+                            </form>
                         </div>
                     </div>
-                    
-                    <form method="POST" action="{{ url_for('remove_from_cart', item_id=cart_item.item.id) }}" style="display: inline;">
-                        <button type="submit" class="remove-btn">
-                            <i class="fas fa-trash"></i>
-                            Remove
-                        </button>
-                    </form>
-                </div>
-                {% endfor %}
 
-                <!-- Cart Summary -->
+                    <div class="cart-items-grid">
+                        {% for cart_item in cart_items %}
+                        <div class="cart-item">
+                            {% if cart_item.item.image_url %}
+                                <img src="{{ cart_item.item.image_url }}" alt="{{ cart_item.item.name }}" class="item-image">
+                            {% else %}
+                                <div class="item-image">📦</div>
+                            {% endif %}
+                            
+                            <div class="item-details">
+                                <div class="item-name" title="{{ cart_item.item.name }}">{{ cart_item.item.name }}</div>
+                                <div class="item-price">
+                                    <i class="fas fa-coins"></i> {{ cart_item.item.value }} Credits
+                                </div>
+                                <div class="item-meta">
+                                    <div class="meta-info">
+                                        <i class="fas fa-tag"></i> {{ cart_item.item.category }}
+                                    </div>
+                                    <div class="meta-info">
+                                        <i class="fas fa-map-marker-alt"></i> {{ cart_item.item.location }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <form method="POST" action="{{ url_for('remove_from_cart', item_id=cart_item.item.id) }}">
+                                <button type="submit" class="remove-btn">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Cart Summary Section -->
                 <div class="cart-summary">
                     <h3 class="summary-title">Order Summary</h3>
                     <div class="total-cost">{{ total_cost }} Credits</div>
                     
                     <div class="credit-balance">
-                        Your Balance: {{ current_user.credits }} Credits
+                        Your Balance: <strong>{{ current_user.credits }} Credits</strong>
                         {% if current_user.credits >= total_cost %}
                             <div class="sufficient-credits">
-                                <i class="fas fa-check-circle"></i>
-                                Sufficient credits available
+                                <i class="fas fa-check-circle"></i> Sufficient credits
                             </div>
                         {% else %}
                             <div class="insufficient-credits">
-                                <i class="fas fa-exclamation-circle"></i>
-                                Need {{ total_cost - current_user.credits }} more credits
+                                <i class="fas fa-exclamation-circle"></i> Need {{ total_cost - current_user.credits }} more
                             </div>
                         {% endif %}
                     </div>
 
                     {% if current_user.credits >= total_cost %}
                         <a href="{{ url_for('checkout') }}" class="checkout-btn">
-                            <i class="fas fa-shopping-cart"></i>
-                            Proceed to Checkout
+                            <i class="fas fa-shopping-cart"></i> Proceed to Checkout
                         </a>
                     {% else %}
                         <button class="checkout-btn" disabled>
-                            <i class="fas fa-wallet"></i>
-                            Insufficient Credits
+                            <i class="fas fa-wallet"></i> Insufficient Credits
                         </button>
                     {% endif %}
 
                     <a href="{{ url_for('marketplace') }}" class="continue-shopping-btn">
-                        <i class="fas fa-arrow-left"></i>
-                        Continue Shopping
+                        <i class="fas fa-arrow-left"></i> Continue Shopping
                     </a>
                 </div>
+            </div>
 
-            {% else %}
-                <!-- Empty Cart -->
+        {% else %}
+            <!-- Empty Cart -->
+            <div class="glass-container">
                 <div class="empty-cart">
                     <div class="empty-cart-icon">
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <div class="empty-cart-text">Your cart is empty</div>
                     <a href="{{ url_for('marketplace') }}" class="browse-btn">
-                        <i class="fas fa-store"></i>
-                        Browse Marketplace
+                        <i class="fas fa-store"></i> Browse Marketplace
                     </a>
                 </div>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>

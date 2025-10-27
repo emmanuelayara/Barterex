@@ -221,6 +221,39 @@
     color: #2d3748;
   }
 
+  /* Special styling for select dropdown */
+  select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    padding-right: 40px;
+    cursor: pointer;
+  }
+
+  select.form-control:focus {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff7a00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  }
+
+  select.form-control option {
+    padding: 10px;
+    background: white;
+    color: #2d3748;
+  }
+
+  select.form-control option:hover {
+    background: #f7fafc;
+  }
+
+  textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+    padding: 12px 16px;
+  }
+
   .form-control:focus {
     border-color: #ff7a00;
     box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
@@ -444,6 +477,11 @@
       border-radius: 10px;
     }
 
+    select.form-control {
+      background-position: right 10px center;
+      background-size: 16px;
+    }
+
     .form-control:focus {
       border-radius: 10px;
     }
@@ -549,6 +587,11 @@
       border-radius: 8px;
     }
 
+    select.form-control {
+      background-position: right 8px center;
+      background-size: 14px;
+    }
+
     .form-control:focus {
       border-radius: 8px;
     }
@@ -625,94 +668,90 @@
   }
 </style>
 
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Page Header -->
+  <div class="page-header">
+    <strong class="page-subtitle" style="color: #054e97;">Update your personal information and preferences</strong>
+  </div>
 
+  <!-- Profile Container -->
+  <div class="profile-container">
+    <div class="profile-form">
+      <div class="form-header">
+        <h2 class="form-title">Edit Your Profile</h2>
+        <p class="form-subtitle">Keep your information up to date for better trading experience</p>
+      </div>
 
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash-message flash-{{ category }}">
+                {% if category == 'success' %}✅{% else %}❌{% endif %}
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <!-- Page Header -->
-    <div class="page-header">
-      <strong class="page-subtitle" style="color: #054e97;">Update your personal information and preferences</strong>
-    </div>
+      <form method="POST" enctype="multipart/form-data" id="profileForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-grid">
+          <!-- Email Field -->
+          <div class="form-group">
+            {{ form.email.label(class="form-label") }}
+            <div class="input-wrapper">
+              <span class="input-icon">📧</span>
+              {{ form.email(class="form-control", placeholder="Enter your email address") }}
+            </div>
+          </div>
 
-    <!-- Profile Container -->
-    <div class="profile-container">
-      <div class="profile-form">
-        <div class="form-header">
-          <h2 class="form-title">Edit Your Profile</h2>
-          <p class="form-subtitle">Keep your information up to date for better trading experience</p>
+          <!-- Phone Number Field -->
+          <div class="form-group">
+            {{ form.phone_number.label(class="form-label") }}
+            <div class="input-wrapper">
+              <span class="input-icon">📱</span>
+              {{ form.phone_number(class="form-control", placeholder="Enter your phone number") }}
+            </div>
+          </div>
+
+          <!-- Address Field -->
+          <div class="form-group">
+            {{ form.address.label(class="form-label") }}
+            <div class="input-wrapper">
+              <span class="input-icon">🏠</span>
+              {{ form.address(class="form-control", placeholder="Enter your street address", rows="3") }}
+            </div>
+          </div>
+
+          <!-- City and State Row -->
+          <div class="form-row">
+            <div class="form-group">
+              {{ form.city.label(class="form-label") }}
+              <div class="input-wrapper">
+                <span class="input-icon">🏙️</span>
+                {{ form.city(class="form-control", placeholder="City") }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              {{ form.state.label(class="form-label") }}
+              <div class="input-wrapper">
+                <span class="input-icon">🗺️</span>
+                {{ form.state(class="form-control") }}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-messages">
-              {% for category, message in messages %}
-                <div class="flash-message flash-{{ category }}">
-                  {% if category == 'success' %}✅{% else %}❌{% endif %}
-                  {{ message }}
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
-
-        <form method="POST" id="profileForm">
-          {{ form.hidden_tag() }}
-          
-          <div class="form-grid">
-            <!-- Email Field -->
-            <div class="form-group">
-              {{ form.email.label(class="form-label") }}
-              <div class="input-wrapper">
-                <span class="input-icon">📧</span>
-                {{ form.email(class="form-control", placeholder="Enter your email address") }}
-              </div>
-            </div>
-
-            <!-- Phone Number Field -->
-            <div class="form-group">
-              {{ form.phone_number.label(class="form-label") }}
-              <div class="input-wrapper">
-                <span class="input-icon">📱</span>
-                {{ form.phone_number(class="form-control", placeholder="Enter your phone number") }}
-              </div>
-            </div>
-
-            <!-- Address Field -->
-            <div class="form-group">
-              {{ form.address.label(class="form-label") }}
-              <div class="input-wrapper">
-                <span class="input-icon">🏠</span>
-                {{ form.address(class="form-control", placeholder="Enter your street address") }}
-              </div>
-            </div>
-
-            <!-- City and State Row -->
-            <div class="form-row">
-              <div class="form-group">
-                {{ form.city.label(class="form-label") }}
-                <div class="input-wrapper">
-                  <span class="input-icon">🏙️</span>
-                  {{ form.city(class="form-control", placeholder="City") }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                {{ form.state.label(class="form-label") }}
-                <div class="input-wrapper">
-                  <span class="input-icon">🗺️</span>
-                  {{ form.state(class="form-control", placeholder="State") }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            {{ form.submit(class="btn-submit", id="submitBtn") }}
-          </div>
-        </form>
-      </div>
+        <div class="form-actions">
+          {{ form.submit(class="btn-submit", id="submitBtn") }}
+        </div>
+      </form>
     </div>
   </div>
 </div>
