@@ -1015,19 +1015,17 @@
           <h3>Find Your Perfect Match</h3>
       </div>
 
-      <div class="form-group">
-        <label for="search">Search Items</label>
-        <input type="text" 
-                id="search"
-                name="search" 
-                placeholder="What are you looking for?"
-                value="{{ request.args.get('search', '') }}"
-                class="form-input" />
-      </div>
-
-      <div class="form-group">
-      
       <form method="GET" action="{{ url_for('marketplace') }}" class="filter-form">
+        <div class="form-group">
+          <label for="search">Search Items</label>
+          <input type="text" 
+                  id="search"
+                  name="search" 
+                  placeholder="What are you looking for?"
+                  value="{{ request.args.get('search', '') }}"
+                  class="form-input" />
+        </div>
+
         <div class="form-group">
           <label for="condition">Condition</label>
           <select name="condition" id="condition" class="form-select">
@@ -1048,6 +1046,23 @@
             ] %}
             {% for cat in categories %}
               <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="state">State</label>
+          <select name="state" id="state" class="form-select">
+            <option value="">All States</option>
+            {% set states = [
+              "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
+              "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "Gombe", "Imo",
+              "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos",
+              "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers",
+              "Sokoto", "Taraba", "Yobe", "Zamfara", "FCT Abuja"
+            ] %}
+            {% for state in states %}
+              <option value="{{ state }}" {% if request.args.get('state') == state %}selected{% endif %}>{{ state }}</option>
             {% endfor %}
           </select>
         </div>
@@ -1113,7 +1128,7 @@
     <div class="results-info">
       <div class="results-count">
         <strong>{{ items.total }}</strong> items found
-        {% if request.args.get('search') or request.args.get('condition') or request.args.get('category') or request.args.get('price_range') or request.args.get('min_price') or request.args.get('max_price') %}
+        {% if request.args.get('search') or request.args.get('condition') or request.args.get('category') or request.args.get('state') or request.args.get('price_range') or request.args.get('min_price') or request.args.get('max_price') %}
           • Filtered results
         {% endif %}
       </div>
@@ -1121,7 +1136,6 @@
         <button class="view-btn active" onclick="toggleView('grid')">⊞ Grid</button>
         <button class="view-btn" onclick="toggleView('compact')">⊡ Compact</button>
       </div>
-    </div>
     </div>
 
 
@@ -1140,7 +1154,9 @@
           
           <div class="item-content">
             <h4 class="item-title">{{ item.name }}</h4>
-            <div class="item-location" style="color: #054e97;"><span class="item-location">{{ item.location }}</span></div>
+            <div class="item-location" style="color: #054e97; font-size: 0.65rem;">
+              <span>Available in <strong>{{ item.location }}</strong></span>
+            </div>
             <div class="item-value">₦{{ "{:,.0f}".format(item.value) if item.value else 'Price not set' }}</div>
             
             <div class="item-actions">
@@ -1168,7 +1184,7 @@
     {% if items.pages > 1 %}
     <div class="pagination">
       {% if items.has_prev %}
-        <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
+        <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), state=request.args.get('state'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
            class="pagination-btn">
           ← Previous
         </a>
@@ -1179,7 +1195,7 @@
       </div>
 
       {% if items.has_next %}
-        <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
+        <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), state=request.args.get('state'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
            class="pagination-btn">
           Next →
         </a>

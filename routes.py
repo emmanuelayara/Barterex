@@ -486,6 +486,7 @@ def marketplace():
     condition_filter = request.args.get('condition')
     category_filter = request.args.get('category')
     search = request.args.get('search', '')
+    state = request.args.get('state', '')  # State filter
     
     # New price filtering parameters
     min_price = request.args.get('min_price', type=float)
@@ -502,6 +503,10 @@ def marketplace():
 
     if search:
         filters.append(Item.name.ilike(f'%{search}%'))
+
+    # ✅ FIXED: Add state filter to filters list
+    if state:
+        filters.append(Item.location == state)
 
     # Price filtering logic
     if price_range:
@@ -532,7 +537,7 @@ def marketplace():
     # Only include items with actual values (not None)
     filters.append(Item.value.isnot(None))
 
-    items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=1000)
+    items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=12)
 
     return render_template('marketplace.html', items=items)
 
