@@ -570,7 +570,7 @@
                             <div class="item-details">
                                 <div class="item-name" title="{{ cart_item.item.name }}">{{ cart_item.item.name }}</div>
                                 <div class="item-price">
-                                    <i class="fas fa-coins"></i> {{ cart_item.item.value }} Credits
+                                    <i class="fas fa-coins"></i>₦{{ "{:,.0f}".format(cart_item.item.value) }} Credits
                                 </div>
                                 <div class="item-meta">
                                     <div class="meta-info">
@@ -595,17 +595,17 @@
                 <!-- Cart Summary Section -->
                 <div class="cart-summary">
                     <h3 class="summary-title">Order Summary</h3>
-                    <div class="total-cost">{{ total_cost }} Credits</div>
-                    
+                    <div class="total-cost">₦{{ "{:,.0f}".format(total_cost) }} Credits</div>
+
                     <div class="credit-balance">
-                        Your Balance: <strong>{{ current_user.credits }} Credits</strong>
+                        Your Balance: <strong>₦{{ "{:,}".format(current_user.credits) }} Credits</strong>
                         {% if current_user.credits >= total_cost %}
                             <div class="sufficient-credits">
                                 <i class="fas fa-check-circle"></i> Sufficient credits
                             </div>
                         {% else %}
                             <div class="insufficient-credits">
-                                <i class="fas fa-exclamation-circle"></i> Need {{ total_cost - current_user.credits }} more
+                                <i class="fas fa-exclamation-circle"></i> Need ₦{{ "{:,.0f}".format(total_cost - current_user.credits) }} more
                             </div>
                         {% endif %}
                     </div>

@@ -599,7 +599,7 @@
                     
                     <div class="item-price">
                         <i class="fas fa-coins"></i>
-                        {{ cart_item.item.value }} Credits
+                        ₦{{ "{:,.0f}".format(cart_item.item.value) }} Credits
                     </div>
                 </div>
                 {% endfor %}
