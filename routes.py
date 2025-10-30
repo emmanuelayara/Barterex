@@ -537,7 +537,7 @@ def marketplace():
     # Only include items with actual values (not None)
     filters.append(Item.value.isnot(None))
 
-    items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=12)
+    items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=1000)
 
     return render_template('marketplace.html', items=items)
 
