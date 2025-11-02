@@ -24,7 +24,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'info.barterex@gmail.com'       # change this
-app.config['MAIL_PASSWORD'] = 'cjct yrds zqxy ippm'           # app password (not Gmail login)
+app.config['MAIL_PASSWORD'] = 'cjctyrdszqxyippm'           # app password (not Gmail login)
 app.config['MAIL_DEFAULT_SENDER'] = ('Barter Express (Barterex)', 'info.barterex@gmail.com')
 
 # ✅ Initialize extensions
