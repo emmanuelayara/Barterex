@@ -82,25 +82,6 @@
     border-radius: 12px;
   }
 
-  .nav-link.active:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(255, 122, 0, 0.4);
-    border-radius: 12px;
-  }
-
-  .nav-link.logout {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.2);
-    border-radius: 12px;
-  }
-
-  .nav-link.logout:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #b91c1c;
-    border-radius: 12px;
-  }
-
   .main-content {
     max-width: 1000px;
     margin: 0 auto;
@@ -113,20 +94,6 @@
     color: white;
   }
 
-  .page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #fff, #e2e8f0);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-  }
-
   .page-subtitle {
     font-size: 0.95rem;
     opacity: 0.9;
@@ -135,7 +102,7 @@
 
   .notifications-summary {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 16px;
     margin-bottom: 30px;
   }
@@ -161,11 +128,6 @@
     right: 0;
     height: 3px;
     background: linear-gradient(135deg, #ff7a00, #ff7a00);
-  }
-
-  .summary-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   }
 
   .summary-icon {
@@ -414,67 +376,42 @@
     border-radius: 12px;
   }
 
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  .pagination-btn {
+    padding: 8px 16px;
+    background: rgba(255, 122, 0, 0.1);
+    color: #ff7a00;
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .pagination-btn:hover {
+    background: linear-gradient(135deg, #ff7a00, #ff7a00);
+    color: white;
+  }
+
+  .pagination-info {
+    color: #718096;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
   /* Mobile Responsive Design */
   @media (max-width: 768px) {
-    .top-nav {
-      border-radius: 0 0 16px 16px;
-    }
-
-    .nav-menu {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-evenly;
-      flex-wrap: nowrap;
-      gap: 3px;
-      min-height: 45px;
-    }
-    
-    .nav-item {
-      flex: 1;
-    }
-    
-    .nav-link {
-      flex-direction: column;
-      text-align: center;
-      width: 100%;
-      padding: 8px 6px;
-      font-size: 10px;
-      gap: 2px;
-      border-radius: 10px;
-    }
-
-    .nav-link:hover {
-      border-radius: 10px;
-    }
-
-    .nav-link.active {
-      border-radius: 10px;
-    }
-
-    .nav-link.active:hover {
-      border-radius: 10px;
-    }
-
-    .nav-link.logout {
-      border-radius: 10px;
-    }
-
-    .nav-link.logout:hover {
-      border-radius: 10px;
-    }
-
     .main-content {
       padding: 16px 12px;
-    }
-
-    .page-title {
-      font-size: 1.75rem;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .page-subtitle {
-      font-size: 0.85rem;
     }
 
     .notifications-container {
@@ -482,356 +419,143 @@
       border-radius: 16px;
     }
 
-    .summary-card {
-      border-radius: 16px;
-    }
-
-    .summary-icon {
-      border-radius: 10px;
-    }
-
     .container-header {
       flex-direction: column;
       align-items: flex-start;
       gap: 12px;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-    }
-
-    .container-title h2 {
-      font-size: 1.2rem;
-    }
-
-    .container-icon {
-      width: 28px;
-      height: 28px;
-      font-size: 14px;
-      border-radius: 10px;
     }
 
     .filter-buttons {
       width: 100%;
       justify-content: center;
     }
-
-    .filter-btn {
-      padding: 5px 10px;
-      font-size: 0.75rem;
-      border-radius: 10px;
-    }
-
-    .filter-btn:hover,
-    .filter-btn.active {
-      border-radius: 10px;
-    }
-
-    .notification-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 6px;
-    }
-
-    .notification-actions {
-      align-self: flex-end;
-    }
-
-    .notification-item {
-      padding: 12px;
-      border-radius: 16px;
-    }
-
-    .notification-type {
-      border-radius: 10px;
-    }
-
-    .notification-message {
-      font-size: 0.85rem;
-    }
-
-    .notification-time {
-      font-size: 0.7rem;
-    }
-
-    .empty-state {
-      padding: 40px 12px;
-    }
-
-    .empty-icon {
-      font-size: 2.5rem;
-    }
-
-    .empty-title {
-      font-size: 1.125rem;
-    }
-
-    .empty-description {
-      font-size: 0.85rem;
-    }
-
-    .btn-explore {
-      border-radius: 10px;
-    }
-
-    .btn-explore:hover {
-      border-radius: 10px;
-    }
-
-    .action-btn {
-      border-radius: 8px;
-    }
-
-    .action-btn:hover {
-      border-radius: 8px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .nav-link {
-      padding: 6px 4px;
-      font-size: 8px;
-      gap: 1px;
-      border-radius: 8px;
-    }
-
-    .nav-link:hover {
-      border-radius: 8px;
-    }
-
-    .nav-link.active {
-      border-radius: 8px;
-    }
-
-    .nav-link.active:hover {
-      border-radius: 8px;
-    }
-
-    .nav-link.logout {
-      border-radius: 8px;
-    }
-
-    .nav-link.logout:hover {
-      border-radius: 8px;
-    }
-
-    .page-title {
-      font-size: 1.5rem;
-    }
-
-    .notifications-summary {
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
-    .summary-card {
-      padding: 16px 12px;
-      border-radius: 14px;
-    }
-
-    .summary-icon {
-      width: 30px;
-      height: 30px;
-      font-size: 16px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-    }
-
-    .summary-title {
-      font-size: 0.75rem;
-    }
-
-    .summary-value {
-      font-size: 1.25rem;
-    }
-
-    .notification-item {
-      padding: 10px;
-      border-radius: 14px;
-    }
-
-    .notification-type {
-      font-size: 0.65rem;
-      padding: 2px 6px;
-      border-radius: 8px;
-    }
-
-    .action-btn {
-      padding: 3px 8px;
-      font-size: 0.65rem;
-    }
-
-    .container-title h2 {
-      font-size: 1.1rem;
-    }
-
-    .container-icon {
-      border-radius: 8px;
-    }
-
-    .filter-btn {
-      padding: 4px 8px;
-      font-size: 0.7rem;
-      border-radius: 8px;
-    }
-
-    .filter-btn:hover,
-    .filter-btn.active {
-      border-radius: 8px;
-    }
-
-    .notifications-container {
-      border-radius: 14px;
-    }
-  }
-
-  @media (max-width: 360px) {
-    .nav-link {
-      padding: 5px 2px;
-      font-size: 7px;
-      gap: 1px;
-    }
-
-    .main-content {
-      padding: 12px 8px;
-    }
-
-    .notifications-container {
-      padding: 12px;
-      border-radius: 12px;
-    }
-
-    .page-title {
-      font-size: 1.3rem;
-    }
-
-    .notification-item {
-      padding: 8px;
-      border-radius: 12px;
-    }
-
-    .summary-card {
-      border-radius: 12px;
-    }
-
-    .empty-state {
-      padding: 32px 8px;
-    }
   }
 </style>
 
+<!-- Main Content -->
+<div class="main-content">
+  <!-- Page Header -->
+  <div class="page-header">
+    <strong class="page-subtitle" style="color: #054e97;">Stay updated with your latest activity and important updates</strong>
+  </div>
 
+  <!-- Summary Cards -->
+  <div class="notifications-summary">
+    <div class="summary-card">
+      <div class="summary-icon">📬</div>
+      <div class="summary-title">Total</div>
+      <div class="summary-value">{{ notifications.total }}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon">🔔</div>
+      <div class="summary-title">Unread</div>
+      <div class="summary-value">{{ unread_count }}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon">✅</div>
+      <div class="summary-title">Read</div>
+      <div class="summary-value">{{ read_count }}</div>
+    </div>
+  </div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <!-- Page Header -->
-    <div class="page-header">
-      <strong class="page-subtitle" style="color: #054e97;">Stay updated with your latest activity and important updates</strong>
+  <!-- Notifications Container -->
+  <div class="notifications-container">
+    <div class="container-header">
+      <div class="container-title">
+        <div class="container-icon">🔔</div>
+        <h2>Notifications</h2>
+      </div>
+      <div class="filter-buttons">
+        <a href="{{ url_for('notifications', filter='all', page=1) }}" 
+           class="filter-btn {% if current_filter == 'all' %}active{% endif %}">All</a>
+        <a href="{{ url_for('notifications', filter='unread', page=1) }}" 
+           class="filter-btn {% if current_filter == 'unread' %}active{% endif %}">Unread</a>
+        <a href="{{ url_for('notifications', filter='read', page=1) }}" 
+           class="filter-btn {% if current_filter == 'read' %}active{% endif %}">Read</a>
+      </div>
     </div>
 
-    <!-- Notifications Container -->
-    <div class="notifications-container">
-      <div class="container-header">
-        <div class="container-title">
-          <div class="container-icon">🔔</div>
-          <h2>All Notifications</h2>
-        </div>
-        <div class="filter-buttons">
-          <button class="filter-btn active">All</button>
-          <button class="filter-btn">Unread</button>
-          <button class="filter-btn">Today</button>
-        </div>
-      </div>
-
-      {% if notifications %}
-        <div class="notifications-list">
-          {% for note in notifications %}
-            <div class="notification-item {% if not note.is_read %}unread{% endif %}">
-              <div class="notification-header">
-                <div class="notification-content">
-                  <div class="notification-type">
-                    📢 System Alert
-                  </div>
-                  <div class="notification-message">{{ note.message }}</div>
-                  <div class="notification-time">
-                    {{ note.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
-                  </div>
+    {% if notifications.items %}
+      <div class="notifications-list">
+        {% for note in notifications.items %}
+          <div class="notification-item {% if not note.is_read %}unread{% endif %}" data-id="{{ note.id }}">
+            <div class="notification-header">
+              <div class="notification-content">
+                <div class="notification-type">
+                  📢 System Alert
                 </div>
-                <div class="notification-actions">
-                  <div class="notification-badge {% if note.is_read %}read{% endif %}"></div>
-                  {% if not note.is_read %}
-                    <form method="post" action="{{ url_for('mark_notification_read', note_id=note.id) }}">
-                      <button type="submit" class="action-btn">Mark Read</button>
-                    </form>
-                  {% endif %}
+                <div class="notification-message">{{ note.message }}</div>
+                <div class="notification-time">
+                  {{ note.timestamp.strftime('%B %d, %Y at %I:%M %p') }}
                 </div>
               </div>
+              <div class="notification-actions">
+                <div class="notification-badge {% if note.is_read %}read{% endif %}"></div>
+                {% if not note.is_read %}
+                  <form method="post" action="{{ url_for('mark_notification_read', note_id=note.id) }}" style="display: inline;">
+                    <button type="submit" class="action-btn">Mark Read</button>
+                  </form>
+                {% endif %}
+              </div>
             </div>
-          {% endfor %}
-        </div>
-
-        <!-- Pagination -->
-        {% if notifications.pages > 1 %}
-          <div class="pagination-container">
-            {% if notifications.has_prev %}
-              <a href="{{ url_for('notifications', page=notifications.prev_num) }}" class="pagination-btn">
-                ← Previous
-              </a>
-            {% endif %}
-            
-            <span class="pagination-info">
-              Page {{ notifications.page }} of {{ notifications.pages }}
-            </span>
-
-            {% if notifications.has_next %}
-              <a href="{{ url_for('notifications', page=notifications.next_num) }}" class="pagination-btn">
-                Next →
-              </a>
-            {% endif %}
           </div>
-        {% endif %}
+        {% endfor %}
+      </div>
 
-      {% else %}
-        <div class="empty-state">
-          <div class="empty-icon">🔔</div>
-          <h3 class="empty-title">No Notifications Yet</h3>
-          <p class="empty-description">You're all caught up! When you have new activity, notifications will appear here.</p>
-          <a href="{{ url_for('marketplace') }}" class="btn-explore">
-            🔍 Explore Marketplace
-          </a>
+      <!-- Pagination -->
+      {% if notifications.pages > 1 %}
+        <div class="pagination-container">
+          {% if notifications.has_prev %}
+            <a href="{{ url_for('notifications', filter=current_filter, page=notifications.prev_num) }}" 
+               class="pagination-btn">← Previous</a>
+          {% endif %}
+          
+          <span class="pagination-info">
+            Page {{ notifications.page }} of {{ notifications.pages }}
+          </span>
+
+          {% if notifications.has_next %}
+            <a href="{{ url_for('notifications', filter=current_filter, page=notifications.next_num) }}" 
+               class="pagination-btn">Next →</a>
+          {% endif %}
         </div>
       {% endif %}
-    </div>
+
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          {% if current_filter == 'unread' %}
+            ✅
+          {% elif current_filter == 'read' %}
+            📭
+          {% else %}
+            🔔
+          {% endif %}
+        </div>
+        <h3 class="empty-title">
+          {% if current_filter == 'unread' %}
+            All Caught Up!
+          {% elif current_filter == 'read' %}
+            No Read Notifications
+          {% else %}
+            No Notifications Yet
+          {% endif %}
+        </h3>
+        <p class="empty-description">
+          {% if current_filter == 'unread' %}
+            You don't have any unread notifications. Great job staying on top of things!
+          {% elif current_filter == 'read' %}
+            You haven't read any notifications yet.
+          {% else %}
+            When you have new activity, notifications will appear here.
+          {% endif %}
+        </p>
+        <a href="{{ url_for('marketplace') }}" class="btn-explore">
+          🔍 Explore Marketplace
+        </a>
+      </div>
+    {% endif %}
   </div>
 </div>
 
-<script>
-  // Simple filter functionality (can be enhanced with actual filtering logic)
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      
-      // Here you would implement actual filtering logic
-      // For now, just visual feedback
-      console.log('Filter:', this.textContent);
-    });
-  });
-
-  // Mark as read functionality
-  document.querySelectorAll('.action-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const notificationItem = this.closest('.notification-item');
-      const badge = notificationItem.querySelector('.notification-badge');
-      
-      // Remove unread styling
-      notificationItem.classList.remove('unread');
-      badge.classList.add('read');
-      
-      // Hide the button
-      this.style.display = 'none';
-      
-      // Here you would make an AJAX call to mark as read in the backend
-      console.log('Marking notification as read');
-    });
-  });
-</script>
 {% endblock %}

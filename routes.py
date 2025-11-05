@@ -416,10 +416,34 @@ def credit_history():
 @login_required
 def notifications():
     page = request.args.get('page', 1, type=int)
-    notes = Notification.query.filter_by(user_id=current_user.id).order_by(
-        Notification.created_at.desc()
-    ).paginate(page=page, per_page=9)
-    return render_template('notifications.html', notifications=notes)
+    filter_type = request.args.get('filter', 'all')
+    
+    # Base query
+    query = Notification.query.filter_by(user_id=current_user.id)
+    
+    # Apply filter
+    if filter_type == 'unread':
+        query = query.filter_by(is_read=False)
+    elif filter_type == 'read':
+        query = query.filter_by(is_read=True)
+    # 'all' shows everything, no additional filter needed
+    
+    # Get paginated results
+    notes = query.order_by(Notification.created_at.desc()).paginate(page=page, per_page=9)
+    
+    # Get counts for summary cards
+    total_count = Notification.query.filter_by(user_id=current_user.id).count()
+    unread_count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
+    read_count = Notification.query.filter_by(user_id=current_user.id, is_read=True).count()
+    
+    return render_template(
+        'notifications.html', 
+        notifications=notes,
+        current_filter=filter_type,
+        total_count=total_count,
+        unread_count=unread_count,
+        read_count=read_count
+    )
 
 
 @app.route('/notifications/mark_read/<int:note_id>', methods=['POST'])

@@ -700,7 +700,7 @@
         {% else %}
           <li class="empty-state">
             <div class="empty-state-icon">📭</div>
-            <div class="empty-state-text">No recent notifications</div>
+            <div class="empty-state-text">No recent notifications <br> <a href="{{ url_for('marketplace') }}" class="nav-link" data-tooltip="Marketplace">Browse the Marketplace</a></div>
           </li>
         {% endfor %}
       </ul>
