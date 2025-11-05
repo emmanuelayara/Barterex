@@ -17,12 +17,13 @@ from sqlalchemy.orm import joinedload
 import os
 import time
 from werkzeug.utils import secure_filename
-from threading import Thread
 
 from flask_mail import Mail, Message
 from app import app, login_manager, db, mail
 from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage, Cart, CartItem, OrderItem
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm, ForgotPasswordForm, ResetPasswordForm
+
+mail = Mail(app)
 
 from itsdangerous import URLSafeTimedSerializer
 
@@ -37,30 +38,6 @@ def verify_reset_token(token, expires_sec=3600):
     except Exception:
         return None
     return email
-
-
-# ==================== ASYNC EMAIL HELPERS ====================
-def send_async_email(app, msg):
-    """Send email in background thread to avoid blocking requests"""
-    with app.app_context():
-        try:
-            mail.send(msg)
-            print(f"✅ Email sent successfully to {msg.recipients}")
-        except Exception as e:
-            print(f"❌ Email sending failed: {e}")
-
-def send_email_async(subject, recipients, html_body, sender=None):
-    """Helper function to send emails asynchronously"""
-    msg = Message(
-        subject=subject,
-        sender=sender or app.config['MAIL_DEFAULT_SENDER'],
-        recipients=recipients if isinstance(recipients, list) else [recipients]
-    )
-    msg.html = html_body
-    
-    # Send in background thread (daemon=True means thread dies when main program exits)
-    Thread(target=send_async_email, args=(app._get_current_object(), msg), daemon=True).start()
-# ============================================================
 
 
 # Utility function for cart management
@@ -104,8 +81,8 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+
 def create_notification(user_id, message):
-    """Create notification and send email asynchronously"""
     # Save notification in DB
     notification = Notification(user_id=user_id, message=message)
     db.session.add(notification)
@@ -114,40 +91,21 @@ def create_notification(user_id, message):
     # Get the user email
     user = User.query.get(user_id)
     if user and user.email:
-        # ✅ Send email asynchronously (non-blocking)
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .message {{ background: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0; }}
-                .footer {{ margin-top: 30px; font-size: 12px; color: #666; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h2>📬 New Notification from Barterex</h2>
-                <div class="message">{message}</div>
-                <p>Thanks for using Barterex!</p>
-                <div class="footer">
-                    <p>This is an automated message. Please do not reply to this email.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        send_email_async(
-            subject="New notification from Barter Express",
-            recipients=[user.email],
-            html_body=html
-        )
+        try:
+            msg = Message(
+                subject="New notification from Barter Express",
+                recipients=[user.email],
+                body=message
+            )
+            mail.send(msg)
+        except Exception as e:
+            print(f"Email failed: {e}")
+
 
 
 @app.route('/home')
 def home():
-    trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()
+    trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()  # 3 rows x 2 cols
     return render_template('home.html', trending_items=trending_items)
 
 
@@ -173,24 +131,43 @@ def register():
             username=form.username.data,
             email=form.email.data,
             password_hash=hashed_password,
-            credits=5000,
-            first_login=True
+            credits=5000,         # 🎁 Beta signup bonus
+            first_login=True      # Mark so we can show flash later
         )
         db.session.add(user)
         db.session.commit()
 
-        # ✅ Send welcome email asynchronously (non-blocking)
-        html = render_template("emails/welcome_email.html", username=user.username)
-        send_email_async(
+        # ✅ Send personalized welcome email
+        msg = Message(
             subject="🎉 Welcome to Barterex!",
-            recipients=[user.email],
-            html_body=html
+            sender="info.barterex@gmail.com",
+            recipients=[user.email]
         )
+        # Render the HTML template and inject username
+        msg.html = render_template("emails/welcome_email.html", username=user.username)
+
+        mail.send(msg)
 
         flash('Registration successful. Please log in.', 'success')
         return redirect(url_for('login'))
 
     return render_template('register.html', form=form)
+
+
+
+""" @app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        # Hash the password
+        form.password.data = generate_password_hash(form.password.data)
+        # Logic to create a new user and add to DB
+        user = User(username=form.username.data, email=form.email.data, password_hash=form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Registration successful. Please log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)  """
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -229,6 +206,27 @@ def login():
     return render_template('login.html', form=form)
 
 
+""" @app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        user = User.query.filter_by(username=username).first()
+
+        if user:
+            if user.is_banned:
+                return render_template("banned.html", reason=user.ban_reason, unban_requested=user.unban_requested)
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            flash('Login successful!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password.', 'danger')
+    return render_template('login.html', form=form) """
+
+
+
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     form = ForgotPasswordForm()
@@ -238,22 +236,23 @@ def forgot_password():
             token = generate_reset_token(user.email)
             reset_url = url_for('reset_password', token=token, _external=True)
 
-            # ✅ Send password reset email asynchronously
-            html = render_template(
+            msg = Message(
+                subject="🔑 Reset Your Password",
+                sender="info.barterex@gmail.com",
+                recipients=[user.email]
+            )
+            msg.html = render_template(
                 "emails/reset_password_email.html",
                 username=user.username,
                 reset_url=reset_url
             )
-            send_email_async(
-                subject="🔑 Reset Your Password",
-                recipients=[user.email],
-                html_body=html
-            )
+            mail.send(msg)
 
         flash('If that email exists, a reset link has been sent.', 'info')
         return redirect(url_for('login'))
 
     return render_template('forgot_password.html', form=form)
+
 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
@@ -275,6 +274,7 @@ def reset_password(token):
     return render_template('reset_password.html', form=form)
 
 
+
 @app.route('/banned')
 def banned():
     if 'user_id' not in session:
@@ -282,6 +282,7 @@ def banned():
 
     user = User.query.get(session['user_id'])
 
+    # If somehow the user is not banned but tries to access banned page
     if not user.is_banned:
         return redirect(url_for('login'))
 
@@ -304,7 +305,7 @@ def request_unban():
 
     if not user.is_banned:
         flash("You are not banned.", "info")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard'))  # Redirect to user dashboard if not banned
 
     if not user.unban_requested:
         user.unban_requested = True
@@ -314,6 +315,7 @@ def request_unban():
         flash('You have already submitted an unban request.', 'warning')
 
     return redirect(url_for('banned'))
+
 
 
 @app.route('/logout')
@@ -331,10 +333,11 @@ def dashboard():
         logout_user()
         return redirect(url_for('login'))
     
-    credits = current_user.credits
+    credits = current_user.credits  # assuming this field exists on User
     item_count = Item.query.filter_by(user_id=current_user.id).count()
     pending_trades = Trade.query.filter(db.or_(Trade.sender_id == current_user.id,Trade.receiver_id == current_user.id),Trade.status == 'pending').count()
 
+    # Get latest 5 notifications
     recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).limit(5).all()
 
     return render_template('dashboard.html', user=current_user, credits=credits, item_count=item_count, pending_trades=pending_trades, recent_notifications=recent_notifications)
@@ -343,15 +346,19 @@ def dashboard():
 @app.route('/my_orders')
 @login_required
 def user_orders():
+    # Fetch all orders belonging to the logged-in user
     page = request.args.get('page', 1, type=int)
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.date_ordered.desc()).paginate(page=page, per_page=6)
+
     return render_template('user_orders.html', orders=orders)
 
 
 @app.route('/user-items')
 @login_required
 def user_items():
+
     page = request.args.get('page', 1, type=int)
+
     items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=10)
     return render_template('user_items.html', items=items)
 
@@ -361,15 +368,17 @@ def user_items():
 def edit_item(item_id):
     item = Item.query.get_or_404(item_id)
     
+    # Ensure the current user owns the item
     if item.user_id != current_user.id:
         flash("Unauthorized access.", "danger")
         return redirect(url_for('marketplace'))
 
+    # Block edit if item is approved
     if item.is_approved:
         flash("This item has already been approved by the admin and cannot be edited.", "warning")
         return redirect(url_for('dashboard'))
 
-    form = UploadItemForm(obj=item)
+    form = UploadItemForm(obj=item)  # Pre-fill form with current data
 
     if form.validate_on_submit():
         item.name = form.name.data
@@ -379,6 +388,7 @@ def edit_item(item_id):
 
         file = form.image.data
         if file and allowed_file(file.filename):
+            # Remove old image if it exists
             if item.image_url:
                 old_path = os.path.join(app.root_path, item.image_url.strip("/"))
                 if os.path.exists(old_path):
@@ -387,7 +397,7 @@ def edit_item(item_id):
             filename = secure_filename(file.filename)
             new_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(new_path)
-            item.image_url = f"/{new_path}"
+            item.image_url = f"/{new_path}"  # Save new image path
 
         db.session.commit()
         flash("Item updated successfully!", "success")
@@ -396,10 +406,13 @@ def edit_item(item_id):
     return render_template('edit_item.html', form=form, item=item)
 
 
+
 @app.route('/my-trades')
 @login_required
 def my_trades():
+
     page = request.args.get('page', 1, type=int)
+
     sent_trades = Trade.query.filter_by(sender_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=9)
     received_trades = Trade.query.filter_by(receiver_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=9)
     return render_template('my_trades.html', sent_trades=sent_trades, received_trades=received_trades)
@@ -415,10 +428,13 @@ def credit_history():
 @app.route('/notifications')
 @login_required
 def notifications():
+
     page = request.args.get('page', 1, type=int)
+
     notes = Notification.query.filter_by(user_id=current_user.id).order_by(
         Notification.created_at.desc()
     ).paginate(page=page, per_page=9)
+
     return render_template('notifications.html', notifications=notes)
 
 
@@ -432,6 +448,7 @@ def mark_notification_read(note_id):
     return redirect(url_for('notifications'))
 
 
+
 @app.route('/profile-settings', methods=['GET', 'POST'])
 @login_required
 def profile_settings():
@@ -441,7 +458,7 @@ def profile_settings():
         current_user.email = request.form['email']
         current_user.phone_number = request.form['phone_number']
         current_user.address = request.form['address']
-        current_user.city = request.form['city']
+        current_user.city = request.form['city']              # Add this
         current_user.state = request.form['state']
         if form.profile_picture.data:
             file = form.profile_picture.data
@@ -469,11 +486,12 @@ def marketplace():
     condition_filter = request.args.get('condition')
     category_filter = request.args.get('category')
     search = request.args.get('search', '')
-    state = request.args.get('state', '')
+    state = request.args.get('state', '')  # State filter
     
+    # New price filtering parameters
     min_price = request.args.get('min_price', type=float)
     max_price = request.args.get('max_price', type=float)
-    price_range = request.args.get('price_range')
+    price_range = request.args.get('price_range')  # For predefined ranges
 
     filters = [Item.is_approved == True, Item.is_available == True]
 
@@ -486,10 +504,13 @@ def marketplace():
     if search:
         filters.append(Item.name.ilike(f'%{search}%'))
 
+    # ✅ FIXED: Add state filter to filters list
     if state:
         filters.append(Item.location == state)
 
+    # Price filtering logic
     if price_range:
+        # Handle predefined price ranges
         if price_range == 'under-1000':
             filters.append(Item.value < 1000)
         elif price_range == '1000-5000':
@@ -507,11 +528,13 @@ def marketplace():
         elif price_range == 'over-50000':
             filters.append(Item.value > 50000)
     else:
+        # Handle custom min/max price inputs
         if min_price is not None:
             filters.append(Item.value >= min_price)
         if max_price is not None:
             filters.append(Item.value <= max_price)
 
+    # Only include items with actual values (not None)
     filters.append(Item.value.isnot(None))
 
     items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).paginate(page=page, per_page=1000)
@@ -523,9 +546,12 @@ def marketplace():
 def view_item(item_id):
     item = Item.query.get_or_404(item_id)
     
+    # Get all images for this item, ordered by order_index
     item_images = ItemImage.query.filter_by(item_id=item.id).order_by(ItemImage.order_index).all()
     
+    # If no images in ItemImage table, use the legacy image_url
     if not item_images and item.image_url:
+        # Create a temporary image object for backward compatibility
         class TempImage:
             def __init__(self, url, is_primary=True):
                 self.image_url = url
@@ -552,6 +578,7 @@ def upload_item():
 
     form = UploadItemForm()
     if form.validate_on_submit():
+        # Create the item first
         new_item = Item(
             name=form.name.data,
             description=form.description.data,
@@ -564,26 +591,30 @@ def upload_item():
             status='pending'
         )
         db.session.add(new_item)
-        db.session.flush()
+        db.session.flush()  # Get the item ID without committing
         
+        # Handle multiple image uploads
         uploaded_images = []
         if form.images.data:
             for index, file in enumerate(form.images.data):
                 if file and allowed_file(file.filename):
+                    # Generate unique filename
                     filename = secure_filename(file.filename)
                     unique_filename = f"{new_item.id}_{index}_{int(time.time())}_{filename}"
                     image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                     file.save(image_path)
                     
+                    # Create ItemImage record
                     item_image = ItemImage(
                         item_id=new_item.id,
                         image_url=f"/{image_path}",
-                        is_primary=(index == 0),
+                        is_primary=(index == 0),  # First image is primary
                         order_index=index
                     )
                     db.session.add(item_image)
                     uploaded_images.append(item_image)
         
+        # Set the main image_url to the first uploaded image for backward compatibility
         if uploaded_images:
             new_item.image_url = uploaded_images[0].image_url
         
@@ -599,6 +630,8 @@ def upload_item():
     return render_template('upload.html', form=form)
 
 
+
+
 @app.route('/add_to_cart/<int:item_id>', methods=['POST', 'GET'])
 @login_required
 def add_to_cart(item_id):
@@ -612,16 +645,20 @@ def add_to_cart(item_id):
         flash("You cannot add your own item to cart.", "info")
         return redirect(url_for('marketplace'))
 
+    # Get or create cart for current user
     cart = get_or_create_cart(current_user.id)
 
+    # Check if item is already in cart
     existing_cart_item = CartItem.query.filter_by(cart_id=cart.id, item_id=item_id).first()
     if existing_cart_item:
         flash("This item is already in your cart.", "info")
         return redirect(url_for('view_cart'))
 
+    # Add item to cart
     cart_item = CartItem(cart_id=cart.id, item_id=item_id)
     db.session.add(cart_item)
     
+    # Update cart timestamp
     cart.updated_at = datetime.utcnow()
     db.session.commit()
 
@@ -638,9 +675,11 @@ def view_cart():
         cart_items = []
         total_cost = 0
     else:
+        # Only show items that are still available
         cart_items = [ci for ci in cart.items if ci.item.is_available]
         total_cost = cart.get_total_cost()
         
+        # Remove unavailable items from cart
         unavailable_items = [ci for ci in cart.items if not ci.item.is_available]
         if unavailable_items:
             for ci in unavailable_items:
@@ -691,6 +730,7 @@ def checkout():
         flash("Your cart is empty.", "info")
         return redirect(url_for('marketplace'))
     
+    # Filter available items
     available_items = [ci for ci in cart.items if ci.item.is_available]
     
     if not available_items:
@@ -699,11 +739,13 @@ def checkout():
     
     total_cost = sum(ci.item.value for ci in available_items)
     
+    # Check if user has sufficient credits
     if current_user.credits < total_cost:
         flash(f"Insufficient credits. You need {total_cost} credits but only have {current_user.credits}.", "danger")
         return redirect(url_for('view_cart'))
     
     return render_template('checkout.html', cart_items=available_items, total_cost=total_cost)
+
 
 
 @app.route('/process_checkout', methods=['POST'])
@@ -758,9 +800,11 @@ def process_checkout():
     if not purchased_items:
         return redirect(url_for('view_cart'))
 
+    # Save purchased items in session and redirect to ONE delivery form
     session['pending_order_items'] = [i.id for i in purchased_items]
     flash("Now set up delivery for your purchased items.", "info")
     return redirect(url_for('order_item'))
+
 
 
 @app.route('/order_item', methods=['GET', 'POST'])
@@ -769,6 +813,7 @@ def order_item():
     form = OrderForm()
     stations = PickupStation.query.filter_by(state=current_user.state).all()
     form.pickup_station.choices = [(s.id, s.name) for s in stations]
+    # Only fetch current purchased items
     pending_item_ids = session.get('pending_order_items', [])
     items = Item.query.filter(Item.id.in_(pending_item_ids)).all()
     
@@ -780,6 +825,7 @@ def order_item():
         pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
         delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
         
+        # Create one order
         order = Order(
             user_id=current_user.id,
             delivery_method=delivery_method,
@@ -788,18 +834,20 @@ def order_item():
         )
         db.session.add(order)
         
+        # Attach all purchased items to this order
         for item_id in pending_item_ids:
             db.session.add(OrderItem(order=order, item_id=item_id))
         
-        db.session.commit()
+        db.session.commit()  # ✅ commit before notification and email
         
-        # Personalized Notification
+        # --- Personalized Notification ---
         if delivery_method == "pickup":
             station = PickupStation.query.get(pickup_station_id)
             extra_info = f"Pickup Station: {station.name}, {station.address}" if station else ""
         else:
             extra_info = f"Delivery Address: {delivery_address}"
         
+        # Item names for notification
         item_names = [item.name for item in items]
         if len(item_names) == 1:
             item_info = f"Item: '{item_names[0]}' keep using Barterex for seamless trading."
@@ -811,7 +859,14 @@ def order_item():
             f"📦 Your order has been set up for delivery via {delivery_method}. {item_info}. {extra_info}"
         )
         
-        # ✅ Send order confirmation email asynchronously
+        # ✅ Send order confirmation email using template
+        msg = Message(
+            subject="📦 Order Confirmation - Barterex",
+            sender="info.barterex@gmail.com",
+            recipients=[current_user.email]
+        )
+        
+        # Prepare data for email template
         email_data = {
             'username': current_user.username,
             'order_id': order.id,
@@ -822,18 +877,17 @@ def order_item():
             'order_date': order.created_at.strftime('%B %d, %Y at %I:%M %p') if hasattr(order, 'created_at') else 'Today'
         }
         
-        html = render_template("emails/order_confirmation.html", **email_data)
-        send_email_async(
-            subject="📦 Order Confirmation - Barterex",
-            recipients=[current_user.email],
-            html_body=html
-        )
+        # Render the HTML template and inject order data
+        msg.html = render_template("emails/order_confirmation.html", **email_data)
+        mail.send(msg)
+        # --- End Email ---
         
         session.pop('pending_order_items', None)
         flash("Delivery set up successfully for your purchased items! Confirmation email sent.", "success")
         return redirect(url_for('dashboard'))
     
     return render_template('order_item.html', form=form, stations=stations, items=items)
+
 
 
 # Context processor to make cart info available in templates
@@ -860,6 +914,7 @@ def admin_register():
         email = form.email.data
         password = form.password.data
 
+        # Password confirmation already handled by the form validator
         hashed_password = generate_password_hash(password)
 
         new_admin = Admin(username=username, email=email, password=hashed_password)
@@ -869,7 +924,9 @@ def admin_register():
         flash('Admin registered successfully!', 'success')
         return redirect(url_for('admin_login'))
 
+    # If form is not valid or GET method, render the form again
     return render_template('admin/register.html', form=form)
+
 
 
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -884,11 +941,12 @@ def admin_login():
         if admin and check_password_hash(admin.password, password):
             session['admin_id'] = admin.id
             flash('Logged in successfully!', 'success')
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_dashboard'))  # Replace with your dashboard route
         else:
             flash('Invalid email or password', 'danger')
     
     return render_template('admin/login.html', form=form)
+
 
 
 @app.route('/admin/logout')
@@ -917,20 +975,25 @@ def admin_login_required(f):
 def admin_dashboard():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('search', '').strip()
-    status = request.args.get('status', 'pending')
+    status = request.args.get('status', 'pending')  # Defaults to 'pending'
 
+    # Base query with optional status filter
     query = Item.query.options(joinedload(Item.user))
 
     if status != 'all':
         query = query.filter(Item.status == status)
 
+
+    # If search is applied
     if search:
         query = query.join(User).filter(
             (Item.name.ilike(f"%{search}%")) | (User.username.ilike(f"%{search}%")) | (Item.item_number == search)
         )
 
+    # Paginate items
     items = query.order_by(Item.id.desc()).paginate(page=page, per_page=10)
 
+    # Admin stats
     total_users = User.query.count()
     total_items = Item.query.count()
     approved_items = Item.query.filter_by(status='approved').count()
@@ -954,6 +1017,7 @@ def admin_dashboard():
     )
 
 
+
 @app.route('/admin/users')
 @admin_login_required
 def manage_users():
@@ -971,6 +1035,7 @@ def view_user(user_id):
     items_uploaded = Item.query.filter_by(user_id=user.id).count()
     items_traded = Item.query.filter_by(user_id=user.id, is_available=False).count()
 
+
     return render_template('admin/view_user.html', user=user,
                            items_uploaded=items_uploaded,
                            items_traded=items_traded)
@@ -985,7 +1050,7 @@ def ban_user(user_id):
         flash("You can't ban yourself.", 'danger')
         return redirect(url_for('manage_users'))
 
-    reason = request.form.get('ban_reason')
+    reason = request.form.get('ban_reason')  # Get reason from form
     if not reason.strip():
         flash("You must provide a reason for banning this user.", 'danger')
         return redirect(url_for('manage_users'))
@@ -1004,7 +1069,6 @@ def admin_banned_users():
     users = User.query.all()
     banned_users = User.query.filter_by(is_banned=True).all()
     return render_template('admin/users.html', users=users, banned_users=banned_users)
-
 
 @app.route('/admin/unban_user/<int:user_id>', methods=['POST'])
 @admin_login_required
@@ -1077,12 +1141,16 @@ def approve_item(item_id):
         item.is_available = True
         item.status = 'approved'
 
+
+        # ✅ Give user the same value as credits
         item.user.credits += int(value)
+
 
         if item.status == 'approved':
             create_notification(item.user_id, f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is: ₦{item.user.credits:,} credits. Keep using Barterex for seamless trading.")
         else:
             create_notification(item.user_id, f"❌ Your item '{item.name}' was rejected because: {item.rejection_reason}. Keep using Barterex for seamless trading.")
+
 
         db.session.commit()
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
@@ -1096,7 +1164,7 @@ def approve_item(item_id):
 @admin_login_required
 def reject_item(item_id):
     item = Item.query.get_or_404(item_id)
-    reason = request.form.get("rejection_reason")
+    reason = request.form.get("rejection_reason")  # from form input
 
     item.is_approved = False
     item.is_available = False
@@ -1105,8 +1173,10 @@ def reject_item(item_id):
 
     db.session.commit()
 
+    # Notify user (assuming you have some send_notification + email setup)
     flash(f'Item rejected. Reason: {reason}', 'warning')
     return redirect(url_for('admin_dashboard'))
+
 
 
 @app.route('/admin/update-status', methods=['POST'])
@@ -1158,7 +1228,7 @@ def fix_missing_credits():
     flash(f"{count} item(s) were fixed and credits added to users.", "success")
     return redirect(url_for('admin_dashboard'))
 
-
+# Add Station
 @app.route('/admin/pickup-stations/add', methods=['GET', 'POST'])
 @admin_login_required
 def add_pickup_station():
@@ -1175,6 +1245,7 @@ def add_pickup_station():
         flash("Pickup station added successfully!", "success")
         return redirect(url_for('manage_pickup_stations'))
 
+    # Pass both form and stations to template
     stations = PickupStation.query.all()
     return render_template(
         "admin/manage_pickup_stations.html",
@@ -1183,11 +1254,12 @@ def add_pickup_station():
     )
 
 
+# Edit Station
 @app.route('/admin/pickup_stations/edit/<int:station_id>', methods=['GET', 'POST'])
 @admin_login_required
 def edit_pickup_station(station_id):
     station = PickupStation.query.get_or_404(station_id)
-    form = PickupStationForm(obj=station)
+    form = PickupStationForm(obj=station)  # ✅ bind station data into the form
 
     if form.validate_on_submit():
         station.name = form.name.data
@@ -1200,11 +1272,12 @@ def edit_pickup_station(station_id):
 
     return render_template(
         'admin/edit_pickup_station.html',
-        form=form,
+        form=form,            # ✅ now template has `form`
         station=station
     )
 
 
+# Delete Station
 @app.route('/admin/pickup_stations/delete/<int:station_id>', methods=['POST'])
 def delete_pickup_station(station_id):
     station = PickupStation.query.get_or_404(station_id)
@@ -1213,7 +1286,7 @@ def delete_pickup_station(station_id):
     flash('Pickup Station deleted successfully!', 'danger')
     return redirect(url_for('manage_pickup_stations'))
 
-
+# Manage Station
 @app.route('/admin/pickup-stations', methods=['GET'])
 @admin_login_required
 def manage_pickup_stations():
@@ -1221,7 +1294,7 @@ def manage_pickup_stations():
     stations = PickupStation.query.all()
     return render_template(
         "admin/manage_pickup_stations.html",
-        form=form,
+        form=form,           
         stations=stations
     )
 
@@ -1243,6 +1316,7 @@ def update_order_status(order_id):
         order.status = "Out for Delivery"
     elif order.status == "Out for Delivery":
         order.status = "Delivered"
+
 
     item_names = ", ".join([f"{oi.item.name}" for oi in order.items])
 
