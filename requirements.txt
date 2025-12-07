@@ -26,4 +26,4 @@ psycopg2==2.9.10
 Flask-mail==0.9.1
 python-dotenv==1.0.0
 flask-limiter==4.1.0
-Pillow==10.1.0
+Pillow==11.3.0
