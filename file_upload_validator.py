@@ -4,7 +4,6 @@ Provides comprehensive file upload validation with magic byte verification,
 size limits, and image validation to prevent malware uploads.
 """
 
-import imghdr
 import io
 import os
 from PIL import Image
@@ -25,18 +24,30 @@ MAGIC_BYTES = {
 
 def get_file_type_from_magic_bytes(file_data):
     """
-    Detect file type by magic bytes (file signature).
+    Detect file type by magic bytes (file signature) using PIL.
     This is the actual file type, not just the extension.
     
     Args:
         file_data: Binary file data
         
     Returns:
-        str: Detected file type ('jpg', 'png', 'gif', etc.) or None
+        str: Detected file type ('JPEG', 'PNG', 'GIF', etc.) or None
     """
-    # Use PIL's imghdr for robust detection
-    detected = imghdr.what(None, h=file_data)
-    return detected
+    try:
+        # Use PIL to detect image format from bytes
+        img = Image.open(io.BytesIO(file_data))
+        format_name = img.format
+        if format_name:
+            return format_name.lower()
+    except Exception:
+        pass
+    
+    # Fallback to magic bytes detection
+    for magic, file_type in MAGIC_BYTES.items():
+        if file_data.startswith(magic):
+            return file_type
+    
+    return None
 
 
 def validate_file_size(file_size, max_size=10*1024*1024):
