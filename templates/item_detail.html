@@ -12,11 +12,13 @@
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     padding: 20px 15px;
+    overflow-y: auto;
   }
 
   .main-content {
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
   }
 
   .breadcrumb {
@@ -116,7 +118,7 @@
   .slide img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transition: transform 0.3s ease;
   }
 
@@ -514,10 +516,12 @@
   @media (max-width: 768px) {
     .page-container {
       padding: 15px 10px;
+      overflow-x: hidden;
     }
 
     .slideshow-section {
-      min-height: 280px;
+      min-height: 350px;
+      max-height: 400px;
     }
 
     .item-title {
