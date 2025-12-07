@@ -119,13 +119,34 @@
 
   .filter-toggle-btn {
     display: none;
-    background: none;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
     border: none;
-    color: var(--text-primary);
-    font-size: 1.2rem;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
-    padding: 0;
+    padding: 8px 16px;
     margin-left: auto;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 122, 0, 0.2);
+  }
+
+  .filter-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+  }
+
+  .filter-toggle-btn::before {
+    content: '⚙️';
+    font-size: 1.1rem;
+  }
+
+  .filter-toggle-btn.expanded::before {
+    content: '✕';
   }
 
   .filter-form {
@@ -1061,29 +1082,13 @@
       <p>For the sake of the "beta-testing" items prices are not realistic.</p>
     </div>
 
-    <!-- Recommendations Section (for logged-in users) -->
-    {% if current_user.is_authenticated %}
-    <div class="recommendations-section" id="recommendationsSection" style="display: none;">
-      <div class="recommendations-header">
-        <div class="recommendations-icon">⭐</div>
-        <div>
-          <h3>Recommended For You</h3>
-          <div class="recommendations-subtitle">Based on your browsing history</div>
-        </div>
-      </div>
-      <div class="recommendations-grid" id="recommendationsGrid">
-        <div class="recommendations-loading">⏳ Loading recommendations...</div>
-      </div>
-    </div>
-    {% endif %}
-
     <div class="filter-section">
       <div class="filter-header">
         <div style="display: flex; align-items: center; gap: 8px;">
           <div class="filter-icon">🔍</div>
           <h3>Find Your Perfect Match</h3>
         </div>
-        <button type="button" class="filter-toggle-btn" id="filterToggleBtn">▼</button>
+        <button type="button" class="filter-toggle-btn" id="filterToggleBtn">Filter Results</button>
       </div>
 
       <form method="GET" action="{{ url_for('marketplace.marketplace') }}" class="filter-form" id="filterForm">
@@ -1196,6 +1201,22 @@
         </div>
       </form>
     </div>
+
+    <!-- Recommendations Section (for logged-in users) - After filter section, before results -->
+    {% if current_user.is_authenticated %}
+    <div class="recommendations-section" id="recommendationsSection" style="display: none;">
+      <div class="recommendations-header">
+        <div class="recommendations-icon">⭐</div>
+        <div>
+          <h3>Recommended For You</h3>
+          <div class="recommendations-subtitle">Based on your browsing history</div>
+        </div>
+      </div>
+      <div class="recommendations-grid" id="recommendationsGrid">
+        <div class="recommendations-loading">⏳ Loading recommendations...</div>
+      </div>
+    </div>
+    {% endif %}
 
     <div class="results-info">
       <div class="results-count">
@@ -1653,22 +1674,22 @@
     // Hide filter form on mobile by default
     if (window.innerWidth <= 768) {
       filterForm.classList.add('hidden');
-      filterToggleBtn.textContent = '▶';
     }
 
     filterToggleBtn.addEventListener('click', function(e) {
       e.preventDefault();
       filterForm.classList.toggle('hidden');
-      filterToggleBtn.textContent = filterForm.classList.contains('hidden') ? '▶' : '▼';
+      filterToggleBtn.classList.toggle('expanded');
     });
 
     // Show filter on larger screens
     window.addEventListener('resize', function() {
       if (window.innerWidth > 768) {
         filterForm.classList.remove('hidden');
+        filterToggleBtn.classList.remove('expanded');
         filterToggleBtn.style.display = 'none';
       } else {
-        filterToggleBtn.style.display = 'block';
+        filterToggleBtn.style.display = 'flex';
       }
     });
   }
