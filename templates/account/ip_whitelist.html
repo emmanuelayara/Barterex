@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}IP Whitelist{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-network-wired"></i> IP Whitelist</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Restrict access to your account to specific IP addresses. 
+                        Only devices with whitelisted IPs will be able to access your account.
+                    </p>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Warning:</strong> If you enable IP whitelisting, you'll only be able to log in from these IPs. 
+                        Make sure to add all IPs you regularly use!
+                    </div>
+
+                    <h6 class="mt-4"><strong>Your Current IP</strong></h6>
+                    <div class="alert alert-info">
+                        <code>{{ current_ip }}</code>
+                        <form method="POST" action="{{ url_for('account.add_ip_whitelist') }}" style="display: inline; float: right;">
+                            <button type="submit" class="btn btn-sm btn-info">
+                                <i class="fas fa-plus"></i> Whitelist This IP
+                            </button>
+                        </form>
+                    </div>
+
+                    {% if ips %}
+                        <h6 class="mt-4"><strong>Whitelisted IP Addresses</strong></h6>
+                        <div class="list-group">
+                            {% for ip_entry in ips %}
+                                <div class="list-group-item">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1">
+                                            <i class="fas fa-network-wired fa-2x text-primary"></i>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <h6 class="mb-0">
+                                                <code>{{ ip_entry.address }}</code>
+                                            </h6>
+                                            <small class="text-muted">
+                                                Added on {{ ip_entry.date }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <form method="POST" action="{{ url_for('account.remove_ip_whitelist', ip_address=ip_entry.address) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remove this IP?')">
+                                                    <i class="fas fa-trash"></i> Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mt-4">
+                            <i class="fas fa-info-circle"></i> No IP addresses whitelisted yet
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Information Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> About IP Whitelisting</h6>
+                </div>
+                <div class="card-body small">
+                    <h6>What is IP Whitelisting?</h6>
+                    <p class="text-muted">
+                        IP whitelisting restricts account access to specific internet addresses. 
+                        Only devices connecting from whitelisted IPs can access your account.
+                    </p>
+
+                    <h6>When should I use it?</h6>
+                    <ul class="text-muted">
+                        <li>You want maximum security for your account</li>
+                        <li>You only access your account from known locations</li>
+                        <li>You want to prevent unauthorized access</li>
+                    </ul>
+
+                    <h6>Things to remember</h6>
+                    <ul class="text-muted">
+                        <li>You can only log in from whitelisted IPs</li>
+                        <li>Add all IPs you regularly use before enabling</li>
+                        <li>ISPs may change your IP periodically</li>
+                        <li>Mobile networks have different IPs than home networks</li>
+                        <li>You can remove IPs anytime</li>
+                    </ul>
+
+                    <h6>What's my IP?</h6>
+                    <p class="text-muted">
+                        Your current IP is: <code>{{ current_ip }}</code>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="mt-4">
+                <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Security Settings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

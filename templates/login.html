@@ -86,6 +86,17 @@
             letter-spacing: 0.5px;
         }
 
+        .form-hint {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-hint.show {
+            display: block;
+        }
+
         .form-input {
             width: 100%;
             padding: 14px 16px;
@@ -113,18 +124,41 @@
             color: #a0aec0;
         }
 
+        .form-input.valid {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .form-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .form-input.valid::after {
+            content: "✓";
+            position: absolute;
+            right: 12px;
+            color: #10b981;
+            font-weight: bold;
+        }
+
         .error-message {
-            color: #e53e3e;
+            color: #ef4444;
             font-size: 12px;
-            margin-top: 4px;
-            display: flex;
+            margin-top: 6px;
+            display: none;
             align-items: center;
             animation: slideIn 0.3s ease;
         }
 
+        .error-message.show {
+            display: flex;
+        }
+
         .error-message::before {
-            content: "⚠";
+            content: "✕ ";
             margin-right: 4px;
+            font-weight: bold;
         }
 
         @keyframes slideIn {
@@ -759,18 +793,20 @@
                     <div class="form-group">
                         <label class="form-label">{{ form.username.label }}</label>
                         {{ form.username(class="form-input", placeholder="Enter your username", id="username") }}
-                        <div class="error-message" style="display: none;"></div>
+                        <div class="form-hint" id="usernameHint">Min. 3 characters, alphanumeric only</div>
+                        <div class="error-message"></div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">{{ form.password.label }}</label>
                         {{ form.password(class="form-input", placeholder="Enter your password", id="password") }}
-                        <div class="error-message" style="display: none;"></div>
+                        <div class="form-hint" id="passwordHint">Your password for account security</div>
+                        <div class="error-message"></div>
                     </div>
                 </div>
 
                 <div class="forgot-password">
-                    <a href="{{ url_for('forgot_password') }}">Forgot your password?</a>
+                    <a href="{{ url_for('auth.forgot_password') }}">Forgot your password?</a>
                 </div>
 
                 <div class="remember-me">
@@ -808,7 +844,7 @@
 
                 <div class="form-footer">
                     <p>Don't have an account?</p>
-                    <a href="/register" class="register-link">Create account here</a>
+                    <a href="{{ url_for('auth.register') }}" class="register-link">Create account here</a>
                 </div>
             </form>
         </div>
@@ -831,39 +867,67 @@
             }
         });
 
-        // Form submission
+        // Form submission with enhanced loading feedback
         form.addEventListener('submit', function(e) {
             // Add loading state
             form.classList.add('loading');
             const submitBtn = document.querySelector('input[type="submit"], button[type="submit"]');
             if (submitBtn) {
+                submitBtn.disabled = true;
                 if (submitBtn.tagName === 'INPUT') {
                     submitBtn.value = 'Signing In...';
                 } else {
                     submitBtn.textContent = 'Signing In...';
                 }
             }
+            
+            // Show global loading overlay
+            if (typeof showLoading !== 'undefined') {
+                showLoading('Signing you in...');
+            }
         });
+        
+        // Check for form errors after page loads
+        const errorMessages = form.querySelectorAll('.flask-error');
+        if (errorMessages.length > 0 && typeof hideLoading !== 'undefined') {
+            hideLoading();
+            errorMessages.forEach(msg => {
+                if (typeof errorToast !== 'undefined' && msg.textContent.trim()) {
+                    errorToast(msg.textContent.trim());
+                }
+            });
+        }
 
-        // Real-time validation for inputs
+        // Real-time validation for inputs with enhanced feedback
         document.querySelectorAll('.form-input').forEach(input => {
+            // Show hints on focus
+            input.addEventListener('focus', function() {
+                const hint = this.parentNode.querySelector('.form-hint');
+                if (hint) hint.classList.add('show');
+            });
+
+            // Hide hints on blur if valid
             input.addEventListener('blur', function() {
                 validateField(this);
             });
 
+            // Real-time validation while typing
             input.addEventListener('input', function() {
-                // Clear error state when user starts typing
-                const errorDiv = this.nextElementSibling;
-                if (errorDiv && errorDiv.classList.contains('error-message')) {
-                    errorDiv.style.display = 'none';
-                    this.style.borderColor = '#e2e8f0';
+                if (this.value.trim()) {
+                    validateField(this);
+                } else {
+                    // Reset on empty
+                    this.classList.remove('valid', 'error');
+                    const errorDiv = this.parentNode.querySelector('.error-message');
+                    if (errorDiv) errorDiv.classList.remove('show');
                 }
             });
         });
 
         function validateField(field) {
             const value = field.value.trim();
-            const errorDiv = field.nextElementSibling;
+            const errorDiv = field.parentNode.querySelector('.error-message');
+            const hint = field.parentNode.querySelector('.form-hint');
 
             let isValid = true;
             let errorMessage = '';
@@ -871,25 +935,44 @@
             if (!value) {
                 errorMessage = field.name === 'username' ? 'Username is required' : 'Password is required';
                 isValid = false;
-            } else if (field.name === 'username' && value.length < 3) {
-                errorMessage = 'Username must be at least 3 characters';
-                isValid = false;
-            } else if (field.name === 'password' && value.length < 6) {
-                errorMessage = 'Password must be at least 6 characters';
-                isValid = false;
+            } else if (field.name === 'username') {
+                if (value.length < 3) {
+                    errorMessage = 'Username must be at least 3 characters';
+                    isValid = false;
+                } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+                    errorMessage = 'Username can only contain letters, numbers, and underscores';
+                    isValid = false;
+                } else {
+                    errorMessage = '✓ Username looks good!';
+                }
+            } else if (field.name === 'password') {
+                if (value.length < 6) {
+                    errorMessage = 'Password must be at least 6 characters';
+                    isValid = false;
+                } else {
+                    errorMessage = '✓ Password is valid!';
+                }
             }
 
-            if (isValid) {
-                if (errorDiv && errorDiv.classList.contains('error-message')) {
-                    errorDiv.style.display = 'none';
-                }
-                field.style.borderColor = '#e2e8f0';
-            } else {
-                if (errorDiv && errorDiv.classList.contains('error-message')) {
+            // Update visual feedback
+            field.classList.remove('valid', 'error');
+            if (errorDiv) errorDiv.classList.remove('show');
+            if (hint) hint.classList.remove('show');
+
+            if (isValid && value) {
+                field.classList.add('valid');
+                if (errorDiv && errorMessage.includes('✓')) {
                     errorDiv.textContent = errorMessage;
-                    errorDiv.style.display = 'block';
+                    errorDiv.classList.add('show');
+                    errorDiv.style.color = '#10b981';
                 }
-                field.style.borderColor = '#e53e3e';
+            } else if (!isValid) {
+                field.classList.add('error');
+                if (errorDiv) {
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.classList.add('show');
+                    errorDiv.style.color = '#ef4444';
+                }
             }
         }
 

@@ -953,7 +953,8 @@
           </div>
 
           <div class="action-section">
-            <form method="POST" action="{{ url_for('add_to_cart', item_id=item.id) }}">
+            <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}">
+              {{ csrf_token() }}
               <button type="submit" class="trade-button">
                 🛒 Add to Cart
               </button>
@@ -974,7 +975,7 @@
         <div class="related-grid">
           {% for related in related_items %}
             <div class="related-item">
-              <a href="{{ url_for('view_item', item_id=related.id) }}">
+              <a href="{{ url_for('marketplace.view_item', item_id=related.id) }}">
                 {% if related.image_url %}
                   <img src="{{ related.image_url }}" alt="{{ related.name }}" class="related-image">
                 {% else %}

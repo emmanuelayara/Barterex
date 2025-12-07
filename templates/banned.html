@@ -2,7 +2,8 @@
 <p>Reason: {{ reason }}</p>
 
 {% if not unban_requested %}
-<form action="{{ url_for('request_unban') }}" method="POST">
+<form action="{{ url_for('auth.request_unban') }}" method="POST">
+    {{ csrf_token() }}
     <button type="submit">Request Unban</button>
 </form>
 {% else %}

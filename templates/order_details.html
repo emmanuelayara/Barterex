@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Details - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --primary-color: #054e97;
+    --primary-light: #0066cc;
+    --primary-gradient: linear-gradient(135deg, #054e97 0%, #0066cc 100%);
+    --success-color: #11998e;
+    --warning-color: #ff7a00;
+    --danger-color: #e74c3c;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --surface: #ffffff;
+    --surface-alt: #f8f9fa;
+    --border-color: #e0e0e0;
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .order-details-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+  }
+
+  .order-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .order-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .order-status {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-left: 10px;
+  }
+
+  .status-pending { background: #fff3cd; color: #856404; }
+  .status-processing { background: #d1ecf1; color: #0c5460; }
+  .status-shipped { background: #cfe2ff; color: #084298; }
+  .status-delivered { background: #d1e7dd; color: #0f5132; }
+  .status-cancelled { background: #f8d7da; color: #842029; }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .info-card h3 {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.95rem;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+  }
+
+  .info-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .info-value {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .items-section {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 30px;
+  }
+
+  .items-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+  }
+
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .items-table th {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .items-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .items-table tr:hover {
+    background: var(--surface-alt);
+  }
+
+  .items-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 15px;
+  }
+
+  .timeline-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .timeline-content {
+    flex: 1;
+  }
+
+  .timeline-content h4 {
+    color: var(--primary-color);
+    margin: 0 0 5px 0;
+    font-weight: 600;
+  }
+
+  .timeline-content p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .btn-secondary {
+    background: var(--surface-alt);
+    color: var(--primary-color);
+    padding: 10px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  .explanation-box {
+    background: #f0f7ff;
+    border-left: 4px solid var(--primary-color);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+  }
+
+  .credits-summary {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+  }
+
+  .credits-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.95rem;
+  }
+
+  .credits-total {
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    padding-top: 10px;
+    margin-top: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    .order-details-container {
+      margin: 20px;
+      padding: 10px;
+    }
+
+    .order-header {
+      padding: 20px;
+    }
+
+    .order-number {
+      font-size: 1.5rem;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+
+    .btn-primary, .btn-secondary {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<div class="order-details-container">
+  <!-- Order Header -->
+  <div class="order-header">
+    <div class="order-number">📦 {{ order.order_number }}</div>
+    <div>Placed on {{ transaction_exp['date_ordered'] }}</div>
+    <div class="order-status">
+      {{ transaction_exp['status_explanation']['icon'] }} 
+      {{ transaction_exp['status_explanation']['title'] }}
+      <span class="status-badge status-{{ order.status.lower() }}">{{ order.status }}</span>
+    </div>
+  </div>
+
+  <!-- Status Explanation -->
+  <div class="explanation-box">
+    <strong>{{ transaction_exp['status_explanation']['icon'] }} {{ transaction_exp['status_explanation']['title'] }}</strong>
+    <p>{{ transaction_exp['status_explanation']['description'] }}</p>
+    <p><em>{{ transaction_exp['status_explanation']['what_happens'] }}</em></p>
+  </div>
+
+  <!-- Info Grid -->
+  <div class="info-grid">
+    <!-- Order Information -->
+    <div class="info-card">
+      <h3>📋 Order Information</h3>
+      <div class="info-row">
+        <span class="info-label">Order Date:</span>
+        <span class="info-value">{{ transaction_exp['date_ordered'] }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Total Items:</span>
+        <span class="info-value">{{ transaction_exp['items_count'] }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Order Status:</span>
+        <span class="info-value">
+          <span class="status-badge status-{{ order.status.lower() }}">{{ order.status }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Delivery Information -->
+    <div class="info-card">
+      <h3>🚚 Delivery Information</h3>
+      <div class="info-row">
+        <span class="info-label">Method:</span>
+        <span class="info-value">{{ transaction_exp['delivery_method']['method'] | title }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Estimated:</span>
+        <span class="info-value">{{ transaction_exp['estimated_delivery'] }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Timeline:</span>
+        <span class="info-value">{{ transaction_exp['delivery_method']['min_days'] }}-{{ transaction_exp['delivery_method']['max_days'] }} days</span>
+      </div>
+      {% if order.delivery_address %}
+      <div class="info-row">
+        <span class="info-label">Address:</span>
+        <span class="info-value">{{ order.delivery_address }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Items Section -->
+  <div class="items-section">
+    <h3>📦 Items in Your Order</h3>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Item Name</th>
+          <th>Condition</th>
+          <th>Location</th>
+          <th>Value (₦)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in transaction_exp['items'] %}
+        <tr>
+          <td>{{ item['name'] }}</td>
+          <td>{{ item['condition'] }}</td>
+          <td>{{ item['location'] }}</td>
+          <td>{{ item['value'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Credits Summary -->
+  <div class="credits-summary">
+    <h3 style="margin-top: 0; color: white;">💰 Credit Transaction Summary</h3>
+    <div class="credits-row">
+      <span>Your Balance Before Order:</span>
+      <strong>{{ transaction_exp['credits']['balance_before'] }}</strong>
+    </div>
+    <div class="credits-row">
+      <span>Total Items Value:</span>
+      <strong>{{ transaction_exp['credits']['total_items_value'] }}</strong>
+    </div>
+    <div class="credits-row">
+      <span>Credits Used:</span>
+      <strong>{{ transaction_exp['credits']['credits_used'] }}</strong>
+    </div>
+    <div class="credits-row credits-total">
+      <span>Your Balance After Order:</span>
+      <strong>{{ transaction_exp['credits']['balance_after'] }}</strong>
+    </div>
+    <div class="explanation-box" style="background: rgba(255, 255, 255, 0.1); border-color: white; color: white; margin-top: 15px;">
+      {{ transaction_exp['credits']['explanation'] }}
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <a href="{{ url_for('user.download_receipt', order_id=order.id) }}" class="btn-primary">
+      📥 Download Receipt
+    </a>
+    <a href="{{ url_for('user.user_orders') }}" class="btn-secondary">
+      ← Back to Orders
+    </a>
+  </div>
+</div>
+
+{% endblock %}

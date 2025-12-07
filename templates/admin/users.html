@@ -194,14 +194,14 @@
                                     <div class="action-buttons">
                                         <!-- View Button -->
                                         <button class="action-btn btn-view" 
-                                                onclick="location.href='{{ url_for('view_user', user_id=user.id) }}'"
+                                                onclick="location.href='{{ url_for('admin.view_user', user_id=user.id) }}'"
                                                 data-bs-toggle="tooltip" title="View User">
                                             <i class="bi bi-eye"></i>
                                         </button>
 
                                         <!-- Edit Button -->
                                         <button class="action-btn btn-edit" 
-                                                onclick="location.href='{{ url_for('edit_user', user_id=user.id) }}'"
+                                                onclick="location.href='{{ url_for('admin.edit_user', user_id=user.id) }}'"
                                                 data-bs-toggle="tooltip" title="Edit User">
                                             <i class="bi bi-pencil"></i>
                                         </button>
@@ -225,15 +225,17 @@
 
                                     <!-- Hidden Ban Form -->
                                     <form id="ban-form-{{ user.id }}" 
-                                          action="{{ url_for('ban_user', user_id=user.id) }}" 
+                                          action="{{ url_for('admin.ban_user', user_id=user.id) }}" 
                                           method="POST" style="display:none;">
+                                        {{ csrf_token() }}
                                         <input type="text" name="ban_reason" id="ban-reason-{{ user.id }}">
                                     </form>
 
                                     <!-- Hidden Unban Form -->
                                     <form id="unban-form-{{ user.id }}" 
-                                          action="{{ url_for('unban_user', user_id=user.id) }}" 
+                                          action="{{ url_for('admin.unban_user', user_id=user.id) }}" 
                                           method="POST" style="display:none;">
+                                        {{ csrf_token() }}
                                     </form>
                                 </td>
                             </tr>
@@ -309,12 +311,12 @@
                                 <td>
                                     <div class="action-buttons">
                                         <button class="action-btn btn-view" 
-                                                onclick="location.href='{{ url_for('view_user', user_id=user.id) }}'"
+                                                onclick="location.href='{{ url_for('admin.view_user', user_id=user.id) }}'"
                                                 data-bs-toggle="tooltip" title="View User">
                                             <i class="bi bi-eye"></i>
                                         </button>
                                         <button class="action-btn btn-edit" 
-                                                onclick="location.href='{{ url_for('edit_user', user_id=user.id) }}'"
+                                                onclick="location.href='{{ url_for('admin.edit_user', user_id=user.id) }}'"
                                                 data-bs-toggle="tooltip" title="Edit User">
                                             <i class="bi bi-pencil"></i>
                                         </button>
@@ -326,8 +328,9 @@
                                     </div>
                                     
                                     <form id="unban-form-banned-{{ user.id }}" 
-                                          action="{{ url_for('unban_user', user_id=user.id) }}" 
+                                          action="{{ url_for('admin.unban_user', user_id=user.id) }}" 
                                           method="POST" style="display:none;">
+                                        {{ csrf_token() }}
                                     </form>
                                 </td>
                             </tr>

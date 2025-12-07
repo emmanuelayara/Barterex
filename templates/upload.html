@@ -796,7 +796,7 @@
               <div class="file-upload-icon" id="uploadIcon">📷</div>
               <div class="file-upload-text">Drag & drop multiple images here</div>
               <div class="file-upload-subtext">or click to browse files (JPG, PNG, WEBP) - Max 6 images</div>
-              <input type="file" class="file-input" id="imageInput" name="images" accept="image/*" multiple required>
+              <input type="file" class="file-input" id="imageInput" name="images" accept="image/*" multiple>
             </div>
             
             <div class="images-preview-container" id="imagesPreviewContainer" style="display: none;">
@@ -942,13 +942,22 @@
   form.addEventListener('submit', function(e) {
     if (selectedFiles.length === 0) {
       e.preventDefault();
-      alert('Please select at least one image before submitting.');
+      if (typeof warningToast !== 'undefined') {
+        warningToast('Please select at least one image before submitting.');
+      } else {
+        alert('Please select at least one image before submitting.');
+      }
       return;
     }
 
     // Add loading state
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
+    
+    // Show global loading overlay
+    if (typeof showLoading !== 'undefined') {
+      showLoading('Uploading your item...');
+    }
 
     // Create FormData to handle file uploads properly
     const formData = new FormData(form);
@@ -973,7 +982,13 @@
       throw new Error('Network response was not ok');
     }).then(html => {
       // Check if submission was successful (look for success message or redirect)
-      if (html.includes('Item submitted for approval') || response.redirected) {
+      if (html.includes('Item submitted for approval') || html.includes('successfully')) {
+        if (typeof hideLoading !== 'undefined') {
+          hideLoading();
+        }
+        if (typeof successToast !== 'undefined') {
+          successToast('Item uploaded successfully! Redirecting...');
+        }
         submitBtn.classList.remove('loading');
         submitBtn.innerHTML = '✅ Uploaded Successfully!';
         submitBtn.style.background = 'var(--success-gradient)';
@@ -987,9 +1002,16 @@
       }
     }).catch(error => {
       console.error('Error:', error);
+      if (typeof hideLoading !== 'undefined') {
+        hideLoading();
+      }
+      if (typeof errorToast !== 'undefined') {
+        errorToast('Error uploading item. Please try again.');
+      } else {
+        alert('Error uploading item. Please try again.');
+      }
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
-      alert('Error uploading item. Please try again.');
     });
 
     e.preventDefault(); // Always prevent default since we're handling with AJAX

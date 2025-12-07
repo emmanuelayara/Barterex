@@ -649,13 +649,14 @@
 
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <form method="POST" action="{{ url_for('process_checkout') }}" style="flex: 1;">
+                <form method="POST" action="{{ url_for('items.process_checkout') }}" style="flex: 1;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="confirm-btn">
                         <i class="fas fa-shopping-cart"></i>
                         Purchase & Setup Delivery
                     </button>
                 </form>
-                <a href="{{ url_for('view_cart') }}" class="cancel-btn">
+                <a href="{{ url_for('items.view_cart') }}" class="cancel-btn">
                     <i class="fas fa-arrow-left"></i>
                     Back to Cart
                 </a>
@@ -669,18 +670,36 @@
         // Prevent back button during processing
         let isProcessing = false;
 
-        document.querySelector('form').addEventListener('submit', function() {
+        const checkoutForm = document.querySelector('form');
+        const confirmBtn = document.querySelector('.confirm-btn');
+
+        checkoutForm.addEventListener('submit', function(e) {
             if (isProcessing) {
+                e.preventDefault();
                 return false;
             }
+            
+            // Show loading feedback
             isProcessing = true;
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Payment...';
+            
+            if (typeof showLoading !== 'undefined') {
+                showLoading('Processing your payment...');
+            }
+            if (typeof infoToast !== 'undefined') {
+                infoToast('Please do not refresh the page...');
+            }
         });
 
         // Add confirmation dialog
-        document.querySelector('.confirm-btn').addEventListener('click', function(e) {
+        confirmBtn.addEventListener('click', function(e) {
             if (!confirm("Are you sure you want to purchase {{ cart_items|length }} item{{ 's' if cart_items|length != 1 else '' }} for {{ total_cost }} credits?")) {
                 e.preventDefault();
                 return false;
+            }
+            if (typeof warningToast !== 'undefined') {
+                warningToast('Confirming your purchase...');
             }
         });
 

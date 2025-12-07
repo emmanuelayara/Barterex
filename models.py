@@ -2,6 +2,7 @@ from app import db
 from flask_login import UserMixin
 from datetime import datetime
 import random
+import secrets
 
 
 class User(db.Model, UserMixin):
@@ -25,11 +26,39 @@ class User(db.Model, UserMixin):
     ban_reason = db.Column(db.Text, nullable=True)
     unban_requested = db.Column(db.Boolean, default=False)
 
+    # Security - failed login tracking for brute force protection
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    account_locked_until = db.Column(db.DateTime, nullable=True)
+
+    # Account Security & GDPR
+    two_factor_enabled = db.Column(db.Boolean, default=False)
+    two_factor_secret = db.Column(db.String(32), nullable=True)
+    last_password_change = db.Column(db.DateTime, default=datetime.utcnow)
+    password_change_required = db.Column(db.Boolean, default=False)
+    data_export_requested = db.Column(db.Boolean, default=False)
+    data_export_date = db.Column(db.DateTime, nullable=True)
+    account_deletion_requested = db.Column(db.Boolean, default=False)
+    account_deletion_date = db.Column(db.DateTime, nullable=True)
+    gdpr_consent_date = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime, nullable=True)
+
+    # Notification Preferences (Consignment Model)
+    notification_preferences = db.Column(db.JSON, default=lambda: {
+        'email_order_updates': True,
+        'email_cart_items': False,
+        'push_cart_items': True,
+        'push_order_updates': True,
+        'notification_frequency': 'instant'  # instant, daily, weekly
+    })
+
     # Relationships
     items = db.relationship('Item', back_populates='user', lazy=True)
     transactions = db.relationship('CreditTransaction', back_populates='user', lazy=True)
     notifications = db.relationship('Notification', back_populates='user', lazy=True)
     orders = db.relationship('Order', back_populates='user', lazy=True)
+    activity_logs = db.relationship('ActivityLog', back_populates='user', lazy=True, cascade='all, delete-orphan')
+    security_settings = db.relationship('SecuritySettings', back_populates='user', lazy=True, uselist=False, cascade='all, delete-orphan')
 
 
 class Admin(db.Model):
@@ -37,6 +66,54 @@ class Admin(db.Model):
     username = db.Column(db.String(120), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    
+    # Security - failed login tracking
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    account_locked_until = db.Column(db.DateTime, nullable=True)
+
+
+class ActivityLog(db.Model):
+    """Track user account activity for security and GDPR compliance"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_activity_log_user'), nullable=False)
+    user = db.relationship('User', back_populates='activity_logs')
+    
+    activity_type = db.Column(db.String(50), nullable=False)  # login, logout, password_change, profile_update, etc.
+    description = db.Column(db.Text, nullable=True)
+    ip_address = db.Column(db.String(45), nullable=True)  # Support IPv6
+    user_agent = db.Column(db.String(500), nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    status = db.Column(db.String(20), default='success')  # success, failed
+    
+    def __repr__(self):
+        return f'<ActivityLog {self.user.username} - {self.activity_type} at {self.timestamp}>'
+
+
+class SecuritySettings(db.Model):
+    """Store user security preferences and settings"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_security_settings_user'), nullable=False, unique=True)
+    user = db.relationship('User', back_populates='security_settings')
+    
+    # Session security
+    remember_device = db.Column(db.Boolean, default=False)
+    trusted_devices = db.Column(db.JSON, default=lambda: [])  # List of trusted device fingerprints
+    
+    # Login alerts
+    alert_on_new_device = db.Column(db.Boolean, default=True)
+    alert_on_location_change = db.Column(db.Boolean, default=True)
+    
+    # Password policy
+    password_strength_required = db.Column(db.String(20), default='medium')  # weak, medium, strong
+    
+    # IP whitelisting
+    ip_whitelist = db.Column(db.JSON, default=lambda: [])  # List of trusted IPs
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<SecuritySettings for {self.user.username}>'
 
 
 class Item(db.Model):
@@ -55,12 +132,12 @@ class Item(db.Model):
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
     credited = db.Column(db.Boolean, default=False)
     location = db.Column(db.String(100))  # New field
-    # Unique number in format EA-123456
+    # Unique number in format EA-XXXXXX (cryptographically secure)
     item_number = db.Column(
         db.String(20), 
         unique=True, 
         nullable=False, 
-        default=lambda: f"EA-{random.randint(1, 999999999)}"
+        default=lambda: f"EA-{secrets.token_hex(4).upper()}"
     )
     
     images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
@@ -111,12 +188,23 @@ class Trade(db.Model):
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    delivery_method = db.Column(db.String(20), nullable=False)
+    delivery_method = db.Column(db.String(20), nullable=False)  # 'home delivery' or 'pickup'
     delivery_address = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.String(50), default="Pending")
+    status = db.Column(db.String(50), default="Pending")  # Pending, Processing, Shipped, Delivered, Cancelled
     date_ordered = db.Column(db.DateTime, default=db.func.now())
     pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
-
+    
+    # Transaction Clarity fields
+    order_number = db.Column(db.String(50), unique=True, nullable=False)  # e.g., ORD-20251207-00042
+    total_credits = db.Column(db.Float, default=0)  # Total credit value of items
+    credits_used = db.Column(db.Float, default=0)  # Credits actually spent
+    credits_balance_before = db.Column(db.Float, default=0)  # User balance before order
+    credits_balance_after = db.Column(db.Float, default=0)  # User balance after order
+    estimated_delivery_date = db.Column(db.DateTime, nullable=True)  # Estimated delivery date
+    actual_delivery_date = db.Column(db.DateTime, nullable=True)  # Actual delivery date
+    receipt_downloaded = db.Column(db.Boolean, default=False)  # Track if receipt was downloaded
+    transaction_notes = db.Column(db.Text, nullable=True)  # Additional notes about the transaction
+    
     user = db.relationship('User', back_populates='orders')
     pickup_station = db.relationship('PickupStation', backref='orders')
     items = db.relationship('OrderItem', back_populates='order', cascade="all, delete-orphan")
@@ -145,9 +233,20 @@ class Notification(db.Model):
     message = db.Column(db.String(255))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow) 
-    user = db.relationship('User', back_populates='notifications')  # Assuming User has a notifications relationship
-    is_read = db.Column(db.Boolean, default=False)  # To track if the notification has been read
+    user = db.relationship('User', back_populates='notifications')
+    is_read = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Enhanced notification fields for real-time and categorization
+    notification_type = db.Column(db.String(50), default='system')  # cart, order, message, listing, system, etc.
+    category = db.Column(db.String(50), default='general')  # quick_action, status_update, alert, recommendation, etc.
+    action_url = db.Column(db.String(500), nullable=True)  # URL to navigate when clicked
+    data = db.Column(db.JSON, nullable=True)  # Additional data (order_id, item_id, etc.)
+    is_email_sent = db.Column(db.Boolean, default=False)  # Track if email notification was sent
+    priority = db.Column(db.String(20), default='normal')  # low, normal, high, urgent
+    
+    def __repr__(self):
+        return f'<Notification {self.id}: {self.notification_type}>'
 
 
 class CreditTransaction(db.Model):

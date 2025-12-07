@@ -659,7 +659,7 @@
         <div class="stat-description">No of Items listed for trade</div>
       </div> 
 
-      <a href="{{ url_for('profile_settings') }}">
+      <a href="{{ url_for('user.profile_settings') }}">
         <div class="stat-card">
           <div class="stat-icon">📍</div>
           <div class="stat-title">Address</div>
@@ -700,7 +700,7 @@
         {% else %}
           <li class="empty-state">
             <div class="empty-state-icon">📭</div>
-            <div class="empty-state-text">No recent notifications <br> <a href="{{ url_for('marketplace') }}" class="nav-link" data-tooltip="Marketplace">Browse the Marketplace</a></div>
+            <div class="empty-state-text">No recent notifications <br> <a href="{{ url_for('marketplace.marketplace') }}" class="nav-link" data-tooltip="Marketplace">Browse the Marketplace</a></div>
           </li>
         {% endfor %}
       </ul>

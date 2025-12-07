@@ -974,7 +974,7 @@
         </em></small>
       </p>
       <div class="hero-cta">
-        <a href="{{ url_for('marketplace') }}" class="btn-primary">
+        <a href="{{ url_for('marketplace.marketplace') }}" class="btn-primary">
           🚀 Start Bartering
         </a>
         <a href="#how" class="btn-secondary">Learn How</a>
@@ -1075,7 +1075,7 @@
       <div class="trending-card-content">
         <h3>{{ item.name }}</h3>
         <p>{{ item.description[:60] }}{% if item.description|length > 60 %}...{% endif %}</p>
-        <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary">View Item</a>
+        <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}" class="btn-primary">View Item</a>
       </div>
     </div>
     {% endfor %}

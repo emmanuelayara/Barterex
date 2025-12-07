@@ -117,11 +117,26 @@
     box-shadow: 0 3px 10px var(--primary-medium);
   }
 
+  .filter-toggle-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    margin-left: auto;
+  }
+
   .filter-form {
     display: grid;
     grid-template-columns: 1fr;
     gap: 12px;
     align-items: end;
+  }
+
+  .filter-form.hidden {
+    display: none;
   }
 
   .form-group {
@@ -632,8 +647,8 @@
   }
 
   @media (min-width: 1200px) {
-    .marketplace-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
-    .marketplace-grid.compact { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .marketplace-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .marketplace-grid.compact { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
   }
 
   @media (max-width: 768px) {
@@ -655,6 +670,365 @@
   @media (prefers-contrast: high) {
     .form-input, .form-select { border-width: 2px; }
     .marketplace-item { border-width: 2px; }
+  }
+
+  /* ==================== AUTOCOMPLETE STYLES ==================== */
+
+  .search-container {
+    position: relative;
+    width: 100%;
+  }
+
+  .autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1.5px solid var(--primary-light);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+  }
+
+  .autocomplete-dropdown.show {
+    display: block;
+  }
+
+  .autocomplete-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .autocomplete-item:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+  }
+
+  .autocomplete-item:last-child {
+    border-bottom: none;
+  }
+
+  .autocomplete-icon {
+    font-size: 1rem;
+    color: var(--primary-color);
+    flex-shrink: 0;
+  }
+
+  .autocomplete-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .autocomplete-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+  }
+
+  .autocomplete-category {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .autocomplete-count {
+    font-size: 0.7rem;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .autocomplete-section-header {
+    padding: 8px 16px;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    background: #f9fafb;
+    border-bottom: 1px solid var(--primary-light);
+  }
+
+  .autocomplete-empty {
+    padding: 20px 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .category-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--primary-light);
+    border: 1px solid var(--primary-medium);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .category-pill:hover {
+    background: var(--primary-gradient);
+    border-color: var(--primary-color);
+    color: white;
+  }
+
+  .category-pill-count {
+    font-size: 0.65rem;
+    opacity: 0.8;
+    font-weight: 700;
+  }
+
+  .search-loading {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--primary-light);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .no-results-suggestion {
+    padding: 12px 16px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+  }
+
+  /* ==================== RECOMMENDATIONS SECTION ==================== */
+
+  .recommendations-section {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 20px 16px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow-soft);
+    border: 2px solid var(--primary-light);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .recommendations-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-gradient);
+  }
+
+  .recommendations-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .recommendations-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-gradient);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px var(--primary-medium);
+  }
+
+  .recommendations-header h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .recommendations-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .recommendation-item {
+    background: var(--surface);
+    border: 2px solid var(--primary-light);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .recommendation-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 16px var(--primary-light);
+    transform: translateY(-2px);
+  }
+
+  .recommendation-image {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
+  }
+
+  .recommendation-content {
+    padding: 10px;
+  }
+
+  .recommendation-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .recommendation-category {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .recommendation-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary-color);
+  }
+
+  .recommendations-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+  }
+
+  .recommendations-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+  }
+
+  @media (min-width: 769px) {
+    .recommendations-section {
+      padding: 24px 20px;
+      margin-bottom: 40px;
+      border-radius: 20px;
+    }
+
+    .recommendations-icon {
+      width: 44px;
+      height: 44px;
+      font-size: 1.3rem;
+    }
+
+    .recommendations-header h3 {
+      font-size: 1.4rem;
+    }
+
+    .recommendations-grid {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .recommendation-item {
+      border-radius: 14px;
+    }
+
+    .recommendation-image {
+      height: 140px;
+    }
+
+    .recommendation-content {
+      padding: 12px;
+    }
+
+    .recommendation-name {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .recommendation-value {
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .autocomplete-dropdown {
+      max-height: 250px;
+    }
+
+    .autocomplete-item {
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .category-pills {
+      gap: 6px;
+    }
+
+    .category-pill {
+      padding: 4px 10px;
+      font-size: 0.7rem;
+    }
+
+    .filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-toggle-btn {
+      display: block;
+    }
+
+    .filter-form.hidden {
+      display: none;
+    }
+
+    .filter-form:not(.hidden) {
+      display: grid;
+    }
   }
 
   @media (max-width: 768px) and (orientation: landscape) and (max-height: 500px) {
@@ -687,21 +1061,45 @@
       <p>For the sake of the "beta-testing" items prices are not realistic.</p>
     </div>
 
+    <!-- Recommendations Section (for logged-in users) -->
+    {% if current_user.is_authenticated %}
+    <div class="recommendations-section" id="recommendationsSection" style="display: none;">
+      <div class="recommendations-header">
+        <div class="recommendations-icon">⭐</div>
+        <div>
+          <h3>Recommended For You</h3>
+          <div class="recommendations-subtitle">Based on your browsing history</div>
+        </div>
+      </div>
+      <div class="recommendations-grid" id="recommendationsGrid">
+        <div class="recommendations-loading">⏳ Loading recommendations...</div>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="filter-section">
       <div class="filter-header">
-        <div class="filter-icon">🔍</div>
-        <h3>Find Your Perfect Match</h3>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div class="filter-icon">🔍</div>
+          <h3>Find Your Perfect Match</h3>
+        </div>
+        <button type="button" class="filter-toggle-btn" id="filterToggleBtn">▼</button>
       </div>
 
-      <form method="GET" action="{{ url_for('marketplace') }}" class="filter-form">
+      <form method="GET" action="{{ url_for('marketplace.marketplace') }}" class="filter-form" id="filterForm">
         <div class="form-group">
           <label for="search">Search Items</label>
-          <input type="text" 
-                 id="search"
-                 name="search" 
-                 placeholder="What are you looking for?"
-                 value="{{ request.args.get('search', '') }}"
-                 class="form-input" />
+          <div class="search-container">
+            <input type="text" 
+                   id="search"
+                   name="search" 
+                   placeholder="What are you looking for?"
+                   value="{{ request.args.get('search', '') }}"
+                   class="form-input"
+                   autocomplete="off" />
+            <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+          </div>
+          <div class="category-pills" id="categoryPills" style="display: none;"></div>
         </div>
 
         <div class="form-group">
@@ -791,7 +1189,7 @@
             <button type="submit" class="filter-btn">
               🔍 Filter Results
             </button>
-            <a href="{{ url_for('marketplace') }}" class="clear-filters-btn">
+            <a href="{{ url_for('marketplace.marketplace') }}" class="clear-filters-btn">
               🔄 Clear All
             </a>
           </div>
@@ -813,7 +1211,7 @@
     </div>
 
     <div class="marketplace-grid" id="itemsGrid">
-      {% for item in items.items %}
+      {% for item in items %}
         <div class="marketplace-item">
           <div class="item-image-container">
             {% if item.image_url %}
@@ -832,7 +1230,7 @@
             <div class="item-value">₦{{ "{:,.0f}".format(item.value) if item.value else 'Price not set' }}</div>
             
             <div class="item-actions">
-              <a href="{{ url_for('view_item', item_id=item.id) }}" class="btn-primary">
+              <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}" class="btn-primary">
                 👁️ View Details
               </a>
             </div> 
@@ -845,38 +1243,239 @@
           <p class="empty-description">
             Try adjusting your search criteria or browse all available items.
           </p>
-          <a href="{{ url_for('marketplace') }}" class="btn-primary" style="display: inline-flex; width: auto;">
+          <a href="{{ url_for('marketplace.marketplace') }}" class="btn-primary" style="display: inline-flex; width: auto;">
             🔄 Clear Filters
           </a>
         </div>
       {% endfor %}  
     </div>
 
-    {% if items.pages > 1 %}
-    <div class="pagination">
-      {% if items.has_prev %}
-        <a href="{{ url_for('marketplace', page=items.prev_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), state=request.args.get('state'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
-           class="pagination-btn">
-          ← Previous
-        </a>
-      {% endif %}
-
-      <div class="pagination-info">
-        Page <strong>{{ items.page }}</strong> of <strong>{{ items.pages }}</strong>
-      </div>
-
-      {% if items.has_next %}
-        <a href="{{ url_for('marketplace', page=items.next_num, search=request.args.get('search'), condition=request.args.get('condition'), category=request.args.get('category'), state=request.args.get('state'), price_range=request.args.get('price_range'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" 
-           class="pagination-btn">
-          Next →
-        </a>
-      {% endif %}
-    </div>
-    {% endif %}
   </div>
 </div>
 
 <script>
+  // ==================== SEARCH AUTOCOMPLETE ====================
+
+  const searchInput = document.getElementById('search');
+  const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+  const categoryPills = document.getElementById('categoryPills');
+  let autocompleteTimeout;
+  let categoryStats = {};
+
+  // Initialize category stats on page load
+  async function initializeCategoryStats() {
+    try {
+      const response = await fetch('/api/filters');
+      const data = await response.json();
+      categoryStats = data.categories || {};
+    } catch (e) {
+      console.error('Error loading category stats:', e);
+    }
+  }
+
+  // Fetch and display search suggestions
+  async function fetchSuggestions(query) {
+    if (!query || query.length < 2) {
+      autocompleteDropdown.classList.remove('show');
+      categoryPills.style.display = 'none';
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      displaySuggestions(data.suggestions);
+    } catch (e) {
+      console.error('Error fetching suggestions:', e);
+      autocompleteDropdown.classList.remove('show');
+    }
+  }
+
+  // Display search suggestions dropdown
+  function displaySuggestions(suggestions) {
+    if (suggestions.length === 0) {
+      autocompleteDropdown.innerHTML = `
+        <div class="no-results-suggestion">
+          No suggestions found. Try different keywords.
+        </div>
+      `;
+      autocompleteDropdown.classList.add('show');
+      return;
+    }
+
+    let html = '';
+
+    // Group by category
+    const grouped = {};
+    suggestions.forEach(s => {
+      if (!grouped[s.category]) {
+        grouped[s.category] = [];
+      }
+      grouped[s.category].push(s);
+    });
+
+    // Render grouped suggestions
+    Object.entries(grouped).forEach(([category, items]) => {
+      html += `<div class="autocomplete-section-header">${category} (${items.length})</div>`;
+      items.forEach(item => {
+        html += `
+          <div class="autocomplete-item" onclick="selectSuggestion('${item.name.replace(/'/g, "\\'")}')">
+            <div class="autocomplete-icon">🏷️</div>
+            <div class="autocomplete-content">
+              <div class="autocomplete-name">${escapeHtml(item.name)}</div>
+              <div class="autocomplete-category">${item.category}</div>
+            </div>
+            <div class="autocomplete-count">${item.count}</div>
+          </div>
+        `;
+      });
+    });
+
+    autocompleteDropdown.innerHTML = html;
+    autocompleteDropdown.classList.add('show');
+  }
+
+  // Select suggestion and update search
+  function selectSuggestion(name) {
+    searchInput.value = name;
+    autocompleteDropdown.classList.remove('show');
+    categoryPills.style.display = 'none';
+  }
+
+  // Show trending categories
+  function displayCategoryPills() {
+    if (searchInput.value.length > 0) {
+      categoryPills.style.display = 'none';
+      return;
+    }
+
+    const topCategories = Object.entries(categoryStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    if (topCategories.length === 0) {
+      categoryPills.style.display = 'none';
+      return;
+    }
+
+    let html = '<strong style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Browse Categories:</strong>';
+    topCategories.forEach(([category, count]) => {
+      html += `
+        <button type="button" class="category-pill" onclick="filterByCategory('${category.replace(/'/g, "\\'")}')" title="${category}">
+          <span>${category}</span>
+          <span class="category-pill-count">${count}</span>
+        </button>
+      `;
+    });
+
+    categoryPills.innerHTML = html;
+    categoryPills.style.display = 'block';
+  }
+
+  // Filter by category when pill clicked
+  function filterByCategory(category) {
+    document.getElementById('category').value = category;
+    searchInput.focus();
+    document.querySelector('.filter-btn').click();
+  }
+
+  // Debounced search input
+  searchInput.addEventListener('input', function(e) {
+    clearTimeout(autocompleteTimeout);
+    const query = e.target.value.trim();
+
+    if (query.length === 0) {
+      displayCategoryPills();
+      return;
+    }
+
+    autocompleteTimeout = setTimeout(() => {
+      fetchSuggestions(query);
+    }, 300);
+  });
+
+  // Show category pills on focus
+  searchInput.addEventListener('focus', function() {
+    if (this.value.length === 0) {
+      displayCategoryPills();
+    }
+  });
+
+  // Hide dropdown on blur
+  searchInput.addEventListener('blur', function() {
+    setTimeout(() => {
+      autocompleteDropdown.classList.remove('show');
+    }, 200);
+  });
+
+  // Close dropdown with Escape key
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      autocompleteDropdown.classList.remove('show');
+      categoryPills.style.display = 'none';
+    }
+  });
+
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+
+  // ==================== RECOMMENDATIONS LOADER ====================
+
+  async function loadRecommendations() {
+    const section = document.getElementById('recommendationsSection');
+    if (!section) return; // Not logged in
+
+    try {
+      const response = await fetch('/api/recommended');
+      const data = await response.json();
+
+      if (data.recommended && data.recommended.length > 0) {
+        displayRecommendations(data.recommended);
+        section.style.display = 'block';
+      } else {
+        section.style.display = 'none';
+      }
+    } catch (e) {
+      console.error('Error loading recommendations:', e);
+      section.style.display = 'none';
+    }
+  }
+
+  function displayRecommendations(items) {
+    const grid = document.getElementById('recommendationsGrid');
+    if (!grid) return;
+
+    let html = '';
+    items.slice(0, 8).forEach(item => {
+      html += `
+        <div class="recommendation-item" onclick="window.location.href='/item/${item.id}'">
+          <img src="${item.image_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2224%22%3E📷%3C/text%3E%3C/svg%3E'}" 
+               alt="${item.name}" 
+               class="recommendation-image" 
+               loading="lazy" />
+          <div class="recommendation-content">
+            <div class="recommendation-name">${escapeHtml(item.name)}</div>
+            <div class="recommendation-category">${item.category}</div>
+            <div class="recommendation-value">₦${(item.value || 0).toLocaleString('en-NG', {maximumFractionDigits: 0})}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    grid.innerHTML = html || '<div class="recommendations-empty">No recommendations available yet.</div>';
+  }
+
+  // ==================== ORIGINAL FUNCTIONS ====================
+
   let currentPriceFilter = 'all';
 
   function togglePriceFilter(filterType) {
@@ -1000,6 +1599,39 @@
   // REMOVED: Complex touch gesture handlers
   // REMOVED: Excessive scroll listeners
   
+  // Add loading feedback to filter and button clicks
+  document.querySelector('.filter-btn')?.addEventListener('click', function() {
+    if (typeof showToast !== 'undefined') {
+      showToast('Applying filters...', 'info');
+    }
+  });
+
+  document.querySelector('.clear-filters-btn')?.addEventListener('click', function() {
+    if (typeof showToast !== 'undefined') {
+      showToast('Clearing filters...', 'info');
+    }
+  });
+
+  // Add loading feedback to View Details buttons
+  document.querySelectorAll('.btn-primary').forEach(btn => {
+    if (btn.textContent.includes('View Details')) {
+      btn.addEventListener('click', function(e) {
+        if (typeof showLoading !== 'undefined') {
+          showLoading('Loading item details...');
+        }
+      });
+    }
+  });
+
+  // Add loading feedback to pagination links
+  document.querySelectorAll('.pagination-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      if (typeof showLoading !== 'undefined') {
+        showLoading('Loading page...');
+      }
+    });
+  });
+  
   // Keep minimal mobile improvements
   if (window.innerWidth <= 768) {
     document.querySelectorAll('button, .btn-primary, .btn-secondary').forEach(btn => {
@@ -1012,5 +1644,39 @@
       }, { passive: true });
     });
   }
+
+  // ==================== FILTER TOGGLE ====================
+  const filterToggleBtn = document.getElementById('filterToggleBtn');
+  const filterForm = document.getElementById('filterForm');
+  
+  if (filterToggleBtn) {
+    // Hide filter form on mobile by default
+    if (window.innerWidth <= 768) {
+      filterForm.classList.add('hidden');
+      filterToggleBtn.textContent = '▶';
+    }
+
+    filterToggleBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      filterForm.classList.toggle('hidden');
+      filterToggleBtn.textContent = filterForm.classList.contains('hidden') ? '▶' : '▼';
+    });
+
+    // Show filter on larger screens
+    window.addEventListener('resize', function() {
+      if (window.innerWidth > 768) {
+        filterForm.classList.remove('hidden');
+        filterToggleBtn.style.display = 'none';
+      } else {
+        filterToggleBtn.style.display = 'block';
+      }
+    });
+  }
+
+  // ==================== INITIALIZATION ====================
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeCategoryStats();
+    loadRecommendations();
+  });
 </script>
 {% endblock %}

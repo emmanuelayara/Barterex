@@ -328,26 +328,94 @@
     text-align: center;
     padding: 60px 15px;
     color: #4a5568;
+    background: linear-gradient(135deg, rgba(255, 122, 0, 0.08) 0%, rgba(255, 122, 0, 0.02) 100%);
+    border-radius: 20px;
+    border: 2px dashed rgba(255, 122, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .empty-state::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 122, 0, 0.05) 0%, transparent 70%);
+    pointer-events: none;
   }
 
   .empty-icon {
     font-size: 3rem;
     margin-bottom: 16px;
-    opacity: 0.5;
+    opacity: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: float 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
   }
 
   .empty-title {
     font-size: 1.3rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 10px;
-    color: #2d3748;
+    color: #1a202c;
+    position: relative;
+    z-index: 1;
   }
 
   .empty-description {
     font-size: 0.9rem;
-    opacity: 0.8;
+    opacity: 1;
+    color: #718096;
     margin-bottom: 24px;
     line-height: 1.4;
+    position: relative;
+    z-index: 1;
+  }
+
+  .empty-state-guide {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 20px 0 24px;
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    position: relative;
+    z-index: 1;
+  }
+
+  .empty-state-guide-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #4a5568;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  .empty-state-guide-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .empty-state-guide-step {
+    font-size: 0.85rem;
+    color: #4a5568;
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid #ff7a00;
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
   }
 
   .btn-browse {
@@ -900,7 +968,7 @@
         {% if orders.pages > 1 %}
           <div class="pagination-container">
             {% if orders.has_prev %}
-              <a href="{{ url_for('user_orders', page=orders.prev_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.user_orders', page=orders.prev_num) }}" class="pagination-btn">
                 ← Previous
               </a>
             {% endif %}
@@ -910,7 +978,7 @@
             </span>
 
             {% if orders.has_next %}
-              <a href="{{ url_for('user_orders', page=orders.next_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.user_orders', page=orders.next_num) }}" class="pagination-btn">
                 Next →
               </a>
             {% endif %}
@@ -923,9 +991,28 @@
           <div class="empty-icon">📦</div>
           <h3 class="empty-title">No Orders Yet</h3>
           <p class="empty-description">You haven't placed any orders yet. Browse our marketplace to find items you'd like to purchase!</p>
-          <a href="{{ url_for('dashboard') }}" class="btn-browse">
-            🛍️ Browse Items
-          </a>
+
+          <!-- Getting Started Guide -->
+          <div class="empty-state-guide">
+            <div class="empty-state-guide-title">🎯 How to get started</div>
+            <div class="empty-state-guide-steps">
+              <div class="empty-state-guide-step">1. Browse marketplace for items</div>
+              <div class="empty-state-guide-step">2. View item details and reviews</div>
+              <div class="empty-state-guide-step">3. Add items to your cart</div>
+              <div class="empty-state-guide-step">4. Proceed to checkout</div>
+              <div class="empty-state-guide-step">5. Place your order and track it here</div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="empty-actions">
+            <a href="{{ url_for('marketplace.marketplace') }}" class="btn-browse">
+              🛍️ Browse Marketplace
+            </a>
+            <a href="{{ url_for('marketplace.marketplace') }}#trending" class="btn-browse" style="background: white; color: #ff7a00; border: 2px solid #ff7a00;">
+              ⭐ View Trending Items
+            </a>
+          </div>
         </div>
       {% endif %}
     </div>

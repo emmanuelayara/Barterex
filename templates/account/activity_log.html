@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3><i class="fas fa-history"></i> Activity Log</h3>
+                <form method="POST" action="{{ url_for('account.export_activity') }}" style="display: inline;">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Export as CSV
+                    </button>
+                </form>
+            </div>
+
+            <!-- Filter and Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="text" id="search-activity" class="form-control" placeholder="Search activities...">
+                        </div>
+                        <div class="col-md-6">
+                            <select id="filter-activity" class="form-control">
+                                <option value="">All Activities</option>
+                                <option value="login">Login</option>
+                                <option value="logout">Logout</option>
+                                <option value="password_change">Password Change</option>
+                                <option value="profile_update">Profile Update</option>
+                                <option value="security_settings_updated">Security Settings</option>
+                                <option value="device_trusted">Device Added</option>
+                                <option value="device_untrusted">Device Removed</option>
+                                <option value="ip_whitelisted">IP Whitelisted</option>
+                                <option value="ip_removed">IP Removed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity List -->
+            {% if activities %}
+                <div class="list-group">
+                    {% for activity in activities %}
+                        <div class="list-group-item list-group-item-action activity-item" data-activity-type="{{ activity.activity_type }}">
+                            <div class="row align-items-center">
+                                <div class="col-md-1">
+                                    {% if 'login' in activity.activity_type.lower() %}
+                                        <div class="activity-icon bg-success text-white">
+                                            <i class="fas fa-sign-in-alt"></i>
+                                        </div>
+                                    {% elif 'logout' in activity.activity_type.lower() %}
+                                        <div class="activity-icon bg-warning text-dark">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                        </div>
+                                    {% elif 'password' in activity.activity_type.lower() %}
+                                        <div class="activity-icon bg-danger text-white">
+                                            <i class="fas fa-lock"></i>
+                                        </div>
+                                    {% elif 'security' in activity.activity_type.lower() %}
+                                        <div class="activity-icon bg-info text-white">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                    {% elif 'device' in activity.activity_type.lower() %}
+                                        <div class="activity-icon bg-primary text-white">
+                                            <i class="fas fa-laptop"></i>
+                                        </div>
+                                    {% elif 'ip' in activity.activity_type.lower() %}
+                                        <div class="activity-icon bg-secondary text-white">
+                                            <i class="fas fa-network-wired"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="activity-icon bg-dark text-white">
+                                            <i class="fas fa-circle"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-5">
+                                    <h6 class="mb-1">{{ activity.activity_type | replace('_', ' ') | title }}</h6>
+                                    <small class="text-muted">
+                                        {% if activity.description %}
+                                            {{ activity.description }}
+                                        {% else %}
+                                            No additional details
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-map-marker-alt"></i> 
+                                        {{ activity.ip_address or 'Unknown' }}
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-devices"></i> 
+                                        {{ activity.user_agent[:50] if activity.user_agent else 'Unknown' }}...
+                                    </small>
+                                </div>
+                                <div class="col-md-2 text-right">
+                                    {% if activity.status == 'success' %}
+                                        <span class="badge badge-success">Success</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Failed</span>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ activity.timestamp.strftime('%b %d, %Y<br>%I:%M %p') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            {% for p in range(max(1, page - 2), min(total_pages + 1, page + 3)) %}
+                                {% if p == page %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ p }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page < total_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ total_pages }}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    <p class="text-center text-muted">
+                        Showing activities on page {{ page }} of {{ total_pages }} ({{ total }} total)
+                    </p>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No activities recorded yet
+                </div>
+            {% endif %}
+
+            <!-- Back Button -->
+            <div class="mt-4">
+                <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Security Settings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+</style>
+
+<script>
+const searchInput = document.getElementById('search-activity');
+const filterSelect = document.getElementById('filter-activity');
+const activityItems = document.querySelectorAll('.activity-item');
+
+function filterActivities() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const filterType = filterSelect.value.toLowerCase();
+
+    activityItems.forEach(item => {
+        let show = true;
+
+        // Filter by type
+        if (filterType && !item.dataset.activityType.includes(filterType)) {
+            show = false;
+        }
+
+        // Filter by search term
+        if (searchTerm && !item.textContent.toLowerCase().includes(searchTerm)) {
+            show = false;
+        }
+
+        item.style.display = show ? '' : 'none';
+    });
+}
+
+searchInput.addEventListener('input', filterActivities);
+filterSelect.addEventListener('change', filterActivities);
+</script>
+{% endblock %}

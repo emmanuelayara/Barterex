@@ -800,7 +800,7 @@
 
                   <div class="item-actions">
                     {% if not item.is_approved %}
-                      <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-edit">
+                      <a href="{{ url_for('user.edit_item', item_id=item.id) }}" class="btn btn-edit">
                         ✏️ Edit Item
                       </a>
                     {% else %}
@@ -819,7 +819,7 @@
         {% if items.pages > 1 %}
           <div class="pagination-container">
             {% if items.has_prev %}
-              <a href="{{ url_for('user_items', page=items.prev_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.user_items', page=items.prev_num) }}" class="pagination-btn">
                 ← Previous
               </a>
             {% endif %}
@@ -829,7 +829,7 @@
             </span>
             
             {% if items.has_next %}
-              <a href="{{ url_for('user_items', page=items.next_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.user_items', page=items.next_num) }}" class="pagination-btn">
                 Next →
               </a>
             {% endif %}
@@ -842,7 +842,7 @@
           <div class="empty-icon">📦</div>
           <h3 class="empty-title">No Items Yet</h3>
           <p class="empty-description">You haven't uploaded any items yet. Start by adding your first item to begin trading!</p>
-          <a href="{{ url_for('upload_item') }}" class="btn-upload">
+          <a href="{{ url_for('items.upload_item') }}" class="btn-upload">
             ➕ Upload Your First Item
           </a>
         </div>

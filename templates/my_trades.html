@@ -982,7 +982,7 @@
         {% if sent_trades.pages > 1 %}
           <div class="pagination-container">
             {% if sent_trades.has_prev %}
-              <a href="{{ url_for('my_trades', page=sent_trades.prev_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.my_trades', page=sent_trades.prev_num) }}" class="pagination-btn">
                 ← Previous
               </a>
             {% endif %}
@@ -992,7 +992,7 @@
             </span>
 
             {% if sent_trades.has_next %}
-              <a href="{{ url_for('my_trades', page=sent_trades.next_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.my_trades', page=sent_trades.next_num) }}" class="pagination-btn">
                 Next →
               </a>
             {% endif %}
@@ -1004,7 +1004,7 @@
           <div class="empty-icon">📤</div>
           <h3 class="empty-title">No Initiated Trades</h3>
           <p class="empty-description">You haven't started any trades yet. Browse available items to begin trading!</p>
-          <a href="{{ url_for('marketplace') }}" class="btn-explore">
+          <a href="{{ url_for('marketplace.marketplace') }}" class="btn-explore">
             🔍 Explore Marketplace
           </a>
         </div>
@@ -1050,7 +1050,7 @@
         {% if received_trades.pages > 1 %}
           <div class="pagination-container">
             {% if received_trades.has_prev %}
-              <a href="{{ url_for('my_trades', page=received_trades.prev_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.my_trades', page=received_trades.prev_num) }}" class="pagination-btn">
                 ← Previous
               </a>
             {% endif %}
@@ -1060,7 +1060,7 @@
             </span>
 
             {% if received_trades.has_next %}
-              <a href="{{ url_for('my_trades', page=received_trades.next_num) }}" class="pagination-btn">
+              <a href="{{ url_for('user.my_trades', page=received_trades.next_num) }}" class="pagination-btn">
                 Next →
               </a>
             {% endif %}
@@ -1072,7 +1072,7 @@
           <div class="empty-icon">📥</div>
           <h3 class="empty-title">No Received Trades</h3>
           <p class="empty-description">You haven't received any trade offers yet. Make sure your items are visible and appealing!</p>
-          <a href="{{ url_for('user_items') }}" class="btn-explore">
+          <a href="{{ url_for('user.user_items') }}" class="btn-explore">
             📦 Manage My Items
           </a>
         </div>

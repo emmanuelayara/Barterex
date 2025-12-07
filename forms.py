@@ -80,7 +80,7 @@ class ProfileUpdateForm(FlaskForm):
 
 class UploadItemForm(FlaskForm):
     name = StringField('Item Name', validators=[DataRequired()])
-    description = TextAreaField('Description', validators=[Length(max=500), DataRequired()])
+    description = TextAreaField('Description', validators=[Length(max=2000), DataRequired()])
     condition = SelectField('Condition', choices=[('Brand New', 'Brand New'), ('Fairly Used', 'Fairly Used')], validators=[DataRequired()])
     category = SelectField('Category', choices=[
         ("Electronics", "Electronics"),
@@ -154,3 +154,44 @@ class PickupStationForm(FlaskForm):
     state = StringField('State', validators=[DataRequired()])
     city = StringField('City', validators=[DataRequired()])
     submit = SubmitField('Add Pickup Station')
+
+
+# ==================== ACCOUNT MANAGEMENT FORMS ==================== #
+
+class ChangePasswordForm(FlaskForm):
+    """Form for users to change their password"""
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
+    confirm_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password', message='Passwords must match')])
+    submit = SubmitField('Change Password')
+
+
+class SecuritySettingsForm(FlaskForm):
+    """Form for security preferences"""
+    alert_on_new_device = BooleanField('Alert me when login from new device')
+    alert_on_location_change = BooleanField('Alert me on location change')
+    password_strength_required = SelectField('Required Password Strength', choices=[
+        ('weak', 'Weak (6+ characters)'),
+        ('medium', 'Medium (8+ chars, numbers, symbols)'),
+        ('strong', 'Strong (12+ chars, numbers, symbols, uppercase)')
+    ])
+    submit = SubmitField('Save Security Settings')
+
+
+class TwoFactorSetupForm(FlaskForm):
+    """Form for enabling 2FA"""
+    verification_code = StringField('Verification Code', validators=[DataRequired(), Length(min=6, max=6)])
+    submit = SubmitField('Enable 2FA')
+
+
+class ExportDataForm(FlaskForm):
+    """Form for GDPR data export request"""
+    confirm = BooleanField('I confirm I want to export my data', validators=[DataRequired()])
+    submit = SubmitField('Request Data Export')
+
+
+class DeleteAccountForm(FlaskForm):
+    """Form for account deletion"""
+    confirm_delete = BooleanField('I understand this cannot be undone', validators=[DataRequired()])
+    confirm_username = StringField('Type your username to confirm', validators=[DataRequired()])
+    submit = SubmitField('Delete My Account')

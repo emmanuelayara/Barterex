@@ -9,7 +9,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0 small">
                     <li class="breadcrumb-item">
-                        <a href="{{ url_for('manage_users') }}" class="text-decoration-none text-muted">
+                        <a href="{{ url_for('admin.manage_users') }}" class="text-decoration-none text-muted">
                             <i class="fas fa-users me-1"></i>Users
                         </a>
                     </li>
@@ -18,7 +18,7 @@
             </nav>
         </div>
         <a 
-            href="{{ url_for('manage_users') }}" 
+            href="{{ url_for('admin.manage_users') }}" 
             class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 align-self-start align-self-md-center"
             style="transition: all 0.3s ease; white-space: nowrap;"
             onmouseover="this.style.backgroundColor='#007BFF'; this.style.color='white'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,123,255,0.3)';" 

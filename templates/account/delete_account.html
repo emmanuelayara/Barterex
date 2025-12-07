@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Account{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Delete Account</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> 
+                        <strong>Warning:</strong> 
+                        This action will permanently delete your account and all associated data. 
+                        Please read this carefully before proceeding.
+                    </div>
+
+                    {% if current_user.account_deletion_requested %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Account deletion is scheduled.</strong><br>
+                            Your account will be permanently deleted on: 
+                            <strong>{{ current_user.account_deletion_date.strftime('%B %d, %Y') }}</strong>
+                        </div>
+                        <p class="text-muted">
+                            You can still cancel the deletion if you change your mind. 
+                            After the scheduled date, your account cannot be recovered.
+                        </p>
+                        <div class="d-flex gap-2">
+                            <form method="POST" action="{{ url_for('account.cancel_deletion') }}" style="flex: 1;">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-undo"></i> Cancel Deletion
+                                </button>
+                            </form>
+                            <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary flex-fill">
+                                Back
+                            </a>
+                        </div>
+                    {% else %}
+                        <h6 class="mt-4"><strong>What will happen when you delete your account?</strong></h6>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item">
+                                <i class="fas fa-trash-alt text-danger"></i> 
+                                Your profile and personal information will be permanently deleted
+                            </div>
+                            <div class="list-group-item">
+                                <i class="fas fa-trash-alt text-danger"></i> 
+                                All your listed items will be removed from the marketplace
+                            </div>
+                            <div class="list-group-item">
+                                <i class="fas fa-trash-alt text-danger"></i> 
+                                Your trading history and transaction records will be deleted
+                            </div>
+                            <div class="list-group-item">
+                                <i class="fas fa-trash-alt text-danger"></i> 
+                                Your account balance and credits will be forfeited
+                            </div>
+                            <div class="list-group-item">
+                                <i class="fas fa-trash-alt text-danger"></i> 
+                                You will no longer be able to log in
+                            </div>
+                            <div class="list-group-item">
+                                <i class="fas fa-check text-success"></i> 
+                                <strong>30-day recovery period:</strong> You can cancel this request within 30 days
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4"><strong>30-Day Recovery Period</strong></h6>
+                        <p class="text-muted">
+                            To protect you from accidental deletion, we don't immediately delete your account. 
+                            Instead, your account will be marked for deletion and permanently removed after 30 days. 
+                            You can cancel this request at any time during the 30-day period.
+                        </p>
+
+                        <form method="POST" onsubmit="return validateDeletion();" class="mt-4">
+                            {{ form.hidden_tag() }}
+
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    {{ form.confirm_delete(class="custom-control-input") }}
+                                    <label class="custom-control-label" for="confirm_delete">
+                                        I understand that this action is permanent and my account will be deleted after 30 days
+                                    </label>
+                                </div>
+                                {% if form.confirm_delete.errors %}
+                                    <div class="text-danger small mt-2">
+                                        {% for error in form.confirm_delete.errors %}
+                                            {{ error }}<br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirm_username">
+                                    <strong>Type your username to confirm:</strong> <span class="text-danger">*</span>
+                                </label>
+                                {{ form.confirm_username(class="form-control") }}
+                                <small class="form-text text-muted">
+                                    Enter your username exactly as shown: <code>{{ current_user.username }}</code>
+                                </small>
+                                {% if form.confirm_username.errors %}
+                                    <div class="text-danger small mt-2">
+                                        {% for error in form.confirm_username.errors %}
+                                            {{ error }}<br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb"></i> 
+                                Before you go, we'd appreciate any feedback about why you're leaving. 
+                                <a href="mailto:support@barterex.com?subject=Account%20Deletion%20Feedback" class="alert-link">
+                                    Send us a message
+                                </a>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-danger flex-fill">
+                                    <i class="fas fa-trash"></i> Delete My Account
+                                </button>
+                                <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary flex-fill">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Alternative Actions -->
+                        <div class="mt-4 pt-4 border-top">
+                            <h6><strong>Don't want to delete your account?</strong></h6>
+                            <p class="text-muted small">
+                                Instead of deleting, you can:
+                            </p>
+                            <ul class="small">
+                                <li>Deactivate your account temporarily</li>
+                                <li>Remove all your items from the marketplace</li>
+                                <li>Export your data for backup</li>
+                                <li>Contact support for help</li>
+                            </ul>
+                            <a href="{{ url_for('account.data_export') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download"></i> Export Your Data First
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contact Support -->
+            <div class="alert alert-secondary mt-4">
+                <h6><i class="fas fa-headset"></i> Need Help?</h6>
+                <p class="mb-2">
+                    If you have questions or concerns, our support team is here to help.
+                </p>
+                <a href="mailto:support@barterex.com" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-envelope"></i> Contact Support
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function validateDeletion() {
+    const username = document.querySelector('input[name="confirm_username"]').value;
+    const currentUsername = '{{ current_user.username }}';
+    
+    if (username !== currentUsername) {
+        alert(`Please enter your username exactly: ${currentUsername}`);
+        return false;
+    }
+    
+    const confirmed = confirm(
+        'This will schedule your account for deletion in 30 days.\n\n' +
+        'You can cancel this request during the 30-day period.\n\n' +
+        'Are you absolutely sure?'
+    );
+    
+    return confirmed;
+}
+</script>
+{% endblock %}

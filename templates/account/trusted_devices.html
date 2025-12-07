@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Trusted Devices{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-laptop"></i> Trusted Devices</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Manage the devices you trust with your account. Trusted devices won't require additional security verification.
+                    </p>
+
+                    {% if devices %}
+                        <div class="list-group">
+                            {% for device in devices %}
+                                <div class="list-group-item">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1">
+                                            <i class="fas fa-laptop fa-2x text-primary"></i>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <h6 class="mb-0">{{ device.name }}</h6>
+                                            <small class="text-muted">
+                                                Added on {{ device.date }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <form method="POST" action="{{ url_for('account.remove_device', index=loop.index0) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remove this device?')">
+                                                    <i class="fas fa-trash"></i> Remove
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No trusted devices yet
+                        </div>
+                    {% endif %}
+
+                    <h6 class="mt-4"><strong>Add Current Device as Trusted</strong></h6>
+                    <form method="POST" action="{{ url_for('account.add_device') }}" id="trustDeviceForm">
+                        <div class="form-group">
+                            <label for="device_name">Device Name</label>
+                            <input type="text" id="device_name" name="name" class="form-control" placeholder="e.g., My Laptop, iPhone, etc." required>
+                            <small class="form-text text-muted">Give this device a recognizable name</small>
+                        </div>
+                        
+                        <!-- Device Info Display -->
+                        <div class="alert alert-secondary" id="deviceInfo" style="display: none;">
+                            <strong>Detected Device Info:</strong>
+                            <ul class="mb-0 mt-2" style="font-size: 0.9rem;">
+                                <li><strong>Browser:</strong> <span id="browserInfo">Detecting...</span></li>
+                                <li><strong>OS:</strong> <span id="osInfo">Detecting...</span></li>
+                                <li><strong>Device Type:</strong> <span id="deviceTypeInfo">Detecting...</span></li>
+                            </ul>
+                        </div>
+                        
+                        <input type="hidden" name="fingerprint" id="fingerprintInput" value="">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Trust This Device
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Information Card -->
+            <div class="alert alert-info mt-4">
+                <h6><i class="fas fa-shield-alt"></i> Security Information</h6>
+                <ul class="mb-0">
+                    <li>Trusted devices skip additional verification steps</li>
+                    <li>You can remove devices at any time</li>
+                    <li>Remove a device if it's lost or stolen</li>
+                    <li>Each device gets a unique fingerprint for security</li>
+                </ul>
+            </div>
+
+            <!-- Back Button -->
+            <div class="mt-4">
+                <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Security Settings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Device Fingerprinting Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/2.1.4/fingerprint2.min.js"></script>
+
+<script>
+// Device detection and fingerprinting
+document.addEventListener('DOMContentLoaded', function() {
+    // Detect browser and OS
+    function detectBrowser() {
+        const userAgent = navigator.userAgent;
+        
+        // Browser detection
+        let browserName = 'Unknown';
+        let browserVersion = '';
+        
+        if (userAgent.indexOf('Firefox') > -1) {
+            browserName = 'Firefox';
+            browserVersion = userAgent.match(/Firefox\/(\d+)/)?.[1] || '';
+        } else if (userAgent.indexOf('Chrome') > -1) {
+            browserName = 'Chrome';
+            browserVersion = userAgent.match(/Chrome\/(\d+)/)?.[1] || '';
+        } else if (userAgent.indexOf('Safari') > -1 && userAgent.indexOf('Chrome') === -1) {
+            browserName = 'Safari';
+            browserVersion = userAgent.match(/Version\/(\d+)/)?.[1] || '';
+        } else if (userAgent.indexOf('Edge') > -1) {
+            browserName = 'Edge';
+            browserVersion = userAgent.match(/Edge?\/(\d+)/)?.[1] || '';
+        }
+        
+        // OS detection
+        let osName = 'Unknown';
+        if (userAgent.indexOf('Windows') > -1) osName = 'Windows';
+        else if (userAgent.indexOf('Mac') > -1) osName = 'macOS';
+        else if (userAgent.indexOf('Linux') > -1) osName = 'Linux';
+        else if (userAgent.indexOf('Android') > -1) osName = 'Android';
+        else if (userAgent.indexOf('iPhone') > -1 || userAgent.indexOf('iPad') > -1) osName = 'iOS';
+        
+        // Device type detection
+        let deviceType = 'Desktop';
+        if (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())) {
+            deviceType = /ipad/i.test(userAgent) ? 'Tablet' : 'Mobile';
+        }
+        
+        return {
+            browser: browserVersion ? `${browserName} ${browserVersion}` : browserName,
+            os: osName,
+            deviceType: deviceType
+        };
+    }
+    
+    // Generate device fingerprint
+    function generateFingerprint() {
+        if (typeof Fingerprint2 !== 'undefined') {
+            Fingerprint2.get(function(components) {
+                const values = components.map(function(component) {
+                    return component.value;
+                });
+                const murmur = Fingerprint2.x64hash128(values.join(''), 31);
+                document.getElementById('fingerprintInput').value = murmur;
+            });
+        } else {
+            // Fallback: use simple fingerprint
+            const fp = navigator.userAgent + '|' + navigator.language + '|' + new Date().getTimezoneOffset();
+            document.getElementById('fingerprintInput').value = btoa(fp).substring(0, 32);
+        }
+    }
+    
+    // Detect and display device info
+    const deviceInfo = detectBrowser();
+    document.getElementById('browserInfo').textContent = deviceInfo.browser;
+    document.getElementById('osInfo').textContent = deviceInfo.os;
+    document.getElementById('deviceTypeInfo').textContent = deviceInfo.deviceType;
+    document.getElementById('deviceInfo').style.display = 'block';
+    
+    // Generate fingerprint on form load and when submitted
+    generateFingerprint();
+    
+    document.getElementById('trustDeviceForm').addEventListener('submit', function(e) {
+        // Regenerate fingerprint before submit
+        generateFingerprint();
+    });
+});
+</script>
+{% endblock %}

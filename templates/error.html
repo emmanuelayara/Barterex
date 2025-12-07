@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ error_code }}{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon">
+            {% if error_code == 404 %}
+                🔍
+            {% elif error_code == 500 %}
+                ⚙️
+            {% elif error_code == 403 %}
+                🔒
+            {% else %}
+                ⚠️
+            {% endif %}
+        </div>
+        <div class="error-code">{{ error_code }}</div>
+        <div class="error-message">{{ error_message }}</div>
+        
+        {% if error_code == 404 %}
+            <p class="error-description">
+                The page you're looking for doesn't exist or has been moved. 
+                This could happen if the page was deleted, the URL was mistyped, or the item is no longer available.
+            </p>
+            <div class="error-details">
+                <p><strong>What can you do?</strong></p>
+                <ul>
+                    <li>Check if the URL is correct</li>
+                    <li>Go back and try again</li>
+                    <li>Search for what you're looking for</li>
+                    <li>Browse all available items</li>
+                </ul>
+            </div>
+        {% elif error_code == 500 %}
+            <p class="error-description">
+                Something unexpected happened on our servers. Our team has been notified and is investigating the issue.
+                Please try again in a few moments.
+            </p>
+            <div class="error-details">
+                <p><strong>What can you do?</strong></p>
+                <ul>
+                    <li>Refresh the page and try again</li>
+                    <li>Clear your browser cache</li>
+                    <li>Try a different browser</li>
+                    <li>Contact support if the problem persists</li>
+                </ul>
+            </div>
+        {% elif error_code == 403 %}
+            <p class="error-description">
+                You don't have permission to access this resource. 
+                This could be because you're not logged in, your account was restricted, or the content requires special permissions.
+            </p>
+            <div class="error-details">
+                <p><strong>What can you do?</strong></p>
+                <ul>
+                    <li>Log in with the correct account</li>
+                    <li>Check if your account has been restricted</li>
+                    <li>Contact support for help</li>
+                </ul>
+            </div>
+        {% elif error_code == 400 %}
+            <p class="error-description">
+                There was a problem with your request. This usually means invalid data was submitted or the request was incomplete.
+            </p>
+            <div class="error-details">
+                <p><strong>What can you do?</strong></p>
+                <ul>
+                    <li>Check that all required fields are filled</li>
+                    <li>Verify the format of your input</li>
+                    <li>Try submitting the form again</li>
+                    <li>Contact support if the issue continues</li>
+                </ul>
+            </div>
+        {% else %}
+            <p class="error-description">
+                An unexpected error has occurred. Our team is aware of the issue and is working to resolve it.
+            </p>
+            <div class="error-details">
+                <p><strong>What can you do?</strong></p>
+                <ul>
+                    <li>Refresh the page</li>
+                    <li>Return to the homepage</li>
+                    <li>Try again later</li>
+                </ul>
+            </div>
+        {% endif %}
+        
+        <div class="error-actions">
+            <a href="{{ url_for('marketplace.marketplace') }}" class="btn btn-primary">
+                <i class="fas fa-shopping-bag"></i> Browse Marketplace
+            </a>
+            <a href="{{ url_for('marketplace.home') }}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Go Home
+            </a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('user.dashboard') }}" class="btn btn-tertiary">
+                    <i class="fas fa-user"></i> My Dashboard
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-tertiary">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </a>
+            {% endif %}
+        </div>
+        
+        <div class="error-help">
+            <p><small>If you continue to experience issues, please <a href="{{ url_for('marketplace.contact') }}">contact our support team</a></small></p>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(255, 122, 0, 0.05) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.error-content {
+    text-align: center;
+    background: white;
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    border-left: 6px solid var(--primary-orange);
+}
+
+.error-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.error-code {
+    font-size: 5rem;
+    font-weight: 700;
+    color: var(--primary-orange);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.error-message {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+}
+
+.error-description {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.error-details {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    text-align: left;
+    border: 1px solid #e9ecef;
+}
+
+.error-details p {
+    margin: 0 0 1rem 0;
+    font-weight: 600;
+    color: #333;
+}
+
+.error-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.error-details li {
+    padding: 0.5rem 0;
+    color: #666;
+    border-left: 3px solid var(--primary-orange);
+    padding-left: 1rem;
+}
+
+.error-details li:before {
+    content: "✓ ";
+    color: var(--primary-orange);
+    font-weight: bold;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.error-actions .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: var(--primary-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(5, 78, 151, 0.3);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+}
+
+.btn-secondary:hover {
+    background: var(--primary-blue);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-tertiary {
+    background: var(--primary-orange);
+    color: white;
+    border: 2px solid var(--primary-orange);
+}
+
+.btn-tertiary:hover {
+    background: #ff9b2a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
+}
+
+.error-help {
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.error-help a {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.error-help a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+    .error-icon {
+        font-size: 3rem;
+    }
+    
+    .error-code {
+        font-size: 3rem;
+    }
+    
+    .error-message {
+        font-size: 1.25rem;
+    }
+    
+    .error-content {
+        padding: 2rem;
+        border-left-width: 4px;
+    }
+    
+    .error-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .error-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .error-details {
+        text-align: center;
+    }
+    
+    .error-details li {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid #ddd;
+        padding-top: 0.75rem;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

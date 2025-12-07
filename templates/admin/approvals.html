@@ -800,7 +800,7 @@
 
               <!-- Compact Form -->
               <div class="appraisal-section">
-                <form method="POST" action="{{ url_for('approve_item', item_id=item.id) }}" class="approval-form">
+                <form method="POST" action="{{ url_for('admin.approve_item', item_id=item.id) }}" class="approval-form">
                   <label for="value_{{ item.id }}" class="appraisal-label">
                     <span class="credit-icon">💰</span>
                     Credits
@@ -828,7 +828,7 @@
 
                 <!-- Collapsible Rejection Form -->
                 <div class="rejection-section" id="rejection_{{ item.id }}">
-                  <form method="POST" action="{{ url_for('reject_item', item_id=item.id) }}" class="rejection-form">
+                  <form method="POST" action="{{ url_for('admin.reject_item', item_id=item.id) }}" class="rejection-form">
                     <textarea 
                       name="rejection_reason" 
                       placeholder="Enter rejection reason..."

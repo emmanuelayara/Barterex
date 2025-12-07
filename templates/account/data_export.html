@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Export Your Data - GDPR Compliance{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-download"></i> Export Your Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>GDPR Compliance:</strong> 
+                        You have the right to download all your personal data in a structured, commonly used format. 
+                        This includes your profile information, activity logs, and all other data associated with your account.
+                    </div>
+
+                    <h6 class="mt-4"><strong>What will be exported?</strong></h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Profile information (email, username, name)</li>
+                        <li><i class="fas fa-check text-success"></i> Account settings and preferences</li>
+                        <li><i class="fas fa-check text-success"></i> Activity log (login history, account changes)</li>
+                        <li><i class="fas fa-check text-success"></i> Listed items and transactions</li>
+                        <li><i class="fas fa-check text-success"></i> Messages and communications</li>
+                        <li><i class="fas fa-check text-success"></i> Payment and credit information</li>
+                        <li><i class="fas fa-check text-success"></i> All other personal data</li>
+                    </ul>
+
+                    <h6 class="mt-4"><strong>Export Formats</strong></h6>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <h6>JSON Format</h6>
+                                    <p class="text-muted small">Complete data export in JSON format</p>
+                                    <code>.json</code>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <h6>CSV Format</h6>
+                                    <p class="text-muted small">Activity logs in CSV format</p>
+                                    <code>.csv</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-4"><strong>How does it work?</strong></h6>
+                    <ol class="text-muted small">
+                        <li>Click "Request Data Export" below to submit your request</li>
+                        <li>We'll prepare your data (usually within 24 hours)</li>
+                        <li>You'll receive a download link via email</li>
+                        <li>Your data will be available for 30 days</li>
+                    </ol>
+
+                    {% if current_user.data_export_requested %}
+                        <div class="alert alert-success mt-4">
+                            <i class="fas fa-check-circle"></i> 
+                            <strong>Data export already requested!</strong><br>
+                            Requested on: {{ current_user.data_export_date.strftime('%B %d, %Y at %I:%M %p') }}
+                        </div>
+                        <p class="text-muted">
+                            A download link has been sent to your email. 
+                            If you don't see it, check your spam folder or request a new export.
+                        </p>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('account.download_exported_data') }}" class="btn btn-success flex-fill">
+                                <i class="fas fa-download"></i> Download Your Data
+                            </a>
+                            <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary flex-fill">
+                                Back
+                            </a>
+                        </div>
+                    {% else %}
+                        <form method="POST" onsubmit="return confirm('Request your data export? This will prepare all your personal data for download.');">
+                            {{ form.hidden_tag() }}
+
+                            <div class="form-group mt-4">
+                                <div class="custom-control custom-checkbox">
+                                    {{ form.confirm(class="custom-control-input") }}
+                                    <label class="custom-control-label" for="confirm">
+                                        I understand that my data will be exported and I can download it for 30 days
+                                    </label>
+                                </div>
+                                {% if form.confirm.errors %}
+                                    <div class="text-danger small mt-2">
+                                        {% for error in form.confirm.errors %}
+                                            {{ error }}<br>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-info flex-fill">
+                                    <i class="fas fa-download"></i> Request Data Export
+                                </button>
+                                <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary flex-fill">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Privacy Information -->
+            <div class="alert alert-secondary mt-4">
+                <h6><i class="fas fa-shield-alt"></i> Your Privacy is Protected</h6>
+                <ul class="mb-0">
+                    <li>Your data export is encrypted and secure</li>
+                    <li>Only you can download your data</li>
+                    <li>Data is automatically deleted after 30 days</li>
+                    <li>This process complies with GDPR regulations</li>
+                </ul>
+            </div>
+
+            <!-- Questions -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-question-circle"></i> FAQ</h6>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#faq1">
+                                        How long does it take to prepare my data?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="faq1" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    Data exports are typically prepared within 24 hours. You'll receive an email notification when your data is ready.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#faq2">
+                                        How long is my data available for download?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="faq2" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    Your exported data is available for download for 30 days. After that, it will be automatically deleted from our servers.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#faq3">
+                                        Is my data secure during export?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="faq3" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    Yes, your data is encrypted using industry-standard AES-256 encryption and can only be downloaded by your account with authentication.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#faq4">
+                                        Can I request multiple exports?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="faq4" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    Yes, you can request multiple data exports. However, we limit to one active export at a time to prevent server overload.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

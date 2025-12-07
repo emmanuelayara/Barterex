@@ -316,7 +316,7 @@
   <nav class="admin-navbar">
     <div class="navbar-container">
       <!-- Brand/Logo Section -->
-      <a href="{{ url_for('admin_dashboard') }}" class="admin-brand">
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="admin-brand">
         <div class="brand-icon">
           <i class="bi bi-gear-fill"></i>
         </div>
@@ -335,14 +335,14 @@
       {% if current_user.is_admin %}
       <div class="admin-nav-links" id="navLinks">
         <div class="nav-item">
-          <a href="{{ url_for('admin_dashboard') }}" class="nav-link">
+          <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link">
             <i class="bi bi-speedometer2"></i>
             Dashboard
           </a>
         </div>
         
         <div class="nav-item">
-          <a href="{{ url_for('approve_items') }}" class="nav-link">
+          <a href="{{ url_for('admin.approve_items') }}" class="nav-link">
             <i class="bi bi-check-circle"></i>
             Approve Items
             <!-- Add notification badge if needed -->
@@ -351,14 +351,14 @@
         </div>
         
         <div class="nav-item">
-          <a href="{{ url_for('manage_users') }}" class="nav-link">
+          <a href="{{ url_for('admin.manage_users') }}" class="nav-link">
             <i class="bi bi-people"></i>
             Manage Users
           </a>
         </div>
         
         <div class="nav-item">
-          <a href="{{ url_for('logout') }}" class="nav-link" onclick="handleLogout(event)">
+          <a href="{{ url_for('auth.logout') }}" class="nav-link" onclick="handleLogout(event)">
             <i class="bi bi-box-arrow-right"></i>
             Logout
           </a>

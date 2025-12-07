@@ -87,6 +87,17 @@
             letter-spacing: 0.5px;
         }
 
+        .form-hint {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-hint.show {
+            display: block;
+        }
+
         .form-input {
             width: 100%;
             padding: 12px 16px;
@@ -113,33 +124,80 @@
             font-size: 0.85rem;
         }
 
+        .form-input.valid {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .form-input.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
         /* Style for Flask form errors */
         .flask-error {
-            color: #e53e3e;
+            color: #ef4444;
             font-size: 0.75rem;
-            margin-top: 4px;
+            margin-top: 6px;
             display: flex;
             align-items: center;
             animation: slideIn 0.3s ease;
+            padding: 6px 10px;
+            background: #fef2f2;
+            border-left: 3px solid #ef4444;
+            border-radius: 4px;
         }
 
         .flask-error::before {
-            content: "⚠";
+            content: "✕ ";
             margin-right: 4px;
+            font-weight: bold;
         }
 
         .error-message {
-            color: #e53e3e;
+            color: #ef4444;
             font-size: 0.75rem;
-            margin-top: 4px;
-            display: flex;
+            margin-top: 6px;
+            display: none;
             align-items: center;
             animation: slideIn 0.3s ease;
+            padding: 6px 10px;
+            background: #fef2f2;
+            border-left: 3px solid #ef4444;
+            border-radius: 4px;
+        }
+
+        .error-message.show {
+            display: flex;
         }
 
         .error-message::before {
-            content: "⚠";
+            content: "✕ ";
             margin-right: 4px;
+            font-weight: bold;
+        }
+
+        .success-message {
+            color: #10b981;
+            font-size: 0.75rem;
+            margin-top: 6px;
+            display: none;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+            padding: 6px 10px;
+            background: #f0fdf4;
+            border-left: 3px solid #10b981;
+            border-radius: 4px;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .success-message::before {
+            content: "✓ ";
+            margin-right: 4px;
+            font-weight: bold;
         }
 
         @keyframes slideIn {
@@ -614,19 +672,21 @@
                     <div class="form-group">
                         <label class="form-label">{{ form.email.label }}</label>
                         {{ form.email(class="form-input", placeholder="Enter your email", id="email") }}
+                        <div class="form-hint" id="emailHint">We'll never share your email</div>
                         {% for error in form.email.errors %}
                             <div class="flask-error">{{ error }}</div>
                         {% endfor %}
-                        <div class="error-message" style="display: none;"></div>
+                        <div class="error-message"></div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">{{ form.username.label }}</label>
                         {{ form.username(class="form-input", placeholder="Choose a username", id="username") }}
+                        <div class="form-hint" id="usernameHint">3-20 characters, letters and numbers</div>
                         {% for error in form.username.errors %}
                             <div class="flask-error">{{ error }}</div>
                         {% endfor %}
-                        <div class="error-message" style="display: none;"></div>
+                        <div class="error-message"></div>
                     </div>
                 </div>
 
@@ -634,6 +694,7 @@
                     <div class="form-group">
                         <label class="form-label">{{ form.password.label }}</label>
                         {{ form.password(class="form-input", placeholder="Create a strong password", id="password") }}
+                        <div class="form-hint" id="passwordHint">Min. 8 characters with uppercase, lowercase, and number</div>
                         <div class="password-strength" id="passwordStrength">
                             <div class="strength-bar">
                                 <div class="strength-fill"></div>
@@ -643,16 +704,17 @@
                         {% for error in form.password.errors %}
                             <div class="flask-error">{{ error }}</div>
                         {% endfor %}
-                        <div class="error-message" style="display: none;"></div>
+                        <div class="error-message"></div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">{{ form.confirm_password.label }}</label>
                         {{ form.confirm_password(class="form-input", placeholder="Confirm your password", id="confirm_password") }}
+                        <div class="form-hint" id="confirmHint">Must match your password exactly</div>
                         {% for error in form.confirm_password.errors %}
                             <div class="flask-error">{{ error }}</div>
                         {% endfor %}
-                        <div class="error-message" style="display: none;"></div>
+                        <div class="error-message"></div>
                     </div>
                 </div>
 
@@ -667,7 +729,7 @@
 
                 <div class="form-footer">
                     <p>Already have an account?</p>
-                    <a href="{{ url_for('login') }}" class="login-link">Sign in here</a>
+                    <a href="{{ url_for('auth.login') }}" class="login-link">Sign in here</a>
                 </div>
             </form>
         </div>
@@ -765,24 +827,45 @@
             }
         }
 
-        // Form submission
+        // Form submission with enhanced loading feedback
         form.addEventListener('submit', function(e) {
             if (!termsAccepted) {
                 e.preventDefault();
-                alert('Please accept the terms and conditions to continue.');
+                if (typeof warningToast !== 'undefined') {
+                    warningToast('Please accept the terms and conditions to continue.');
+                } else {
+                    alert('Please accept the terms and conditions to continue.');
+                }
                 return;
             }
 
             // Add loading state
             form.classList.add('loading');
             if (submitBtn) {
+                submitBtn.disabled = true;
                 if (submitBtn.tagName === 'INPUT') {
                     submitBtn.value = 'Creating Account...';
                 } else {
                     submitBtn.textContent = 'Creating Account...';
                 }
             }
+            
+            // Show global loading overlay
+            if (typeof showLoading !== 'undefined') {
+                showLoading('Creating your account...');
+            }
         });
+        
+        // Check for form errors after page loads
+        const errorMessages = form.querySelectorAll('.flask-error');
+        if (errorMessages.length > 0 && typeof hideLoading !== 'undefined') {
+            hideLoading();
+            errorMessages.forEach(msg => {
+                if (typeof errorToast !== 'undefined' && msg.textContent.trim()) {
+                    errorToast(msg.textContent.trim());
+                }
+            });
+        }
 
         // Real-time validation for all inputs
         document.querySelectorAll('.form-input').forEach(input => {

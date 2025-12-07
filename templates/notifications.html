@@ -333,26 +333,86 @@
     text-align: center;
     padding: 60px 16px;
     color: #64748b;
+    background: linear-gradient(135deg, rgba(255, 122, 0, 0.08) 0%, rgba(255, 122, 0, 0.02) 100%);
+    border-radius: 20px;
+    border: 2px dashed rgba(255, 122, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .empty-state::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 122, 0, 0.05) 0%, transparent 70%);
+    pointer-events: none;
   }
 
   .empty-icon {
     font-size: 3rem;
     margin-bottom: 16px;
-    opacity: 0.4;
+    opacity: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: float 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
   }
 
   .empty-title {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 10px;
-    color: #334155;
+    color: #1a202c;
+    position: relative;
+    z-index: 1;
   }
 
   .empty-description {
     font-size: 0.9rem;
-    opacity: 0.8;
+    opacity: 1;
+    color: #718096;
     margin-bottom: 24px;
     line-height: 1.5;
+    position: relative;
+    z-index: 1;
+  }
+
+  .empty-state-help {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 20px 0 24px;
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    position: relative;
+    z-index: 1;
+  }
+
+  .empty-state-help-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #4a5568;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  .empty-state-help-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .empty-state-help-item {
+    font-size: 0.85rem;
+    color: #4a5568;
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid #ff7a00;
   }
 
   .btn-explore {
@@ -367,6 +427,7 @@
     gap: 6px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
   }
 
   .btn-explore:hover {
@@ -466,11 +527,11 @@
         <h2>Notifications</h2>
       </div>
       <div class="filter-buttons">
-        <a href="{{ url_for('notifications', filter='all', page=1) }}" 
+        <a href="{{ url_for('user.notifications', filter='all', page=1) }}" 
            class="filter-btn {% if current_filter == 'all' %}active{% endif %}">All</a>
-        <a href="{{ url_for('notifications', filter='unread', page=1) }}" 
+        <a href="{{ url_for('user.notifications', filter='unread', page=1) }}" 
            class="filter-btn {% if current_filter == 'unread' %}active{% endif %}">Unread</a>
-        <a href="{{ url_for('notifications', filter='read', page=1) }}" 
+        <a href="{{ url_for('user.notifications', filter='read', page=1) }}" 
            class="filter-btn {% if current_filter == 'read' %}active{% endif %}">Read</a>
       </div>
     </div>
@@ -492,7 +553,8 @@
               <div class="notification-actions">
                 <div class="notification-badge {% if note.is_read %}read{% endif %}"></div>
                 {% if not note.is_read %}
-                  <form method="post" action="{{ url_for('mark_notification_read', note_id=note.id) }}" style="display: inline;">
+                  <form method="post" action="{{ url_for('user.mark_notification_read', note_id=note.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="action-btn">Mark Read</button>
                   </form>
                 {% endif %}
@@ -506,7 +568,7 @@
       {% if notifications.pages > 1 %}
         <div class="pagination-container">
           {% if notifications.has_prev %}
-            <a href="{{ url_for('notifications', filter=current_filter, page=notifications.prev_num) }}" 
+            <a href="{{ url_for('user.notifications', filter=current_filter, page=notifications.prev_num) }}" 
                class="pagination-btn">← Previous</a>
           {% endif %}
           
@@ -515,7 +577,7 @@
           </span>
 
           {% if notifications.has_next %}
-            <a href="{{ url_for('notifications', filter=current_filter, page=notifications.next_num) }}" 
+            <a href="{{ url_for('user.notifications', filter=current_filter, page=notifications.next_num) }}" 
                class="pagination-btn">Next →</a>
           {% endif %}
         </div>
@@ -550,7 +612,19 @@
             When you have new activity, notifications will appear here.
           {% endif %}
         </p>
-        <a href="{{ url_for('marketplace') }}" class="btn-explore">
+
+        <!-- Help Text -->
+        <div class="empty-state-help">
+          <div class="empty-state-help-title">📢 How to get notifications</div>
+          <div class="empty-state-help-items">
+            <div class="empty-state-help-item">• Browse and interact with marketplace items</div>
+            <div class="empty-state-help-item">• Receive updates on your listings and sales</div>
+            <div class="empty-state-help-item">• Get alerts for messages and trade offers</div>
+            <div class="empty-state-help-item">• Stay updated on account activities</div>
+          </div>
+        </div>
+
+        <a href="{{ url_for('marketplace.marketplace') }}" class="btn-explore">
           🔍 Explore Marketplace
         </a>
       </div>

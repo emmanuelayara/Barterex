@@ -1,0 +1,616 @@
+{% extends 'base.html' %}
+{% block title %}Notification Settings{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .page-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        padding-bottom: 80px;
+    }
+
+    .top-nav {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        border-radius: 0 0 20px 20px;
+    }
+
+    .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+
+    .nav-menu {
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 6px;
+        flex-wrap: nowrap;
+        min-height: 50px;
+    }
+
+    .nav-item {
+        margin: 2px 0;
+        flex: 1;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        color: #4a5568;
+        text-decoration: none;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        width: 100%;
+        text-align: center;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 122, 0, 0.1);
+        color: #ff7a00;
+    }
+
+    .nav-link.active {
+        background: linear-gradient(135deg, #ff7a00, #ff7a00);
+        color: white;
+        box-shadow: 0 3px 15px rgba(255, 122, 0, 0.3);
+    }
+
+    .main-content {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 30px 16px;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: white;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+    .settings-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .settings-section {
+        margin-bottom: 30px;
+        padding-bottom: 30px;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+    }
+
+    .settings-section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-description {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-bottom: 16px;
+    }
+
+    .settings-grid {
+        display: grid;
+        gap: 12px;
+    }
+
+    .preference-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(226, 232, 240, 0.3);
+    }
+
+    .preference-item:hover {
+        background: rgba(255, 122, 0, 0.05);
+        border-color: rgba(255, 122, 0, 0.2);
+    }
+
+    .preference-content {
+        flex: 1;
+    }
+
+    .preference-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1a202c;
+        margin-bottom: 2px;
+    }
+
+    .preference-description {
+        font-size: 0.75rem;
+        color: #a0aec0;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e0;
+        transition: 0.3s;
+        border-radius: 26px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: #ff7a00;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(24px);
+    }
+
+    /* Select Dropdown */
+    .preference-select {
+        padding: 8px 12px;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        border-radius: 8px;
+        background: white;
+        color: #1a202c;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .preference-select:hover {
+        border-color: #ff7a00;
+        box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+    }
+
+    .preference-select:focus {
+        outline: none;
+        border-color: #ff7a00;
+        box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.15);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        justify-content: flex-end;
+        padding-top: 24px;
+        border-top: 1px solid rgba(226, 232, 240, 0.5);
+    }
+
+    .btn {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #ff7a00, #ff8c00);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(255, 122, 0, 0.4);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #ff7a00;
+        border: 2px solid #ff7a00;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 122, 0, 0.05);
+    }
+
+    .status-message {
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        display: none;
+    }
+
+    .status-message.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        display: block;
+    }
+
+    .status-message.error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        display: block;
+    }
+
+    .info-box {
+        background: rgba(255, 122, 0, 0.05);
+        border-left: 4px solid #ff7a00;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        font-size: 0.85rem;
+        color: #4a5568;
+    }
+
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .settings-container {
+            padding: 16px;
+            border-radius: 16px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .preference-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .toggle-switch {
+            align-self: flex-end;
+        }
+    }
+</style>
+
+<!-- Navigation -->
+<nav class="top-nav">
+    <div class="nav-container">
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.notifications') }}" class="nav-link">Notifications</a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.notification_settings') }}" class="nav-link active">Settings</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">🔔 Notification Settings</h1>
+        <p class="page-subtitle">Manage how and when you receive notifications</p>
+    </div>
+
+    <!-- Settings Container -->
+    <div class="settings-container">
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- Email Notifications Section -->
+        <div class="settings-section">
+            <div class="section-title">
+                <span>📧</span>
+                <span>Email Notifications</span>
+            </div>
+            <p class="section-description">
+                Choose which activities should trigger email notifications to your inbox
+            </p>
+
+            <div class="settings-grid">
+                <div class="preference-item">
+                    <div class="preference-content">
+                        <div class="preference-label">Order Updates</div>
+                        <div class="preference-description">Get notified about order confirmations and status changes</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="pref-toggle" data-pref="email_order_updates">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="preference-item">
+                    <div class="preference-content">
+                        <div class="preference-label">Cart Items</div>
+                        <div class="preference-description">Notify when items are added or recommended</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="pref-toggle" data-pref="email_cart_items">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Push Notifications Section -->
+        <div class="settings-section">
+            <div class="section-title">
+                <span>🔔</span>
+                <span>In-App Notifications</span>
+            </div>
+            <p class="section-description">
+                Control which notifications appear in your notification center
+            </p>
+
+            <div class="settings-grid">
+                <div class="preference-item">
+                    <div class="preference-content">
+                        <div class="preference-label">Cart Items</div>
+                        <div class="preference-description">Show when items are added to cart</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="pref-toggle" data-pref="push_cart_items">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="preference-item">
+                    <div class="preference-content">
+                        <div class="preference-label">Order Updates</div>
+                        <div class="preference-description">Show order confirmations and status changes</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" class="pref-toggle" data-pref="push_order_updates">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Frequency Settings -->
+        <div class="settings-section">
+            <div class="section-title">
+                <span>⏰</span>
+                <span>Notification Frequency</span>
+            </div>
+            <p class="section-description">
+                Choose how often you want to receive notifications
+            </p>
+
+            <div class="preference-item">
+                <div class="preference-content">
+                    <div class="preference-label">Notification Frequency</div>
+                    <div class="preference-description">Instant notifications, daily digest, or weekly summary</div>
+                </div>
+                <select class="preference-select" id="frequencySelect">
+                    <option value="instant">Instant</option>
+                    <option value="daily">Daily Digest</option>
+                    <option value="weekly">Weekly Summary</option>
+                </select>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Tip:</strong> Set to "Daily Digest" or "Weekly Summary" if you want fewer interruptions but stay informed.
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="resetPreferences()">
+                <span>↻</span>
+                <span>Reset to Default</span>
+            </button>
+            <button class="btn btn-primary" onclick="savePreferences()">
+                <span>✓</span>
+                <span>Save Changes</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize preferences on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPreferences();
+    });
+
+    /**
+     * Load user preferences from server
+     */
+    function loadPreferences() {
+        fetch('/api/notifications/preferences')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const prefs = data.preferences;
+                    
+                    // Set toggle switches
+                    document.querySelectorAll('.pref-toggle').forEach(toggle => {
+                        const prefKey = toggle.dataset.pref;
+                        toggle.checked = prefs[prefKey] !== false;
+                    });
+                    
+                    // Set frequency select
+                    const frequencySelect = document.getElementById('frequencySelect');
+                    if (frequencySelect) {
+                        frequencySelect.value = prefs.notification_frequency || 'instant';
+                    }
+                    
+                    showStatus('Preferences loaded', 'success');
+                } else {
+                    showStatus('Failed to load preferences', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading preferences:', error);
+                showStatus('Error loading preferences', 'error');
+            });
+    }
+
+    /**
+     * Save preferences to server
+     */
+    function savePreferences() {
+        const preferences = {};
+        
+        // Collect toggle preferences
+        document.querySelectorAll('.pref-toggle').forEach(toggle => {
+            const prefKey = toggle.dataset.pref;
+            preferences[prefKey] = toggle.checked;
+        });
+        
+        // Collect frequency preference
+        const frequencySelect = document.getElementById('frequencySelect');
+        if (frequencySelect) {
+            preferences['notification_frequency'] = frequencySelect.value;
+        }
+        
+        // Send to server
+        fetch('/api/notifications/preferences', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(preferences)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showStatus('✓ Preferences saved successfully', 'success');
+            } else {
+                showStatus('Failed to save preferences', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving preferences:', error);
+            showStatus('Error saving preferences', 'error');
+        });
+    }
+
+    /**
+     * Reset to default preferences
+     */
+    function resetPreferences() {
+        if (confirm('Are you sure you want to reset all preferences to default?')) {
+            const defaultPreferences = {
+                'email_order_updates': true,
+                'email_cart_items': false,
+                'push_cart_items': true,
+                'push_order_updates': true,
+                'notification_frequency': 'instant'
+            };
+            
+            // Apply defaults to UI
+            document.querySelectorAll('.pref-toggle').forEach(toggle => {
+                const prefKey = toggle.dataset.pref;
+                toggle.checked = defaultPreferences[prefKey] !== false;
+            });
+            
+            document.getElementById('frequencySelect').value = 'instant';
+            
+            // Save to server
+            savePreferences();
+        }
+    }
+
+    /**
+     * Show status message
+     */
+    function showStatus(message, type) {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.textContent = message;
+        statusDiv.className = `status-message ${type}`;
+        
+        if (type === 'success') {
+            setTimeout(() => {
+                statusDiv.className = 'status-message';
+            }, 4000);
+        }
+    }
+</script>
+
+{% endblock %}

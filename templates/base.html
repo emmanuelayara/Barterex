@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barterex - {% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Modern Design System CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+    <!-- Font Awesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         /* ========================================
@@ -823,46 +825,46 @@
 <nav id="navbar" class="barterex-navbar">
     <div class="nav-container">
         <div class="nav-header">
-            <a href="{{ url_for('home') }}" class="logo-link">
+            <a href="{{ url_for('marketplace.home') }}" class="logo-link">
                 <img src="/static/logo.png" alt="Barterex Logo" class="logo-img">
                 <span class="logo-text">Barterex</span>
             </a>
             
             <ul class="nav-links">
                 <li class="nav-item">
-                    <a href="{{ url_for('marketplace') }}" class="nav-link" data-tooltip="Marketplace">
+                    <a href="{{ url_for('marketplace.marketplace') }}" class="nav-link" data-tooltip="Marketplace">
                         <i class="fas fa-store"></i>
                         <span class="nav-text">Marketplace</span>
                     </a>
                 </li>
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="{{ url_for('upload_item') }}" class="nav-link" data-tooltip="Upload Item">
+                        <a href="{{ url_for('items.upload_item') }}" class="nav-link" data-tooltip="Upload Item">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span class="nav-text">Upload</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ url_for('view_cart') }}" class="nav-link" data-tooltip="Shopping Cart">
+                        <a href="{{ url_for('items.view_cart') }}" class="nav-link" data-tooltip="Shopping Cart">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="nav-text">Cart</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ url_for('logout') }}" class="nav-link" data-tooltip="Logout">
+                        <a href="{{ url_for('auth.logout') }}" class="nav-link" data-tooltip="Logout">
                             <i class="fas fa-sign-out-alt"></i>
                             <span class="nav-text">Logout</span>
                         </a>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a href="{{ url_for('login') }}" class="nav-link" data-tooltip="Login">
+                        <a href="{{ url_for('auth.login') }}" class="nav-link" data-tooltip="Login">
                             <i class="fas fa-sign-in-alt"></i>
                             <span class="nav-text">Login</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ url_for('register') }}" class="nav-link" data-tooltip="Register">
+                        <a href="{{ url_for('auth.register') }}" class="nav-link" data-tooltip="Register">
                             <i class="fas fa-user-plus"></i>
                             <span class="nav-text">Register</span>
                         </a>
@@ -901,29 +903,29 @@
 <nav class="bottom-nav">
     <div class="bottom-nav-container">
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('user_items') }}" class="bottom-nav-item {% if request.endpoint == 'user_items' %}active{% endif %}">
+            <a href="{{ url_for('user.user_items') }}" class="bottom-nav-item {% if request.endpoint == 'user.user_items' %}active{% endif %}">
                 <i class="fas fa-box"></i>
                 <span>Items</span>
             </a>
-            <a href="{{ url_for('my_trades') }}" class="bottom-nav-item {% if request.endpoint == 'my_trades' %}active{% endif %}">
+            <a href="{{ url_for('user.my_trades') }}" class="bottom-nav-item {% if request.endpoint == 'user.my_trades' %}active{% endif %}">
                 <i class="fas fa-sync-alt"></i>
                 <span>Trades</span>
             </a>
-            <a href="{{ url_for('user_orders') }}" class="bottom-nav-item {% if request.endpoint == 'user_orders' %}active{% endif %}">
+            <a href="{{ url_for('user.user_orders') }}" class="bottom-nav-item {% if request.endpoint == 'user.user_orders' %}active{% endif %}">
                 <i class="fas fa-credit-card"></i>
                 <span>Orders</span>
             </a>
-            <a href="{{ url_for('notifications') }}" class="bottom-nav-item {% if request.endpoint == 'notifications' %}active{% endif %}">
+            <a href="{{ url_for('user.notifications') }}" class="bottom-nav-item {% if request.endpoint == 'user.notifications' %}active{% endif %}">
                 <i class="fas fa-bell"></i>
                 <span>Alerts</span>
             </a>
-            <a href="{{ url_for('dashboard') }}" class="bottom-nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+            <a href="{{ url_for('user.dashboard') }}" class="bottom-nav-item {% if request.endpoint == 'user.dashboard' %}active{% endif %}">
                 <i class="fas fa-user-circle"></i>
                 <span>Dashboard</span>
             </a>
         {% else %}
             <div class="bottom-footer">
-                <p>&copy; 2025 Barter Express | <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('register') }}">Register</a></p>
+                <p>&copy; 2025 Barter Express | <a href="{{ url_for('marketplace.about') }}">About</a> | <a href="{{ url_for('auth.login') }}">Login</a> | <a href="{{ url_for('auth.register') }}">Register</a></p>
             </div>
         {% endif %}
     </div>
@@ -968,6 +970,518 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// ========================================
+// GLOBAL LOADING & TOAST SYSTEM
+// ========================================
+
+// Initialize loading overlay and toast container on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Create loading overlay
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'global-loading-overlay';
+    loadingOverlay.innerHTML = `
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p class="loading-text">Loading...</p>
+        </div>
+    `;
+    loadingOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    `;
+    document.body.appendChild(loadingOverlay);
+
+    // Create toast container
+    const toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 400px;
+    `;
+    document.body.appendChild(toastContainer);
+
+    // Add styles for loading overlay
+    const loadingStyles = document.createElement('style');
+    loadingStyles.textContent = `
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ff7a00;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-content {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading-text {
+            color: #333;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        /* Toast Notification Styles */
+        .toast {
+            min-width: 300px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-weight: 500;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .toast.success {
+            background: #10b981;
+            color: white;
+        }
+
+        .toast.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .toast.info {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .toast.warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast.removing {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 480px) {
+            #toast-container {
+                left: 10px;
+                right: 10px;
+                max-width: none;
+            }
+            .toast {
+                min-width: auto;
+            }
+        }
+    `;
+    document.head.appendChild(loadingStyles);
+});
+
+// Global loading functions
+window.showLoading = function(message = 'Loading...') {
+    const overlay = document.getElementById('global-loading-overlay');
+    if (overlay) {
+        const text = overlay.querySelector('.loading-text');
+        if (text) text.textContent = message;
+        overlay.style.display = 'flex';
+    }
+};
+
+window.hideLoading = function() {
+    const overlay = document.getElementById('global-loading-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+};
+
+// Toast notification function
+window.showToast = function(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '✓';
+    if (type === 'error') icon = '✕';
+    if (type === 'warning') icon = '⚠';
+    if (type === 'info') icon = 'ⓘ';
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+};
+
+// Shorthand functions
+window.successToast = (msg, duration) => showToast(msg, 'success', duration);
+window.errorToast = (msg, duration) => showToast(msg, 'error', duration);
+window.infoToast = (msg, duration) => showToast(msg, 'info', duration);
+window.warningToast = (msg, duration) => showToast(msg, 'warning', duration);
+
+// ============================================================================
+// REAL-TIME NOTIFICATIONS SYSTEM
+// ============================================================================
+
+class NotificationManager {
+    constructor() {
+        this.pollInterval = 10000; // Poll every 10 seconds
+        this.pollTimer = null;
+        this.unreadCount = 0;
+        this.isRunning = false;
+        this.useWebSocket = false; // Can be enabled when WebSocket server is available
+    }
+    
+    /**
+     * Start real-time notification polling
+     */
+    start() {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        console.log('Notification manager started');
+        
+        // Initial check
+        this.fetchNotifications();
+        
+        // Set up polling
+        this.pollTimer = setInterval(() => {
+            this.fetchNotifications();
+        }, this.pollInterval);
+    }
+    
+    /**
+     * Stop notification polling
+     */
+    stop() {
+        if (this.pollTimer) {
+            clearInterval(this.pollTimer);
+            this.pollTimer = null;
+        }
+        this.isRunning = false;
+        console.log('Notification manager stopped');
+    }
+    
+    /**
+     * Fetch unread notifications from server
+     */
+    fetchNotifications() {
+        fetch('/api/notifications/real-time?limit=10')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.handleNotifications(data.notifications);
+                    this.updateUnreadCount(data.unread_count);
+                }
+            })
+            .catch(error => {
+                console.warn('Error fetching notifications:', error);
+            });
+    }
+    
+    /**
+     * Handle incoming notifications
+     */
+    handleNotifications(notifications) {
+        notifications.forEach(notification => {
+            this.displayNotification(notification);
+        });
+    }
+    
+    /**
+     * Display a notification to the user
+     */
+    displayNotification(notification) {
+        // Determine toast type based on priority
+        let toastType = 'info';
+        if (notification.priority === 'high' || notification.priority === 'urgent') {
+            toastType = 'warning';
+        }
+        
+        // Show toast
+        window.showToast(notification.message, toastType, 5000);
+        
+        // Log notification
+        console.log('Notification:', notification);
+    }
+    
+    /**
+     * Update unread notification count badge
+     */
+    updateUnreadCount(count) {
+        this.unreadCount = count;
+        
+        // Update badge in UI if it exists
+        const badge = document.querySelector('[data-notification-badge]');
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        // Update bell icon if it exists
+        const bell = document.querySelector('[data-notification-bell]');
+        if (bell) {
+            if (count > 0) {
+                bell.classList.add('has-notifications');
+            } else {
+                bell.classList.remove('has-notifications');
+            }
+        }
+    }
+    
+    /**
+     * Get unread count from server
+     */
+    getUnreadCount() {
+        return fetch('/api/notifications/unread-count')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.updateUnreadCount(data.unread_count);
+                    return data.unread_count;
+                }
+            })
+            .catch(error => {
+                console.warn('Error getting unread count:', error);
+                return 0;
+            });
+    }
+    
+    /**
+     * Mark notification as read
+     */
+    markAsRead(notificationId) {
+        return fetch(`/api/notifications/mark-read/${notificationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                console.log('Notification marked as read');
+                this.getUnreadCount();
+                return true;
+            }
+        })
+        .catch(error => {
+            console.warn('Error marking notification as read:', error);
+            return false;
+        });
+    }
+    
+    /**
+     * Delete a notification
+     */
+    deleteNotification(notificationId) {
+        return fetch(`/api/notifications/delete/${notificationId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                console.log('Notification deleted');
+                this.getUnreadCount();
+                return true;
+            }
+        })
+        .catch(error => {
+            console.warn('Error deleting notification:', error);
+            return false;
+        });
+    }
+    
+    /**
+     * Get user's notification preferences
+     */
+    getPreferences() {
+        return fetch('/api/notifications/preferences')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    return data.preferences;
+                }
+            })
+            .catch(error => {
+                console.warn('Error getting preferences:', error);
+                return null;
+            });
+    }
+    
+    /**
+     * Update user's notification preferences
+     */
+    updatePreferences(preferences) {
+        return fetch('/api/notifications/preferences', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(preferences)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.successToast('Preferences updated');
+                return data.preferences;
+            }
+        })
+        .catch(error => {
+            console.warn('Error updating preferences:', error);
+            window.errorToast('Failed to update preferences');
+            return null;
+        });
+    }
+}
+
+// Create global notification manager instance
+window.notificationManager = new NotificationManager();
+
+// Start notification manager when DOM is ready and user is authenticated
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is authenticated (look for any authenticated indicator)
+    const isAuthenticated = document.body.dataset.authenticated === 'true' || 
+                           document.querySelector('[data-user-id]') !== null;
+    
+    if (isAuthenticated) {
+        // Start notification polling with a slight delay
+        setTimeout(() => {
+            window.notificationManager.start();
+        }, 1000);
+    }
+});
+
+// Stop notification manager when page is about to unload
+window.addEventListener('beforeunload', function() {
+    if (window.notificationManager && window.notificationManager.isRunning) {
+        window.notificationManager.stop();
+    }
+});
+
+// ============================================================================
+// QUICK ACTION NOTIFICATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Show notification for item added to cart
+ */
+function notifyItemAddedToCart(itemId, itemName) {
+    const message = `✓ "${itemName}" added to your cart`;
+    window.successToast(message, 4000);
+    
+    // Optional: Send to server
+    fetch('/api/notifications/cart/item-added', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ item_id: itemId })
+    }).catch(error => console.warn('Error logging notification:', error));
+}
+
+/**
+ * Show notification for order placed
+ */
+function notifyOrderPlaced(orderId) {
+    const message = `📦 Order #${orderId} confirmed!`;
+    window.successToast(message, 5000);
+    
+    fetch('/api/notifications/order-placed', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ order_id: orderId })
+    }).catch(error => console.warn('Error logging notification:', error));
+}
+
+/**
+ * Show notification for order status update
+ */
+function notifyOrderStatus(orderId, status) {
+    const statusMessages = {
+        'processing': '⚙️ Your order is being processed',
+        'shipped': '🚚 Your order has been shipped!',
+        'delivered': '✅ Your order has been delivered!',
+        'cancelled': '❌ Your order has been cancelled',
+        'completed': '🎉 Order completed successfully!'
+    };
+    
+    const message = statusMessages[status] || `Order status: ${status}`;
+    window.showToast(message, 'success', 5000);
+    
+    fetch('/api/notifications/order-status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ order_id: orderId, status: status })
+    }).catch(error => console.warn('Error logging notification:', error));
+}
+
 </script>
 
 </body>

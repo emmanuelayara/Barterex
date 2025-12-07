@@ -120,7 +120,7 @@
                     </td>
                     <td class="actions-cell">
                     {% if order.status != 'Delivered' and order.status != 'Cancelled' %}
-                        <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}">
+                        <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}">
                         <button type="submit" class="action-btn">
                             {% if order.status == 'Pending' %} Mark as Shipped 🚚
                             {% elif order.status == 'Shipped' %} Mark as Out for Delivery 🚚
