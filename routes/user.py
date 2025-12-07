@@ -171,7 +171,7 @@ def credit_history():
 def notifications():
     try:
         page = request.args.get('page', 1, type=int)
-        filter_type = request.args.get('filter', 'all')
+        filter_type = request.args.get('filter', 'unread')
         
         query = Notification.query.filter_by(user_id=current_user.id)
         
