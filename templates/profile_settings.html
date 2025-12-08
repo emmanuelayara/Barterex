@@ -192,26 +192,29 @@
   }
 
   .form-group {
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .form-label {
     display: block;
     font-weight: 600;
-    color: #4a5568;
-    margin-bottom: 6px;
-    font-size: 0.8rem;
+    color: #2d3748;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
   .input-wrapper {
     position: relative;
+    display: block;
   }
 
   .form-control {
     width: 100%;
-    padding: 12px 16px 12px 40px;
+    padding: 12px 16px 12px 44px;
     border-radius: 12px;
     border: 2px solid #e2e8f0;
     background: #fff;
@@ -219,6 +222,28 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
     color: #2d3748;
+    font-family: inherit;
+  }
+
+  textarea.form-control {
+    padding: 12px 16px 12px 44px;
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .form-control::placeholder {
+    color: #cbd5e0;
+  }
+
+  .form-control:hover {
+    border-color: #cbd5e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .form-control:focus {
+    border-color: #ff7a00;
+    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.15), 0 4px 12px rgba(255, 122, 0, 0.1);
+    transform: translateY(-2px);
   }
 
   /* Special styling for select dropdown */
@@ -248,12 +273,6 @@
     background: #f7fafc;
   }
 
-  textarea.form-control {
-    resize: vertical;
-    min-height: 80px;
-    padding: 12px 16px;
-  }
-
   .form-control:focus {
     border-color: #ff7a00;
     box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
@@ -272,25 +291,37 @@
 
   .input-icon {
     position: absolute;
-    left: 14px;
+    left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1rem;
-    color: #a0aec0;
+    font-size: 1.1rem;
+    color: #cbd5e0;
     pointer-events: none;
-    z-index: 1;
-    border-radius: 12px;
+    z-index: 2;
+    transition: all 0.3s ease;
   }
 
-  .form-actions {
-    margin-top: 24px;
+  .input-wrapper > .form-control + .input-icon {
+    left: 12px;
+  }
+
+    .input-wrapper.focused .input-icon {
+      color: #ff7a00;
+      transform: translateY(-50%) scale(1.15);
+    }
+
+    .form-control:focus + .input-icon {
+      color: #ff7a00;
+      transform: translateY(-50%) scale(1.15);
+    }  .form-actions {
+    margin-top: 32px;
     text-align: center;
   }
 
   .btn-submit {
-    background: linear-gradient(135deg, #ff7a00, #ff7a00);
+    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
     color: white;
-    padding: 12px 36px;
+    padding: 14px 48px;
     border: none;
     border-radius: 12px;
     font-size: 0.95rem;
@@ -303,7 +334,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
   }
 
   .btn-submit::before {
@@ -313,22 +345,21 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     transition: left 0.5s;
     border-radius: 12px;
   }
 
-  .btn-submit:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(255, 122, 0, 0.3);
-    border-radius: 12px;
+  .btn-submit:hover:not(.loading) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255, 122, 0, 0.4);
   }
 
-  .btn-submit:hover::before {
+  .btn-submit:hover:not(.loading)::before {
     left: 100%;
   }
 
-  .btn-submit:active {
+  .btn-submit:active:not(.loading) {
     transform: translateY(0);
   }
 
@@ -355,24 +386,56 @@
 
   /* Flash Messages */
   .flash-messages {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
   }
 
   .flash-message {
-    padding: 12px 16px;
-    margin-bottom: 10px;
+    padding: 14px 16px;
     border-radius: 12px;
+    font-size: 0.9rem;
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
+    gap: 10px;
+    animation: slideDown 0.3s ease-out;
   }
 
   .flash-success {
-    background: rgba(16, 185, 129, 0.1);
-    color: #059669;
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+  }
+
+  .flash-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+    color: #b91c1c;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .flash-message.flash-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+    color: #b91c1c;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .flash-success {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.2);
     border-radius: 12px;
   }
 
@@ -679,8 +742,8 @@
   <div class="profile-container">
     <div class="profile-form">
       <div class="form-header">
-        <h2 class="form-title">Edit Your Profile</h2>
-        <p class="form-subtitle">Keep your information up to date for better trading experience</p>
+        <h2 class="form-title">✨ Edit Your Profile</h2>
+        <p class="form-subtitle">Update your personal information to enhance your trading experience</p>
       </div>
 
       <!-- Flash Messages -->
@@ -705,8 +768,8 @@
           <div class="form-group">
             {{ form.email.label(class="form-label") }}
             <div class="input-wrapper">
-              <span class="input-icon">📧</span>
-              {{ form.email(class="form-control", placeholder="Enter your email address") }}
+              {{ form.email(class="form-control", placeholder="your.email@example.com") }}
+              <span class="input-icon"></span>
             </div>
           </div>
 
@@ -714,36 +777,34 @@
           <div class="form-group">
             {{ form.phone_number.label(class="form-label") }}
             <div class="input-wrapper">
-              <span class="input-icon">📱</span>
-              {{ form.phone_number(class="form-control", placeholder="Enter your phone number") }}
+              {{ form.phone_number(class="form-control", placeholder="+234 800 000 0000") }}
+              <span class="input-icon"></span>
             </div>
           </div>
 
-          <!-- Address Field -->
-          <div class="form-group">
+          <!-- Address Field (Full Width) -->
+          <div class="form-group full">
             {{ form.address.label(class="form-label") }}
             <div class="input-wrapper">
-              <span class="input-icon">🏠</span>
               {{ form.address(class="form-control", placeholder="Enter your street address", rows="3") }}
+              <span class="input-icon"></span>
             </div>
           </div>
 
           <!-- City and State Row -->
-          <div class="form-row">
-            <div class="form-group">
-              {{ form.city.label(class="form-label") }}
-              <div class="input-wrapper">
-                <span class="input-icon">🏙️</span>
-                {{ form.city(class="form-control", placeholder="City") }}
-              </div>
+          <div class="form-group">
+            {{ form.city.label(class="form-label") }}
+            <div class="input-wrapper">
+              {{ form.city(class="form-control", placeholder="City") }}
+              <span class="input-icon"></span>
             </div>
+          </div>
 
-            <div class="form-group">
-              {{ form.state.label(class="form-label") }}
-              <div class="input-wrapper">
-                <span class="input-icon">🗺️</span>
-                {{ form.state(class="form-control") }}
-              </div>
+          <div class="form-group">
+            {{ form.state.label(class="form-label") }}
+            <div class="input-wrapper">
+              {{ form.state(class="form-control") }}
+              <span class="input-icon">🗺️</span>
             </div>
           </div>
         </div>
@@ -766,17 +827,30 @@ document.addEventListener('DOMContentLoaded', function() {
   form.addEventListener('submit', function(e) {
     submitBtn.classList.add('loading');
     submitBtn.innerHTML = '💾 Saving...';
+    submitBtn.disabled = true;
   });
 
-  // Input focus animations
+  // Input focus animations with wrapper styling
   const inputs = document.querySelectorAll('.form-control');
   inputs.forEach(input => {
+    const wrapper = input.closest('.input-wrapper');
+    
     input.addEventListener('focus', function() {
-      this.closest('.input-wrapper').classList.add('focused');
+      if (wrapper) wrapper.classList.add('focused');
     });
 
     input.addEventListener('blur', function() {
-      this.closest('.input-wrapper').classList.remove('focused');
+      if (wrapper) wrapper.classList.remove('focused');
+    });
+
+    // Add input change animation
+    input.addEventListener('input', function() {
+      if (wrapper) {
+        wrapper.style.animation = 'none';
+        setTimeout(() => {
+          wrapper.style.animation = '';
+        }, 10);
+      }
     });
   });
 
@@ -812,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Auto-hide flash messages
+  // Auto-hide flash messages with smooth animation
   const flashMessages = document.querySelectorAll('.flash-message');
   flashMessages.forEach(message => {
     setTimeout(() => {
@@ -823,11 +897,25 @@ document.addEventListener('DOMContentLoaded', function() {
           message.remove();
         }
       }, 300);
-    }, 5000);
+    }, 4000);
+  });
+
+  // Form validation feedback
+  const textInputs = document.querySelectorAll('.form-control[type="email"], .form-control[type="text"], .form-control[type="tel"], textarea.form-control');
+  textInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      const wrapper = this.closest('.input-wrapper');
+      if (wrapper && this.value.trim() !== '') {
+        wrapper.style.opacity = '0.8';
+        setTimeout(() => {
+          wrapper.style.opacity = '1';
+        }, 200);
+      }
+    });
   });
 });
 
-// Add ripple animation CSS
+// Add ripple animation and focus CSS
 const style = document.createElement('style');
 style.textContent = `
   @keyframes ripple {
@@ -843,11 +931,15 @@ style.textContent = `
 
   .input-wrapper.focused .input-icon {
     color: #ff7a00;
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.15);
   }
 
   .flash-message {
     transition: all 0.3s ease;
+  }
+
+  .form-control:focus ~ .input-icon {
+    color: #ff7a00;
   }
 `;
 document.head.appendChild(style);

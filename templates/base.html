@@ -919,8 +919,12 @@
                 <i class="fas fa-bell"></i>
                 <span>Alerts</span>
             </a>
-            <a href="{{ url_for('user.dashboard') }}" class="bottom-nav-item {% if request.endpoint == 'user.dashboard' %}active{% endif %}">
-                <i class="fas fa-user-circle"></i>
+            <a href="{{ url_for('user.settings') }}" class="bottom-nav-item {% if request.endpoint == 'user.settings' %}active{% endif %}">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+                <a href="{{ url_for('user.dashboard') }}" class="bottom-nav-item {% if request.endpoint == 'user.dashboard' %}active{% endif %}">
+                <i class="fas fa-cog"></i>
                 <span>Dashboard</span>
             </a>
         {% else %}

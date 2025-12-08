@@ -2,10 +2,11 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required, current_user, logout_user
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db, app
 from models import Item, Trade, Notification, CreditTransaction, User, ItemImage, Order, OrderItem
-from forms import UploadItemForm, ProfileUpdateForm
+from forms import UploadItemForm, ProfileUpdateForm, ChangePasswordForm, DeleteAccountForm
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, ValidationError, AuthorizationError, FileUploadError
 from error_handlers import handle_errors, safe_database_operation
@@ -33,6 +34,11 @@ def dashboard():
             logout_user()
             return redirect(url_for('auth.login'))
         
+        # Generate referral code if not exists
+        if not current_user.referral_code:
+            current_user.generate_referral_code()
+            db.session.commit()
+        
         credits = current_user.credits
         item_count = Item.query.filter_by(user_id=current_user.id).count()
         pending_trades = Trade.query.filter(
@@ -42,8 +48,43 @@ def dashboard():
 
         recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(
             Notification.timestamp.desc()
-        ).limit(5).all()
-
+        ).limit(3).all()
+        
+        # Calculate profile completion percentage
+        profile_fields = [
+            current_user.email,
+            current_user.phone_number,
+            current_user.address,
+            current_user.city,
+            current_user.state,
+            current_user.profile_picture
+        ]
+        profile_completion = int((sum(1 for field in profile_fields if field) / len(profile_fields)) * 100)
+        
+        # Calculate trading goals
+        completed_trades = Trade.query.filter(
+            db.or_(Trade.sender_id == current_user.id, Trade.receiver_id == current_user.id),
+            Trade.status == 'completed'
+        ).count()
+        
+        # Orders placed (purchasing goal)
+        orders_placed = Order.query.filter_by(user_id=current_user.id).count()
+        
+        # Get similar items (recommendations) - get 2 most recent items from users with similar trades
+        similar_items = Item.query.filter(
+            Item.user_id != current_user.id,
+            Item.status == 'available'
+        ).order_by(Item.id.desc()).limit(2).all()
+        
+        # Calculate progress percentages for widgets
+        upload_progress = min(item_count * 10, 100)
+        trading_progress = min((completed_trades + orders_placed) * 5, 100)
+        
+        # Calculate SVG offsets for progress rings (stroke-dasharray circumference = 163.36 for r=16)
+        profile_offset = 163.36 * (1 - profile_completion / 100)
+        upload_offset = 163.36 * (1 - upload_progress / 100)
+        trading_offset = 163.36 * (1 - trading_progress / 100)
+        
         logger.info(f"User dashboard loaded - User: {current_user.username}, Credits: {credits}, Items: {item_count}")
 
         return render_template(
@@ -52,7 +93,16 @@ def dashboard():
             credits=credits,
             item_count=item_count,
             pending_trades=pending_trades,
-            recent_notifications=recent_notifications
+            recent_notifications=recent_notifications,
+            profile_completion=profile_completion,
+            completed_trades=completed_trades,
+            orders_placed=orders_placed,
+            upload_progress=upload_progress,
+            trading_progress=trading_progress,
+            profile_offset=profile_offset,
+            upload_offset=upload_offset,
+            trading_offset=trading_offset,
+            similar_items=similar_items
         )
     except Exception as e:
         logger.error(f"Error loading dashboard for user {current_user.username}: {str(e)}", exc_info=True)
@@ -368,3 +418,187 @@ def download_receipt(order_id):
         logger.error(f"Error downloading receipt: {str(e)}", exc_info=True)
         flash('An error occurred while downloading the receipt.', 'danger')
         return redirect(url_for('user.view_order_details', order_id=order_id))
+
+
+# ==================== SETTINGS ROUTES ====================
+
+@user_bp.route('/settings', methods=['GET', 'POST'])
+@login_required
+@handle_errors
+def settings():
+    """Central settings page for profile, password, and account management"""
+    try:
+        profile_form = ProfileUpdateForm(obj=current_user)
+        password_form = ChangePasswordForm()
+        delete_form = DeleteAccountForm()
+        
+        # Handle form submissions
+        if request.method == 'POST':
+            form_type = request.form.get('form_type')
+            
+            # ========== PROFILE UPDATE ==========
+            if form_type == 'profile':
+                current_user.email = request.form['email']
+                current_user.phone_number = request.form['phone_number']
+                current_user.address = request.form['address']
+                current_user.city = request.form['city']
+                current_user.state = request.form['state']
+                
+                if profile_form.profile_picture.data:
+                    file = profile_form.profile_picture.data
+                    if file.filename:
+                        try:
+                            validate_upload(file, max_size=5*1024*1024, allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}))
+                            unique_filename = generate_safe_filename(file, current_user.id)
+                            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                            file.save(file_path)
+                            current_user.profile_picture = f"/{file_path}"
+                            logger.info(f"Profile picture updated - User: {current_user.username}, File: {unique_filename}")
+                        except FileUploadError as e:
+                            logger.warning(f"Profile picture upload failed: {str(e)}")
+                            flash(f"Profile picture upload failed: {str(e)}", 'danger')
+                            return redirect(url_for('user.settings'))
+                else:
+                    current_user.profile_picture = None
+                
+                db.session.commit()
+                logger.info(f"Profile updated successfully - User: {current_user.username}, Email: {current_user.email}")
+                flash('✅ Profile updated successfully', 'success')
+                return redirect(url_for('user.settings'))
+            
+            # ========== PASSWORD CHANGE ==========
+            elif form_type == 'password':
+                current_password = request.form.get('current_password')
+                new_password = request.form.get('new_password')
+                confirm_password = request.form.get('confirm_password')
+                
+                # Validate current password
+                if not check_password_hash(current_user.password_hash, current_password):
+                    flash('❌ Current password is incorrect', 'danger')
+                    return redirect(url_for('user.settings'))
+                
+                # Validate new password
+                if len(new_password) < 8:
+                    flash('❌ New password must be at least 8 characters long', 'danger')
+                    return redirect(url_for('user.settings'))
+                
+                # Check passwords match
+                if new_password != confirm_password:
+                    flash('❌ New passwords do not match', 'danger')
+                    return redirect(url_for('user.settings'))
+                
+                # Check new password is different from current
+                if check_password_hash(current_user.password_hash, new_password):
+                    flash('❌ New password must be different from current password', 'danger')
+                    return redirect(url_for('user.settings'))
+                
+                # Update password
+                current_user.password_hash = generate_password_hash(new_password)
+                db.session.commit()
+                logger.info(f"Password changed successfully - User: {current_user.username}")
+                flash('✅ Password changed successfully', 'success')
+                return redirect(url_for('user.settings'))
+            
+            # ========== ACCOUNT DELETION ==========
+            elif form_type == 'delete':
+                confirm_delete = request.form.get('confirm_delete')
+                confirm_username = request.form.get('confirm_username')
+                
+                # Validate confirmation
+                if not confirm_delete or confirm_delete != 'on':
+                    flash('❌ You must confirm account deletion', 'danger')
+                    return redirect(url_for('user.settings'))
+                
+                if confirm_username != current_user.username:
+                    flash(f'❌ Username does not match. Please type "{current_user.username}"', 'danger')
+                    return redirect(url_for('user.settings'))
+                
+                # Capture user info before deletion
+                username = current_user.username
+                user_email = current_user.email
+                user_id = current_user.id
+                
+                # Send goodbye email
+                try:
+                    from routes.auth import send_email_async
+                    goodbye_html = f"""
+                    <html>
+                        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                                <h2 style="color: #ff7a00; margin-bottom: 20px;">👋 We'll Miss You!</h2>
+                                
+                                <p style="font-size: 16px;">Hi <strong>{username}</strong>,</p>
+                                
+                                <p style="font-size: 16px;">
+                                    Your Barterex account has been successfully deleted. All your personal information, 
+                                    items, trades, and transactions have been permanently removed from our system.
+                                </p>
+                                
+                                <div style="background: #f8fafc; padding: 20px; border-left: 4px solid #ff7a00; margin: 20px 0;">
+                                    <h3 style="margin-top: 0; color: #054e97;">What was deleted:</h3>
+                                    <ul style="margin: 0; padding-left: 20px;">
+                                        <li>Profile information and settings</li>
+                                        <li>All uploaded items</li>
+                                        <li>Trading history and transactions</li>
+                                        <li>Orders and credit balance</li>
+                                        <li>Notifications and preferences</li>
+                                    </ul>
+                                </div>
+                                
+                                <p style="font-size: 16px;">
+                                    If this was a mistake or you'd like to create a new account, you're welcome to 
+                                    <a href="{url_for('auth.register', _external=True)}" style="color: #ff7a00; text-decoration: none; font-weight: bold;">register again anytime</a>.
+                                </p>
+                                
+                                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                                
+                                <p style="font-size: 14px; color: #64748b;">
+                                    We appreciate you being part of the Barterex community. If you have any feedback 
+                                    about your experience, feel free to reach out to us at 
+                                    <a href="mailto:info.barterex@gmail.com" style="color: #ff7a00; text-decoration: none;">info.barterex@gmail.com</a>.
+                                </p>
+                                
+                                <p style="font-size: 14px; color: #64748b;">
+                                    Best regards,<br>
+                                    <strong>The Barterex Team</strong>
+                                </p>
+                            </div>
+                        </body>
+                    </html>
+                    """
+                    
+                    send_email_async(
+                        subject='Goodbye from Barterex - Account Deleted',
+                        recipients=[user_email],
+                        html_body=goodbye_html
+                    )
+                    logger.info(f"Goodbye email sent to {user_email} for deleted account {username}")
+                except Exception as e:
+                    logger.warning(f"Failed to send goodbye email: {str(e)}")
+                
+                # Delete related data
+                Item.query.filter_by(user_id=user_id).delete()
+                Trade.query.filter((Trade.sender_id == user_id) | (Trade.receiver_id == user_id)).delete()
+                Notification.query.filter_by(user_id=user_id).delete()
+                CreditTransaction.query.filter_by(user_id=user_id).delete()
+                Order.query.filter_by(user_id=user_id).delete()
+                
+                # Delete user
+                db.session.delete(current_user)
+                db.session.commit()
+                
+                logger.warning(f"Account deleted - User: {username} (ID: {user_id})")
+                logout_user()
+                flash('Account deleted successfully. Redirecting to marketplace...', 'success')
+                return redirect(url_for('marketplace.marketplace'))
+        
+        return render_template('settings.html', 
+                             profile_form=profile_form,
+                             password_form=password_form,
+                             delete_form=delete_form,
+                             user=current_user)
+        
+    except Exception as e:
+        logger.error(f"Error in settings for user {current_user.username}: {str(e)}", exc_info=True)
+        flash('An error occurred. Please try again.', 'danger')
+        return redirect(url_for('user.dashboard'))

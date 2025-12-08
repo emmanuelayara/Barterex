@@ -182,13 +182,454 @@
     font-style: italic;
   }
 
+  /* ==================== NEW ANIMATED WIDGETS ==================== */
+
+  .widgets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  /* Progress Rings Card */
+  .progress-card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .progress-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(255, 122, 0, 0.2);
+  }
+
+  .progress-card h3 {
+    color: #054e97;
+    margin: 0 0 20px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .progress-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .progress-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .progress-ring-container {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+  }
+
+  .progress-ring-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-circle-bg {
+    fill: none;
+    stroke: #e2e8f0;
+    stroke-width: 6;
+  }
+
+  .progress-ring-circle {
+    fill: none;
+    stroke: url(#gradientRing);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 163.36;
+    animation: progressRingAnimation 1.5s ease-out forwards;
+  }
+
+  @keyframes progressRingAnimation {
+    from {
+      stroke-dashoffset: 163.36;
+      opacity: 0;
+    }
+    to {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+  }
+
+  .progress-info {
+    flex: 1;
+  }
+
+  .progress-label {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .progress-percentage {
+    color: #ff7a00;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  /* Level/Tier Card */
+  .level-card {
+    background: linear-gradient(135deg, rgba(5, 78, 151, 0.95), rgba(255, 122, 0, 0.1));
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .level-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(255, 122, 0, 0.3);
+  }
+
+  .level-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 122, 0, 0.1) 0%, transparent 70%);
+    animation: glow 6s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(20px, -20px);
+    }
+  }
+
+  .level-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .level-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .level-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.9;
+  }
+
+  .level-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    50% {
+      background: rgba(255, 255, 255, 0.35);
+    }
+  }
+
+  .level-display {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .level-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .level-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .level-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .level-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff7a00, #ff8f1f);
+    width: 65%;
+    animation: expandBar 1.5s ease-out forwards;
+  }
+
+  @keyframes expandBar {
+    from {
+      width: 0%;
+    }
+  }
+
+  .level-info-text {
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+
+  /* Referral Card */
+  .referral-card {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.95), rgba(255, 122, 0, 0.1));
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .referral-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(74, 144, 226, 0.3);
+  }
+
+  .referral-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .referral-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .referral-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-bottom: 16px;
+  }
+
+  .referral-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .referral-stat {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    animation: slideInUp 0.6s ease-out backwards;
+  }
+
+  .referral-stat:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .referral-stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: block;
+  }
+
+  .referral-stat-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+
+  .referral-button {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
+
+  .referral-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: scale(1.02);
+  }
+
+  /* Recommendations Card */
+  .recommendations-card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    grid-column: 1 / -1;
+  }
+
+  .recommendations-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(255, 122, 0, 0.2);
+  }
+
+  .recommendations-card h3 {
+    color: #054e97;
+    margin: 0 0 20px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .recommendation-item {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    animation: fadeInScale 0.6s ease-out backwards;
+  }
+
+  .recommendation-item:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .recommendation-item:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 28px rgba(255, 122, 0, 0.15);
+  }
+
+  .recommendation-image {
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    overflow: hidden;
+  }
+
+  .recommendation-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .recommendation-info {
+    padding: 12px;
+  }
+
+  .recommendation-name {
+    font-weight: 600;
+    color: #054e97;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recommendation-seller {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+
+  .recommendation-view {
+    color: #ff7a00;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .recommendation-view:hover {
+    text-decoration: underline;
+  }
+
+  .empty-recommendations {
+    text-align: center;
+    padding: 24px;
+    color: #64748b;
+  }
+
+  .empty-recommendations i {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: #cbd5e0;
+  }
+
   .notifications-section {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 24px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+    padding: 24px 24px;
+    border: none;
+    border-top: 2px solid #ff7a00;
+    border-bottom: 2px solid #ff7a00;
+    box-shadow: none;
+    width: 100%;
+    margin: 40px 0 0 0;
   }
 
   .notifications-header {
@@ -221,7 +662,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: 280px;
+    max-height: 120px;
     overflow-y: auto;
   }
 
@@ -659,53 +1100,240 @@
         <div class="stat-description">No of Items listed for trade</div>
       </div> 
 
-      <a href="{{ url_for('user.profile_settings') }}">
-        <div class="stat-card">
-          <div class="stat-icon">📍</div>
-          <div class="stat-title">Address</div>
-          <div class="stat-value" style="font-size: 0.70rem; line-height: 1.3;">
-            {% if current_user.address %}
-              {{ current_user.address }}
-            {% else %}
-              Not Set
-            {% endif %}
+      <div class="stat-card">
+        <div class="stat-icon">📍</div>
+        <div class="stat-title">Address</div>
+        <div class="stat-value" style="font-size: 0.70rem; line-height: 1.3;">
+          {% if current_user.address %}
+            {{ current_user.address }}
+          {% else %}
+            Not Set
+          {% endif %}
+        </div>
+        <div class="stat-description">
+          {% if current_user.address %}
+            {{ current_user.city or '' }}{% if current_user.city and current_user.state %}, {% endif %}{{ current_user.state or '' }}
+            <br>
+          {% else %}
+            <span style="color: #ff7a00; font-weight: 600;">👉 No address set</span>
+            <br>
+            <small style="display: block; margin-top: 6px; font-size: 0.75rem; opacity: 0.85;">
+              Complete your profile in Settings to help buyers find you
+            </small>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Animated Widgets Section -->
+    <div class="widgets-grid">
+      <!-- Progress Rings Card -->
+      <div class="progress-card">
+        <h3>📊 Your Progress</h3>
+        
+        <!-- Profile Completion -->
+        <div class="progress-item">
+          <div class="progress-ring-container">
+            <svg class="progress-ring-svg" viewBox="0 0 36 36">
+              <defs>
+                <linearGradient id="gradientRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#ff7a00;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#ff8f1f;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle class="progress-ring-circle-bg" cx="18" cy="18" r="16"/>
+              <circle class="progress-ring-circle" cx="18" cy="18" r="16" style="stroke-dashoffset: {{ profile_offset }}"/>
+            </svg>
           </div>
-          <div class="stat-description">
-            {% if current_user.city or current_user.state %}
-              {{ current_user.city or '' }}{% if current_user.city and current_user.state %}, {% endif %}{{ current_user.state or '' }}
-            {% else %}
-              Please update your address for efficient trading
-            {% endif %}
+          <div class="progress-info">
+            <div class="progress-label">Profile Completion</div>
+            <div class="progress-percentage">{{ profile_completion }}%</div>
+          </div>
+        </div>
+
+        <!-- Upload Goals -->
+        <div class="progress-item">
+          <div class="progress-ring-container">
+            <svg class="progress-ring-svg" viewBox="0 0 36 36">
+              <circle class="progress-ring-circle-bg" cx="18" cy="18" r="16"/>
+              <circle class="progress-ring-circle" cx="18" cy="18" r="16" style="stroke-dashoffset: {{ upload_offset }}"/>
+            </svg>
+          </div>
+          <div class="progress-info">
+            <div class="progress-label">Items Uploaded</div>
+            <div class="progress-percentage">{{ upload_progress }}%</div>
+          </div>
+        </div>
+
+        <!-- Trading Goals -->
+        <div class="progress-item">
+          <div class="progress-ring-container">
+            <svg class="progress-ring-svg" viewBox="0 0 36 36">
+              <circle class="progress-ring-circle-bg" cx="18" cy="18" r="16"/>
+              <circle class="progress-ring-circle" cx="18" cy="18" r="16" style="stroke-dashoffset: {{ trading_offset }}"/>
+            </svg>
+          </div>
+          <div class="progress-info">
+            <div class="progress-label">Trading Completed</div>
+            <div class="progress-percentage">{{ trading_progress }}%</div>
           </div>
         </div>
       </div>
-      </a>
 
-    <!-- Recent Notifications -->
+      <!-- Level/Tier Card -->
+      <div class="level-card">
+        <div class="level-content">
+          <div class="level-header">
+            <div class="level-title">⭐ YOUR TRADING LEVEL</div>
+            <div class="level-badge">{{ current_user.level }} / 10</div>
+          </div>
+          
+          <div class="level-display">
+            <div>
+              <div class="level-number">{{ current_user.level }}</div>
+            </div>
+            <div>
+              <div class="level-name">{% if current_user.level <= 2 %}Beginner{% elif current_user.level <= 4 %}Novice{% elif current_user.level <= 6 %}Intermediate{% elif current_user.level <= 8 %}Advanced{% else %}Expert{% endif %}</div>
+              <div class="level-info-text">{{ current_user.trading_points }} points</div>
+            </div>
+          </div>
+          
+          <div class="level-progress-bar">
+            <div class="level-progress-fill"></div>
+          </div>
+          
+          <div class="level-info-text">
+            Complete more trades to advance your level and unlock special perks!
+          </div>
+        </div>
+      </div>
+
+      <!-- Referral Card -->
+      <div class="referral-card">
+        <div class="referral-content">
+          <div class="referral-title">🎁 Earn Rewards</div>
+          <div class="referral-subtitle">Invite friends and earn bonuses</div>
+          
+          <div class="referral-stats">
+            <div class="referral-stat">
+              <span class="referral-stat-value">{{ current_user.referral_count }}</span>
+              <span class="referral-stat-label">Referrals</span>
+            </div>
+            <div class="referral-stat">
+              <span class="referral-stat-value">₦{{ current_user.referral_bonus_earned }}</span>
+              <span class="referral-stat-label">Earned</span>
+            </div>
+          </div>
+          
+          <button class="referral-button" onclick="copyReferralCode()">📋 Share Code: {{ current_user.referral_code or 'PENDING' }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Notifications Section -->
     <div class="notifications-section">
       <div class="notifications-header">
         <div class="notifications-icon">🔔</div>
         <h3 class="notifications-title">Recent Notifications</h3>
       </div>
       
-      <ul class="notifications-list">
-        {% for note in recent_notifications %}
-          <li class="notification-item">
-            <div class="notification-dot"></div>
-            <div class="notification-content">
-              <div class="notification-message">{{ note.message }}</div>
-              <div class="notification-date">{{ note.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
-            </div>
-          </li>
-        {% else %}
-          <li class="empty-state">
-            <div class="empty-state-icon">📭</div>
-            <div class="empty-state-text">No recent notifications <br> <a href="{{ url_for('marketplace.marketplace') }}" class="nav-link" data-tooltip="Marketplace">Browse the Marketplace</a></div>
-          </li>
-        {% endfor %}
-      </ul>
+      {% if recent_notifications %}
+        <ul class="notifications-list">
+          {% for note in recent_notifications %}
+            <li class="notification-item">
+              <div class="notification-dot"></div>
+              <div class="notification-content">
+                <div class="notification-message">{{ note.message }}</div>
+                <div class="notification-date">{{ note.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-text">No recent notifications <br> <a href="{{ url_for('marketplace.marketplace') }}" class="nav-link" data-tooltip="Marketplace">Browse the Marketplace</a></div>
+        </div>
+      {% endif %}
     </div>
-  </div>
-</div>
+
+    <!-- Personalized Recommendations -->
+    {% if similar_items %}
+    <div class="recommendations-card">
+      <h3>✨ Recommended For You</h3>
+      <div class="recommendations-grid">
+        {% for item in similar_items %}
+        <div class="recommendation-item" onclick="window.location.href='{{ url_for('marketplace.item_detail', item_id=item.id) }}'">
+          <div class="recommendation-image">
+            {% if item.images and item.images[0] %}
+              <img src="{{ item.images[0].image_url }}" alt="{{ item.name }}">
+            {% else %}
+              <i class="fas fa-image"></i>
+            {% endif %}
+          </div>
+          <div class="recommendation-info">
+            <div class="recommendation-name" title="{{ item.name }}">{{ item.name[:25] }}</div>
+            <div class="recommendation-seller">by {{ item.user.username }}</div>
+            <a href="{{ url_for('marketplace.item_detail', item_id=item.id) }}" class="recommendation-view">View →</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="recommendations-card">
+      <h3>✨ Recommended For You</h3>
+      <div class="empty-recommendations">
+        <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
+        <p>Browse the marketplace to see personalized recommendations!</p>
+      </div>
+    </div>
+    {% endif %}
+    </div><script>
+  // Copy referral code to clipboard
+  function copyReferralCode() {
+    const referralCode = '{{ current_user.referral_code or "PENDING" }}';
+    const button = event.target;
+    
+    if (referralCode === 'PENDING') {
+      alert('Your referral code will be available soon!');
+      return;
+    }
+    
+    navigator.clipboard.writeText(referralCode).then(() => {
+      const originalText = button.textContent;
+      button.textContent = '✅ Copied!';
+      button.style.background = 'rgba(34, 197, 94, 0.3)';
+      
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.style.background = 'rgba(255, 255, 255, 0.2)';
+      }, 2000);
+    });
+  }
+
+  // Animate progress rings on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const circles = document.querySelectorAll('.progress-ring-circle');
+    circles.forEach(circle => {
+      circle.style.animation = 'progressRingAnimation 1.5s ease-out forwards';
+    });
+
+    // Add focus state to inputs
+    const inputs = document.querySelectorAll('.form-control, input[type="text"], input[type="email"], textarea');
+    inputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        if (this.closest('.input-wrapper')) {
+          this.closest('.input-wrapper').classList.add('focused');
+        }
+      });
+      input.addEventListener('blur', function() {
+        if (this.closest('.input-wrapper')) {
+          this.closest('.input-wrapper').classList.remove('focused');
+        }
+      });
+    });
+  });
+</script>
 
 {% endblock %}

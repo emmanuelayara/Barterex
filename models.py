@@ -19,6 +19,13 @@ class User(db.Model, UserMixin):
     # Credits & first login flag
     credits = db.Column(db.Integer, default=0)
     first_login = db.Column(db.Boolean, default=True)
+    
+    # Gamification - Level, Tier, Referrals
+    level = db.Column(db.Integer, default=1)  # User level based on trades
+    trading_points = db.Column(db.Integer, default=0)  # Points earned from trading
+    referral_code = db.Column(db.String(20), unique=True, nullable=True)
+    referral_bonus_earned = db.Column(db.Integer, default=0)  # Total bonus from referrals
+    referral_count = db.Column(db.Integer, default=0)  # Number of successful referrals
 
     # Admin/ban fields
     is_admin = db.Column(db.Boolean, default=False)
@@ -59,6 +66,16 @@ class User(db.Model, UserMixin):
     orders = db.relationship('Order', back_populates='user', lazy=True)
     activity_logs = db.relationship('ActivityLog', back_populates='user', lazy=True, cascade='all, delete-orphan')
     security_settings = db.relationship('SecuritySettings', back_populates='user', lazy=True, uselist=False, cascade='all, delete-orphan')
+
+    def generate_referral_code(self):
+        """Generate a unique referral code for the user"""
+        import string
+        import random
+        if not self.referral_code:
+            # Generate a unique code like REF-USERNAME-XXXXX
+            code = f"REF{self.id}{random.randint(1000, 9999)}"
+            self.referral_code = code
+        return self.referral_code
 
 
 class Admin(db.Model):
