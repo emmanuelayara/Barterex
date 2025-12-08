@@ -1248,7 +1248,7 @@
             <div class="item-location" style="color: #054e97; font-size: 0.65rem;">
               <span>Available in <strong>{{ item.location }}</strong></span>
             </div>
-            <div class="item-value">₦{{ "{:,.0f}".format(item.value) if item.value else 'Price not set' }}</div>
+            <div class="item-value">₦{{ "{:,.2f}".format(item.value) if item.value else 'Price not set' }}</div>
             
             <div class="item-actions">
               <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}" class="btn-primary">
@@ -1486,7 +1486,7 @@
           <div class="recommendation-content">
             <div class="recommendation-name">${escapeHtml(item.name)}</div>
             <div class="recommendation-category">${item.category}</div>
-            <div class="recommendation-value">₦${(item.value || 0).toLocaleString('en-NG', {maximumFractionDigits: 0})}</div>
+            <div class="recommendation-value">₦${(item.value || 0).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
           </div>
         </div>
       `;

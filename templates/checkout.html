@@ -599,7 +599,7 @@
                     
                     <div class="item-price">
                         <i class="fas fa-coins"></i>
-                        ₦{{ "{:,.0f}".format(cart_item.item.value) }} Credits
+                        ₦{{ "{:,.2f}".format(cart_item.item.value) }} Credits
                     </div>
                 </div>
                 {% endfor %}
@@ -629,10 +629,10 @@
                 <div class="credit-info">
                     <div class="current-balance">
                         <i class="fas fa-wallet"></i>
-                        Current Balance: {{ current_user.credits }} Credits
+                        Current Balance: ₦{{ "{:,.2f}".format(current_user.credits) }} Credits
                     </div>
                     <div class="balance-after">
-                        Balance after purchase: {{ current_user.credits - total_cost }} Credits
+                        Balance after purchase: ₦{{ "{:,.2f}".format(current_user.credits - total_cost) }} Credits
                     </div>
                 </div>
             </div>

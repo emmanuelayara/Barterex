@@ -308,3 +308,38 @@ def contact():
 def about():
     logger.info("About page accessed")
     return render_template('about.html')
+
+
+@marketplace_bp.route('/faq')
+@handle_errors
+def faq():
+    logger.info("FAQ page accessed")
+    return render_template('faq.html')
+
+
+@marketplace_bp.route('/safety')
+@handle_errors
+def safety():
+    logger.info("Safety page accessed")
+    return render_template('safety.html')
+
+
+@marketplace_bp.route('/how-it-works')
+@handle_errors
+def how_it_works():
+    logger.info("How It Works page accessed")
+    return render_template('how_it_works.html')
+
+
+@marketplace_bp.route('/terms')
+@handle_errors
+def terms():
+    logger.info("Terms of Use page accessed")
+    return render_template('terms_of_use.html')
+
+
+@marketplace_bp.route('/privacy')
+@handle_errors
+def privacy():
+    logger.info("Privacy page accessed")
+    return render_template('privacy.html')

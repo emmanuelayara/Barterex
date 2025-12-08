@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% block title %}How It Works - Barter Express{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .how-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 5rem;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            border-radius: 2px;
+        }
+
+        .hero-section h1 {
+            color: #054e97;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .hero-section .subtitle {
+            color: #666;
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 5rem;
+        }
+
+        .step-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(5, 78, 151, 0.15);
+        }
+
+        .step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-card h3 {
+            color: #054e97;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .features-section {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            margin-bottom: 5rem;
+            position: relative;
+        }
+
+        .features-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        }
+
+        .section-header {
+            color: #054e97;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 122, 0, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff7a00;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .feature-item h4 {
+            color: #054e97;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-item p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .comparison-section {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            position: relative;
+        }
+
+        .comparison-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .comparison-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 15px;
+            background: #f9fafb;
+        }
+
+        .comparison-card.traditional {
+            border-left: 4px solid #ccc;
+        }
+
+        .comparison-card.barter {
+            border-left: 4px solid #ff7a00;
+        }
+
+        .comparison-card h4 {
+            color: #054e97;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .comparison-item {
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        .comparison-item strong {
+            color: #054e97;
+        }
+
+        @media (max-width: 768px) {
+            .how-container {
+                padding: 2rem 1rem;
+            }
+
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .steps-container {
+                grid-template-columns: 1fr;
+            }
+
+            .features-section {
+                padding: 1.5rem;
+            }
+
+            .section-header {
+                font-size: 2rem;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<div class="how-container">
+    <div class="hero-section">
+        <h1>How It Works</h1>
+        <p class="subtitle">Simple steps to start trading on Barter Express</p>
+    </div>
+
+    <!-- Main Steps -->
+    <div class="steps-container">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Create Your Account</h3>
+            <p>Sign up for free with your email. Complete your profile with a photo and description. Verify your account to start trading.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>List Your Items</h3>
+            <p>Add items you want to trade. Include clear photos, descriptions, and condition details. Our community reviews your listings.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Browse & Discover</h3>
+            <p>Explore thousands of items available for trade. Search by category, location, or keywords. Check out other traders' collections.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <h3>Make an Offer</h3>
+            <p>Find something you like and propose a trade. Suggest items from your inventory. Start negotiating with the other trader.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">5</div>
+            <h3>Agree & Arrange</h3>
+            <p>Finalize the trade details. Choose a delivery method - meet in person or ship. Confirm all terms and payment methods.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">6</div>
+            <h3>Complete & Review</h3>
+            <p>Exchange items and confirm receipt. Leave ratings and reviews for each other. Build your trading reputation.</p>
+        </div>
+    </div>
+
+    <!-- Key Features -->
+    <div class="features-section">
+        <h2 class="section-header">Why Choose Barter Express?</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-free-code-camp"></i>
+                </div>
+                <div>
+                    <h4>100% Free</h4>
+                    <p>No fees, no hidden costs. Listing items and trading is completely free.</p>
+                </div>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <h4>Safe & Secure</h4>
+                    <p>Verified users, secure messaging, and dispute resolution protect your trades.</p>
+                </div>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <h4>Active Community</h4>
+                    <p>Join thousands of traders. Find exactly what you're looking for.</p>
+                </div>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div>
+                    <h4>Ratings System</h4>
+                    <p>Build trust through verified reviews and ratings from other traders.</p>
+                </div>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div>
+                    <h4>Mobile Friendly</h4>
+                    <p>Trade on the go with our responsive mobile interface.</p>
+                </div>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <div>
+                    <h4>Global Reach</h4>
+                    <p>Connect with traders worldwide or in your local area.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="comparison-section">
+        <h2 class="section-header">Barter vs. Traditional Shopping</h2>
+        <div class="comparison-grid">
+            <div class="comparison-card traditional">
+                <h4>Traditional Shopping</h4>
+                <div class="comparison-item"><strong>Cost:</strong> Buy everything with money</div>
+                <div class="comparison-item"><strong>Waste:</strong> Old items often discarded</div>
+                <div class="comparison-item"><strong>Choice:</strong> Limited by budget</div>
+                <div class="comparison-item"><strong>Impact:</strong> Higher environmental cost</div>
+                <div class="comparison-item"><strong>Community:</strong> Impersonal transactions</div>
+            </div>
+
+            <div class="comparison-card barter">
+                <h4>🎉 Barter Express</h4>
+                <div class="comparison-item"><strong>Cost:</strong> Trade items you don't need</div>
+                <div class="comparison-item"><strong>Waste:</strong> Give items new homes</div>
+                <div class="comparison-item"><strong>Choice:</strong> Unlimited possibilities</div>
+                <div class="comparison-item"><strong>Impact:</strong> Sustainable & eco-friendly</div>
+                <div class="comparison-item"><strong>Community:</strong> Build relationships</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

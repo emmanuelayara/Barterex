@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}Terms of Use - Barter Express{% endblock %}
+
+{% block content %}
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .terms-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            border-radius: 2px;
+        }
+
+        .hero-section h1 {
+            color: #054e97;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .hero-section p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .terms-content {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            position: relative;
+        }
+
+        .terms-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        }
+
+        .terms-section {
+            margin-bottom: 3rem;
+        }
+
+        .terms-section h2 {
+            color: #054e97;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 122, 0, 0.2);
+            padding-bottom: 0.5rem;
+        }
+
+        .terms-section h3 {
+            color: #0a6bb8;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .terms-section p {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .terms-section ul {
+            color: #666;
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .terms-section li {
+            margin-bottom: 0.75rem;
+            line-height: 1.8;
+        }
+
+        .highlight {
+            background: rgba(255, 122, 0, 0.1);
+            padding: 1.5rem;
+            border-left: 4px solid #ff7a00;
+            border-radius: 5px;
+            margin: 1.5rem 0;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(5, 78, 151, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .terms-container {
+                padding: 2rem 1rem;
+            }
+
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+
+            .terms-content {
+                padding: 1.5rem;
+            }
+
+            .terms-section h2 {
+                font-size: 1.3rem;
+            }
+
+            .terms-section h3 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+
+<div class="terms-container">
+    <div class="hero-section">
+        <h1>Terms of Use</h1>
+        <p>Please read these terms carefully before using Barter Express</p>
+    </div>
+
+    <div class="terms-content">
+        <div class="terms-section">
+            <h2>1. Agreement to Terms</h2>
+            <p>By accessing and using Barter Express, you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, you may not use the service.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>2. Use License</h2>
+            <p>Permission is granted to temporarily download one copy of the materials (information or software) on Barter Express for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
+            <ul>
+                <li>Modify or copy the materials</li>
+                <li>Use the materials for any commercial purpose or for any public display</li>
+                <li>Attempt to decompile or reverse engineer any software contained on the site</li>
+                <li>Remove any copyright or other proprietary notations from the materials</li>
+                <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
+            </ul>
+        </div>
+
+        <div class="terms-section">
+            <h2>3. Disclaimer</h2>
+            <p>The materials on Barter Express are provided on an 'as is' basis. Barter Express makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>4. Limitations</h2>
+            <p>In no event shall Barter Express or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on Barter Express, even if Barter Express or an authorized representative has been notified orally or in writing of the possibility of such damage.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>5. Accuracy of Materials</h2>
+            <p>The materials appearing on Barter Express could include technical, typographical, or photographic errors. Barter Express does not warrant that any of the materials on its website are accurate, complete, or current. Barter Express may make changes to the materials contained on its website at any time without notice.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>6. Links</h2>
+            <p>Barter Express has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by Barter Express of the site. Use of any such linked website is at the user's own risk.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>7. Modifications</h2>
+            <p>Barter Express may revise these terms of use for its website at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of use.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>8. User Conduct</h2>
+            <h3>You agree not to:</h3>
+            <ul>
+                <li>Harass, abuse, or threaten other users</li>
+                <li>Post false, inaccurate, or misleading information</li>
+                <li>List counterfeit, stolen, or illegal items</li>
+                <li>Attempt to manipulate the trading system or abuse the platform</li>
+                <li>Engage in fraudulent or deceptive practices</li>
+                <li>Share personal information of others without consent</li>
+                <li>Spam or send unsolicited messages</li>
+            </ul>
+
+            <div class="highlight">
+                <strong>Violation of these conduct standards may result in account suspension or permanent ban.</strong>
+            </div>
+        </div>
+
+        <div class="terms-section">
+            <h2>9. Item Listings</h2>
+            <h3>User Responsibilities:</h3>
+            <ul>
+                <li>You are responsible for the accuracy of your item descriptions</li>
+                <li>Items must be legal to own and trade</li>
+                <li>You must own or have rights to trade the items listed</li>
+                <li>Prices/values must be reasonable and honestly represented</li>
+                <li>Photos must be of the actual items being traded</li>
+            </ul>
+        </div>
+
+        <div class="terms-section">
+            <h2>10. Trading Agreements</h2>
+            <p>Once a trade is agreed upon by both parties, you are responsible for fulfilling the agreed terms. Barter Express is not liable for disputes between traders but will attempt to mediate fairly.</p>
+            <ul>
+                <li>Both parties are responsible for arranging delivery/pickup</li>
+                <li>Payment terms must be agreed between parties</li>
+                <li>Both parties are responsible for accurate item condition upon exchange</li>
+                <li>Disputes should be reported within 7 days of the transaction</li>
+            </ul>
+        </div>
+
+        <div class="terms-section">
+            <h2>11. Intellectual Property Rights</h2>
+            <p>All content on Barter Express, including text, graphics, logos, images, and software, is the property of Barter Express or its content suppliers and is protected by international copyright laws.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>12. Limitation of Liability</h2>
+            <p>In no case shall Barter Express be liable for any indirect, incidental, special, consequential, or punitive damages. This limitation applies even if Barter Express has been advised of the possibility of such damages.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>13. Indemnification</h2>
+            <p>You agree to indemnify, defend, and hold harmless Barter Express from any claims, damages, losses, or expenses arising from your use of the website or violation of these terms.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>14. Dispute Resolution</h2>
+            <p>Any disputes arising from use of Barter Express shall be resolved through our internal dispute resolution process first. If unresolved, disputes may be subject to arbitration or litigation as permitted by law.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>15. Governing Law</h2>
+            <p>These terms and conditions are governed by and construed in accordance with the laws of the jurisdiction where Barter Express operates, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.</p>
+        </div>
+
+        <div class="terms-section">
+            <h2>16. Contact Information</h2>
+            <p>If you have questions about these Terms of Use, please contact us at:</p>
+            <p><strong>Barter Express Support Team</strong><br>
+            Email: support@barterexpress.com<br>
+            Website: <a href="{{ url_for('marketplace.contact') }}" style="color: #ff7a00;">Contact Us</a></p>
+        </div>
+
+        <div class="last-updated">
+            Last Updated: December 8, 2025
+        </div>
+    </div>
+</div>
+
+{% endblock %}

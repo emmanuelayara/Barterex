@@ -4,7 +4,7 @@ import os
 from werkzeug.utils import secure_filename
 
 from app import db, app
-from models import Item, Trade, Notification, CreditTransaction, User, ItemImage, Order
+from models import Item, Trade, Notification, CreditTransaction, User, ItemImage, Order, OrderItem
 from forms import UploadItemForm, ProfileUpdateForm
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, ValidationError, AuthorizationError, FileUploadError
@@ -66,7 +66,10 @@ def dashboard():
 def user_items():
     try:
         page = request.args.get('page', 1, type=int)
-        items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=10)
+        # Get items uploaded by the user, excluding items that were purchased (in OrderItem)
+        items = Item.query.filter_by(user_id=current_user.id).filter(
+            ~Item.id.in_(db.session.query(OrderItem.item_id))
+        ).order_by(Item.id.desc()).paginate(page=page, per_page=10)
         logger.info(f"User items page accessed - User: {current_user.username}, Items: {items.total}")
         return render_template('user_items.html', items=items)
     except Exception as e:

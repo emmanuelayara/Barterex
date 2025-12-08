@@ -1083,7 +1083,7 @@
                                 <div class="item-name">{{ cart_item.item.name }}</div>
                                 <div class="item-price">
                                     <i class="fas fa-coins"></i>
-                                    ₦{{ "{:,.0f}".format(cart_item.item.value) }}
+                                    ₦{{ "{:,.2f}".format(cart_item.item.value) }}
                                 </div>
                                 <div class="item-meta">
                                     <div class="meta-info">
@@ -1125,19 +1125,19 @@
 
                     <div class="summary-row total-row">
                         <span class="total-label">Total Cost</span>
-                        <span class="total-cost">₦{{ "{:,.0f}".format(total_cost) }}</span>
+                        <span class="total-cost">₦{{ "{:,.2f}".format(total_cost) }}</span>
                     </div>
 
                     <div class="credit-info">
                         <div class="credit-label">Your Credit Balance</div>
-                        <div class="credit-value">₦{{ "{:,}".format(current_user.credits) }}</div>
+                        <div class="credit-value">₦{{ "{:,.2f}".format(current_user.credits) }}</div>
                         {% if current_user.credits >= total_cost %}
                             <div class="credit-status sufficient-credits">
                                 <i class="fas fa-check-circle"></i> Sufficient credits available
                             </div>
                         {% else %}
                             <div class="credit-status insufficient-credits">
-                                <i class="fas fa-exclamation-circle"></i> Need ₦{{ "{:,.0f}".format(total_cost - current_user.credits) }} more credits
+                                <i class="fas fa-exclamation-circle"></i> Need ₦{{ "{:,.2f}".format(total_cost - current_user.credits) }} more credits
                             </div>
                         {% endif %}
                     </div>

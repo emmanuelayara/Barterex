@@ -1126,13 +1126,13 @@
   <footer>
     <div class="footer-content">
       <div class="footer-links">
-        <a href="/about">About Us</a>
-        <a href="#">How It Works</a>
-        <a href="#">Safety</a>
-        <a href="/contact">Contact</a>
-        <a href="#">FAQ</a>
-        <a href="#">Terms</a>
-        <a href="#">Privacy</a>
+        <a href="{{ url_for('marketplace.about') }}">About Us</a>
+        <a href="{{ url_for('marketplace.how_it_works') }}">How It Works</a>
+        <a href="{{ url_for('marketplace.safety') }}">Safety</a>
+        <a href="{{ url_for('marketplace.contact') }}">Contact</a>
+        <a href="{{ url_for('marketplace.faq') }}">FAQ</a>
+        <a href="{{ url_for('marketplace.terms') }}">Terms of Use</a>
+        <a href="{{ url_for('marketplace.privacy') }}">Privacy</a>
       </div>
       <div class="footer-bottom">
         <small>&copy; {{ current_year if current_year else '2025' }} Barter Express | All rights reserved.</small> 

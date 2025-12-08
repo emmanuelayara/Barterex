@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% block title %}Safety Tips - Barter Express{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .safety-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 5rem;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            border-radius: 2px;
+        }
+
+        .hero-section h1 {
+            color: #054e97;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .hero-section .subtitle {
+            color: #666;
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        .safety-section {
+            background: white;
+            margin-bottom: 3rem;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            position: relative;
+        }
+
+        .safety-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+            color: white;
+            padding: 2rem 3rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .section-header i {
+            font-size: 2.5rem;
+            opacity: 0.9;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .section-content {
+            padding: 3rem;
+        }
+
+        .safety-tip {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f9fafb;
+            border-left: 4px solid #ff7a00;
+            border-radius: 8px;
+        }
+
+        .safety-tip h3 {
+            color: #054e97;
+            margin-bottom: 0.5rem;
+        }
+
+        .safety-tip p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: #666;
+        }
+
+        .checklist li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #ff7a00;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .warning-box i {
+            color: #ff7a00;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+
+        .warning-box h3 {
+            color: #054e97;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .safety-container {
+                padding: 2rem 1rem;
+            }
+
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .section-header {
+                padding: 1.5rem;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .section-content {
+                padding: 1.5rem;
+            }
+
+            .safety-tip {
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<div class="safety-container">
+    <div class="hero-section">
+        <h1>Safety Guidelines</h1>
+        <p class="subtitle">How to stay safe while trading on Barter Express</p>
+    </div>
+
+    <!-- Before Trading -->
+    <div class="safety-section">
+        <div class="section-header">
+            <i class="fas fa-shield-alt"></i>
+            <h2>Before Trading</h2>
+        </div>
+        <div class="section-content">
+            <div class="safety-tip">
+                <h3>Verify User Profiles</h3>
+                <p>Check the trader's profile, ratings, and reviews before agreeing to a trade. Look for verified badges and established trading history.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Inspect Item Photos Carefully</h3>
+                <p>Request clear, detailed photos from multiple angles. Ask questions about the item's condition, functionality, and any defects.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Use the Platform Messaging</h3>
+                <p>Always communicate through Barter Express messaging. Never share personal contact information or move conversations off-platform until after the trade is complete.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Agree on Trade Details</h3>
+                <p>Be crystal clear about what's being traded, the condition of items, and delivery method. Document all agreements in writing through the platform.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meeting in Person -->
+    <div class="safety-section">
+        <div class="section-header">
+            <i class="fas fa-handshake"></i>
+            <h2>Safe In-Person Meetings</h2>
+        </div>
+        <div class="section-content">
+            <ul class="checklist">
+                <li>Meet in a public, well-lit location (mall, coffee shop, police station)</li>
+                <li>Bring a friend or family member with you</li>
+                <li>Go during daylight hours</li>
+                <li>Tell someone where you're going and when you'll return</li>
+                <li>Inspect items thoroughly before agreeing to trade</li>
+                <li>Test electronics and functionality before the exchange</li>
+                <li>Trust your instincts - if something feels wrong, walk away</li>
+                <li>Use mobile payment apps rather than cash when possible</li>
+                <li>Take photos of the items and the other person (with permission)</li>
+            </ul>
+
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Red Flags to Watch For:</h3>
+                <p>✗ Pressure to trade quickly<br>
+                ✗ Requests to pay in advance or wire money<br>
+                ✗ Unwillingness to meet in public<br>
+                ✗ Vague or inconsistent item descriptions<br>
+                ✗ New accounts with no trading history<br>
+                ✗ Requests to keep the transaction secret</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipping Safety -->
+    <div class="safety-section">
+        <div class="section-header">
+            <i class="fas fa-truck"></i>
+            <h2>Shipping Safely</h2>
+        </div>
+        <div class="section-content">
+            <div class="safety-tip">
+                <h3>Use Tracked Shipping</h3>
+                <p>Always use shipping services with tracking numbers. This provides proof of delivery and protects both parties.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Pack Items Securely</h3>
+                <p>Use appropriate packaging materials. Take photos of items before packing and include them in your shipment record.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Insure Valuable Items</h3>
+                <p>For high-value trades, purchase shipping insurance. This provides recourse if items are lost or damaged in transit.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Document Everything</h3>
+                <p>Take photos and videos of items before shipping. Keep all receipts, tracking information, and delivery confirmation.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Communicate Throughout</h3>
+                <p>Send tracking information to the other trader. Update them on shipping status and expected delivery date.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Safety -->
+    <div class="safety-section">
+        <div class="section-header">
+            <i class="fas fa-lock"></i>
+            <h2>Payment Security</h2>
+        </div>
+        <div class="section-content">
+            <div class="safety-tip">
+                <h3>Never Send Money First</h3>
+                <p>Don't wire money or send payment before receiving the item. Use Barter Express's secure payment system.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Avoid Overpayment</h3>
+                <p>Be suspicious of requests to pay more than agreed and refund the difference. This is a common scam.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Use Secure Payment Methods</h3>
+                <p>Prefer payment methods with buyer protection. Avoid wire transfers, gift cards, or cryptocurrency that can't be reversed.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Verify Payment Information</h3>
+                <p>Double-check all payment details before sending money. Watch out for similar-looking account numbers or email addresses.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Security -->
+    <div class="safety-section">
+        <div class="section-header">
+            <i class="fas fa-key"></i>
+            <h2>Account Security</h2>
+        </div>
+        <div class="section-content">
+            <ul class="checklist">
+                <li>Use a strong, unique password</li>
+                <li>Enable two-factor authentication on your account</li>
+                <li>Never share your password with anyone</li>
+                <li>Log out from shared computers</li>
+                <li>Update your password regularly</li>
+                <li>Keep your email address secure</li>
+                <li>Monitor your account activity regularly</li>
+                <li>Report suspicious login attempts immediately</li>
+                <li>Verify email addresses that contact you from the platform</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Reporting Issues -->
+    <div class="safety-section">
+        <div class="section-header">
+            <i class="fas fa-exclamation-circle"></i>
+            <h2>Report Suspicious Activity</h2>
+        </div>
+        <div class="section-content">
+            <div class="safety-tip">
+                <h3>Use Our Report Feature</h3>
+                <p>If you encounter suspicious behavior, use the report feature on the user's profile. Provide details about the concerning activity.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Contact Support Immediately</h3>
+                <p>Report scams, harassment, or safety concerns to our support team right away. We take these matters seriously and investigate promptly.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>Document Evidence</h3>
+                <p>Take screenshots of conversations, listings, and any evidence of fraud or harmful behavior. Save all communications related to the incident.</p>
+            </div>
+
+            <div class="safety-tip">
+                <h3>File a Dispute</h3>
+                <p>If a trade doesn't go as agreed, use our dispute resolution process. We'll help mediate and reach a fair resolution.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

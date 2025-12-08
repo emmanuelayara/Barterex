@@ -378,7 +378,7 @@
           <td>{{ item['name'] }}</td>
           <td>{{ item['condition'] }}</td>
           <td>{{ item['location'] }}</td>
-          <td>{{ item['value'] }}</td>
+          <td>₦{{ "{:,.2f}".format(item['value']) }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -390,19 +390,19 @@
     <h3 style="margin-top: 0; color: white;">💰 Credit Transaction Summary</h3>
     <div class="credits-row">
       <span>Your Balance Before Order:</span>
-      <strong>{{ transaction_exp['credits']['balance_before'] }}</strong>
+      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['balance_before']) }}</strong>
     </div>
     <div class="credits-row">
       <span>Total Items Value:</span>
-      <strong>{{ transaction_exp['credits']['total_items_value'] }}</strong>
+      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['total_items_value']) }}</strong>
     </div>
     <div class="credits-row">
       <span>Credits Used:</span>
-      <strong>{{ transaction_exp['credits']['credits_used'] }}</strong>
+      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['credits_used']) }}</strong>
     </div>
     <div class="credits-row credits-total">
       <span>Your Balance After Order:</span>
-      <strong>{{ transaction_exp['credits']['balance_after'] }}</strong>
+      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['balance_after']) }}</strong>
     </div>
     <div class="explanation-box" style="background: rgba(255, 255, 255, 0.1); border-color: white; color: white; margin-top: 15px;">
       {{ transaction_exp['credits']['explanation'] }}

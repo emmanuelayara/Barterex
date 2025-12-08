@@ -957,7 +957,7 @@
           <div class="price-section">
             <div class="price-label">Credit Value</div>
             <div class="price-value">
-              💰 ₦{{ "{:,.0f}".format(item.value) }}
+              💰 ₦{{ "{:,.2f}".format(item.value) }}
             </div>
           </div>
 
@@ -1000,7 +1000,7 @@
                 <div class="related-content">
                   <h4 class="related-name">{{ related.name }}</h4>
                   <div class="related-price">
-                    💰 ₦{{ related.value }} credits
+                    💰 ₦{{ "{:,.2f}".format(related.value) }} credits
                   </div>
                 </div>
               </a>

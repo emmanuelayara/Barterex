@@ -1,0 +1,369 @@
+{% extends 'base.html' %}
+{% block title %}FAQ - Barter Express{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* FAQ Page Container */
+        .faq-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            margin-bottom: 5rem;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            border-radius: 2px;
+        }
+
+        .hero-section h1 {
+            color: #054e97;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .hero-section .subtitle {
+            color: #666;
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
+            border: 1px solid rgba(255, 122, 0, 0.1);
+            position: relative;
+        }
+
+        .faq-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        }
+
+        /* FAQ Items */
+        .faq-item {
+            border-bottom: 1px solid rgba(5, 78, 151, 0.1);
+            padding: 0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            padding: 2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .faq-question:hover {
+            background: #f3f4f6;
+        }
+
+        .faq-question h3 {
+            color: #054e97;
+            font-size: 1.2rem;
+            margin: 0;
+            flex: 1;
+        }
+
+        .faq-toggle {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .faq-item.active .faq-toggle {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            padding: 0 2rem;
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        .faq-answer p {
+            margin-bottom: 1rem;
+        }
+
+        .faq-answer a {
+            color: #ff7a00;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .faq-answer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .faq-container {
+                padding: 2rem 1rem;
+            }
+
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-section .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .faq-question {
+                padding: 1.5rem;
+            }
+
+            .faq-question h3 {
+                font-size: 1rem;
+            }
+
+            .faq-answer {
+                padding: 0 1.5rem;
+            }
+
+            .faq-item.active .faq-answer {
+                padding: 0 1.5rem 1.5rem 1.5rem;
+            }
+
+            .faq-toggle {
+                width: 28px;
+                height: 28px;
+                font-size: 1rem;
+                margin-left: 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<div class="faq-container">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1>Frequently Asked Questions</h1>
+        <p class="subtitle">Find answers to common questions about Barter Express</p>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+        <!-- Getting Started -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>How do I create an account?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>Creating an account is simple! Click the "Sign Up" button on the homepage, provide your email address, create a password, and fill out your profile information. You'll need to verify your email address before you can start using Barter Express.</p>
+            </div>
+        </div>
+
+        <!-- Adding Items -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>How do I add items to my inventory?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>Once logged in, go to your Dashboard and click "Add Item". Fill in the item details including name, description, category, and condition. Upload clear photos of your item and set its approximate value. Click "Save" to list your item on the marketplace.</p>
+            </div>
+        </div>
+
+        <!-- Item Visibility -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Why isn't my item showing up in the marketplace?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>Items may not appear immediately due to moderation. We review all listings for quality and compliance with our community guidelines. This usually takes 24-48 hours. If your item hasn't appeared after this time, check that you've provided all required information and clear photos.</p>
+            </div>
+        </div>
+
+        <!-- Trading Process -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>How does the trading process work?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>1. Browse items in the marketplace<br>2. Find an item you want and click "Propose Trade"<br>3. Offer items from your inventory<br>4. Wait for the other user to accept or counter-offer<br>5. Once agreed, arrange delivery details<br>6. Exchange items with the other user<br>7. Confirm receipt of your new item</p>
+            </div>
+        </div>
+
+        <!-- Safety & Security -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>How safe is trading on Barter Express?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>We take safety seriously! We verify user accounts, review listings, and monitor transactions. Always communicate through our platform to have a record of agreements. Meet in safe public locations for exchanges, and inspect items carefully before accepting. Report any suspicious activity to our support team immediately.</p>
+            </div>
+        </div>
+
+        <!-- Ratings and Reviews -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>How does the rating system work?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>After completing a trade, both parties can leave a rating and review for each other. Ratings help build trust in the community. You can only rate after a trade is complete. Your rating history is visible on your profile to help others decide whether to trade with you.</p>
+            </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Do I have to pay to use Barter Express?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>Creating an account and listing items is completely free! We don't charge for trades. However, optional services like premium listing features or expedited shipping options may have associated costs. All fees will be clearly displayed before you make any purchase.</p>
+            </div>
+        </div>
+
+        <!-- Disputes -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>What if there's a problem with my trade?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>If you have an issue with a trade, contact the other party through the platform's messaging system. If you can't resolve it directly, use our dispute resolution feature. Document the problem with screenshots or photos and submit a dispute report. Our support team will investigate and work toward a fair resolution.</p>
+            </div>
+        </div>
+
+        <!-- Delivery -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>How do I arrange delivery of items?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>Once a trade is agreed upon, you'll have options to arrange delivery. You can meet in person, arrange for shipping, or use our courier partner for a fee. For shipping, take photos of the item before packing and keep your tracking information. Always insure valuable items.</p>
+            </div>
+        </div>
+
+        <!-- Cancellation -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Can I cancel a trade offer?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>You can cancel a trade offer while it's still pending (before the other person accepts). Once both parties have accepted and the trade is in progress, cancellation policies apply based on the delivery method. Contact support if you need to cancel a completed exchange.</p>
+            </div>
+        </div>
+
+        <!-- Account Closure -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>How do I delete my account?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>You can request account deletion from your account settings. However, if you have active or pending trades, you'll need to complete or cancel them first. Your rating history will remain visible to the community even after account closure to maintain trading history integrity.</p>
+            </div>
+        </div>
+
+        <!-- Contact Support -->
+        <div class="faq-item">
+            <div class="faq-question">
+                <h3>Where can I get help if my question isn't answered here?</h3>
+                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="faq-answer">
+                <p>Visit our <a href="{{ url_for('marketplace.contact') }}">Contact Us</a> page to reach our support team. You can also check our <a href="{{ url_for('marketplace.about') }}">About Us</a> page for more information. We typically respond to inquiries within 24 hours.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // FAQ Accordion functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const faqItems = document.querySelectorAll('.faq-item');
+
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+
+            question.addEventListener('click', function() {
+                // Close other open items
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('active')) {
+                        otherItem.classList.remove('active');
+                    }
+                });
+
+                // Toggle current item
+                item.classList.toggle('active');
+            });
+        });
+    });
+</script>
+
+{% endblock %}
