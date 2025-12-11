@@ -77,8 +77,15 @@ def marketplace():
 
         items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).all()
         
+        # Build breadcrumbs
+        breadcrumbs = ['Marketplace']
+        if category_filter:
+            breadcrumbs.append(category_filter)
+        if search:
+            breadcrumbs.append(f'Search: {search}')
+        
         logger.info(f"Marketplace search completed - Found {len(items)} items")
-        return render_template('marketplace.html', items=items)
+        return render_template('marketplace.html', items=items, breadcrumbs=breadcrumbs)
         
     except Exception as e:
         logger.error(f"Marketplace search error: {str(e)}", exc_info=True)
@@ -92,11 +99,12 @@ def home():
     try:
         trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()
         logger.info(f"Home page loaded - {len(trending_items)} trending items displayed")
-        return render_template('home.html', trending_items=trending_items)
+        breadcrumbs = ['Home']
+        return render_template('home.html', trending_items=trending_items, breadcrumbs=breadcrumbs)
     except Exception as e:
         logger.error(f"Error loading home page: {str(e)}", exc_info=True)
         flash('An error occurred while loading the home page. Please refresh.', 'danger')
-        return render_template('home.html', trending_items=[])
+        return render_template('home.html', trending_items=[], breadcrumbs=['Home'])
 
 
 @marketplace_bp.route('/item/<int:item_id>', methods=['GET', 'POST'])
@@ -122,7 +130,8 @@ def view_item(item_id):
         ).limit(5).all()
 
         logger.info(f"Item viewed - Item ID: {item_id}, Name: {item.name}, User: {item.user_id}")
-        return render_template('item_detail.html', item=item, item_images=item_images, related_items=related_items, csrf_token=generate_csrf)
+        breadcrumbs = ['Marketplace', item.category, item.name[:50]]  # Truncate long names
+        return render_template('item_detail.html', item=item, item_images=item_images, related_items=related_items, csrf_token=generate_csrf, breadcrumbs=breadcrumbs)
         
     except Exception as e:
         logger.error(f"Error viewing item {item_id}: {str(e)}", exc_info=True)
@@ -300,28 +309,32 @@ def api_filters():
 @handle_errors
 def contact():
     logger.info("Contact page accessed")
-    return render_template('contact.html')
+    breadcrumbs = ['Contact Us']
+    return render_template('contact.html', breadcrumbs=breadcrumbs)
 
 
 @marketplace_bp.route('/about')
 @handle_errors
 def about():
     logger.info("About page accessed")
-    return render_template('about.html')
+    breadcrumbs = ['About Us']
+    return render_template('about.html', breadcrumbs=breadcrumbs)
 
 
 @marketplace_bp.route('/faq')
 @handle_errors
 def faq():
     logger.info("FAQ page accessed")
-    return render_template('faq.html')
+    breadcrumbs = ['FAQ']
+    return render_template('faq.html', breadcrumbs=breadcrumbs)
 
 
 @marketplace_bp.route('/safety')
 @handle_errors
 def safety():
     logger.info("Safety page accessed")
-    return render_template('safety.html')
+    breadcrumbs = ['Safety Tips']
+    return render_template('safety.html', breadcrumbs=breadcrumbs)
 
 
 @marketplace_bp.route('/how-it-works')

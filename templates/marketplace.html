@@ -1093,18 +1093,17 @@
 
       <form method="GET" action="{{ url_for('marketplace.marketplace') }}" class="filter-form" id="filterForm">
         <div class="form-group">
-          <label for="search">Search Items</label>
+          <label for="searchInput">Search Items</label>
           <div class="search-container">
             <input type="text" 
-                   id="search"
+                   id="searchInput"
                    name="search" 
                    placeholder="What are you looking for?"
                    value="{{ request.args.get('search', '') }}"
-                   class="form-input"
+                   class="search-input"
                    autocomplete="off" />
-            <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+            <ul class="search-suggestions hidden" id="searchSuggestions"></ul>
           </div>
-          <div class="category-pills" id="categoryPills" style="display: none;"></div>
         </div>
 
         <div class="form-group">

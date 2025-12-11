@@ -786,7 +786,8 @@
                 <p>Sign in to your account to continue</p>
             </div>
 
-            <form method="POST" id="loginForm">
+            {% set form_action = url_for('auth.login', next=next_page) if next_page else url_for('auth.login') %}
+            <form method="POST" action="{{ form_action }}" id="loginForm">
                 {{ form.hidden_tag() }}
 
                 <div class="form-row">

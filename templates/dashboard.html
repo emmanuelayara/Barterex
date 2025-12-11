@@ -94,7 +94,7 @@
   }
 
   .welcome-title {
-    font-size: 1.75rem;
+    font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 6px;
     background: linear-gradient(135deg, #ffffff, #054e97, #ffffff);
@@ -107,6 +107,47 @@
     font-size: 0.95rem;
     opacity: 0.9;
     font-weight: 400;
+  }
+
+  .settings-btn-dashboard {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ff7a00, #ff7a00);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .settings-btn-dashboard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255, 122, 0, 0.4);
+    background: linear-gradient(135deg, #ff8c1a, #ff8c1a);
+  }
+
+  .settings-btn-dashboard i {
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 768px) {
+    .welcome-section {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .settings-btn-dashboard {
+      width: 100%;
+      justify-content: center;
+    }
   }
 
   .stats-grid {
@@ -1079,9 +1120,15 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Welcome Section -->
-    <div class="welcome-section">
-      <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
+    <!-- Welcome Section with Settings Button -->
+    <div class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+      <div>
+        <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
+      </div>
+      <a href="{{ url_for('user.settings') }}" class="settings-btn-dashboard">
+        <i class="fas fa-user-cog"></i>
+        <span>Manage Account</span>
+      </a>
     </div>
 
     <!-- Stats Grid -->
@@ -1263,7 +1310,7 @@
       <h3>✨ Recommended For You</h3>
       <div class="recommendations-grid">
         {% for item in similar_items %}
-        <div class="recommendation-item" onclick="window.location.href='{{ url_for('marketplace.item_detail', item_id=item.id) }}'">
+        <div class="recommendation-item" onclick="window.location.href='{{ url_for('marketplace.view_item', item_id=item.id) }}'">
           <div class="recommendation-image">
             {% if item.images and item.images[0] %}
               <img src="{{ item.images[0].image_url }}" alt="{{ item.name }}">
@@ -1274,7 +1321,7 @@
           <div class="recommendation-info">
             <div class="recommendation-name" title="{{ item.name }}">{{ item.name[:25] }}</div>
             <div class="recommendation-seller">by {{ item.user.username }}</div>
-            <a href="{{ url_for('marketplace.item_detail', item_id=item.id) }}" class="recommendation-view">View →</a>
+            <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}" class="recommendation-view">View →</a>
           </div>
         </div>
         {% endfor %}

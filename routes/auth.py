@@ -100,6 +100,12 @@ def register():
 @handle_errors
 def login():
     form = LoginForm()
+    next_page = request.args.get('next')
+    
+    # Validate next_page to prevent open redirect attacks
+    if next_page and (not next_page.startswith('/') or next_page.startswith('//')):
+        next_page = None
+    
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
@@ -113,7 +119,7 @@ def login():
                 remaining_time = (user.account_locked_until - datetime.utcnow()).total_seconds() / 60
                 logger.warning(f"Locked account login attempt: {username}")
                 flash(f'Account temporarily locked due to failed login attempts. Try again in {int(remaining_time)} minutes.', 'danger')
-                return redirect(url_for('auth.login'))
+                return redirect(url_for('auth.login', next=next_page))
 
             if user and user.is_banned:
                 logger.warning(f"Banned user attempted login: {username}")
@@ -142,6 +148,9 @@ def login():
                 else:
                     flash('Login successful!', 'success')
 
+                # Redirect to next_page if provided and safe, otherwise to dashboard
+                if next_page:
+                    return redirect(next_page)
                 return redirect(url_for('user.dashboard'))
             else:
                 # Failed login attempt - increment counter
@@ -154,7 +163,7 @@ def login():
                         db.session.commit()
                         logger.warning(f"Account locked: {username} after 5 failed login attempts")
                         flash('Account locked due to too many failed login attempts. Try again in 15 minutes.', 'danger')
-                        return redirect(url_for('auth.login'))
+                        return redirect(url_for('auth.login', next=next_page))
                     
                     db.session.commit()
 
@@ -165,7 +174,7 @@ def login():
             logger.error(f"Login error: {str(e)}", exc_info=True)
             flash('An error occurred during login. Please try again.', 'danger')
     
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, next_page=next_page)
 
 
 @auth_bp.route('/logout')

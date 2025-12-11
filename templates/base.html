@@ -817,6 +817,209 @@
                 padding-bottom: 0;
             }
         }
+
+        /* ========================================
+           LOADING OVERLAY STYLES
+           ======================================== */
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner-circle {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--primary-orange);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-text {
+            color: var(--white);
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ========================================
+           BREADCRUMB NAVIGATION STYLES
+           ======================================== */
+        
+        .breadcrumb-nav {
+            background: linear-gradient(135deg, #054e97 0%, #0d5fa8 100%);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 60px;
+            z-index: 100;
+        }
+
+        .breadcrumb-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb-item {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--white);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--primary-orange);
+            font-weight: 600;
+            cursor: default;
+        }
+
+        .breadcrumb-item.active:hover {
+            background: transparent;
+        }
+
+        .breadcrumb-separator {
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0 0.25rem;
+        }
+
+        /* Responsive breadcrumb */
+        @media (max-width: 768px) {
+            .breadcrumb-container {
+                font-size: 0.85rem;
+                gap: 0.25rem;
+            }
+
+            .breadcrumb-item {
+                padding: 0.2rem 0.35rem;
+            }
+
+            .breadcrumb-separator {
+                margin: 0 0.15rem;
+            }
+        }
+
+        /* ========================================
+           SEARCH AUTOCOMPLETE STYLES
+           ======================================== */
+        
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border: 1px solid var(--gray-300);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .search-suggestions.hidden {
+            display: none;
+        }
+
+        .search-suggestion-item {
+            padding: 0.75rem 1rem;
+            color: var(--gray-900);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .search-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-suggestion-item:hover {
+            background: var(--gray-100);
+            color: var(--primary-orange);
+        }
+
+        .search-suggestion-icon {
+            color: var(--primary-orange);
+            font-size: 0.9rem;
+        }
+
+        .search-suggestion-text {
+            flex: 1;
+        }
+
+        /* Empty state for suggestions */
+        .search-empty-state {
+            padding: 1rem;
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -889,6 +1092,14 @@
     {% endif %}
 {% endwith %}
 
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="spinner">
+        <div class="spinner-circle"></div>
+        <div class="spinner-text">Loading...</div>
+    </div>
+</div>
+
 <!-- PAGE CONTENT -->
 {% block content %}
 <div class="container">
@@ -919,12 +1130,8 @@
                 <i class="fas fa-bell"></i>
                 <span>Alerts</span>
             </a>
-            <a href="{{ url_for('user.settings') }}" class="bottom-nav-item {% if request.endpoint == 'user.settings' %}active{% endif %}">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </a>
-                <a href="{{ url_for('user.dashboard') }}" class="bottom-nav-item {% if request.endpoint == 'user.dashboard' %}active{% endif %}">
-                <i class="fas fa-cog"></i>
+            <a href="{{ url_for('user.dashboard') }}" class="bottom-nav-item {% if request.endpoint == 'user.dashboard' %}active{% endif %}">
+                <i class="fas fa-th-large"></i>
                 <span>Dashboard</span>
             </a>
         {% else %}
@@ -1486,7 +1693,176 @@ function notifyOrderStatus(orderId, status) {
     }).catch(error => console.warn('Error logging notification:', error));
 }
 
-</script>
+/* ========================================
+   LOADING STATE MANAGEMENT
+   ======================================== */
+
+function showLoading(message = 'Loading...') {
+    const overlay = document.getElementById('loadingOverlay');
+    const text = overlay.querySelector('.spinner-text');
+    if (text) {
+        text.textContent = message;
+    }
+    overlay.classList.remove('hidden');
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('hidden');
+}
+
+// Auto-hide loading on page load
+window.addEventListener('load', function() {
+    setTimeout(hideLoading, 300);
+});
+
+// Show loading on form submission
+document.addEventListener('submit', function(event) {
+    if (event.target && !event.target.classList.contains('no-loading')) {
+        showLoading();
+    }
+}, true);
+
+// Show loading on link click for navigation
+document.addEventListener('click', function(event) {
+    const link = event.target.closest('a');
+    if (link && link.href && !link.target && !link.classList.contains('no-loading')) {
+        const href = link.getAttribute('href');
+        // Don't show loading for hash links, external links, or javascript links
+        if (href && !href.startsWith('#') && !href.startsWith('javascript:') && href.startsWith('/')) {
+            showLoading();
+        }
+    }
+}, true);
+
+/* ========================================
+   SEARCH AUTOCOMPLETE
+   ======================================== */
+
+class SearchAutocomplete {
+    constructor() {
+        this.searchInput = document.getElementById('searchInput');
+        this.suggestionsList = document.getElementById('searchSuggestions');
+        this.debounceTimer = null;
+        this.minChars = 2;
+        
+        if (this.searchInput && this.suggestionsList) {
+            this.init();
+        }
+    }
+    
+    init() {
+        this.searchInput.addEventListener('input', (e) => this.handleInput(e));
+        this.searchInput.addEventListener('focus', (e) => this.handleFocus(e));
+        document.addEventListener('click', (e) => this.handleClickOutside(e));
+    }
+    
+    handleInput(event) {
+        const query = event.target.value.trim();
+        
+        clearTimeout(this.debounceTimer);
+        
+        if (query.length < this.minChars) {
+            this.hideSuggestions();
+            return;
+        }
+        
+        // Debounce API calls
+        this.debounceTimer = setTimeout(() => {
+            this.fetchSuggestions(query);
+        }, 300);
+    }
+    
+    handleFocus(event) {
+        const query = event.target.value.trim();
+        if (query.length >= this.minChars) {
+            this.fetchSuggestions(query);
+        }
+    }
+    
+    handleClickOutside(event) {
+        if (!event.target.closest('.search-container')) {
+            this.hideSuggestions();
+        }
+    }
+    
+    async fetchSuggestions(query) {
+        try {
+            const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            this.displaySuggestions(data.suggestions, query);
+        } catch (error) {
+            console.error('Error fetching suggestions:', error);
+        }
+    }
+    
+    displaySuggestions(suggestions, query) {
+        if (!suggestions || suggestions.length === 0) {
+            this.showEmptyState(query);
+            return;
+        }
+        
+        const html = suggestions.map((item, index) => `
+            <li class="search-suggestion-item" onclick="searchItem('${item.name}')">
+                <i class="fas fa-cube search-suggestion-icon"></i>
+                <span class="search-suggestion-text">${this.highlightMatch(item.name, query)}</span>
+            </li>
+        `).join('');
+        
+        this.suggestionsList.innerHTML = html;
+        this.showSuggestions();
+    }
+    
+    showEmptyState(query) {
+        this.suggestionsList.innerHTML = `
+            <div class="search-empty-state">
+                <i class="fas fa-search" style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--primary-orange);"></i>
+                <p>No items found for "${query}"</p>
+            </div>
+        `;
+        this.showSuggestions();
+    }
+    
+    highlightMatch(text, query) {
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<strong style="color: var(--primary-orange);">$1</strong>');
+    }
+    
+    showSuggestions() {
+        this.suggestionsList.classList.remove('hidden');
+    }
+    
+    hideSuggestions() {
+        this.suggestionsList.classList.add('hidden');
+    }
+}
+
+// Initialize search autocomplete
+function initSearchAutocomplete() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            new SearchAutocomplete();
+        });
+    } else {
+        new SearchAutocomplete();
+    }
+}
+
+initSearchAutocomplete();
+
+// Handle item selection from search
+function searchItem(itemName) {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = itemName;
+        // Trigger search
+        const form = searchInput.closest('form');
+        if (form) {
+            showLoading('Searching...');
+            form.submit();
+        }
+    }
+}</script>
 
 </body>
 </html>

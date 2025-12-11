@@ -70,10 +70,11 @@ def dashboard():
         # Orders placed (purchasing goal)
         orders_placed = Order.query.filter_by(user_id=current_user.id).count()
         
-        # Get similar items (recommendations) - get 2 most recent items from users with similar trades
+        # Get similar items (recommendations) - get 2 most recent items from other users that are approved and available
         similar_items = Item.query.filter(
             Item.user_id != current_user.id,
-            Item.status == 'available'
+            Item.is_approved == True,
+            Item.is_available == True
         ).order_by(Item.id.desc()).limit(2).all()
         
         # Calculate progress percentages for widgets
