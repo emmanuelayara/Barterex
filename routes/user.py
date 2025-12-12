@@ -12,6 +12,8 @@ from exceptions import ResourceNotFoundError, ValidationError, AuthorizationErro
 from error_handlers import handle_errors, safe_database_operation
 from transaction_clarity import generate_pdf_receipt, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
+from rank_rewards import get_tier_info, get_tier_badge
+from trading_points import get_points_to_next_level
 
 logger = setup_logger(__name__)
 
@@ -28,9 +30,6 @@ user_bp = Blueprint('user', __name__)
 @handle_errors
 def dashboard():
     try:
-        from rank_rewards import get_tier_info, get_tier_badge
-        from trading_points import get_points_to_next_level
-        
         if current_user.is_banned:
             logger.warning(f"Banned user attempted to access dashboard: {current_user.username}")
             flash('Your account has been banned.', 'danger')
@@ -93,7 +92,7 @@ def dashboard():
         upload_offset = 163.36 * (1 - upload_progress / 100)
         trading_offset = 163.36 * (1 - trading_progress / 100)
         
-        # Get tier information
+        # Get tier information and points
         tier_info = get_tier_info(current_user.level)
         tier_badge = get_tier_badge(current_user.level)
         points_to_next = get_points_to_next_level(current_user.trading_points)

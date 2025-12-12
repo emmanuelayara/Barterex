@@ -5,9 +5,11 @@ Handles earning points, calculating levels, awarding rewards, and notifications
 
 from app import db
 from models import User, Notification
-from datetime import datetime
+from datetime import datetime, timezone
 from logger_config import setup_logger
 from rank_rewards import get_tier_info, get_tier_badge
+from routes.auth import send_email_async
+from flask import render_template
 
 logger = setup_logger(__name__)
 
@@ -250,10 +252,6 @@ def create_level_up_notification(user, level_up_info):
         db.session.commit()
         
         # Send email notification
-        from routes.auth import send_email_async
-        from flask import render_template
-        from datetime import datetime as dt
-        
         email_data = {
             'username': user.username,
             'level': new_level,
@@ -261,7 +259,7 @@ def create_level_up_notification(user, level_up_info):
             'credits_awarded': credits_awarded,
             'total_points': level_up_info['points'],
             'new_balance': user.credits,
-            'now': dt.utcnow()
+            'now': datetime.now(timezone.utc)
         }
         
         try:

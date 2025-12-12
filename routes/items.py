@@ -15,6 +15,7 @@ from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailab
 from error_handlers import handle_errors, safe_database_operation, retry_operation
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
+from trading_points import award_points_for_purchase, create_level_up_notification
 
 logger = setup_logger(__name__)
 
@@ -324,8 +325,6 @@ def checkout():
 @safe_database_operation("process_checkout")
 def process_checkout():
     try:
-        from trading_points import award_points_for_purchase, create_level_up_notification
-        
         cart = Cart.query.filter_by(user_id=current_user.id).first()
 
         if not cart or not cart.items:
@@ -370,7 +369,8 @@ def process_checkout():
             db.session.add(trade)
 
             # Award trading points for purchase (20 points per item)
-            temp_level_up_info = award_points_for_purchase(current_user, f"purchase-{item.id}")
+            # Use item.id as order reference for consistent tracking
+            temp_level_up_info = award_points_for_purchase(current_user, f"item-{item.id}")
             if temp_level_up_info and not level_up_occurred:
                 level_up_info = temp_level_up_info
                 level_up_occurred = True
