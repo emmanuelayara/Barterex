@@ -12,6 +12,8 @@ from exceptions import ResourceNotFoundError, ValidationError, AuthorizationErro
 from error_handlers import handle_errors, safe_database_operation
 from transaction_clarity import generate_pdf_receipt, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
+from rank_rewards import get_tier_info, get_tier_badge
+from trading_points import get_points_to_next_level, MAX_LEVEL
 
 logger = setup_logger(__name__)
 
@@ -90,6 +92,11 @@ def dashboard():
         upload_offset = 163.36 * (1 - upload_progress / 100)
         trading_offset = 163.36 * (1 - trading_progress / 100)
         
+        # Get tier information and points
+        tier_info = get_tier_info(current_user.level)
+        tier_badge = get_tier_badge(current_user.level)
+        points_to_next = get_points_to_next_level(current_user.trading_points)
+        
         logger.info(f"User dashboard loaded - User: {current_user.username}, Credits: {credits}, Items: {item_count}")
 
         return render_template(
@@ -108,7 +115,11 @@ def dashboard():
             profile_offset=profile_offset,
             upload_offset=upload_offset,
             trading_offset=trading_offset,
-            similar_items=similar_items
+            similar_items=similar_items,
+            tier_info=tier_info,
+            tier_badge=tier_badge,
+            points_to_next=points_to_next,
+            max_level=MAX_LEVEL
         )
     except Exception as e:
         logger.error(f"Error loading dashboard for user {current_user.username}: {str(e)}", exc_info=True)

@@ -15,6 +15,7 @@ from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailab
 from error_handlers import handle_errors, safe_database_operation, retry_operation
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
+from trading_points import award_points_for_purchase, create_level_up_notification
 
 logger = setup_logger(__name__)
 
@@ -343,6 +344,8 @@ def process_checkout():
             raise InsufficientCreditsError(total_cost, current_user.credits)
 
         purchased_items = []
+        level_up_notifications = []  # Track all level-ups
+        
         for ci in available:
             item = ci.item
             if not item.is_available:
@@ -354,16 +357,35 @@ def process_checkout():
             item.user_id = current_user.id
             item.is_available = False
 
-            db.session.add(Trade(
+            # Create trade record
+            trade = Trade(
                 sender_id=current_user.id,
                 receiver_id=seller_id,
                 item_id=item.id,
                 item_received_id=item.id,
                 status='completed'
-            ))
+            )
+            db.session.add(trade)
+
+            # Award trading points for purchase (20 points per item)
+            # Use item.id as order reference for consistent tracking
+            level_up_info = award_points_for_purchase(current_user, f"item-{item.id}")
+            if level_up_info:
+                level_up_notifications.append(level_up_info)
 
             purchased_items.append(item)
             db.session.delete(ci)
+        
+        # Commit all changes
+        db.session.commit()
+        
+        # Create level up notifications for all level-ups that occurred (after commit)
+        for level_up_info in level_up_notifications:
+            try:
+                create_level_up_notification(current_user, level_up_info)
+            except Exception as e:
+                # Log but don't fail the checkout if notification fails
+                logger.error(f"Failed to create level-up notification: {str(e)}", exc_info=True)
 
         logger.info(f"Checkout completed successfully - User: {current_user.username}, Items: {len(purchased_items)}, Total: {total_cost}")
 
