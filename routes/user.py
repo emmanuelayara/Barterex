@@ -59,7 +59,11 @@ def dashboard():
             current_user.state,
             current_user.profile_picture
         ]
+        profile_field_names = ['Email', 'Phone', 'Address', 'City', 'State', 'Profile Picture']
         profile_completion = int((sum(1 for field in profile_fields if field) / len(profile_fields)) * 100)
+        
+        # Calculate missing profile fields
+        missing_fields = [name for name, field in zip(profile_field_names, profile_fields) if not field]
         
         # Calculate trading goals
         completed_trades = Trade.query.filter(
@@ -96,6 +100,7 @@ def dashboard():
             pending_trades=pending_trades,
             recent_notifications=recent_notifications,
             profile_completion=profile_completion,
+            missing_fields=missing_fields,
             completed_trades=completed_trades,
             orders_placed=orders_placed,
             upload_progress=upload_progress,

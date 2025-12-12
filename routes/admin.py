@@ -371,6 +371,8 @@ def approve_items():
 @safe_database_operation("approve_item")
 def approve_item(item_id):
     try:
+        from trading_points import award_points_for_upload, create_level_up_notification
+        
         item = Item.query.get_or_404(item_id)
 
         try:
@@ -389,11 +391,29 @@ def approve_item(item_id):
         item.user.credits += int(value)
         logger.info(f"Item approved - Item ID: {item_id}, Name: {item.name}, Value: {value}, User Credits: {item.user.credits}, Admin ID: {session.get('admin_id')}")
 
-        notification = Notification(
-            user_id=item.user_id,
-            message=f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits!. And your New Balance is: ₦{item.user.credits:,} credits. Keep using Barterex for seamless trading."
-        )
+        # Award trading points for upload approval
+        level_up_info = award_points_for_upload(item.user, item.name)
+        
+        # Create level up notification and send email if applicable
+        if level_up_info:
+            create_level_up_notification(item.user, level_up_info)
+            notification = Notification(
+                user_id=item.user_id,
+                message=f"🎉 Your item '{item.name}' has been approved! You earned 10 trading points. "
+                        f"New Balance: ₦{item.user.credits:,} credits. "
+                        f"Congratulations on reaching Level {level_up_info['new_level']} ({level_up_info['new_tier']})! "
+                        f"You earned {level_up_info['credits_awarded']} bonus credits. Keep trading!"
+            )
+        else:
+            notification = Notification(
+                user_id=item.user_id,
+                message=f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits! "
+                        f"You earned 10 trading points. New Balance: ₦{item.user.credits:,} credits. "
+                        f"Keep using Barterex for seamless trading."
+            )
+        
         db.session.add(notification)
+        db.session.commit()
 
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
         
