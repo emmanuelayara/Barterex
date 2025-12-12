@@ -107,11 +107,14 @@ def award_points_for_upload(user, item_name):
     try:
         old_level = user.level
         old_points = user.trading_points
+        old_tier = user.tier if hasattr(user, 'tier') else get_level_tier(old_level)
         
         # Award points
         user.trading_points += POINTS_PER_UPLOAD_APPROVAL
         new_level = calculate_level_from_points(user.trading_points)
         user.level = new_level
+        new_tier = get_level_tier(new_level)
+        user.tier = new_tier  # Update tier field
         
         db.session.add(user)
         db.session.flush()  # Flush to get updated values
@@ -125,15 +128,15 @@ def award_points_for_upload(user, item_name):
             level_up_info = {
                 'old_level': old_level,
                 'new_level': new_level,
-                'old_tier': get_level_tier(old_level),
-                'new_tier': get_level_tier(new_level),
+                'old_tier': old_tier,
+                'new_tier': new_tier,
                 'credits_awarded': CREDITS_PER_LEVEL_UP,
                 'points': user.trading_points
             }
             
             logger.info(
                 f"User leveled up! User ID: {user.id}, Username: {user.username}, "
-                f"Level: {old_level} → {new_level} ({get_level_tier(new_level)}), "
+                f"Level: {old_level} → {new_level} ({new_tier}), "
                 f"Points: {old_points} → {user.trading_points}, "
                 f"Credits Awarded: {CREDITS_PER_LEVEL_UP}"
             )
@@ -166,11 +169,14 @@ def award_points_for_purchase(user, order_number):
     try:
         old_level = user.level
         old_points = user.trading_points
+        old_tier = user.tier if hasattr(user, 'tier') else get_level_tier(old_level)
         
         # Award points
         user.trading_points += POINTS_PER_PURCHASE
         new_level = calculate_level_from_points(user.trading_points)
         user.level = new_level
+        new_tier = get_level_tier(new_level)
+        user.tier = new_tier  # Update tier field
         
         db.session.add(user)
         db.session.flush()  # Flush to get updated values
@@ -184,15 +190,15 @@ def award_points_for_purchase(user, order_number):
             level_up_info = {
                 'old_level': old_level,
                 'new_level': new_level,
-                'old_tier': get_level_tier(old_level),
-                'new_tier': get_level_tier(new_level),
+                'old_tier': old_tier,
+                'new_tier': new_tier,
                 'credits_awarded': CREDITS_PER_LEVEL_UP,
                 'points': user.trading_points
             }
             
             logger.info(
                 f"User leveled up! User ID: {user.id}, Username: {user.username}, "
-                f"Level: {old_level} → {new_level} ({get_level_tier(new_level)}), "
+                f"Level: {old_level} → {new_level} ({new_tier}), "
                 f"Points: {old_points} → {user.trading_points}, "
                 f"Credits Awarded: {CREDITS_PER_LEVEL_UP}"
             )

@@ -649,7 +649,11 @@ def manage_orders():
 @safe_database_operation("update_order_status")
 def update_order_status(order_id):
     try:
+        from trading_points import award_points_for_purchase, create_level_up_notification
+        
         order = Order.query.get_or_404(order_id)
+        old_status = order.status
+        
         if order.status == "Pending":
             order.status = "Shipped"
         elif order.status == "Shipped":
@@ -670,6 +674,26 @@ def update_order_status(order_id):
             message=status_messages.get(order.status, f"Order status updated to {order.status}")
         )
         db.session.add(note)
+        
+        # Award points when order is delivered
+        if order.status == "Delivered" and old_status != "Delivered":
+            user = order.user
+            level_up_info = award_points_for_purchase(user, order.order_number)
+            
+            # Create level up notification if applicable
+            if level_up_info:
+                create_level_up_notification(user, level_up_info)
+                # Add bonus to the status notification
+                note.message = (
+                    f"{status_messages.get(order.status, f'Order status updated to {order.status}')} "
+                    f"🎉 You earned 20 trading points and reached Level {level_up_info['new_level']} ({level_up_info['new_tier']})! "
+                    f"Bonus reward: {level_up_info['credits_awarded']} credits added!"
+                )
+            else:
+                # Add points earned message if no level up
+                note.message = f"{status_messages.get(order.status, f'Order status updated to {order.status}')} You earned 20 trading points!"
+            
+            db.session.add(note)
 
         logger.info(f"Order status updated - Order ID: {order_id}, New Status: {order.status}, Admin ID: {session.get('admin_id')}")
         flash(f"Order status updated to {order.status}", "success")

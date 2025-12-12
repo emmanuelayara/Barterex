@@ -22,6 +22,7 @@ class User(db.Model, UserMixin):
     
     # Gamification - Level, Tier, Referrals
     level = db.Column(db.Integer, default=1)  # User level based on trades
+    tier = db.Column(db.String(20), default='Beginner')  # User tier: Beginner, Novice, Intermediate, Advanced, Expert
     trading_points = db.Column(db.Integer, default=0)  # Points earned from trading
     referral_code = db.Column(db.String(20), unique=True, nullable=True)
     referral_bonus_earned = db.Column(db.Integer, default=0)  # Total bonus from referrals
