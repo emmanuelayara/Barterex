@@ -19,6 +19,9 @@ logger = setup_logger(__name__)
 POINTS_PER_UPLOAD_APPROVAL = 10  # Points for item upload approved
 POINTS_PER_PURCHASE = 20  # Points for completed purchase
 
+# Maximum level
+MAX_LEVEL = 30
+
 # Level thresholds - points needed to reach each level
 LEVEL_THRESHOLDS = {
     1: 0,      # Level 1: Beginner (0 points)
@@ -75,13 +78,13 @@ def calculate_level_from_points(points):
             current_level = level
             break
     
-    return min(current_level, 30)  # Max level 30
+    return min(current_level, MAX_LEVEL)  # Cap at MAX_LEVEL
 
 
 def get_points_to_next_level(current_points):
     """Calculate points needed to reach next level"""
     current_level = calculate_level_from_points(current_points)
-    next_level = min(current_level + 1, 30)  # Cap at level 30
+    next_level = min(current_level + 1, MAX_LEVEL)  # Cap at MAX_LEVEL
     
     if next_level not in LEVEL_THRESHOLDS:
         return 0  # Already at max

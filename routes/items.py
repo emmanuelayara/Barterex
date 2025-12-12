@@ -344,8 +344,7 @@ def process_checkout():
             raise InsufficientCreditsError(total_cost, current_user.credits)
 
         purchased_items = []
-        level_up_occurred = False
-        level_up_info = None
+        level_up_notifications = []  # Track all level-ups
         
         for ci in available:
             item = ci.item
@@ -370,10 +369,9 @@ def process_checkout():
 
             # Award trading points for purchase (20 points per item)
             # Use item.id as order reference for consistent tracking
-            temp_level_up_info = award_points_for_purchase(current_user, f"item-{item.id}")
-            if temp_level_up_info and not level_up_occurred:
-                level_up_info = temp_level_up_info
-                level_up_occurred = True
+            level_up_info = award_points_for_purchase(current_user, f"item-{item.id}")
+            if level_up_info:
+                level_up_notifications.append(level_up_info)
 
             purchased_items.append(item)
             db.session.delete(ci)
@@ -381,9 +379,13 @@ def process_checkout():
         # Commit all changes
         db.session.commit()
         
-        # Create level up notification if applicable (after commit)
-        if level_up_info:
-            create_level_up_notification(current_user, level_up_info)
+        # Create level up notifications for all level-ups that occurred (after commit)
+        for level_up_info in level_up_notifications:
+            try:
+                create_level_up_notification(current_user, level_up_info)
+            except Exception as e:
+                # Log but don't fail the checkout if notification fails
+                logger.error(f"Failed to create level-up notification: {str(e)}", exc_info=True)
 
         logger.info(f"Checkout completed successfully - User: {current_user.username}, Items: {len(purchased_items)}, Total: {total_cost}")
 

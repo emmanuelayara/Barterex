@@ -65,13 +65,14 @@ def get_tier_info(level):
                 'level_range': tier_data['level_range']
             }
     
-    # Default to Expert for any level above 30
+    # Default to Expert for any level above 30 - reference existing tier
+    expert_tier = RANK_TIERS['Expert']
     return {
         'name': 'Expert',
-        'badge_icon': '🏆',
-        'color': '#ef4444',
-        'description': 'Master of the trading platform',
-        'level_range': (21, 30)
+        'badge_icon': expert_tier['badge_icon'],
+        'color': expert_tier['color'],
+        'description': expert_tier['description'],
+        'level_range': expert_tier['level_range']
     }
 
 

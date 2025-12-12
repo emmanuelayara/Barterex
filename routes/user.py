@@ -13,7 +13,7 @@ from error_handlers import handle_errors, safe_database_operation
 from transaction_clarity import generate_pdf_receipt, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
 from rank_rewards import get_tier_info, get_tier_badge
-from trading_points import get_points_to_next_level
+from trading_points import get_points_to_next_level, MAX_LEVEL
 
 logger = setup_logger(__name__)
 
@@ -118,7 +118,8 @@ def dashboard():
             similar_items=similar_items,
             tier_info=tier_info,
             tier_badge=tier_badge,
-            points_to_next=points_to_next
+            points_to_next=points_to_next,
+            max_level=MAX_LEVEL
         )
     except Exception as e:
         logger.error(f"Error loading dashboard for user {current_user.username}: {str(e)}", exc_info=True)

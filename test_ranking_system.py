@@ -53,10 +53,26 @@ class MockDB:
 class MockApp:
     db = MockDB()
 
+class MockAuthModule:
+    @staticmethod
+    def send_email_async(*args, **kwargs):
+        pass
+
 sys.modules['app'] = MockApp()
 sys.modules['models'] = type(sys)('models')
 sys.modules['models'].User = object
 sys.modules['models'].Notification = object
+sys.modules['routes'] = type(sys)('routes')
+sys.modules['routes.auth'] = MockAuthModule()
+
+# Mock Flask
+class MockFlask:
+    @staticmethod
+    def render_template(*args, **kwargs):
+        return ""
+
+sys.modules['flask'] = MockFlask()
+sys.modules['flask_login'] = type(sys)('flask_login')
 
 import trading_points
 
