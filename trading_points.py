@@ -7,6 +7,7 @@ from app import db
 from models import User, Notification
 from datetime import datetime
 from logger_config import setup_logger
+from rank_rewards import get_tier_info, get_tier_badge
 
 logger = setup_logger(__name__)
 
@@ -55,17 +56,9 @@ CREDITS_PER_LEVEL_UP = 300
 
 # Level ranges for tier names
 def get_level_tier(level):
-    """Get tier name based on level"""
-    if level <= 5:
-        return "Beginner"
-    elif level <= 10:
-        return "Novice"
-    elif level <= 15:
-        return "Intermediate"
-    elif level <= 20:
-        return "Advanced"
-    else:
-        return "Expert"
+    """Get tier name based on level - uses rank_rewards module"""
+    tier_info = get_tier_info(level)
+    return tier_info['name']
 
 
 def calculate_level_from_points(points):
@@ -229,9 +222,12 @@ def create_level_up_notification(user, level_up_info):
         new_tier = level_up_info['new_tier']
         credits_awarded = level_up_info['credits_awarded']
         
-        # Create notification
+        # Get tier badge icon
+        tier_badge = get_tier_badge(new_level)
+        
+        # Create notification with badge icon
         message = (
-            f"🎉 Congratulations! You've reached Level {new_level} ({new_tier})! "
+            f"{tier_badge} Congratulations! You've reached Level {new_level} ({new_tier})! "
             f"You earned {credits_awarded} credits as a reward. Keep trading to reach higher levels!"
         )
         
@@ -244,6 +240,7 @@ def create_level_up_notification(user, level_up_info):
             data={
                 'level': new_level,
                 'tier': new_tier,
+                'badge': tier_badge,
                 'credits_awarded': credits_awarded,
                 'total_points': level_up_info['points']
             }
@@ -253,8 +250,9 @@ def create_level_up_notification(user, level_up_info):
         db.session.commit()
         
         # Send email notification
-        from utils import send_email_async
+        from routes.auth import send_email_async
         from flask import render_template
+        from datetime import datetime as dt
         
         email_data = {
             'username': user.username,
@@ -262,7 +260,8 @@ def create_level_up_notification(user, level_up_info):
             'tier': new_tier,
             'credits_awarded': credits_awarded,
             'total_points': level_up_info['points'],
-            'new_balance': user.credits
+            'new_balance': user.credits,
+            'now': dt.utcnow()
         }
         
         try:

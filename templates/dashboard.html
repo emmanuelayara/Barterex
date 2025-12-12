@@ -1218,8 +1218,8 @@
       <div class="level-card">
         <div class="level-content">
           <div class="level-header">
-            <div class="level-title">⭐ YOUR TRADING LEVEL</div>
-            <div class="level-badge">{{ current_user.level }} / 10</div>
+            <div class="level-title">{{ tier_badge }} YOUR TRADING LEVEL</div>
+            <div class="level-badge">{{ current_user.level }} / 30</div>
           </div>
           
           <div class="level-display">
@@ -1227,7 +1227,7 @@
               <div class="level-number">{{ current_user.level }}</div>
             </div>
             <div>
-              <div class="level-name">{% if current_user.level <= 2 %}Beginner{% elif current_user.level <= 4 %}Novice{% elif current_user.level <= 6 %}Intermediate{% elif current_user.level <= 8 %}Advanced{% else %}Expert{% endif %}</div>
+              <div class="level-name">{{ tier_info.name }}</div>
               <div class="level-info-text">{{ current_user.trading_points }} points</div>
             </div>
           </div>
@@ -1237,7 +1237,11 @@
           </div>
           
           <div class="level-info-text">
-            Complete more trades to advance your level and unlock special perks!
+            {% if points_to_next > 0 %}
+              {{ points_to_next }} points to next level! Complete more trades to advance and unlock special perks!
+            {% else %}
+              Maximum level reached! You're a trading master!
+            {% endif %}
           </div>
         </div>
       </div>

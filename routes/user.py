@@ -28,6 +28,9 @@ user_bp = Blueprint('user', __name__)
 @handle_errors
 def dashboard():
     try:
+        from rank_rewards import get_tier_info, get_tier_badge
+        from trading_points import get_points_to_next_level
+        
         if current_user.is_banned:
             logger.warning(f"Banned user attempted to access dashboard: {current_user.username}")
             flash('Your account has been banned.', 'danger')
@@ -90,6 +93,11 @@ def dashboard():
         upload_offset = 163.36 * (1 - upload_progress / 100)
         trading_offset = 163.36 * (1 - trading_progress / 100)
         
+        # Get tier information
+        tier_info = get_tier_info(current_user.level)
+        tier_badge = get_tier_badge(current_user.level)
+        points_to_next = get_points_to_next_level(current_user.trading_points)
+        
         logger.info(f"User dashboard loaded - User: {current_user.username}, Credits: {credits}, Items: {item_count}")
 
         return render_template(
@@ -108,7 +116,10 @@ def dashboard():
             profile_offset=profile_offset,
             upload_offset=upload_offset,
             trading_offset=trading_offset,
-            similar_items=similar_items
+            similar_items=similar_items,
+            tier_info=tier_info,
+            tier_badge=tier_badge,
+            points_to_next=points_to_next
         )
     except Exception as e:
         logger.error(f"Error loading dashboard for user {current_user.username}: {str(e)}", exc_info=True)

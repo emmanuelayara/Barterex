@@ -324,6 +324,8 @@ def checkout():
 @safe_database_operation("process_checkout")
 def process_checkout():
     try:
+        from trading_points import award_points_for_purchase, create_level_up_notification
+        
         cart = Cart.query.filter_by(user_id=current_user.id).first()
 
         if not cart or not cart.items:
@@ -343,6 +345,9 @@ def process_checkout():
             raise InsufficientCreditsError(total_cost, current_user.credits)
 
         purchased_items = []
+        level_up_occurred = False
+        level_up_info = None
+        
         for ci in available:
             item = ci.item
             if not item.is_available:
@@ -354,16 +359,31 @@ def process_checkout():
             item.user_id = current_user.id
             item.is_available = False
 
-            db.session.add(Trade(
+            # Create trade record
+            trade = Trade(
                 sender_id=current_user.id,
                 receiver_id=seller_id,
                 item_id=item.id,
                 item_received_id=item.id,
                 status='completed'
-            ))
+            )
+            db.session.add(trade)
+
+            # Award trading points for purchase (20 points per item)
+            temp_level_up_info = award_points_for_purchase(current_user, f"purchase-{item.id}")
+            if temp_level_up_info and not level_up_occurred:
+                level_up_info = temp_level_up_info
+                level_up_occurred = True
 
             purchased_items.append(item)
             db.session.delete(ci)
+        
+        # Commit all changes
+        db.session.commit()
+        
+        # Create level up notification if applicable (after commit)
+        if level_up_info:
+            create_level_up_notification(current_user, level_up_info)
 
         logger.info(f"Checkout completed successfully - User: {current_user.username}, Items: {len(purchased_items)}, Total: {total_cost}")
 
