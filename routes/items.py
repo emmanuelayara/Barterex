@@ -325,6 +325,8 @@ def checkout():
 @safe_database_operation("process_checkout")
 def process_checkout():
     try:
+        from referral_rewards import award_referral_bonus
+        
         cart = Cart.query.filter_by(user_id=current_user.id).first()
 
         if not cart or not cart.items:
@@ -378,6 +380,11 @@ def process_checkout():
         
         # Commit all changes
         db.session.commit()
+        
+        # Award referral bonus for purchase
+        referral_result = award_referral_bonus(current_user.id, 'purchase', amount=100)
+        if referral_result['success']:
+            logger.info(f"Referral bonus awarded: {referral_result['message']}")
         
         # Create level up notifications for all level-ups that occurred (after commit)
         for level_up_info in level_up_notifications:

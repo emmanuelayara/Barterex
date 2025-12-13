@@ -1702,7 +1702,7 @@
           </div>
           <div class="recommendation-info">
             <div class="recommendation-name" title="{{ item.name }}">{{ item.name[:25] }}</div>
-            <div class="recommendation-seller">by {{ item.user.username }}</div>
+            <div class="recommendation-seller">📍 {{ item.location }}</div>
             <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}" class="recommendation-view">View →</a>
           </div>
         </div>

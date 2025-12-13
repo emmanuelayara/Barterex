@@ -316,3 +316,28 @@ class CartItem(db.Model):
     
     # Composite unique constraint to prevent duplicate items in same cart
     __table_args__ = (db.UniqueConstraint('cart_id', 'item_id', name='unique_cart_item'),)
+
+
+class Referral(db.Model):
+    """Track referral relationships and bonuses earned"""
+    id = db.Column(db.Integer, primary_key=True)
+    referrer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # User who referred
+    referred_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # User who was referred
+    referral_code_used = db.Column(db.String(20), nullable=False)  # The code that was used
+    
+    # Bonus tracking
+    signup_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on signup
+    item_upload_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on approved item upload
+    purchase_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on friend's purchase
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # When referred user signed up
+    item_upload_bonus_date = db.Column(db.DateTime, nullable=True)  # When item was approved
+    purchase_bonus_date = db.Column(db.DateTime, nullable=True)  # When friend made a purchase
+    
+    # Relationships
+    referrer = db.relationship('User', foreign_keys=[referrer_id])
+    referred_user = db.relationship('User', foreign_keys=[referred_user_id])
+    
+    def __repr__(self):
+        return f'<Referral {self.referrer_id} -> {self.referred_user_id}>'

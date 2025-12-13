@@ -11,6 +11,7 @@ class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=25)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    referral_code = StringField('Referral Code (Optional)', validators=[Optional(), Length(max=20)])
     submit = SubmitField('Register')
 
     def validate_email(self, email):
@@ -20,6 +21,13 @@ class RegisterForm(FlaskForm):
     def validate_username(self, username):
         if User.query.filter_by(username=username.data).first():
             raise ValidationError('Username already taken.')
+    
+    def validate_referral_code(self, referral_code):
+        if referral_code.data:  # Only validate if provided
+            from models import User
+            referrer = User.query.filter_by(referral_code=referral_code.data).first()
+            if not referrer:
+                raise ValidationError('Invalid referral code.')
 
 
 class LoginForm(FlaskForm):

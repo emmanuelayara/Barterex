@@ -60,6 +60,7 @@ def verify_reset_token(token, expires_sec=3600):
 @handle_errors
 def register():
     from app import db
+    from models import Referral
     
     form = RegisterForm()
     if form.validate_on_submit():
@@ -74,6 +75,43 @@ def register():
             )
             db.session.add(user)
             db.session.commit()
+            
+            # Handle referral if provided
+            if form.referral_code.data:
+                referrer = User.query.filter_by(referral_code=form.referral_code.data).first()
+                if referrer:
+                    referral = Referral(
+                        referrer_id=referrer.id,
+                        referred_user_id=user.id,
+                        referral_code_used=form.referral_code.data,
+                        signup_bonus_earned=True  # Award bonus on signup
+                    )
+                    db.session.add(referral)
+                    
+                    # Award 100 naira to referrer on signup
+                    referrer.credits += 100
+                    referrer.referral_count += 1
+                    referrer.referral_bonus_earned += 100
+                    
+                    # Log the transaction
+                    transaction = CreditTransaction(
+                        user_id=referrer.id,
+                        amount=100,
+                        transaction_type='referral_signup_bonus'
+                    )
+                    db.session.add(transaction)
+                    
+                    # Create notification for referrer
+                    notification = Notification(
+                        user_id=referrer.id,
+                        message=f'🎉 {user.username} signed up using your referral code! You earned ₦100',
+                        notification_type='referral',
+                        category='reward'
+                    )
+                    db.session.add(notification)
+                    
+                    db.session.commit()
+                    logger.info(f"Referral processed: {referrer.username} referred {user.username}")
             
             logger.info(f"New user registered: {user.username}")
 

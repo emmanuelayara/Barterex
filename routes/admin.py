@@ -372,6 +372,7 @@ def approve_items():
 def approve_item(item_id):
     try:
         from trading_points import award_points_for_upload, create_level_up_notification
+        from referral_rewards import award_referral_bonus
         
         item = Item.query.get_or_404(item_id)
 
@@ -393,6 +394,11 @@ def approve_item(item_id):
 
         # Award trading points for upload approval
         level_up_info = award_points_for_upload(item.user, item.name)
+        
+        # Award referral bonus if user was referred
+        referral_result = award_referral_bonus(item.user_id, 'item_upload', amount=100)
+        if referral_result['success']:
+            logger.info(f"Referral bonus awarded: {referral_result['message']}")
         
         # Create level up notification and send email if applicable
         if level_up_info:
