@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter Section Layout Test</title>
+    <style>
+        :root {
+            --primary-color: #ff7a00;
+            --secondary-color: #054e97;
+            --primary-light: rgba(255, 122, 0, 0.1);
+            --primary-medium: rgba(255, 122, 0, 0.3);
+            --primary-strong: rgba(255, 122, 0, 0.8);
+            --secondary-light: rgba(5, 78, 151, 0.1);
+            --secondary-medium: rgba(5, 78, 151, 0.3);
+            --secondary-strong: rgba(5, 78, 151, 0.8);
+            --primary-gradient: linear-gradient(135deg, #ff7a00 0%, #ff8c00 100%);
+            --secondary-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+            --hero-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 122, 0, 0.2);
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b7280;
+            --surface: #ffffff;
+            --surface-hover: #f8fafc;
+            --shadow-soft: 0 8px 30px rgba(255, 122, 0, 0.1);
+            --shadow-hover: 0 15px 45px rgba(255, 122, 0, 0.15);
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--primary-light) 0%, rgba(255, 255, 255, 0.98) 100%);
+        }
+
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .test-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px solid var(--primary-color);
+        }
+
+        .filter-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(255, 122, 0, 0.08);
+            border: 1.5px solid rgba(255, 122, 0, 0.15);
+            box-sizing: border-box;
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(255, 122, 0, 0.1);
+        }
+
+        .filter-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .filter-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(255, 122, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        .filter-toggle-btn {
+            display: flex !important;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
+            border: none;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 8px 16px;
+            margin-left: auto;
+            border-radius: 8px;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .filter-toggle-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(255, 122, 0, 0.35);
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            align-items: end;
+            transition: all 0.3s ease;
+            max-height: 500px;
+            overflow: visible;
+            padding: 8px 0;
+            box-sizing: border-box;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .form-input, .form-select {
+            padding: 7px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            background: var(--surface);
+            color: var(--text-primary);
+            font-weight: 500;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .price-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .price-custom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .price-input {
+            padding: 7px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            background: var(--surface);
+            color: var(--text-primary);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .price-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .filter-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(255, 122, 0, 0.25);
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 122, 0, 0.4);
+        }
+
+        .clear-filters-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 8px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.15px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .clear-filters-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: rgba(255, 122, 0, 0.05);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 122, 0, 0.15);
+        }
+
+        .toggle-btn {
+            padding: 6px 10px;
+            border: 1.5px solid #e5e7eb;
+            background: var(--surface);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.05px;
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .price-toggle {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        /* Desktop styles */
+        @media (min-width: 769px) {
+            .filter-section { padding: 20px; margin-bottom: 25px; border-radius: 16px; }
+            .filter-header { gap: 12px; margin-bottom: 20px; }
+            .filter-header h3 { font-size: 1.2rem; }
+            .filter-icon { width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; }
+            .filter-form { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+            .form-group label { font-size: 0.85rem; }
+            .form-input, .form-select { padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; }
+            .price-input { padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; }
+            .filter-btn { padding: 12px 20px; border-radius: 12px; font-size: 0.9rem; min-width: auto; flex: 0 1 auto; }
+            .clear-filters-btn { padding: 12px 20px; border-radius: 12px; font-size: 0.9rem; min-width: auto; flex: 0 1 auto; }
+        }
+
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .filter-section { padding: 12px 14px; margin-bottom: 16px; border-radius: 10px; }
+            .filter-header { flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+            .filter-header h3 { flex: 1 1 auto; font-size: 0.9rem; }
+            .filter-icon { width: 24px; height: 24px; font-size: 0.8rem; }
+            .filter-toggle-btn { padding: 6px 12px; font-size: 0.65rem; gap: 4px; }
+            .filter-form { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; padding: 6px 0; }
+            .form-group { gap: 4px; }
+            .form-group label { font-size: 0.6rem; }
+            .form-input, .form-select { padding: 6px 8px; border-radius: 4px; font-size: 0.7rem; }
+            .form-group > div[style*="display: flex"] { flex-wrap: wrap; gap: 6px; }
+            .filter-btn, .clear-filters-btn { padding: 6px 10px; font-size: 0.65rem; min-width: 120px; flex: 1 1 calc(50% - 4px); }
+            .price-input { padding: 6px 8px; border-radius: 4px; font-size: 0.7rem; }
+            .price-toggle { gap: 4px; margin-bottom: 8px; }
+            .toggle-btn { padding: 4px 8px; font-size: 0.6rem; flex: 1; }
+        }
+
+        /* Small devices */
+        @media (max-width: 480px) {
+            .filter-section { padding: 10px 12px; }
+            .filter-header { gap: 6px; }
+            .filter-form { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 6px; }
+            .filter-btn, .clear-filters-btn { min-width: 100px; flex: 1 1 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-info">
+            <h2>Filter Section Layout Test</h2>
+            <p><strong>Instructions:</strong> Resize your browser window to test responsiveness:</p>
+            <ul>
+                <li>Desktop (1024px+): Check that filter inputs fit on one or two rows</li>
+                <li>Tablet (769px-1023px): Check that inputs wrap properly without overflow</li>
+                <li>Mobile (375px-768px): Check that inputs stack with proper spacing</li>
+                <li>Small Mobile (< 375px): Check that all elements are accessible</li>
+            </ul>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="filter-icon">🔍</div>
+                    <h3>Find Your Perfect Match</h3>
+                </div>
+                <button type="button" class="filter-toggle-btn" id="filterToggleBtn">Filter Results</button>
+            </div>
+
+            <form method="GET" class="filter-form" id="filterForm">
+                <div class="form-group">
+                    <label for="searchInput">Search Items</label>
+                    <input type="text" 
+                           id="searchInput"
+                           name="search" 
+                           placeholder="What are you looking for?"
+                           class="form-input" />
+                </div>
+
+                <div class="form-group">
+                    <label for="condition">Condition</label>
+                    <select name="condition" id="condition" class="form-select">
+                        <option value="">All Conditions</option>
+                        <option value="Brand New">Brand New</option>
+                        <option value="Fairly Used">Fairly Used</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">All Categories</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Fashion">Fashion / Clothing</option>
+                        <option value="Footwear">Footwear</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <select name="state" id="state" class="form-select">
+                        <option value="">All States</option>
+                        <option value="Lagos">Lagos</option>
+                        <option value="Abuja">FCT Abuja</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>💰 Price Filter</label>
+                    <div class="price-filter-group">
+                        <div class="price-toggle">
+                            <button type="button" class="toggle-btn active">All</button>
+                            <button type="button" class="toggle-btn">Range</button>
+                            <button type="button" class="toggle-btn">Custom</button>
+                        </div>
+
+                        <div id="customPrice" class="price-custom">
+                            <input type="number" 
+                                   name="min_price" 
+                                   placeholder="Min Price (₦)"
+                                   class="price-input"
+                                   min="0"
+                                   step="100" />
+                            <input type="number" 
+                                   name="max_price" 
+                                   placeholder="Max Price (₦)"
+                                   class="price-input"
+                                   min="0"
+                                   step="100" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="submit" class="filter-btn">
+                            🔍 Filter Results
+                        </button>
+                        <a href="#" class="clear-filters-btn">
+                            🔄 Clear All
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
