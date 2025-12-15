@@ -111,8 +111,8 @@ def award_referral_bonus(referred_user_id, bonus_type, amount=100):
         )
         db.session.add(notification)
         
-        # Commit all changes
-        db.session.commit()
+        # NOTE: Do NOT commit here - let the caller's transaction manager handle commits
+        # to ensure all changes (item approval + referral bonus) are atomic
         
         return {
             'success': True,

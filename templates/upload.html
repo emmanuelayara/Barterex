@@ -417,6 +417,289 @@
     color: var(--text-secondary);
   }
 
+  /* AI Price Estimator Styles */
+  .ai-estimator-section {
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    border: 2px solid #8b5cf6;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 25px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ai-estimator-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .estimator-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .estimator-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 6px 25px rgba(139, 92, 246, 0.3);
+  }
+
+  .estimator-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #5b21b6;
+    margin: 0;
+  }
+
+  .estimator-subtitle {
+    font-size: 0.85rem;
+    color: #7c3aed;
+    margin: 4px 0 0 0;
+  }
+
+  .estimate-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 25px rgba(139, 92, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .estimate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+  }
+
+  .estimate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .estimate-btn.loading .btn-text {
+    opacity: 0;
+  }
+
+  .estimate-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .btn-icon {
+    font-size: 1.1rem;
+  }
+
+  .estimator-result {
+    margin-top: 15px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .result-loading {
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(139, 92, 246, 0.2);
+    border-top: 4px solid #8b5cf6;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: spin 1s linear infinite;
+  }
+
+  .result-loading p {
+    font-weight: 600;
+    color: #5b21b6;
+    margin: 10px 0;
+  }
+
+  .loading-subtext {
+    font-size: 0.85rem;
+    color: #7c3aed;
+    font-weight: 400 !important;
+  }
+
+  .result-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .price-display {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f3f4f6;
+    margin-bottom: 20px;
+  }
+
+  .price-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .price-amount {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 5px 0;
+  }
+
+  .price-range {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 8px 0;
+  }
+
+  .confidence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #10b981;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #065f46;
+    margin-top: 10px;
+  }
+
+  .confidence-badge.medium {
+    background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%);
+    border-color: #f59e0b;
+    color: #92400e;
+  }
+
+  .confidence-badge.low {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-color: #ef4444;
+    color: #991b1b;
+  }
+
+  .credit-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    border: 2px solid #ff7a00;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .credit-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+  }
+
+  .credit-info {
+    flex: 1;
+  }
+
+  .credit-label {
+    font-size: 0.8rem;
+    color: #9a3412;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .credit-amount {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ff7a00;
+  }
+
+  .credit-note {
+    font-size: 0.75rem;
+    color: #ea580c;
+    margin-top: 2px;
+  }
+
+  .estimate-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 8px;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .detail-icon {
+    font-size: 1rem;
+  }
+
+  .estimate-disclaimer {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #92400e;
+    line-height: 1.5;
+  }
+
   /* Submit button */
   .submit-container {
     text-align: center;

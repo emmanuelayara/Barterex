@@ -127,6 +127,20 @@ def dashboard():
         return redirect(url_for('marketplace.home'))
 
 
+@user_bp.route('/valuate')
+@login_required
+@handle_errors
+def valuate():
+    """Valuate item page - users can get AI price estimates without uploading"""
+    try:
+        logger.info(f"User accessed valuate page - User: {current_user.username}")
+        return render_template('valuate.html')
+    except Exception as e:
+        logger.error(f"Error loading valuate page for user {current_user.username}: {str(e)}", exc_info=True)
+        flash('An error occurred while loading the valuation page.', 'danger')
+        return redirect(url_for('user.dashboard'))
+
+
 @user_bp.route('/user-items')
 @login_required
 @handle_errors

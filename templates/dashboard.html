@@ -148,6 +148,67 @@
     font-size: 0.95rem;
   }
 
+  /* Action Buttons Section */
+  .action-buttons-section {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+  }
+
+  .action-btn-primary {
+    background: linear-gradient(135deg, #ff7a00, #ff8c1a);
+    color: white;
+    box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
+  }
+
+  .action-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(255, 122, 0, 0.4);
+  }
+
+  .action-btn-secondary {
+    background: linear-gradient(135deg, #054e97, #0d66c2);
+    color: white;
+    box-shadow: 0 6px 20px rgba(5, 78, 151, 0.3);
+  }
+
+  .action-btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(5, 78, 151, 0.4);
+  }
+
+  .action-btn i {
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    .action-buttons-section {
+      flex-direction: column;
+    }
+
+    .action-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
   @media (max-width: 768px) {
     .welcome-section {
       flex-direction: column;
@@ -1476,15 +1537,21 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Welcome Section with Settings Button -->
+    <!-- Welcome Section with Settings and Valuate Buttons -->
     <div class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
       <div>
         <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
       </div>
-      <a href="{{ url_for('user.settings') }}" class="settings-btn-dashboard">
-        <i class="fas fa-user-cog"></i>
-        <span>Manage Account</span>
-      </a>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <a href="{{ url_for('user.valuate') }}" class="action-btn action-btn-secondary">
+          <i class="fas fa-gem"></i>
+          <span>Valuate Item</span>
+        </a>
+        <a href="{{ url_for('user.settings') }}" class="settings-btn-dashboard">
+          <i class="fas fa-user-cog"></i>
+          <span>Manage Account</span>
+        </a>
+      </div>
     </div>
 
     <!-- Stats Grid -->
@@ -1527,6 +1594,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Animated Widgets Section -->
     <div class="widgets-grid">

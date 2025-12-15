@@ -63,7 +63,7 @@ def handle_api_errors(f):
 def safe_database_operation(operation_name):
     """
     Decorator for safe database operations.
-    Handles commit/rollback automatically.
+    Handles commit/rollback automatically with detailed error logging.
     """
     def decorator(f):
         @wraps(f)
@@ -71,13 +71,20 @@ def safe_database_operation(operation_name):
             from app import db
             try:
                 result = f(*args, **kwargs)
+                # CRITICAL: Debug logging before commit
+                logger.debug(f"[{operation_name}] About to commit transaction")
+                logger.debug(f"[{operation_name}] Session state: new={len(db.session.new)}, dirty={len(db.session.dirty)}, deleted={len(db.session.deleted)}")
+                
+                # Commit the transaction
                 db.session.commit()
                 logger.info(f"Database operation '{operation_name}' completed successfully")
+                logger.debug(f"[{operation_name}] Transaction committed successfully")
                 return result
             
             except Exception as e:
+                logger.error(f"Database operation '{operation_name}' failed during commit: {str(e)}", exc_info=True)
                 db.session.rollback()
-                logger.error(f"Database operation '{operation_name}' failed: {str(e)}", exc_info=True)
+                logger.error(f"Database operation '{operation_name}' rolled back due to error: {str(e)}")
                 raise BarterexException(f"Database operation failed: {str(e)}", 500)
         
         return decorated_function

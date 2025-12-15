@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, sessio
 from flask_wtf.csrf import generate_csrf
 from functools import wraps
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm.attributes import flag_modified
 
 from app import db
 from models import Admin, User, Item, Order, PickupStation, Notification
@@ -357,7 +358,19 @@ def edit_user(user_id):
 def approve_items():
     try:
         items = Item.query.filter_by(status='pending').all()
-        logger.info(f"Item approvals page accessed - Pending items: {len(items)}")
+        pending_count = Item.query.filter_by(status='pending').count()
+        logger.info(f"Item approvals page accessed - Pending items: {len(items)}, Count query: {pending_count}")
+        
+        # Debug: Log all item statuses to understand database state
+        all_items = Item.query.all()
+        status_breakdown = {}
+        for item in all_items:
+            status = item.status
+            if status not in status_breakdown:
+                status_breakdown[status] = 0
+            status_breakdown[status] += 1
+        logger.debug(f"Database status breakdown: {status_breakdown}")
+        
         return render_template('admin/approvals.html', items=items)
     except Exception as e:
         logger.error(f"Error loading approvals page: {str(e)}", exc_info=True)
@@ -370,12 +383,13 @@ def approve_items():
 @handle_errors
 @safe_database_operation("approve_item")
 def approve_item(item_id):
+    from trading_points import award_points_for_upload, create_level_up_notification
+    from referral_rewards import award_referral_bonus
+    
     try:
-        from trading_points import award_points_for_upload, create_level_up_notification
-        from referral_rewards import award_referral_bonus
-        
         item = Item.query.get_or_404(item_id)
 
+        # Validate and parse item value
         try:
             value = float(request.form['value'])
             if value <= 0:
@@ -384,13 +398,25 @@ def approve_item(item_id):
             logger.warning(f"Invalid item value provided - Item ID: {item_id}, Value: {request.form.get('value')}, Admin ID: {session.get('admin_id')}")
             raise ValidationError("Item value must be a positive number", field="value")
             
+        # Update item approval status
         item.value = value
         item.is_approved = True
         item.is_available = True
         item.status = 'approved'
 
+        # Award credits to user
         item.user.credits += int(value)
+        # Mark item as modified to ensure changes persist through subsequent operations
+        flag_modified(item, 'status')
+        flag_modified(item, 'is_approved')
+        flag_modified(item, 'is_available')
+        flag_modified(item, 'value')
+        
         logger.info(f"Item approved - Item ID: {item_id}, Name: {item.name}, Value: {value}, User Credits: {item.user.credits}, Admin ID: {session.get('admin_id')}")
+        
+        # CRITICAL: Detach item from session to prevent it from being reloaded by subsequent flushes
+        # in award_points_for_upload and award_referral_bonus functions
+        db.session.expunge(item)
 
         # Award trading points for upload approval
         level_up_info = award_points_for_upload(item.user, item.name)
@@ -399,6 +425,10 @@ def approve_item(item_id):
         referral_result = award_referral_bonus(item.user_id, 'item_upload', amount=100)
         if referral_result['success']:
             logger.info(f"Referral bonus awarded: {referral_result['message']}")
+        
+        # Re-attach item to session after award operations
+        # Merge reattaches the item with all its changes intact
+        item = db.session.merge(item)
         
         # Create level up notification and send email if applicable
         if level_up_info:
@@ -419,13 +449,12 @@ def approve_item(item_id):
             )
         
         db.session.add(notification)
-        db.session.commit()
-
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
         
     except ValidationError as e:
         logger.warning(f"Validation error approving item: {str(e)}")
         flash(str(e.message), 'danger')
+        raise  # Re-raise so decorator knows to rollback
 
     return redirect(url_for('admin.approve_items'))
 
@@ -450,12 +479,13 @@ def reject_item(item_id):
 
         logger.info(f"Item rejected - Item ID: {item_id}, Name: {item.name}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
         flash(f'Item rejected. Reason: {reason}', 'warning')
-        return redirect(url_for('admin.admin_dashboard'))
         
     except ValidationError as e:
         logger.warning(f"Validation error rejecting item: {str(e)}")
         flash(str(e.message), 'danger')
-        return redirect(url_for('admin.approve_items'))
+        raise  # Re-raise so decorator knows to rollback
+
+    return redirect(url_for('admin.admin_dashboard'))
 
 
 @admin_bp.route('/update-status', methods=['POST'])

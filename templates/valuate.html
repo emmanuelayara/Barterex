@@ -1,0 +1,1418 @@
+{% extends 'base.html' %}
+{% block title %}Valuate Item{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    --secondary-gradient: linear-gradient(135deg, #ff7a00 0%, #ffb366 100%);
+    --accent-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    --orange-gradient: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --warning-gradient: linear-gradient(135deg, #ff7a00 0%, #ffb366 100%);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --surface: #ffffff;
+    --surface-hover: #f8fafc;
+    --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 16px 50px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Page background - matching upload page */
+  .valuate-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    padding: 25px 15px;
+    position: relative;
+  }
+
+  .valuate-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(255, 122, 0, 0.2) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(5, 78, 151, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Main container - matching upload page */
+  .valuate-container {
+    max-width: 650px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header section - matching upload page */
+  .valuate-header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding: 25px 20px;
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .valuate-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--orange-gradient);
+  }
+
+  .valuate-header h1 {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 0 10px 0;
+  }
+
+  .valuate-icon {
+    width: 45px;
+    height: 45px;
+    background: var(--orange-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: white;
+    box-shadow: 0 6px 25px rgba(255, 122, 0, 0.3);
+  }
+
+  .valuate-header p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* Form container - matching upload page */
+  .form-container {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 25px 20px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* Form groups - matching upload page */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .label-hint {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #10b981;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: auto;
+    background: #f0fdf4;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-style: italic;
+  }
+
+  .label-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+  }
+
+  /* Description hint */
+  .description-hint {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: #f9fafb;
+    border-left: 3px solid #ff7a00;
+    padding: 10px 12px;
+    margin-top: 8px;
+    border-radius: 6px;
+    line-height: 1.5;
+    animation: slideInLeft 0.4s ease-out;
+  }
+
+  /* Form inputs - matching upload page */
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: #ff7a00;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .form-textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  /* File upload section - matching upload page */
+  .file-upload-container {
+    position: relative;
+  }
+
+  .file-upload-area {
+    border: 3px dashed #d1d5db;
+    border-radius: 16px;
+    padding: 30px 15px;
+    text-align: center;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .file-upload-area:hover {
+    border-color: #ff7a00;
+    background: #fff7ed;
+    transform: translateY(-1px);
+  }
+
+  .file-upload-area.dragover {
+    border-color: #ff7a00;
+    background: var(--warning-gradient);
+    color: white;
+  }
+
+  .file-upload-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--accent-gradient);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 30px rgba(255, 122, 0, 0.3);
+  }
+
+  .file-upload-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .file-upload-subtext {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.3;
+  }
+
+  .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* Multiple images preview container */
+  .images-preview-container {
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    margin-top: 12px;
+    animation: slideInUp 0.4s ease-out;
+  }
+
+  .image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .image-preview-item {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+    animation: slideInUp 0.3s ease-out;
+  }
+
+  .image-preview-item:hover {
+    border-color: #ff7a00;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .image-preview-item.primary {
+    border-color: #ff7a00;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+  }
+
+  .preview-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+  }
+
+  .image-preview-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 8px;
+  }
+
+  .image-preview-item:hover .image-preview-controls {
+    opacity: 1;
+  }
+
+  .set-primary {
+    background: #fbbf24;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+
+  .set-primary:hover {
+    background: #f59e0b;
+    transform: scale(1.1);
+  }
+
+  .remove-image {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+
+  .remove-image:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+  }
+
+  .primary-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #ff7a00;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .image-count-info {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 8px;
+  }
+
+  .image-count-value {
+    font-weight: 600;
+    color: #ff7a00;
+    font-size: 0.95rem;
+  }
+
+  /* Old single image preview (kept for compatibility) */
+  .image-preview {
+    display: none;
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    margin-top: 12px;
+  }
+
+  .preview-wrapper {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .remove-image-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .remove-image-btn:hover {
+    background: rgba(239, 68, 68, 1);
+    transform: scale(1.05);
+  }
+
+  /* Submit button - matching upload page */
+  .submit-container {
+    text-align: center;
+    margin-top: 25px;
+  }
+
+  .submit-btn, .back-btn {
+    background: var(--orange-gradient);
+    color: white;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 40px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 30px rgba(255, 122, 0, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+    justify-content: center;
+    margin: 10px 5px;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255, 122, 0, 0.4);
+  }
+
+  .back-btn {
+    background: #e5e7eb;
+    color: var(--text-primary);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .back-btn:hover {
+    background: #d1d5db;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Estimation result - matching upload page colors */
+  .estimation-result {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 25px 20px;
+    margin-top: 25px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: none;
+  }
+
+  .estimation-result.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f3f4f6;
+  }
+
+  .result-header-icon {
+    font-size: 2rem;
+  }
+
+  .result-header-text h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .result-header-text p {
+    margin: 4px 0 0 0;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .result-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .result-content {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .result-item {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+  }
+
+  .result-item-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 8px;
+  }
+
+  .result-item-value {
+    color: #ff7a00;
+    font-size: 1.8rem;
+    font-weight: 800;
+  }
+
+  .result-item-subtext {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 8px;
+  }
+
+  .result-details {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.9rem;
+  }
+
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+
+  .detail-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  .detail-value {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  .confidence-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 12px;
+    background: #f0fdf4;
+    border: 1px solid #10b981;
+    color: #065f46;
+  }
+
+  .confidence-badge.medium {
+    background: #fef9c3;
+    border-color: #f59e0b;
+    color: #92400e;
+  }
+
+  .confidence-badge.low {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+  }
+
+  /* File upload drag-over state */
+  .file-upload-area.drag-over {
+    border-color: #ff7a00;
+    background: rgba(255, 122, 0, 0.05);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+  }
+
+  /* Loading spinner - matching upload page */
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 122, 0, 0.2);
+    border-top: 4px solid #ff7a00;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .result-loading {
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .result-loading p {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 10px 0;
+  }
+
+  .loading-subtext {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  /* Error and success messages */
+  .error-message {
+    background: #fee2e2;
+    border: 2px solid #ef4444;
+    color: #991b1b;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: none;
+    font-weight: 500;
+    animation: shake 0.4s ease-out;
+  }
+
+  .error-message.show {
+    display: block;
+    animation: slideInDown 0.4s ease-out;
+  }
+
+  .success-message {
+    background: #f0fdf4;
+    border: 2px solid #10b981;
+    color: #065f46;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: none;
+    font-weight: 500;
+    animation: slideInDown 0.4s ease-out;
+  }
+
+  .success-message.show {
+    display: block;
+  }
+
+  /* Fade in animation */
+  .fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+
+  /* Stagger animation for form groups */
+  .form-group {
+    animation: slideInUp 0.4s ease-out backwards;
+  }
+
+  .form-group:nth-child(1) { animation-delay: 0.1s; }
+  .form-group:nth-child(2) { animation-delay: 0.2s; }
+  .form-group:nth-child(3) { animation-delay: 0.3s; }
+  .form-group:nth-child(4) { animation-delay: 0.4s; }
+  .form-group:nth-child(5) { animation-delay: 0.5s; }
+
+  /* Pulse animation for input focus */
+  @keyframes inputPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(255, 122, 0, 0.05);
+    }
+  }
+
+  .form-input:focus, .form-textarea:focus {
+    animation: inputPulse 0.6s ease-out;
+  }
+
+  /* Smooth hover transition */
+  .submit-btn {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 16px 50px rgba(255, 122, 0, 0.4);
+  }
+
+  .submit-btn:active {
+    transform: translateY(-1px) scale(0.98);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .valuate-page {
+      padding: 20px 10px;
+    }
+
+    .valuate-header {
+      margin-bottom: 20px;
+      padding: 20px 15px;
+    }
+
+    .valuate-header h1 {
+      font-size: 1.5rem;
+      gap: 10px;
+    }
+
+    .valuate-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+    }
+
+    .form-container {
+      padding: 20px 15px;
+    }
+
+    .submit-btn, .back-btn {
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    .result-content {
+      gap: 12px;
+    }
+
+    .result-item {
+      padding: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .valuate-container {
+      max-width: 100%;
+    }
+
+    .valuate-header h1 {
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+    }
+
+    .valuate-header p {
+      font-size: 0.85rem;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .submit-btn, .back-btn {
+      padding: 12px 24px;
+      font-size: 0.85rem;
+      min-width: auto;
+    }
+
+    .result-item-value {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<div class="valuate-page">
+  <div class="valuate-container">
+    <!-- Header -->
+    <div class="valuate-header fade-in">
+      <h1>
+        <span class="valuate-icon">💎</span>
+        Valuate Your Item
+      </h1>
+      <p>Get an accurate AI-powered price estimate before uploading</p>
+    </div>
+
+    <!-- Form -->
+    <div class="form-container fade-in">
+      <!-- Error Message -->
+      <div class="error-message" id="errorMessage"></div>
+      <div class="success-message" id="successMessage"></div>
+
+      <form id="valuateForm" enctype="multipart/form-data">
+        <!-- Item Name -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">🏷️</span>
+            Item Name
+          </label>
+          <input 
+            type="text" 
+            id="itemName" 
+            name="itemName" 
+            class="form-input"
+            required
+            placeholder="e.g., Apple iPhone 13 Pro Max, Samsung 55-inch Smart TV"
+          />
+        </div>
+
+        <!-- Item Description -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📝</span>
+            Item Description
+            <span class="label-hint">✓ Be detailed</span>
+          </label>
+          <textarea 
+            id="description" 
+            name="description" 
+            class="form-textarea"
+            required
+            placeholder="Include important details like:&#10;• Brand, model, and exact specifications&#10;• Year of purchase or manufacture&#10;• Size, dimensions, or capacity&#10;• Color, material, and finish&#10;• Any defects, scratches, or issues&#10;• Original packaging and accessories&#10;• Usage history and maintenance&#10;• Warranty or guarantee status"
+          ></textarea>
+          <div class="description-hint">💡 More details = Better price estimate. Include brand, model, year, size, condition details, and any accessories.</div>
+        </div>
+
+        <!-- Item Condition and Category -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">⭐</span>
+            Condition
+          </label>
+          <select id="condition" name="condition" class="form-select" required>
+            <option value="">Select condition</option>
+            <option value="Brand New">Brand New</option>
+            <option value="Fairly Used">Fairly Used</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📂</span>
+            Category
+          </label>
+          <select id="category" name="category" class="form-select" required>
+            <option value="">Select category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Fashion / Clothing">Fashion / Clothing</option>
+            <option value="Footwear">Footwear</option>
+            <option value="Home & Kitchen">Home & Kitchen</option>
+            <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+            <option value="Sports & Outdoors">Sports & Outdoors</option>
+            <option value="Groceries">Groceries</option>
+            <option value="Furniture">Furniture</option>
+            <option value="Toys & Games">Toys & Games</option>
+            <option value="Books & Stationery">Books & Stationery</option>
+            <option value="Health & Wellness">Health & Wellness</option>
+            <option value="Automotive">Automotive</option>
+            <option value="Phones & Gadgets">Phones & Gadgets</option>
+          </select>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📸</span>
+            Upload Images (Optional - Max 6)
+          </label>
+          <div class="file-upload-container">
+            <div class="file-upload-area" id="fileUploadArea">
+              <div class="file-upload-icon">📷</div>
+              <div class="file-upload-text">Drag & drop multiple images here</div>
+              <div class="file-upload-subtext">or click to browse files (JPG, PNG, WEBP) - Max 6 images</div>
+              <input type="file" class="file-input" id="imageInput" name="images" accept="image/*" multiple>
+            </div>
+            
+            <div class="images-preview-container" id="imagesPreviewContainer" style="display: none;">
+              <div class="image-preview-grid" id="imagePreviewGrid"></div>
+              <div class="image-count-info">
+                <span id="imageCount" class="image-count-value">0</span> image(s) selected
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="submit-container">
+          <button type="submit" class="submit-btn" id="valuateBtn">
+            <span>🔍</span>
+            <span>Get Price Estimate</span>
+          </button>
+          <a href="{{ url_for('user.dashboard') }}" class="back-btn">
+            <span>←</span>
+            <span>Back to Dashboard</span>
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Estimation Result -->
+    <div class="estimation-result" id="estimationResult">
+      <div id="loadingContent" class="result-loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Analyzing your item with AI...</p>
+        <p class="loading-subtext">Searching market prices and comparing similar items</p>
+      </div>
+
+      <div id="resultContent" style="display: none;">
+        <div class="result-header">
+          <div class="result-header-icon">✨</div>
+          <div class="result-header-text">
+            <h3>Valuation Complete</h3>
+            <p>Based on AI analysis and market data</p>
+          </div>
+        </div>
+
+        <div class="result-content">
+          <div class="result-item">
+            <div class="result-item-label">Estimated Market Value</div>
+            <div class="result-item-value" id="estimatedPrice">$0.00</div>
+            <div class="result-item-subtext" id="priceRange">$0.00 - $0.00</div>
+          </div>
+
+          <div class="result-item">
+            <div class="result-item-label">Your Platform Credits</div>
+            <div class="result-item-value" id="creditAmount">0</div>
+            <div class="result-item-subtext">After 10% platform fee</div>
+          </div>
+        </div>
+
+        <div class="result-details">
+          <div class="detail-row">
+            <span class="detail-label">📊 Confidence Level</span>
+            <span class="detail-value" id="confidenceLevel">High</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📈 Based on</span>
+            <span class="detail-value" id="dataPoints">0 market listings</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">⏰ Analysis Date</span>
+            <span class="detail-value" id="timestamp">Just now</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Image file handling
+  const fileUploadArea = document.getElementById('fileUploadArea');
+  const imageInput = document.getElementById('imageInput');
+  const imagePreview = document.getElementById('imagePreview');
+  let selectedFile = null;
+
+  // File upload click handler
+  fileUploadArea.addEventListener('click', function() {
+    imageInput.click();
+  });
+
+  // Multiple file selection handler
+  imageInput.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+      handleMultipleFiles(e.target.files);
+    }
+  });
+
+  // Drag and drop handlers
+  fileUploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.add('drag-over');
+  });
+
+  fileUploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('drag-over');
+  });
+
+  fileUploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('drag-over');
+    
+    if (e.dataTransfer.files.length > 0) {
+      handleMultipleFiles(e.dataTransfer.files);
+    }
+  });
+
+  // Multiple file handling
+  let selectedFiles = [];
+  let primaryImageIndex = 0;
+
+  function handleMultipleFiles(files) {
+    const maxFiles = 6;
+    const maxFileSize = 10 * 1024 * 1024; // 10MB per file
+
+    // Reset if new selection (not appending)
+    selectedFiles = [];
+    primaryImageIndex = 0;
+
+    let validFiles = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showError(`File "${file.name}" is not an image. Please select JPG, PNG, or WEBP files.`);
+        continue;
+      }
+
+      // Validate file size
+      if (file.size > maxFileSize) {
+        showError(`File "${file.name}" is larger than 10MB. Please choose a smaller image.`);
+        continue;
+      }
+
+      // Check max files limit
+      if (selectedFiles.length >= maxFiles) {
+        showError(`Maximum ${maxFiles} images allowed. Extra files were ignored.`);
+        break;
+      }
+
+      selectedFiles.push(file);
+      validFiles++;
+    }
+
+    if (validFiles > 0) {
+      updateImagePreviews();
+    }
+  }
+
+  function updateImagePreviews() {
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
+    const imagePreviewGrid = document.getElementById('imagePreviewGrid');
+    const imageCount = document.getElementById('imageCount');
+
+    if (selectedFiles.length === 0) {
+      imagesPreviewContainer.style.display = 'none';
+      fileUploadArea.style.display = 'block';
+      return;
+    }
+
+    fileUploadArea.style.display = 'none';
+    imagesPreviewContainer.style.display = 'block';
+    imagePreviewGrid.innerHTML = '';
+    imageCount.textContent = selectedFiles.length;
+
+    selectedFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const previewItem = document.createElement('div');
+        previewItem.className = `image-preview-item ${index === primaryImageIndex ? 'primary' : ''}`;
+        
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.alt = `Preview ${index + 1}`;
+        img.className = 'preview-image';
+        previewItem.appendChild(img);
+
+        // Primary badge
+        if (index === primaryImageIndex) {
+          const badge = document.createElement('div');
+          badge.className = 'primary-badge';
+          badge.textContent = '⭐ Primary';
+          previewItem.appendChild(badge);
+        }
+
+        // Controls
+        const controls = document.createElement('div');
+        controls.className = 'image-preview-controls';
+
+        // Set primary button
+        const setPrimaryBtn = document.createElement('button');
+        setPrimaryBtn.type = 'button';
+        setPrimaryBtn.className = 'set-primary';
+        setPrimaryBtn.title = 'Set as primary image';
+        setPrimaryBtn.textContent = '⭐';
+        setPrimaryBtn.onclick = (e) => {
+          e.preventDefault();
+          setPrimaryImage(index);
+        };
+        controls.appendChild(setPrimaryBtn);
+
+        // Remove button
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-image';
+        removeBtn.title = 'Remove image';
+        removeBtn.textContent = '✕';
+        removeBtn.onclick = (e) => {
+          e.preventDefault();
+          removeImage(index);
+        };
+        controls.appendChild(removeBtn);
+
+        previewItem.appendChild(controls);
+        imagePreviewGrid.appendChild(previewItem);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setPrimaryImage(index) {
+    if (index >= 0 && index < selectedFiles.length) {
+      primaryImageIndex = index;
+      updateImagePreviews();
+    }
+  }
+
+  function removeImage(index) {
+    selectedFiles.splice(index, 1);
+    
+    // Adjust primary index if needed
+    if (primaryImageIndex >= selectedFiles.length && selectedFiles.length > 0) {
+      primaryImageIndex = selectedFiles.length - 1;
+    }
+
+    updateImagePreviews();
+  }
+
+  // Form submission
+  const valuateForm = document.getElementById('valuateForm');
+  const valuateBtn = document.getElementById('valuateBtn');
+  const errorMessage = document.getElementById('errorMessage');
+  const successMessage = document.getElementById('successMessage');
+  const estimationResult = document.getElementById('estimationResult');
+  const loadingContent = document.getElementById('loadingContent');
+  const resultContent = document.getElementById('resultContent');
+
+  valuateForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    console.log('=== VALUATE FORM SUBMISSION STARTED ===');
+    
+    // Validate form
+    const itemName = document.getElementById('itemName').value.trim();
+    console.log('Item Name value:', itemName);
+    if (itemName.length === 0) {
+      showError('Please provide an item name');
+      return;
+    }
+
+    const description = document.getElementById('description').value.trim();
+    console.log('Description length:', description.length);
+    if (description.length < 20) {
+      showError('Please provide a detailed description (minimum 20 characters)');
+      return;
+    }
+
+    // Clear previous messages
+    errorMessage.classList.remove('show');
+    successMessage.classList.remove('show');
+
+    console.log('Form validation passed. Showing loading state...');
+    // Show loading state
+    showLoading();
+    valuateBtn.disabled = true;
+    valuateBtn.classList.add('loading');
+
+    // Create FormData
+    const formData = new FormData();
+    formData.append('item_name', itemName);
+    formData.append('description', description);
+    formData.append('condition', document.getElementById('condition').value);
+    formData.append('category', document.getElementById('category').value);
+    
+    console.log('Preparing form data:', {
+      item_name: itemName,
+      description: description.substring(0, 50) + '...',
+      condition: document.getElementById('condition').value,
+      category: document.getElementById('category').value,
+      images: selectedFiles.length
+    });
+    
+    // Append multiple images
+    if (selectedFiles.length > 0) {
+      selectedFiles.forEach((file, index) => {
+        // Mark primary image
+        if (index === primaryImageIndex) {
+          formData.append('primary_image_index', primaryImageIndex);
+        }
+        formData.append('images', file, file.name);
+      });
+      formData.append('image_count', selectedFiles.length);
+    }
+
+    const submitUrl = '{{ url_for("items.estimate_item_price") }}';
+    console.log('Submitting to URL:', submitUrl);
+    console.log('Starting fetch request...');
+    
+    // Submit form
+    fetch(submitUrl, {
+      method: 'POST',
+      body: formData
+    }).then(response => {
+      console.log('RESPONSE RECEIVED - Status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        console.log('Response not OK, attempting to parse error...');
+        return response.json().then(data => {
+          console.error('Error response:', data);
+          throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
+        }).catch(parseErr => {
+          console.error('Could not parse error response:', parseErr);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        });
+      }
+      return response.json();
+    }).then(data => {
+      console.log('SUCCESS - Response data:', data);
+      
+      if (data.success) {
+        console.log('Displaying estimation result...');
+        displayEstimationResult(data);
+        const imageText = selectedFiles.length > 0 ? `${selectedFiles.length} image(s)` : 'no images';
+        successMessage.innerHTML = `✓ Price estimation completed! Confidence: ${data.confidence || 'Standard'}<br>
+                                   <small>Based on ${imageText} and detailed information</small>`;
+        successMessage.classList.add('show');
+      } else {
+        console.log('Success false, showing error:', data.error);
+        showError(data.error || 'Failed to estimate price. Please try again.');
+      }
+    }).catch(error => {
+      console.error('=== FETCH CATCH ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      showError(error.message || 'An error occurred. Please try again later.');
+    }).finally(() => {
+      console.log('=== FORM SUBMISSION FINALLY BLOCK ===');
+      valuateBtn.disabled = false;
+      valuateBtn.classList.remove('loading');
+      console.log('=== FORM SUBMISSION COMPLETED ===');
+    });
+  });
+
+  function showLoading() {
+    estimationResult.classList.add('fade-in');
+    estimationResult.style.display = 'block';
+    loadingContent.style.display = 'block';
+    resultContent.style.display = 'none';
+    estimationResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function displayEstimationResult(data) {
+    const priceInfo = data.price_estimate;
+    const creditInfo = data.credit_value;
+
+    // Update values
+    document.getElementById('estimatedPrice').textContent = `$${priceInfo.estimated_price.toFixed(2)}`;
+    document.getElementById('priceRange').textContent = 
+      `$${priceInfo.price_range.min.toFixed(2)} - $${priceInfo.price_range.max.toFixed(2)}`;
+    
+    const credits = Math.floor(creditInfo.credit_value);
+    document.getElementById('creditAmount').textContent = `${credits}`;
+    
+    document.getElementById('dataPoints').textContent = 
+      `${priceInfo.data_points || 0} market listings`;
+    
+    // Confidence level
+    const confidence = priceInfo.confidence;
+    const confidenceElement = document.getElementById('confidenceLevel');
+    confidenceElement.textContent = confidence.charAt(0).toUpperCase() + confidence.slice(1);
+
+    // Show result
+    loadingContent.style.display = 'none';
+    resultContent.style.display = 'block';
+  }
+
+  function showError(message) {
+    estimationResult.style.display = 'none';
+    errorMessage.textContent = '✗ ' + message;
+    errorMessage.classList.add('show');
+    errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Form field interactions - match upload.html behavior
+  const formInputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
+  
+  formInputs.forEach(input => {
+    input.addEventListener('focus', function() {
+      this.parentElement.style.transform = 'translateY(-2px)';
+    });
+    
+    input.addEventListener('blur', function() {
+      this.parentElement.style.transform = 'translateY(0)';
+    });
+  });
+
+  // Real-time form validation
+  const descriptionInput = document.querySelector('textarea[name="description"]');
+
+  descriptionInput.addEventListener('input', function() {
+    if (this.value.length > 20) {
+      this.style.borderColor = '#10b981';
+    } else {
+      this.style.borderColor = '#f59e0b';
+    }
+  });
+
+  // Scroll animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, observerOptions);
+
+  // Observe all fade-in elements
+  document.querySelectorAll('.fade-in').forEach((el, index) => {
+    el.style.transitionDelay = `${index * 0.1}s`;
+    observer.observe(el);
+  });
+</script>
+
+{% endblock %}

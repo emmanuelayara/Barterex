@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from flask_login import login_required, current_user, logout_user
 from flask_wtf.csrf import generate_csrf
 import os
@@ -16,6 +16,7 @@ from error_handlers import handle_errors, safe_database_operation, retry_operati
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
 from trading_points import award_points_for_purchase, create_level_up_notification
+from services.ai_price_estimator import get_price_estimator
 
 logger = setup_logger(__name__)
 
@@ -524,3 +525,102 @@ def order_item():
             return render_template('order_item.html', form=form, stations=stations, items=items)
     
     return render_template('order_item.html', form=form, stations=stations, items=items)
+
+
+# ==================== AI PRICE ESTIMATION API ====================
+
+@items_bp.route('/api/estimate-price', methods=['POST'])
+@login_required
+def estimate_item_price():
+    """
+    API endpoint to estimate item price using AI and web scraping
+    Accepts image(s) + description and returns estimated market value
+    Supports both single image (legacy) and multiple images (new)
+    """
+    try:
+        # Get form data
+        description = request.form.get('description', '')
+        item_name = request.form.get('item_name', '')
+        condition = request.form.get('condition', 'good')
+        category = request.form.get('category', 'other')
+        
+        # Get image file(s) - support both single (legacy) and multiple (new)
+        image_data = None
+        image_count = 0
+        primary_image_index = 0
+        
+        # Try multiple images first (new format)
+        image_files = request.files.getlist('images')
+        
+        # Fallback to single image (legacy format)
+        if not image_files:
+            image_file = request.files.get('image')
+            if image_file and allowed_file(image_file.filename):
+                image_files = [image_file]
+        
+        # Process the first/primary image for estimation
+        if image_files:
+            primary_image_index = int(request.form.get('primary_image_index', 0))
+            image_count = len(image_files)
+            
+            # Use the primary image or first image
+            primary_file = image_files[min(primary_image_index, len(image_files) - 1)]
+            if allowed_file(primary_file.filename):
+                image_data = primary_file.read()
+                primary_file.seek(0)
+        
+        # Validate inputs
+        if not description or len(description.strip()) < 10:
+            return jsonify({
+                'success': False,
+                'error': 'Please provide a detailed description (at least 10 characters)'
+            }), 400
+        
+        # Get price estimator service
+        estimator = get_price_estimator()
+        
+        # Estimate price
+        item_label = item_name if item_name else description[:50]
+        logger.info(f"Price estimation requested - User: {current_user.username}, Item: {item_label}, Images: {image_count}")
+        price_estimate = estimator.estimate_price(
+            image_data=image_data,
+            description=description,
+            condition=condition,
+            category=category
+        )
+        
+        # Adjust confidence based on number of images (optional enhancement)
+        if image_count > 1:
+            # Boost confidence slightly when multiple images provided
+            original_confidence = price_estimate.get('confidence', 'Standard')
+            if original_confidence == 'Standard':
+                price_estimate['confidence'] = 'Enhanced'
+            elif original_confidence == 'Good':
+                price_estimate['confidence'] = 'Very Good'
+        
+        # Calculate credit value
+        credit_info = estimator.get_credit_value_estimate(
+            price_estimate['estimated_price']
+        )
+        
+        # Combine results
+        result = {
+            'success': True,
+            'price_estimate': price_estimate,
+            'credit_value': credit_info,
+            'message': 'Price estimation completed successfully',
+            'confidence': price_estimate.get('confidence', 'Standard'),
+            'images_analyzed': image_count
+        }
+        
+        logger.info(f"Price estimated - Amount: ${price_estimate['estimated_price']}, Confidence: {price_estimate['confidence']}, Images: {image_count}")
+        return jsonify(result), 200
+        
+    except Exception as e:
+        logger.error(f"Price estimation API error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'Unable to estimate price at this time. Please try again later.',
+            'details': str(e) if app.debug else None
+        }), 500
+
