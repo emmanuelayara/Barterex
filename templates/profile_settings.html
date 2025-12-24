@@ -198,13 +198,32 @@
   }
 
   .form-label {
-    display: block;
+    display: flex;
+    align-items: center;
     font-weight: 600;
     color: #2d3748;
     margin-bottom: 4px;
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    gap: 8px;
+  }
+
+  .form-label-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .input-icon {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #ff7a00;
+    transition: all 0.3s ease;
   }
 
   .input-wrapper {
@@ -214,7 +233,7 @@
 
   .form-control {
     width: 100%;
-    padding: 12px 16px 12px 44px;
+    padding: 14px 16px;
     border-radius: 12px;
     border: 2px solid #e2e8f0;
     background: #fff;
@@ -226,7 +245,7 @@
   }
 
   textarea.form-control {
-    padding: 12px 16px 12px 44px;
+    padding: 14px 16px;
     resize: vertical;
     min-height: 100px;
   }
@@ -289,31 +308,17 @@
     color: #a0aec0;
   }
 
-  .input-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.1rem;
-    color: #cbd5e0;
-    pointer-events: none;
-    z-index: 2;
-    transition: all 0.3s ease;
+
+
+  .input-wrapper.focused .input-icon {
+    color: #ff7a00;
+    transform: scale(1.15);
   }
 
-  .input-wrapper > .form-control + .input-icon {
-    left: 12px;
-  }
-
-    .input-wrapper.focused .input-icon {
-      color: #ff7a00;
-      transform: translateY(-50%) scale(1.15);
-    }
-
-    .form-control:focus + .input-icon {
-      color: #ff7a00;
-      transform: translateY(-50%) scale(1.15);
-    }  .form-actions {
+  .form-control:focus + .input-icon {
+    color: #ff7a00;
+    transform: scale(1.15);
+  }  .form-actions {
     margin-top: 32px;
     text-align: center;
   }
@@ -535,7 +540,7 @@
     }
 
     .form-control {
-      padding: 10px 14px 10px 36px;
+      padding: 10px 14px;
       font-size: 14px;
       border-radius: 10px;
     }
@@ -645,7 +650,7 @@
     }
 
     .form-control {
-      padding: 10px 12px 10px 32px;
+      padding: 10px 12px;
       font-size: 14px;
       border-radius: 8px;
     }
@@ -766,45 +771,55 @@
         <div class="form-grid">
           <!-- Email Field -->
           <div class="form-group">
-            {{ form.email.label(class="form-label") }}
+            <div class="form-label-wrapper">
+              {{ form.email.label(class="form-label") }}
+              <span class="input-icon">📧</span>
+            </div>
             <div class="input-wrapper">
               {{ form.email(class="form-control", placeholder="your.email@example.com") }}
-              <span class="input-icon"></span>
             </div>
           </div>
 
           <!-- Phone Number Field -->
           <div class="form-group">
-            {{ form.phone_number.label(class="form-label") }}
+            <div class="form-label-wrapper">
+              {{ form.phone_number.label(class="form-label") }}
+              <span class="input-icon">📱</span>
+            </div>
             <div class="input-wrapper">
               {{ form.phone_number(class="form-control", placeholder="+234 800 000 0000") }}
-              <span class="input-icon"></span>
             </div>
           </div>
 
           <!-- Address Field (Full Width) -->
           <div class="form-group full">
-            {{ form.address.label(class="form-label") }}
+            <div class="form-label-wrapper">
+              {{ form.address.label(class="form-label") }}
+              <span class="input-icon">📍</span>
+            </div>
             <div class="input-wrapper">
               {{ form.address(class="form-control", placeholder="Enter your street address", rows="3") }}
-              <span class="input-icon"></span>
             </div>
           </div>
 
           <!-- City and State Row -->
           <div class="form-group">
-            {{ form.city.label(class="form-label") }}
+            <div class="form-label-wrapper">
+              {{ form.city.label(class="form-label") }}
+              <span class="input-icon">🏙️</span>
+            </div>
             <div class="input-wrapper">
               {{ form.city(class="form-control", placeholder="City") }}
-              <span class="input-icon"></span>
             </div>
           </div>
 
           <div class="form-group">
-            {{ form.state.label(class="form-label") }}
+            <div class="form-label-wrapper">
+              {{ form.state.label(class="form-label") }}
+              <span class="input-icon">🗺️</span>
+            </div>
             <div class="input-wrapper">
               {{ form.state(class="form-control") }}
-              <span class="input-icon">🗺️</span>
             </div>
           </div>
         </div>
