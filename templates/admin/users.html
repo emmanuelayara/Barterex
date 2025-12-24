@@ -227,7 +227,7 @@
                                     <form id="ban-form-{{ user.id }}" 
                                           action="{{ url_for('admin.ban_user', user_id=user.id) }}" 
                                           method="POST" style="display:none;">
-                                        {{ csrf_token() }}
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <input type="text" name="ban_reason" id="ban-reason-{{ user.id }}">
                                     </form>
 
@@ -235,7 +235,7 @@
                                     <form id="unban-form-{{ user.id }}" 
                                           action="{{ url_for('admin.unban_user', user_id=user.id) }}" 
                                           method="POST" style="display:none;">
-                                        {{ csrf_token() }}
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     </form>
                                 </td>
                             </tr>
@@ -330,7 +330,7 @@
                                     <form id="unban-form-banned-{{ user.id }}" 
                                           action="{{ url_for('admin.unban_user', user_id=user.id) }}" 
                                           method="POST" style="display:none;">
-                                        {{ csrf_token() }}
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     </form>
                                 </td>
                             </tr>

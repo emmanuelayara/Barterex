@@ -1,0 +1,474 @@
+{% extends 'base.html' %}
+{% block title %}Credit Transaction History{% endblock %}
+
+{% block content %}
+<style>
+  .transaction-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  .transaction-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .transaction-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 8px;
+  }
+
+  .transaction-subtitle {
+    font-size: 1rem;
+    color: #6b7280;
+  }
+
+  .transaction-list {
+    display: grid;
+    gap: 20px;
+  }
+
+  .transaction-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .transaction-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .transaction-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .transaction-type-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .transaction-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border-radius: 8px;
+  }
+
+  .transaction-type {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .transaction-type-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  .transaction-type-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .transaction-date {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    white-space: nowrap;
+  }
+
+  .transaction-amount {
+    text-align: right;
+  }
+
+  .transaction-amount-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .amount-debit {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .amount-credit {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .transaction-details {
+    background: #f9fafb;
+    border-left: 4px solid #e5e7eb;
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+
+  .transaction-details h4 {
+    margin: 0 0 12px 0;
+    color: #1f2937;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+
+  .detail-label {
+    color: #4b5563;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .detail-value {
+    color: #1f2937;
+    font-weight: 600;
+  }
+
+  .balance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    font-weight: 600;
+  }
+
+  .balance-before {
+    padding: 12px 0;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .balance-after {
+    padding: 12px 0;
+    background: #ecfdf5;
+    padding: 12px;
+    border-radius: 6px;
+    color: #065f46;
+  }
+
+  .explanation-box {
+    background: #eff6ff;
+    border-left: 4px solid #0284c7;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+    color: #0c4a6e;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .transaction-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.85rem;
+    color: #9ca3af;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+  }
+
+  .empty-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+  }
+
+  .empty-description {
+    color: #6b7280;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stat-box {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+  }
+
+  .stat-label {
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .stat-value.positive {
+    color: #16a34a;
+  }
+
+  .stat-value.negative {
+    color: #dc2626;
+  }
+
+  .filter-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .filter-select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #1f2937;
+    background: white;
+    cursor: pointer;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .transaction-header-row {
+      flex-direction: column;
+    }
+
+    .transaction-amount {
+      text-align: left;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .transaction-title {
+      font-size: 1.8rem;
+    }
+  }
+</style>
+
+<div class="transaction-container">
+  <!-- Header -->
+  <div class="transaction-header">
+    <h1 class="transaction-title">💰 Credit Transaction History</h1>
+    <p class="transaction-subtitle">Track all your credit transactions and understand how your balance changes</p>
+  </div>
+
+  <!-- Statistics -->
+  {% if history %}
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-label">Total Transactions</div>
+      <div class="stat-value">{{ history|length }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Current Balance</div>
+      <div class="stat-value">₦{{ "{:,.0f}".format(current_user.credits) }}</div>
+    </div>
+    {% set total_earned = history|selectattr('transaction_type', 'in', ['referral_signup_bonus', 'referral_purchase_bonus', 'admin_credit'])|map(attribute='amount')|sum %}
+    <div class="stat-box">
+      <div class="stat-label">Total Earned</div>
+      <div class="stat-value positive">+₦{{ "{:,.0f}".format(total_earned) }}</div>
+    </div>
+    {% set total_spent = history|selectattr('transaction_type', 'in', ['purchase', 'debit'])|map(attribute='amount')|sum %}
+    <div class="stat-box">
+      <div class="stat-label">Total Spent</div>
+      <div class="stat-value negative">-₦{{ "{:,.0f}".format(total_spent) }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Transactions List -->
+  {% if history %}
+    <div class="transaction-list">
+      {% for transaction in history %}
+      <div class="transaction-card">
+        <!-- Header Row -->
+        <div class="transaction-header-row">
+          <div class="transaction-type-section">
+            <div class="transaction-icon">
+              {% if transaction.transaction_type == 'purchase' %}
+                🛍️
+              {% elif transaction.transaction_type in ['referral_signup_bonus', 'referral_purchase_bonus'] %}
+                🎁
+              {% elif transaction.transaction_type == 'admin_credit' %}
+                ⭐
+              {% elif transaction.transaction_type == 'refund' %}
+                ↩️
+              {% else %}
+                💳
+              {% endif %}
+            </div>
+            <div class="transaction-type">
+              <span class="transaction-type-label">{{ transaction.reason or transaction.transaction_type }}</span>
+              <span class="transaction-type-name">{{ transaction.get_human_readable_description() }}</span>
+            </div>
+          </div>
+          <div class="transaction-amount">
+            <span class="transaction-amount-badge {% if transaction.transaction_type == 'purchase' or transaction.transaction_type == 'debit' %}amount-debit{% else %}amount-credit{% endif %}">
+              {% if transaction.transaction_type == 'purchase' or transaction.transaction_type == 'debit' %}
+                -₦{{ "{:,.0f}".format(transaction.amount) }}
+              {% else %}
+                +₦{{ "{:,.0f}".format(transaction.amount) }}
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div style="text-align: right; margin-bottom: 16px;">
+          <span class="transaction-date">{{ transaction.timestamp.strftime('%d %b %Y, %I:%M %p') }}</span>
+        </div>
+
+        <!-- Details Section -->
+        <div class="transaction-details">
+          <h4>Transaction Breakdown</h4>
+
+          <!-- Balance Before -->
+          <div class="detail-row balance-before">
+            <span class="detail-label">Your Balance Before:</span>
+            <span class="detail-value">
+              {% if transaction.balance_before %}
+                ₦{{ "{:,.0f}".format(transaction.balance_before) }}
+              {% else %}
+                <em>Not recorded</em>
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Amount Changed -->
+          <div class="detail-row">
+            <span class="detail-label">
+              {% if transaction.transaction_type == 'purchase' or transaction.transaction_type == 'debit' %}
+                Amount Deducted:
+              {% else %}
+                Amount Added:
+              {% endif %}
+            </span>
+            <span class="detail-value">
+              {% if transaction.transaction_type == 'purchase' or transaction.transaction_type == 'debit' %}
+                -₦{{ "{:,.0f}".format(transaction.amount) }}
+              {% else %}
+                +₦{{ "{:,.0f}".format(transaction.amount) }}
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Balance After -->
+          <div class="balance-after">
+            <span class="detail-label">Your Balance After:</span>
+            <span class="detail-value">
+              {% if transaction.balance_after %}
+                ₦{{ "{:,.0f}".format(transaction.balance_after) }}
+              {% else %}
+                <em>Not recorded</em>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- Explanation -->
+        <div class="explanation-box">
+          <strong>📝 What Happened:</strong><br>
+          {% if transaction.transaction_type == 'purchase' %}
+            You purchased item(s) worth ₦{{ "{:,.0f}".format(transaction.amount) }}. This amount was deducted from your credit balance.
+          {% elif transaction.transaction_type == 'referral_signup_bonus' %}
+            Someone signed up using your referral code! You earned ₦{{ "{:,.0f}".format(transaction.amount) }} as a bonus.
+          {% elif transaction.transaction_type == 'referral_purchase_bonus' %}
+            Someone you referred made a purchase! You earned ₦{{ "{:,.0f}".format(transaction.amount) }} commission.
+          {% elif transaction.transaction_type == 'admin_credit' %}
+            An admin credited ₦{{ "{:,.0f}".format(transaction.amount) }} to your account. {{ transaction.description or '' }}
+          {% elif transaction.transaction_type == 'refund' %}
+            You received a refund of ₦{{ "{:,.0f}".format(transaction.amount) }} back to your account.
+          {% else %}
+            {{ transaction.description or 'Transaction processed successfully.' }}
+          {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div class="transaction-footer">
+          <span>Transaction ID: #{{ transaction.id }}</span>
+          {% if transaction.related_order_id %}
+            <a href="{{ url_for('user.order_details', order_id=transaction.related_order_id) }}" style="color: #667eea; text-decoration: none;">View Order →</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <h3 class="empty-title">No Transactions Yet</h3>
+      <p class="empty-description">You haven't made any transactions. Start trading to see your transaction history here!</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

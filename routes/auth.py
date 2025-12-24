@@ -70,11 +70,36 @@ def register():
                 username=form.username.data,
                 email=form.email.data,
                 password_hash=hashed_password,
-                credits=5000,
-                first_login=True
+                credits=1000,
+                first_login=True,
+                email_verified=False  # ✅ Email must be verified before account is active
             )
             db.session.add(user)
             db.session.commit()
+            
+            # ✅ Generate email verification token
+            verification_token = user.generate_email_verification_token()
+            db.session.commit()
+            
+            # ✅ Send verification email BEFORE handling referrals
+            from flask import url_for
+            verification_link = url_for('auth.verify_email', token=verification_token, _external=True)
+            support_url = url_for('marketplace.marketplace', _external=True)
+            
+            html = render_template(
+                "emails/verify_email.html", 
+                username=user.username,
+                verification_token=verification_token,
+                verification_link=verification_link,
+                support_url=support_url
+            )
+            send_email_async(
+                subject="✅ Verify Your Barterex Email Address",
+                recipients=[user.email],
+                html_body=html
+            )
+            
+            logger.info(f"Verification email sent to new user: {user.username} ({user.email})")
             
             # Handle referral if provided
             if form.referral_code.data:
@@ -113,16 +138,10 @@ def register():
                     db.session.commit()
                     logger.info(f"Referral processed: {referrer.username} referred {user.username}")
             
-            logger.info(f"New user registered: {user.username}")
+            logger.info(f"New user registered (pending email verification): {user.username}")
 
-            html = render_template("emails/welcome_email.html", username=user.username)
-            send_email_async(
-                subject="🎉 Welcome to Barterex!",
-                recipients=[user.email],
-                html_body=html
-            )
-
-            flash('Registration successful. Please log in.', 'success')
+            # ✅ Show message about email verification required
+            flash('✅ Registration successful! Please check your email to verify your account before logging in.', 'info')
             return redirect(url_for('auth.login'))
         
         except Exception as e:
@@ -132,6 +151,125 @@ def register():
             return render_template('register.html', form=form)
 
     return render_template('register.html', form=form)
+
+
+@auth_bp.route('/verify-email/<token>')
+@handle_errors
+def verify_email(token):
+    """
+    Verify user email address using the token sent in email.
+    This route activates the user account.
+    """
+    from app import db
+    
+    if not token:
+        logger.warning("Email verification attempted without token")
+        flash('❌ Invalid verification link. Please request a new one.', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    try:
+        # Find user with this verification token
+        user = User.query.filter_by(email_verification_token=token).first()
+        
+        if not user:
+            logger.warning(f"Email verification attempted with invalid token: {token[:10]}...")
+            flash('❌ Invalid verification link. This link may have expired or been already used.', 'danger')
+            return redirect(url_for('auth.login'))
+        
+        # Check if token is still valid
+        if not user.verify_email_token(token):
+            logger.warning(f"Email verification token expired or invalid for user: {user.username}")
+            flash('❌ Verification link has expired. Please request a new verification email.', 'warning')
+            return redirect(url_for('auth.resend_verification', email=user.email))
+        
+        # Mark email as verified
+        user.mark_email_verified()
+        db.session.commit()
+        
+        logger.info(f"✅ Email verified for user: {user.username}")
+        
+        # Send welcome email after verification
+        html = render_template("emails/welcome_email.html", username=user.username)
+        send_email_async(
+            subject="🎉 Welcome to Barterex!",
+            recipients=[user.email],
+            html_body=html
+        )
+        
+        flash('✅ Email verified successfully! Your account is now active. You can log in now.', 'success')
+        return redirect(url_for('auth.login'))
+        
+    except Exception as e:
+        logger.error(f"Error during email verification: {str(e)}", exc_info=True)
+        flash('An error occurred during verification. Please try again later.', 'danger')
+        return redirect(url_for('auth.login'))
+
+
+@auth_bp.route('/resend-verification', methods=['GET', 'POST'])
+@handle_errors
+def resend_verification():
+    """
+    Resend verification email to user.
+    """
+    from app import db
+    from flask import request
+    
+    email = request.args.get('email') or request.form.get('email', '')
+    
+    if request.method == 'GET':
+        return render_template('resend_verification.html', email=email)
+    
+    # POST request - resend verification
+    email = request.form.get('email', '').strip().lower()
+    
+    if not email:
+        flash('❌ Please enter your email address.', 'danger')
+        return render_template('resend_verification.html')
+    
+    try:
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            # Don't reveal whether email exists
+            logger.info(f"Resend verification requested for non-existent email: {email}")
+            flash('✅ If an account exists with this email, a verification link has been sent.', 'info')
+            return redirect(url_for('auth.login'))
+        
+        if user.email_verified:
+            logger.info(f"Resend verification requested for already verified user: {user.username}")
+            flash('ℹ️ Your email is already verified! You can log in now.', 'info')
+            return redirect(url_for('auth.login'))
+        
+        # Generate new verification token
+        verification_token = user.generate_email_verification_token()
+        db.session.commit()
+        
+        # Send verification email
+        from flask import url_for
+        verification_link = url_for('auth.verify_email', token=verification_token, _external=True)
+        support_url = url_for('marketplace.marketplace', _external=True)
+        
+        html = render_template(
+            "emails/verify_email.html", 
+            username=user.username,
+            verification_token=verification_token,
+            verification_link=verification_link,
+            support_url=support_url
+        )
+        send_email_async(
+            subject="✅ Verify Your Barterex Email Address",
+            recipients=[user.email],
+            html_body=html
+        )
+        
+        logger.info(f"Verification email resent to user: {user.username}")
+        flash('✅ Verification email sent! Please check your inbox.', 'success')
+        return redirect(url_for('auth.login'))
+        
+    except Exception as e:
+        logger.error(f"Error resending verification email: {str(e)}", exc_info=True)
+        flash('An error occurred. Please try again later.', 'danger')
+        return render_template('resend_verification.html', email=email)
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -168,13 +306,22 @@ def login():
                 )
 
             if user and check_password_hash(user.password_hash, password):
+                # ✅ Check if email is verified BEFORE allowing login
+                if not user.email_verified:
+                    logger.info(f"Unverified email login attempt: {username}")
+                    flash('❌ Please verify your email address before logging in. Check your inbox for the verification link.', 'warning')
+                    return render_template('login.html', form=form, show_resend=True, email=user.email)
+                
                 # Successful login - reset failed attempts
                 user.failed_login_attempts = 0
                 user.account_locked_until = None
                 db.session.commit()
 
-                login_user(user)
-                logger.info(f"User logged in: {username}")
+                # ✅ Handle Remember Me functionality
+                remember_me = form.remember_me.data if hasattr(form, 'remember_me') else False
+                login_user(user, remember=remember_me)
+                
+                logger.info(f"User logged in: {username} (Remember Me: {remember_me})")
 
                 if user.first_login:
                     flash(
@@ -184,7 +331,10 @@ def login():
                     user.first_login = False
                     db.session.commit()
                 else:
-                    flash('Login successful!', 'success')
+                    if remember_me:
+                        flash('Login successful! You will stay logged in for 30 days.', 'success')
+                    else:
+                        flash('Login successful!', 'success')
 
                 # Redirect to next_page if provided and safe, otherwise to dashboard
                 if next_page:

@@ -140,14 +140,33 @@ def admin_dashboard():
         search = request.args.get('search', '').strip()
         status = request.args.get('status', 'pending')
 
+        # CRITICAL: Validate search input to prevent SQL injection
+        # SQLAlchemy's ilike() provides protection, but we add defense-in-depth
+        if search:
+            # Limit search length to prevent DoS attacks
+            if len(search) > 100:
+                logger.warning(f"Search input exceeds maximum length - Length: {len(search)}, Value: {search[:50]}...")
+                search = search[:100]
+            
+            # Check for suspicious patterns (SQL keywords, special chars)
+            suspicious_patterns = ['--', '/*', '*/', 'union', 'select', 'insert', 'delete', 'drop', ';', '\\x00']
+            search_lower = search.lower()
+            if any(pattern in search_lower for pattern in suspicious_patterns):
+                logger.warning(f"Suspicious search pattern detected - Value: {search}")
+                flash("Invalid search characters detected.", "warning")
+                search = ""  # Clear search to prevent exploitation
+
         query = Item.query.options(joinedload(Item.user))
 
         if status != 'all':
             query = query.filter(Item.status == status)
 
         if search:
+            # CRITICAL: Use ilike() with proper parameter binding to prevent SQL injection
+            # ilike() automatically escapes the search term and uses parameterized queries
+            search_term = f"%{search}%"
             query = query.join(User).filter(
-                (Item.name.ilike(f"%{search}%")) | (User.username.ilike(f"%{search}%")) | (Item.item_number == search)
+                (Item.name.ilike(search_term)) | (User.username.ilike(search_term)) | (Item.item_number == search)
             )
 
         items = query.order_by(Item.id.desc()).paginate(page=page, per_page=10)
@@ -389,6 +408,12 @@ def approve_item(item_id):
     try:
         item = Item.query.get_or_404(item_id)
 
+        # CRITICAL: Check if item is already approved to prevent double-crediting
+        if item.is_approved:
+            logger.warning(f"Attempted to approve already-approved item - Item ID: {item_id}, Name: {item.name}, Admin ID: {session.get('admin_id')}")
+            flash(f"Item '{item.name}' is already approved.", "info")
+            return redirect(url_for('admin.approve_items'))
+
         # Validate and parse item value
         try:
             value = float(request.form['value'])
@@ -404,7 +429,7 @@ def approve_item(item_id):
         item.is_available = True
         item.status = 'approved'
 
-        # Award credits to user
+        # Award credits to user (only once, since we checked is_approved above)
         item.user.credits += int(value)
         # Mark item as modified to ensure changes persist through subsequent operations
         flag_modified(item, 'status')

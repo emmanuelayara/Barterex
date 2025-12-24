@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #ff7a00;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #ff7a00;
+            margin: 0;
+            font-size: 28px;
+        }
+        .header p {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+        .content {
+            margin: 30px 0;
+        }
+        .content h2 {
+            color: #1a1a1a;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+        .content p {
+            color: #555;
+            margin: 12px 0;
+            font-size: 15px;
+        }
+        .verification-box {
+            background-color: #f9f9f9;
+            border-left: 4px solid #ff7a00;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .verification-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
+            color: white;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .verification-button:hover {
+            transform: scale(1.05);
+        }
+        .code-container {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff7a00;
+            letter-spacing: 2px;
+            word-break: break-all;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #856404;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+        .footer a {
+            color: #ff7a00;
+            text-decoration: none;
+        }
+        .security-note {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #2e7d32;
+            font-size: 14px;
+        }
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding: 0;
+        }
+        .step-list li {
+            counter-increment: step-counter;
+            margin: 12px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .step-list li:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: #ff7a00;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎉 Welcome to Barterex!</h1>
+            <p>Verify Your Email Address & Claim Your ₦1,000 Login Bonus</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <h2>Hi {{ username }},</h2>
+            
+            <p>Thank you for creating an account with Barterex! We're excited to have you on board.</p>
+            
+            <p><strong>🎁 You've been credited with ₦1,000 naira</strong> as a welcome login bonus! Once you verify your email and log in, you can use these credits immediately.</p>
+            
+            <p>To complete your registration and unlock all features of Barterex, please verify your email address. This helps us keep your account secure and ensures you can receive important updates about your trades.</p>
+
+            <!-- Steps -->
+            <p><strong>Here's how to verify your email:</strong></p>
+            <ol class="step-list">
+                <li>Click the button below to verify your email</li>
+                <li>Confirm that you want to activate your account</li>
+                <li>Start trading on Barterex!</li>
+            </ol>
+
+            <!-- Verification Button -->
+            <div style="text-align: center;">
+                <a href="{{ verification_link }}" class="verification-button">
+                    ✅ Verify My Email
+                </a>
+            </div>
+
+            <!-- Token Info -->
+            <div class="verification-box">
+                <p><strong>Or use this verification code:</strong></p>
+                <div class="code-container">{{ verification_token }}</div>
+                <p style="font-size: 13px; color: #999; margin: 10px 0 0 0;">
+                    Copy this code if the button above doesn't work and paste it on the verification page.
+                </p>
+            </div>
+
+            <!-- Security Note -->
+            <div class="security-note">
+                <strong>🔒 Security Notice:</strong> This verification link will expire in <strong>24 hours</strong>. 
+                If you didn't create a Barterex account, please ignore this email. Do not share this link with anyone.
+            </div>
+
+            <!-- Warning -->
+            <div class="warning">
+                <strong>⚠️ Important:</strong> Your account is currently inactive. You won't be able to log in or trade until you verify your email address.
+            </div>
+
+            <!-- Additional Info -->
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                <strong>What happens next?</strong>
+                <br>
+                Once verified, you'll have full access to Barterex including:
+                <br>✓ Browse and post items for trading
+                <br>✓ Make trades with other users
+                <br>✓ Manage your inventory
+                <br>✓ Use your ₦1,000 welcome bonus
+                <br>✓ Earn trading points and rewards
+                <br>✓ Access all marketplace features
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                Need help? <a href="{{ support_url }}">Contact our support team</a>
+                <br>
+                Barterex © 2025. All rights reserved.
+            </p>
+            <p style="margin-top: 15px;">
+                This is an automated message. Please do not reply to this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

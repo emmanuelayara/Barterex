@@ -656,6 +656,78 @@
         .loading .submit-button {
             background: #a0aec0;
         }
+
+        /* Password Requirements Styling */
+        .password-requirements {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 3px solid #cbd5e0;
+        }
+
+        .req-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            padding: 6px 0;
+            color: #4a5568;
+            transition: all 0.2s ease;
+        }
+
+        .req-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #a0aec0;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        /* Met requirement - green state */
+        .req-item.met .req-icon {
+            background: #48bb78;
+            color: white;
+            box-shadow: 0 0 8px rgba(72, 187, 120, 0.3);
+        }
+
+        .req-item.met {
+            color: #2f855a;
+        }
+
+        /* Unmet requirement - red state */
+        .req-item.unmet .req-icon {
+            background: #fc8181;
+            color: white;
+        }
+
+        .req-item.unmet {
+            color: #c53030;
+        }
+
+        @media (max-width: 480px) {
+            .password-requirements {
+                padding: 10px;
+                margin-top: 10px;
+            }
+
+            .req-item {
+                font-size: 0.8rem;
+                padding: 5px 0;
+            }
+
+            .req-icon {
+                width: 18px;
+                height: 18px;
+                margin-right: 6px;
+            }
+        }
     </style>
 
     <div class="main-content">
@@ -694,7 +766,31 @@
                     <div class="form-group">
                         <label class="form-label">{{ form.password.label }}</label>
                         {{ form.password(class="form-input", placeholder="Create a strong password", id="password") }}
-                        <div class="form-hint" id="passwordHint">Min. 8 characters with uppercase, lowercase, and number</div>
+                        
+                        <!-- Password Requirements Checklist -->
+                        <div class="password-requirements" id="passwordRequirements">
+                            <div class="req-item" id="req-length">
+                                <span class="req-icon">✓</span>
+                                <span>At least 8 characters</span>
+                            </div>
+                            <div class="req-item" id="req-uppercase">
+                                <span class="req-icon">✓</span>
+                                <span>One uppercase letter (A-Z)</span>
+                            </div>
+                            <div class="req-item" id="req-lowercase">
+                                <span class="req-icon">✓</span>
+                                <span>One lowercase letter (a-z)</span>
+                            </div>
+                            <div class="req-item" id="req-number">
+                                <span class="req-icon">✓</span>
+                                <span>One number (0-9)</span>
+                            </div>
+                            <div class="req-item" id="req-special">
+                                <span class="req-icon">✓</span>
+                                <span>One special character (!@#$%^&*)</span>
+                            </div>
+                        </div>
+                        
                         <div class="password-strength" id="passwordStrength">
                             <div class="strength-bar">
                                 <div class="strength-fill"></div>
@@ -764,6 +860,9 @@
                 return;
             }
 
+            // Check requirements and update visual indicators
+            checkPasswordRequirements(password);
+
             passwordStrength.classList.add('show');
             const strength = calculatePasswordStrength(password);
             updatePasswordStrength(strength);
@@ -797,6 +896,49 @@
                     text.textContent = 'Strong password';
                     break;
             }
+        }
+
+        // Check and update password requirements in real-time
+        function checkPasswordRequirements(password) {
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*()_+\-=\[\]{};:'",./<>?\\|`~]/.test(password)
+            };
+
+            const requirementIds = {
+                length: 'req-length',
+                uppercase: 'req-uppercase',
+                lowercase: 'req-lowercase',
+                number: 'req-number',
+                special: 'req-special'
+            };
+
+            // Update UI for each requirement
+            for (const [key, isMet] of Object.entries(requirements)) {
+                const element = document.getElementById(requirementIds[key]);
+                if (element) {
+                    if (isMet) {
+                        element.classList.remove('unmet');
+                        element.classList.add('met');
+                        const icon = element.querySelector('.req-icon');
+                        if (icon && icon.textContent === '✓') {
+                            // Keep the checkmark
+                        }
+                    } else {
+                        element.classList.remove('met');
+                        element.classList.add('unmet');
+                        const icon = element.querySelector('.req-icon');
+                        if (icon) {
+                            icon.textContent = '✕';
+                        }
+                    }
+                }
+            }
+
+            return requirements;
         }
 
         // Password confirmation validation

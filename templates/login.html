@@ -786,6 +786,18 @@
                 <p>Sign in to your account to continue</p>
             </div>
 
+            {% if show_resend %}
+            <div class="alert alert-warning" style="margin: 0 0 20px 0; padding: 12px 16px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; color: #856404;">
+                <strong>📧 Email Not Verified</strong>
+                <p style="margin: 8px 0 0 0; font-size: 14px;">
+                    Your email hasn't been verified yet. Please check your inbox for the verification link.
+                </p>
+                <a href="{{ url_for('auth.resend_verification', email=email) }}" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 14px;">
+                    📨 Resend Verification Email
+                </a>
+            </div>
+            {% endif %}
+
             {% set form_action = url_for('auth.login', next=next_page) if next_page else url_for('auth.login') %}
             <form method="POST" action="{{ form_action }}" id="loginForm">
                 {{ form.hidden_tag() }}
@@ -811,9 +823,9 @@
                 </div>
 
                 <div class="remember-me">
-                    <div class="custom-checkbox" id="rememberCheckbox"></div>
-                    <label class="checkbox-label" for="rememberCheckbox">
-                        Remember me for 30 days
+                    {{ form.remember_me(id="rememberMe", class="form-checkbox") }}
+                    <label class="checkbox-label" for="rememberMe">
+                        {{ form.remember_me.label }}
                     </label>
                 </div>
 

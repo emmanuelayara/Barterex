@@ -189,8 +189,13 @@ def edit_item(item_id):
                 file = form.images.data[0]
                 if file and file.filename:
                     try:
-                        # Comprehensive file upload validation
-                        validate_upload(file, max_size=10*1024*1024, allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}))
+                        # Comprehensive file upload validation with STRICT security checks
+                        validate_upload(
+                            file, 
+                            max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
+                            allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}),
+                            enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+                        )
                         
                         if item.image_url:
                             old_path = os.path.join(app.root_path, item.image_url.strip("/"))
@@ -240,9 +245,9 @@ def my_trades():
 @handle_errors
 def credit_history():
     try:
-        history = CreditTransaction.query.filter_by(user_id=current_user.id).order_by(CreditTransaction.id.desc()).all()
+        history = CreditTransaction.query.filter_by(user_id=current_user.id).order_by(CreditTransaction.timestamp.desc()).all()
         logger.info(f"Credit history accessed - User: {current_user.username}, Transactions: {len(history)}")
-        return render_template('credit_history.html', history=history)
+        return render_template('transaction_history.html', history=history)
     except Exception as e:
         logger.error(f"Error loading credit history for user {current_user.username}: {str(e)}", exc_info=True)
         flash('An error occurred while loading your credit history.', 'danger')
@@ -338,8 +343,13 @@ def profile_settings():
                 file = form.profile_picture.data
                 if file.filename:
                     try:
-                        # Comprehensive file upload validation
-                        validate_upload(file, max_size=5*1024*1024, allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}))
+                        # Comprehensive file upload validation with STRICT security checks
+                        validate_upload(
+                            file, 
+                            max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
+                            allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}),
+                            enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+                        )
                         
                         unique_filename = generate_safe_filename(file, current_user.id)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
@@ -479,7 +489,12 @@ def settings():
                     file = profile_form.profile_picture.data
                     if file.filename:
                         try:
-                            validate_upload(file, max_size=5*1024*1024, allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}))
+                            validate_upload(
+                                file, 
+                                max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
+                                allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}),
+                                enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+                            )
                             unique_filename = generate_safe_filename(file, current_user.id)
                             file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                             file.save(file_path)

@@ -652,6 +652,19 @@
   .result-loading {
     text-align: center;
     padding: 30px 20px;
+    display: none;
+  }
+
+  .result-loading.show {
+    display: block;
+  }
+
+  #resultContent {
+    display: none;
+  }
+
+  #resultContent.show {
+    display: block;
   }
 
   .result-loading p {
@@ -923,8 +936,11 @@
           </label>
           <select id="condition" name="condition" class="form-select" required>
             <option value="">Select condition</option>
-            <option value="Brand New">Brand New</option>
-            <option value="Fairly Used">Fairly Used</option>
+            <option value="new">Brand New / Unopened</option>
+            <option value="like-new">Like New / Barely Used</option>
+            <option value="good">Good / Lightly Used</option>
+            <option value="fair">Fair / Used With Wear</option>
+            <option value="poor">Poor / Heavy Wear / Defects</option>
           </select>
         </div>
 
@@ -990,13 +1006,13 @@
 
     <!-- Estimation Result -->
     <div class="estimation-result" id="estimationResult">
-      <div id="loadingContent" class="result-loading" style="display: none;">
+      <div id="loadingContent" class="result-loading">
         <div class="loading-spinner"></div>
         <p class="loading-text">Analyzing your item with AI...</p>
         <p class="loading-subtext">Searching market prices and comparing similar items</p>
       </div>
 
-      <div id="resultContent" style="display: none;">
+      <div id="resultContent">
         <div class="result-header">
           <div class="result-header-icon">✨</div>
           <div class="result-header-text">
@@ -1008,13 +1024,13 @@
         <div class="result-content">
           <div class="result-item">
             <div class="result-item-label">Estimated Market Value</div>
-            <div class="result-item-value" id="estimatedPrice">$0.00</div>
-            <div class="result-item-subtext" id="priceRange">$0.00 - $0.00</div>
+            <div class="result-item-value" id="estimatedPrice">₦0</div>
+            <div class="result-item-subtext" id="priceRange">₦0 - ₦0</div>
           </div>
 
           <div class="result-item">
             <div class="result-item-label">Your Platform Credits</div>
-            <div class="result-item-value" id="creditAmount">0</div>
+            <div class="result-item-value" id="creditAmount">₦0</div>
             <div class="result-item-subtext">After 10% platform fee</div>
           </div>
         </div>
@@ -1033,12 +1049,44 @@
             <span class="detail-value" id="timestamp">Just now</span>
           </div>
         </div>
+
+        <!-- Action buttons -->
+        <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: center;">
+          <button onclick="tryAnother()" class="submit-btn" style="margin: 0;">
+            🔄 Valuate Another Item
+          </button>
+          <a href="/dashboard" class="back-btn" style="margin: 0; text-decoration: none;">
+            📊 Go to Dashboard
+          </a>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+  function tryAnother() {
+    // Show form again
+    const formContainer = document.querySelector('.form-container');
+    if (formContainer) {
+      formContainer.style.display = 'block';
+    }
+    
+    // Reset and hide results
+    estimationResult.classList.remove('show');
+    loadingContent.classList.remove('show');
+    resultContent.classList.remove('show');
+    
+    // Reset form
+    document.getElementById('valuateForm').reset();
+    imagePreview.innerHTML = '';
+    selectedFiles = [];
+    primaryImageIndex = 0;
+    
+    // Scroll back to top
+    document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+  }
+  
   // Image file handling
   const fileUploadArea = document.getElementById('fileUploadArea');
   const imageInput = document.getElementById('imageInput');
@@ -1243,6 +1291,18 @@
       return;
     }
 
+    const condition = document.getElementById('condition').value.trim();
+    if (!condition) {
+      showError('Please select an item condition');
+      return;
+    }
+
+    const category = document.getElementById('category').value.trim();
+    if (!category) {
+      showError('Please select a category');
+      return;
+    }
+
     // Clear previous messages
     errorMessage.classList.remove('show');
     successMessage.classList.remove('show');
@@ -1257,8 +1317,8 @@
     const formData = new FormData();
     formData.append('item_name', itemName);
     formData.append('description', description);
-    formData.append('condition', document.getElementById('condition').value);
-    formData.append('category', document.getElementById('category').value);
+    formData.append('condition', condition);
+    formData.append('category', category);
     
     console.log('Preparing form data:', {
       item_name: itemName,
@@ -1330,37 +1390,115 @@
     });
   });
 
+  // Exchange rate: 1 USD = ~1600 NGN (approximate, can be updated)
+  const EXCHANGE_RATE = 1600;
+  const CURRENCY = 'NGN'; // Nigerian Naira
+
+  function convertToNaira(usdAmount) {
+    return usdAmount * EXCHANGE_RATE;
+  }
+
+  function formatNaira(amount) {
+    return '₦' + amount.toLocaleString('en-NG', { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: 0 
+    });
+  }
+
   function showLoading() {
     estimationResult.classList.add('fade-in');
-    estimationResult.style.display = 'block';
-    loadingContent.style.display = 'block';
-    resultContent.style.display = 'none';
+    estimationResult.classList.add('show');
+    loadingContent.classList.add('show');
+    resultContent.classList.remove('show');
     estimationResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function displayEstimationResult(data) {
-    const priceInfo = data.price_estimate;
-    const creditInfo = data.credit_value;
+    console.log('=== DISPLAYING ESTIMATION RESULT ===');
+    console.log('Data received:', data);
+    
+    try {
+      const priceInfo = data.price_estimate;
+      const creditInfo = data.credit_value;
 
-    // Update values
-    document.getElementById('estimatedPrice').textContent = `$${priceInfo.estimated_price.toFixed(2)}`;
-    document.getElementById('priceRange').textContent = 
-      `$${priceInfo.price_range.min.toFixed(2)} - $${priceInfo.price_range.max.toFixed(2)}`;
-    
-    const credits = Math.floor(creditInfo.credit_value);
-    document.getElementById('creditAmount').textContent = `${credits}`;
-    
-    document.getElementById('dataPoints').textContent = 
-      `${priceInfo.data_points || 0} market listings`;
-    
-    // Confidence level
-    const confidence = priceInfo.confidence;
-    const confidenceElement = document.getElementById('confidenceLevel');
-    confidenceElement.textContent = confidence.charAt(0).toUpperCase() + confidence.slice(1);
+      console.log('Price info:', priceInfo);
+      console.log('Credit info:', creditInfo);
 
-    // Show result
-    loadingContent.style.display = 'none';
-    resultContent.style.display = 'block';
+      if (!priceInfo) {
+        console.error('Price info is missing!');
+        showError('Price estimation data is incomplete');
+        return;
+      }
+
+      // Convert USD to Nigerian Naira
+      const estimatedPriceNaira = convertToNaira(priceInfo.estimated_price);
+      const minNaira = convertToNaira(priceInfo.price_range.min);
+      const maxNaira = convertToNaira(priceInfo.price_range.max);
+      
+      // Update values with Nigerian Naira
+      const estimatedPriceEl = document.getElementById('estimatedPrice');
+      if (estimatedPriceEl) {
+        estimatedPriceEl.textContent = formatNaira(estimatedPriceNaira);
+        console.log('Updated estimatedPrice:', estimatedPriceEl.textContent);
+      }
+      
+      const priceRangeEl = document.getElementById('priceRange');
+      if (priceRangeEl) {
+        priceRangeEl.textContent = `${formatNaira(minNaira)} - ${formatNaira(maxNaira)}`;
+        console.log('Updated priceRange:', priceRangeEl.textContent);
+      }
+      
+      const creditAmountEl = document.getElementById('creditAmount');
+      if (creditAmountEl && creditInfo) {
+        const credits = Math.floor(creditInfo.credit_value * EXCHANGE_RATE);
+        creditAmountEl.textContent = formatNaira(credits);
+        console.log('Updated creditAmount:', creditAmountEl.textContent);
+      }
+      
+      const dataPointsEl = document.getElementById('dataPoints');
+      if (dataPointsEl) {
+        dataPointsEl.textContent = `${priceInfo.data_points || 0} market listings`;
+        console.log('Updated dataPoints:', dataPointsEl.textContent);
+      }
+      
+      // Confidence level
+      const confidence = priceInfo.confidence;
+      const confidenceElement = document.getElementById('confidenceLevel');
+      if (confidenceElement) {
+        confidenceElement.textContent = confidence;
+        console.log('Updated confidenceLevel:', confidenceElement.textContent);
+      }
+
+      // Update timestamp
+      const timestampEl = document.getElementById('timestamp');
+      if (timestampEl) {
+        const now = new Date();
+        timestampEl.textContent = now.toLocaleTimeString('en-NG');
+        console.log('Updated timestamp:', timestampEl.textContent);
+      }
+
+      // Show result - hide loading, show results
+      console.log('Hiding loadingContent, showing resultContent');
+      loadingContent.classList.remove('show');
+      resultContent.classList.add('show');
+      
+      // Hide the form when showing results (optional - makes it cleaner)
+      const formContainer = document.querySelector('.form-container');
+      if (formContainer) {
+        formContainer.style.display = 'none';
+      }
+      
+      // Scroll to show the result
+      setTimeout(() => {
+        estimationResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+      
+      console.log('=== ESTIMATION RESULT DISPLAYED ===');
+    } catch (error) {
+      console.error('Error in displayEstimationResult:', error);
+      console.error('Stack trace:', error.stack);
+      showError('Failed to display estimation result: ' + error.message);
+    }
   }
 
   function showError(message) {

@@ -11,12 +11,27 @@ from models import Item, ItemImage, Cart, CartItem, Trade, Order, OrderItem, Pic
 from forms import UploadItemForm, OrderForm
 from routes.auth import send_email_async
 from logger_config import setup_logger
-from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailableError, FileUploadError, DatabaseError
+from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailableError, FileUploadError, DatabaseError, CheckoutError
 from error_handlers import handle_errors, safe_database_operation, retry_operation
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
 from trading_points import award_points_for_purchase, create_level_up_notification
 from services.ai_price_estimator import get_price_estimator
+
+# Import limiter - handle gracefully if not available
+try:
+    from app import limiter
+except ImportError:
+    limiter = None
+
+# Helper decorator for conditional rate limiting
+def rate_limit(limit_str):
+    """Decorator that applies rate limiting if available, otherwise passes through"""
+    def decorator(func):
+        if limiter is not None:
+            return limiter.limit(limit_str)(func)
+        return func
+    return decorator
 
 logger = setup_logger(__name__)
 
@@ -108,8 +123,13 @@ def upload_item():
                 for index, file in enumerate(form.images.data):
                     if file and file.filename:
                         try:
-                            # Comprehensive file upload validation (magic bytes, size, integrity)
-                            validate_upload(file, max_size=10*1024*1024, allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}))
+                            # Comprehensive file upload validation with STRICT security checks
+                            validate_upload(
+                                file, 
+                                max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
+                                allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}),
+                                enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+                            )
                             
                             unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
                             image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
@@ -168,7 +188,9 @@ def upload_item():
 @safe_database_operation("add_to_cart")
 def add_to_cart(item_id):
     try:
-        item = Item.query.get_or_404(item_id)
+        # CRITICAL: Use row-level lock to prevent race condition
+        # Item could be purchased by another user between validation and add_to_cart
+        item = Item.query.filter_by(id=item_id).with_for_update().first_or_404()
 
         if not item.is_available:
             logger.warning(f"Attempt to add unavailable item to cart - Item: {item_id}, User: {current_user.username}")
@@ -288,9 +310,14 @@ def clear_cart():
 
 
 @items_bp.route('/checkout')
+@rate_limit("10 per minute")  # Rate limit: 10 requests per minute per IP
 @login_required
 @handle_errors
 def checkout():
+    """
+    NEW FLOW: Checkout now only validates items and sets up pending order.
+    Does NOT purchase yet - user must complete delivery setup first.
+    """
     try:
         cart = Cart.query.filter_by(user_id=current_user.id).first()
         
@@ -312,7 +339,13 @@ def checkout():
             logger.warning(f"Insufficient credits for checkout - User: {current_user.username}, Required: {total_cost}, Available: {current_user.credits}")
             raise InsufficientCreditsError(total_cost, current_user.credits)
         
-        return render_template('checkout.html', cart_items=available_items, total_cost=total_cost, csrf_token=generate_csrf)
+        # Store pending items in session (for delivery setup before purchase)
+        # Do NOT purchase yet - user must set up delivery first
+        session['pending_checkout_items'] = [ci.item_id for ci in available_items]
+        logger.info(f"Checkout initialized - User: {current_user.username}, Items: {len(available_items)}, Total: {total_cost}")
+        
+        # Redirect to delivery setup page (no purchase yet)
+        return redirect(url_for('items.order_item'))
         
     except InsufficientCreditsError as e:
         logger.warning(f"Insufficient credits: {str(e)}")
@@ -320,97 +353,343 @@ def checkout():
         return redirect(url_for('items.view_cart'))
 
 
-@items_bp.route('/process_checkout', methods=['POST'])
+@items_bp.route('/finalize_purchase', methods=['POST'])
+@rate_limit("10 per minute")  # Rate limit: 10 requests per minute per IP
 @login_required
 @handle_errors
-@safe_database_operation("process_checkout")
-def process_checkout():
+@safe_database_operation("finalize_purchase")
+def finalize_purchase():
+    """
+    NEW FLOW: This is called AFTER user sets up delivery details.
+    Finalizes the purchase by:
+    1. Re-validating all items are still available
+    2. Deducting credits
+    3. Linking items to user
+    4. Creating trades
+    5. Clearing cart
+    """
+    import uuid
+    from referral_rewards import award_referral_bonus
+    
+    # Generate unique transaction ID for audit trail
+    transaction_id = str(uuid.uuid4())[:8]
+    
     try:
-        from referral_rewards import award_referral_bonus
+        # Get pending checkout items from session
+        pending_item_ids = session.get('pending_checkout_items', [])
         
-        cart = Cart.query.filter_by(user_id=current_user.id).first()
-
-        if not cart or not cart.items:
-            logger.warning(f"Checkout attempted with empty cart - User: {current_user.username}")
-            flash("Your cart is empty.", "info")
+        if not pending_item_ids:
+            logger.warning(f"[TXN:{transaction_id}] Finalize purchase with no pending items - User: {current_user.username}")
+            flash("No items to purchase. Please start from checkout.", "info")
             return redirect(url_for('marketplace.marketplace'))
-
-        available = [ci for ci in cart.items if ci.item and ci.item.is_available]
-        if not available:
-            logger.warning(f"Checkout attempted with no available items - User: {current_user.username}")
-            flash("No available items in your cart.", "info")
-            return redirect(url_for('items.view_cart'))
-
-        total_cost = sum(ci.item.value for ci in available)
-        if current_user.credits < total_cost:
-            logger.warning(f"Insufficient credits during checkout - User: {current_user.username}, Required: {total_cost}, Available: {current_user.credits}")
-            raise InsufficientCreditsError(total_cost, current_user.credits)
-
-        purchased_items = []
-        level_up_notifications = []  # Track all level-ups
         
-        for ci in available:
-            item = ci.item
+        # Get items that are pending for purchase
+        items_to_purchase = Item.query.filter(Item.id.in_(pending_item_ids)).all()
+        
+        if not items_to_purchase:
+            logger.warning(f"[TXN:{transaction_id}] Pending items not found - User: {current_user.username}")
+            flash("Items not found. Please start from checkout.", "info")
+            return redirect(url_for('marketplace.marketplace'))
+        
+        # CRITICAL: Acquire row-level locks on all items to prevent race condition
+        logger.debug(f"[TXN:{transaction_id}] Acquiring locks on items: {pending_item_ids}")
+        locked_items = Item.query.filter(Item.id.in_(pending_item_ids)).with_for_update().all()
+        locked_items_dict = {item.id: item for item in locked_items}
+        
+        # PHASE 1: VALIDATION - Re-check all items are still available
+        logger.debug(f"[TXN:{transaction_id}] Phase 1: Re-validating items")
+        available = []
+        for item_id in pending_item_ids:
+            item = locked_items_dict.get(item_id)
+            if not item:
+                logger.warning(f"[TXN:{transaction_id}] Item not found - Item: {item_id}")
+                raise CheckoutError(f"Item became unavailable (not found)")
+            
             if not item.is_available:
-                logger.warning(f"Item became unavailable during checkout - Item: {item.id}, User: {current_user.username}")
-                continue
-
+                logger.warning(f"[TXN:{transaction_id}] Item became unavailable - Item: {item.id}")
+                raise CheckoutError(f"Item '{item.title}' is no longer available.")
+            
             seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
-            current_user.credits -= item.value
-            item.user_id = current_user.id
-            item.is_available = False
-
-            # Create trade record
-            trade = Trade(
-                sender_id=current_user.id,
-                receiver_id=seller_id,
-                item_id=item.id,
-                item_received_id=item.id,
-                status='completed'
-            )
-            db.session.add(trade)
-
-            # Award trading points for purchase (20 points per item)
-            # Use item.id as order reference for consistent tracking
-            level_up_info = award_points_for_purchase(current_user, f"item-{item.id}")
-            if level_up_info:
-                level_up_notifications.append(level_up_info)
-
-            purchased_items.append(item)
-            db.session.delete(ci)
+            if not seller_id:
+                logger.error(f"[TXN:{transaction_id}] Item has no owner - Item: {item.id}")
+                raise CheckoutError(f"Item '{item.title}' has invalid seller information.")
+            
+            if item.user_id == current_user.id:
+                logger.warning(f"[TXN:{transaction_id}] User already owns item - Item: {item.id}")
+                raise CheckoutError(f"You already own item '{item.title}'.")
+            
+            available.append(item)
         
-        # Commit all changes
+        # PHASE 2: CALCULATE - Compute total cost
+        logger.debug(f"[TXN:{transaction_id}] Phase 2: Calculating total cost")
+        total_cost = sum(item.value for item in available)
+        
+        if current_user.credits < total_cost:
+            logger.warning(f"[TXN:{transaction_id}] Insufficient credits - Required: {total_cost}, Available: {current_user.credits}")
+            raise InsufficientCreditsError(total_cost, current_user.credits)
+        
+        # PHASE 3: PROCESS - Atomic credit deduction and item linking
+        logger.debug(f"[TXN:{transaction_id}] Phase 3: Processing purchase (deducting credits, linking items)")
+        
+        purchased_items = []
+        level_up_notifications = []
+        failed_items = []
+        
+        # Single atomic credit deduction (all-or-nothing)
+        current_user.credits -= total_cost
+        current_user.last_checkout_transaction_id = transaction_id
+        current_user.last_checkout_timestamp = datetime.utcnow()
+        
+        # Process each item with savepoint for per-item error recovery
+        for item in available:
+            savepoint = db.session.begin_nested()
+            
+            try:
+                # Get seller ID BEFORE any changes
+                seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
+                
+                # Link item to buyer
+                item.user_id = current_user.id
+                item.is_available = False
+                
+                # Create trade record
+                trade = Trade(
+                    sender_id=current_user.id,
+                    receiver_id=seller_id,
+                    item_id=item.id,
+                    item_received_id=item.id,
+                    status='completed'
+                )
+                db.session.add(trade)
+
+                # Award trading points for purchase
+                level_up_info = award_points_for_purchase(current_user, f"item-{item.id}")
+                if level_up_info:
+                    level_up_notifications.append(level_up_info)
+                
+                # Commit this item's savepoint
+                savepoint.commit()
+                purchased_items.append(item)
+                logger.debug(f"[TXN:{transaction_id}] Item purchased - Item: {item.id}, Title: {item.title}")
+                
+            except Exception as e:
+                savepoint.rollback()
+                failed_items.append({
+                    'item_id': item.id,
+                    'title': item.title,
+                    'error': str(e)
+                })
+                logger.warning(f"[TXN:{transaction_id}] Item purchase failed - Item: {item.id}, Error: {str(e)}")
+        
+        # If no items were successfully purchased, refund credits
+        if not purchased_items and total_cost > 0:
+            current_user.credits += total_cost
+            logger.warning(f"[TXN:{transaction_id}] All items failed - Refunding credits: {total_cost}")
+            raise CheckoutError("Could not process any items in your order.")
+        
+        # Commit main transaction
         db.session.commit()
         
-        # Award referral bonus for purchase
-        referral_result = award_referral_bonus(current_user.id, 'purchase', amount=100)
-        if referral_result['success']:
-            logger.info(f"Referral bonus awarded: {referral_result['message']}")
+        # Award referral bonus for purchase (after commit)
+        try:
+            referral_result = award_referral_bonus(current_user.id, 'purchase', amount=100)
+            if referral_result['success']:
+                logger.info(f"[TXN:{transaction_id}] Referral bonus awarded: {referral_result['message']}")
+        except Exception as e:
+            logger.warning(f"[TXN:{transaction_id}] Failed to award referral bonus: {str(e)}")
         
-        # Create level up notifications for all level-ups that occurred (after commit)
+        # Create level-up notifications (after commit)
         for level_up_info in level_up_notifications:
             try:
                 create_level_up_notification(current_user, level_up_info)
             except Exception as e:
-                # Log but don't fail the checkout if notification fails
-                logger.error(f"Failed to create level-up notification: {str(e)}", exc_info=True)
+                logger.error(f"[TXN:{transaction_id}] Failed to create level-up notification: {str(e)}")
 
-        logger.info(f"Checkout completed successfully - User: {current_user.username}, Items: {len(purchased_items)}, Total: {total_cost}")
+        # Remove items from cart since they're now purchased
+        cart = Cart.query.filter_by(user_id=current_user.id).first()
+        if cart:
+            CartItem.query.filter(CartItem.cart_id == cart.id, CartItem.item_id.in_(pending_item_ids)).delete()
+            db.session.commit()
+
+        logger.info(f"[TXN:{transaction_id}] ✓ Purchase FINALIZED - User: {current_user.username}, Items: {len(purchased_items)}, Credits Deducted: {total_cost}")
+        if failed_items:
+            logger.warning(f"[TXN:{transaction_id}] ⚠ Some items failed: {failed_items}")
+        
+        # Clear pending items from session
+        session.pop('pending_checkout_items', None)
+        flash(f"✓ Purchase complete! {len(purchased_items)} item(s) purchased.", "success")
+        return redirect(url_for('user.dashboard'))
 
     except InsufficientCreditsError as e:
-        logger.warning(f"Insufficient credits error: {str(e)}")
+        logger.warning(f"[TXN:{transaction_id}] Insufficient credits error: {str(e)}")
         flash(str(e.message), 'danger')
         return redirect(url_for('items.view_cart'))
+    except CheckoutError as e:
+        logger.error(f"[TXN:{transaction_id}] Checkout error: {str(e)}")
+        flash(str(e), 'danger')
+        return redirect(url_for('items.view_cart'))
     except Exception as e:
-        logger.error(f"Error during checkout: {str(e)}", exc_info=True)
-        flash("Something went wrong while processing your purchase.", "danger")
+        logger.error(f"[TXN:{transaction_id}] Unexpected error during purchase finalization: {str(e)}", exc_info=True)
+        flash("Something went wrong while finalizing your purchase. Please contact support.", "danger")
+        return redirect(url_for('items.view_cart'))
+        
+        if not available:
+            logger.warning(f"[TXN:{transaction_id}] Checkout attempted with no available items - User: {current_user.username}")
+            flash("No available items in your cart.", "info")
+            return redirect(url_for('items.view_cart'))
+
+        # CRITICAL: Acquire row-level locks on all items to prevent race condition
+        # This ensures no other user can purchase the same items concurrently
+        item_ids = [ci.item_id for ci in available]
+        logger.debug(f"[TXN:{transaction_id}] Acquiring locks on items: {item_ids}")
+        
+        # Lock items with FOR UPDATE to prevent concurrent modifications
+        # This uses database-level locking: no other transaction can modify these rows
+        locked_items = Item.query.filter(Item.id.in_(item_ids)).with_for_update().all()
+        locked_items_dict = {item.id: item for item in locked_items}
+        
+        # Re-validate items after acquiring locks to prevent race condition
+        # (item could have been purchased by another user between validation and lock)
+        for ci in available:
+            item = locked_items_dict.get(ci.item_id)
+            if not item:
+                logger.warning(f"[TXN:{transaction_id}] Item not found during lock acquisition - Item: {ci.item_id}")
+                raise CheckoutError(f"Item became unavailable (not found in database)")
+            
+            if not item.is_available:
+                logger.warning(f"[TXN:{transaction_id}] Item became unavailable during validation - Item: {item.id}")
+                raise CheckoutError(f"Item '{item.title}' is no longer available.")
+            
+            seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
+            if not seller_id:
+                logger.error(f"[TXN:{transaction_id}] Item has no owner - Item: {item.id}")
+                raise CheckoutError(f"Item '{item.title}' has invalid seller information.")
+            
+            # Check that item is not already owned by current user (shouldn't happen, but double-check)
+            if item.user_id == current_user.id:
+                logger.warning(f"[TXN:{transaction_id}] User already owns item - Item: {item.id}, User: {current_user.id}")
+                raise CheckoutError(f"You already own item '{item.title}'.")
+
+        # PHASE 2: CALCULATE - Compute total cost
+        logger.debug(f"[TXN:{transaction_id}] Phase 2: Calculating total cost")
+        # Use locked items for cost calculation (not original cart items)
+        total_cost = sum(locked_items_dict[ci.item_id].value for ci in available)
+        
+        if current_user.credits < total_cost:
+            logger.warning(f"[TXN:{transaction_id}] Insufficient credits - Required: {total_cost}, Available: {current_user.credits}")
+            raise InsufficientCreditsError(total_cost, current_user.credits)
+
+        # PHASE 3: PROCESS - Atomic credit deduction and item linking
+        logger.debug(f"[TXN:{transaction_id}] Phase 3: Processing checkout (deducting credits, linking items)")
+        
+        purchased_items = []
+        level_up_notifications = []
+        failed_items = []
+        
+        # Single atomic credit deduction (not per-item)
+        # This ensures all-or-nothing: either all items purchased or none
+        current_user.credits -= total_cost
+        current_user.last_checkout_transaction_id = transaction_id
+        current_user.last_checkout_timestamp = datetime.utcnow()
+        
+        # Process each item with savepoint for per-item error recovery
+        # Use locked items to ensure no race condition
+        for ci in available:
+            # Get locked item (guaranteed to be locked and not modified by other transactions)
+            item = locked_items_dict.get(ci.item_id)
+            savepoint = db.session.begin_nested()
+            
+            try:
+                # CRITICAL: Get seller ID BEFORE any changes
+                seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
+                
+                # Link item to buyer
+                item.user_id = current_user.id
+                item.is_available = False
+                
+                # Create trade record
+                trade = Trade(
+                    sender_id=current_user.id,
+                    receiver_id=seller_id,
+                    item_id=item.id,
+                    item_received_id=item.id,
+                    status='completed'
+                )
+                db.session.add(trade)
+
+                # Award trading points for purchase (20 points per item)
+                level_up_info = award_points_for_purchase(current_user, f"item-{item.id}")
+                if level_up_info:
+                    level_up_notifications.append(level_up_info)
+
+                # Remove from cart
+                db.session.delete(ci)
+                
+                # Commit this item's savepoint
+                savepoint.commit()
+                purchased_items.append(item)
+                logger.debug(f"[TXN:{transaction_id}] Item processed - Item: {item.id}, Title: {item.title}")
+                
+            except Exception as e:
+                # Rollback only THIS item's changes, not the entire transaction
+                savepoint.rollback()
+                failed_items.append({
+                    'item_id': item.id,
+                    'title': item.title,
+                    'error': str(e)
+                })
+                logger.warning(f"[TXN:{transaction_id}] Item processing failed - Item: {item.id}, Error: {str(e)}")
+        
+        # If no items were successfully purchased, refund credits
+        if not purchased_items and total_cost > 0:
+            current_user.credits += total_cost
+            logger.warning(f"[TXN:{transaction_id}] All items failed - Refunding credits: {total_cost}")
+            raise CheckoutError("Could not process any items in your cart.")
+        
+        # Commit main transaction (credits deducted, items linked)
+        db.session.commit()
+        
+        # Award referral bonus for purchase (after commit)
+        try:
+            referral_result = award_referral_bonus(current_user.id, 'purchase', amount=100)
+            if referral_result['success']:
+                logger.info(f"[TXN:{transaction_id}] Referral bonus awarded: {referral_result['message']}")
+        except Exception as e:
+            logger.warning(f"[TXN:{transaction_id}] Failed to award referral bonus: {str(e)}")
+        
+        # Create level-up notifications (after commit)
+        for level_up_info in level_up_notifications:
+            try:
+                create_level_up_notification(current_user, level_up_info)
+            except Exception as e:
+                logger.error(f"[TXN:{transaction_id}] Failed to create level-up notification: {str(e)}")
+
+        # Log successful checkout
+        logger.info(f"[TXN:{transaction_id}] ✓ Checkout SUCCESSFUL - User: {current_user.username}, Items: {len(purchased_items)}, Credits Deducted: {total_cost}")
+        if failed_items:
+            logger.warning(f"[TXN:{transaction_id}] ⚠ Some items failed: {failed_items}")
+
+    except InsufficientCreditsError as e:
+        logger.warning(f"[TXN:{transaction_id}] Insufficient credits error: {str(e)}")
+        flash(str(e.message), 'danger')
+        return redirect(url_for('items.view_cart'))
+    except CheckoutError as e:
+        logger.error(f"[TXN:{transaction_id}] Checkout error: {str(e)}")
+        flash(str(e), 'danger')
+        return redirect(url_for('items.view_cart'))
+    except Exception as e:
+        logger.error(f"[TXN:{transaction_id}] Unexpected error during checkout: {str(e)}", exc_info=True)
+        flash("Something went wrong while processing your purchase. Please contact support if credits were deducted.", "danger")
         return redirect(url_for('items.view_cart'))
 
     if not purchased_items:
+        logger.warning(f"[TXN:{transaction_id}] No items purchased - redirecting to cart")
         return redirect(url_for('items.view_cart'))
 
+    # Success: Set up delivery for purchased items
     session['pending_order_items'] = [i.id for i in purchased_items]
-    flash("Now set up delivery for your purchased items.", "info")
+    flash(f"✓ Purchase complete! {len(purchased_items)} item(s) purchased. Now set up delivery.", "success")
+    logger.info(f"[TXN:{transaction_id}] Redirecting to order setup - Items: {[i.id for i in purchased_items]}")
     return redirect(url_for('items.order_item'))
 
 
@@ -419,109 +698,90 @@ def process_checkout():
 @handle_errors
 @safe_database_operation("order_item")
 def order_item():
+    """
+    NEW FLOW: User sets up delivery BEFORE purchase is finalized.
+    The purchase happens when they click "Confirm Purchase" button,
+    which calls finalize_purchase().
+    """
     form = OrderForm()
     stations = PickupStation.query.filter_by(state=current_user.state).all()
     form.pickup_station.choices = [(s.id, s.name) for s in stations]
-    pending_item_ids = session.get('pending_order_items', [])
-    items = Item.query.filter(Item.id.in_(pending_item_ids)).all()
+    
+    # Get pending items from checkout (not yet purchased)
+    pending_item_ids = session.get('pending_checkout_items', [])
+    items = Item.query.filter(Item.id.in_(pending_item_ids)).all() if pending_item_ids else []
+    
+    if not items:
+        logger.warning(f"Order setup attempted with no pending items - User: {current_user.username}")
+        flash("No items to set up delivery for. Please start from checkout.", "info")
+        return redirect(url_for('items.view_cart'))
     
     if request.method == 'GET' and current_user.address:
         form.delivery_address.data = current_user.address
     
     if form.validate_on_submit():
         try:
-            # Check if order was already created for this session to prevent duplicates
-            order_created_key = f"order_created_{pending_item_ids}"
-            if session.get(order_created_key):
-                logger.info(f"Duplicate order submission detected - User: {current_user.username}")
-                flash("Order already being processed. Please wait...", "info")
-                return redirect(url_for('user.dashboard'))
-            
-            # Mark this order as being processed
-            session[order_created_key] = True
-            
             delivery_method = form.delivery_method.data
             pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
             delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
             
-            # Calculate total credits for this order
-            total_credits = sum(item.value for item in items)
-            
-            # Generate unique order number with sequential counter to prevent duplicates
-            from datetime import datetime as dt
-            import random
-            # Add random component to ensure uniqueness even on same day
-            random_suffix = random.randint(1000, 9999)
-            order_number = f"ORD-{dt.utcnow().strftime('%Y%m%d')}-{current_user.id:05d}-{random_suffix}"
-            
-            # Create order with transaction clarity fields
-            order = Order(
-                user_id=current_user.id,
-                order_number=order_number,
-                delivery_method=delivery_method,
-                delivery_address=delivery_address,
-                pickup_station_id=pickup_station_id,
-                total_credits=total_credits,
-                credits_used=total_credits,
-                credits_balance_before=current_user.credits,
-                credits_balance_after=current_user.credits - total_credits,
-                estimated_delivery_date=calculate_estimated_delivery(delivery_method),
-                status='Pending'
-            )
-            db.session.add(order)
-            
-            for item_id in pending_item_ids:
-                db.session.add(OrderItem(order=order, item_id=item_id))
-            
-            db.session.commit()
-            
-            logger.info(f"Order created - User: {current_user.username}, Items: {len(items)}, Method: {delivery_method}, Order#: {order_number}")
-            
-            if delivery_method == "pickup":
-                station = PickupStation.query.get(pickup_station_id)
-                extra_info = f"Pickup Station: {station.name}, {station.address}" if station else ""
-            else:
-                extra_info = f"Delivery Address: {delivery_address}"
-            
-            item_names = [item.name for item in items]
-            if len(item_names) == 1:
-                item_info = f"Item: '{item_names[0]}' keep using Barterex for seamless trading."
-            else:
-                item_info = f"Items: {', '.join(item_names)} keep using Barterex for seamless trading."
-            
-            create_notification(
-                current_user.id,
-                f"📦 Your order has been set up for delivery via {delivery_method}. {item_info}. {extra_info}"
-            )
-            
-            # Send confirmation email ONCE
-            email_data = {
-                'username': current_user.username,
-                'order_id': order.id,
-                'items': items,
-                'delivery_method': delivery_method,
-                'delivery_address': delivery_address,
-                'pickup_station': PickupStation.query.get(pickup_station_id) if pickup_station_id else None,
-                'order_date': order.created_at.strftime('%B %d, %Y at %I:%M %p') if hasattr(order, 'created_at') else 'Today'
+            # Store delivery details in session for finalize_purchase to use
+            session['pending_delivery'] = {
+                'method': delivery_method,
+                'pickup_station_id': pickup_station_id,
+                'delivery_address': delivery_address
             }
+            logger.info(f"Delivery setup completed - User: {current_user.username}, Method: {delivery_method}")
             
-            html = render_template("emails/order_confirmation.html", **email_data)
-            send_email_async(
-                subject="📦 Order Confirmation - Barterex",
-                recipients=[current_user.email],
-                html_body=html
-            )
-            
-            session.pop('pending_order_items', None)
-            session.pop(order_created_key, None)
-            logger.info(f"Order confirmation email sent - User: {current_user.username}, Order: {order.id}")
-            flash("Delivery set up successfully for your purchased items! Confirmation email sent.", "success")
-            return redirect(url_for('user.dashboard'))
+            # Render the order review page with delivery details and purchase confirmation button
+            total_credits = sum(item.value for item in items)
+            return render_template('order_review.html', 
+                                 form=form, 
+                                 items=items,
+                                 delivery_method=delivery_method,
+                                 delivery_address=delivery_address,
+                                 pickup_station_id=pickup_station_id,
+                                 total_credits=total_credits,
+                                 csrf_token=generate_csrf)
         
         except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error creating order for user {current_user.id}: {str(e)}", exc_info=True)
-            flash('An error occurred while creating your order. Please try again.', 'danger')
+            logger.error(f"Error in delivery setup for user {current_user.id}: {str(e)}", exc_info=True)
+            flash('An error occurred while setting up delivery. Please try again.', 'danger')
+            return render_template('order_item.html', form=form, stations=stations, items=items)
+    
+    return render_template('order_item.html', form=form, stations=stations, items=items)
+    
+    if request.method == 'GET' and current_user.address:
+        form.delivery_address.data = current_user.address
+    
+    if form.validate_on_submit():
+        try:
+            delivery_method = form.delivery_method.data
+            pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
+            delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
+            
+            # Store delivery details in session for finalize_purchase to use
+            session['pending_delivery'] = {
+                'method': delivery_method,
+                'pickup_station_id': pickup_station_id,
+                'delivery_address': delivery_address
+            }
+            logger.info(f"Delivery setup completed - User: {current_user.username}, Method: {delivery_method}")
+            
+            # Render the order review page with delivery details and purchase confirmation button
+            total_credits = sum(item.value for item in items)
+            return render_template('order_review.html', 
+                                 form=form, 
+                                 items=items,
+                                 delivery_method=delivery_method,
+                                 delivery_address=delivery_address,
+                                 pickup_station_id=pickup_station_id,
+                                 total_credits=total_credits,
+                                 csrf_token=generate_csrf)
+        
+        except Exception as e:
+            logger.error(f"Error in delivery setup for user {current_user.id}: {str(e)}", exc_info=True)
+            flash('An error occurred while setting up delivery. Please try again.', 'danger')
             return render_template('order_item.html', form=form, stations=stations, items=items)
     
     return render_template('order_item.html', form=form, stations=stations, items=items)
@@ -530,6 +790,7 @@ def order_item():
 # ==================== AI PRICE ESTIMATION API ====================
 
 @items_bp.route('/api/estimate-price', methods=['POST'])
+@rate_limit("5 per minute")  # Rate limit: 5 requests per minute per IP (stricter for AI processing)
 @login_required
 def estimate_item_price():
     """
@@ -582,6 +843,8 @@ def estimate_item_price():
         # Estimate price
         item_label = item_name if item_name else description[:50]
         logger.info(f"Price estimation requested - User: {current_user.username}, Item: {item_label}, Images: {image_count}")
+        logger.info(f"DEBUG: Calling estimate_price with condition='{condition}', category='{category}'")
+        
         price_estimate = estimator.estimate_price(
             image_data=image_data,
             description=description,
@@ -589,14 +852,16 @@ def estimate_item_price():
             category=category
         )
         
+        logger.info(f"DEBUG: estimate_price returned: {price_estimate}")
+        
         # Adjust confidence based on number of images (optional enhancement)
         if image_count > 1:
             # Boost confidence slightly when multiple images provided
-            original_confidence = price_estimate.get('confidence', 'Standard')
-            if original_confidence == 'Standard':
-                price_estimate['confidence'] = 'Enhanced'
-            elif original_confidence == 'Good':
-                price_estimate['confidence'] = 'Very Good'
+            original_confidence = price_estimate.get('confidence', 'Low')
+            if original_confidence == 'Low':
+                price_estimate['confidence'] = 'Medium'
+            elif original_confidence == 'Medium':
+                price_estimate['confidence'] = 'High'
         
         # Calculate credit value
         credit_info = estimator.get_credit_value_estimate(

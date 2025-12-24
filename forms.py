@@ -1,15 +1,49 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField, FileField, IntegerField, MultipleFileField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, Optional
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, Optional, Regexp
 from flask_wtf.file import FileAllowed
 from models import User, Admin
+import re
+
+# Custom Password Validator
+class PasswordStrengthValidator:
+    """Validates password strength requirements"""
+    
+    def __init__(self, message=None):
+        self.message = message or (
+            'Password must be at least 8 characters and include: '
+            'uppercase letter, lowercase letter, number, and special character (!@#$%^&*)'
+        )
+    
+    def __call__(self, form, field):
+        password = field.data
+        
+        # Check minimum length
+        if len(password) < 8:
+            raise ValidationError('Password must be at least 8 characters long.')
+        
+        # Check for uppercase letter
+        if not re.search(r'[A-Z]', password):
+            raise ValidationError('Password must contain at least one uppercase letter.')
+        
+        # Check for lowercase letter
+        if not re.search(r'[a-z]', password):
+            raise ValidationError('Password must contain at least one lowercase letter.')
+        
+        # Check for number
+        if not re.search(r'\d', password):
+            raise ValidationError('Password must contain at least one number.')
+        
+        # Check for special character
+        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]', password):
+            raise ValidationError('Password must contain at least one special character (!@#$%^&*).')
 
 # ------------------ USER FORMS ------------------ #
 
 class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=25)])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    password = PasswordField('Password', validators=[DataRequired(), PasswordStrengthValidator()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     referral_code = StringField('Referral Code (Optional)', validators=[Optional(), Length(max=20)])
     submit = SubmitField('Register')
@@ -33,6 +67,7 @@ class RegisterForm(FlaskForm):
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember me for 30 days')
     submit = SubmitField('Login')
 
 
@@ -127,7 +162,7 @@ class ForgotPasswordForm(FlaskForm):
     submit = SubmitField('Reset Password')
 
 class ResetPasswordForm(FlaskForm):
-    password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
+    password = PasswordField('New Password', validators=[DataRequired(), PasswordStrengthValidator()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Update Password')
 
@@ -137,7 +172,7 @@ class ResetPasswordForm(FlaskForm):
 class AdminRegisterForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=25)])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    password = PasswordField('Password', validators=[DataRequired(), PasswordStrengthValidator()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register Admin')
 
@@ -169,7 +204,7 @@ class PickupStationForm(FlaskForm):
 class ChangePasswordForm(FlaskForm):
     """Form for users to change their password"""
     current_password = PasswordField('Current Password', validators=[DataRequired()])
-    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
+    new_password = PasswordField('New Password', validators=[DataRequired(), PasswordStrengthValidator()])
     confirm_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password', message='Passwords must match')])
     submit = SubmitField('Change Password')
 

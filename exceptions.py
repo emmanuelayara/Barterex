@@ -90,3 +90,9 @@ class ConfigurationError(BarterexException):
     """Raised when application configuration is invalid."""
     def __init__(self, message):
         super().__init__(message, 500)
+
+
+class CheckoutError(BarterexException):
+    """Raised when checkout process fails (e.g., item became unavailable, missing seller info)."""
+    def __init__(self, message):
+        super().__init__(message, 400)

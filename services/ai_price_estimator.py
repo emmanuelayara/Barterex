@@ -11,6 +11,10 @@ from typing import Dict, List, Optional, Tuple
 import json
 import logging
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Ensure .env is loaded
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +38,12 @@ class AIPriceEstimator:
         self.google_cx = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
         self.cache = {}  # Simple in-memory cache
         self.cache_duration = timedelta(hours=24)
+        
+        # Log API key status on initialization
+        logger.info(f"🔐 API Configuration:")
+        logger.info(f"   - OpenAI API: {'✓ Configured' if self.openai_api_key else '❌ Not configured'}")
+        logger.info(f"   - Google API Key: {'✓ Configured' if self.google_api_key else '❌ Not configured'}")
+        logger.info(f"   - Google Search ID: {'✓ Configured' if self.google_cx else '❌ Not configured'}")
     
     def estimate_price(
         self, 
@@ -59,10 +69,13 @@ class AIPriceEstimator:
         try:
             # Step 1: Try to search for market prices first (fastest path)
             search_query = self._build_search_query(description, None, category)
+            logger.info(f"🔎 Attempting to search market prices with query: {search_query[:80]}")
             price_data = self._search_market_prices(search_query, condition)
+            logger.info(f"📊 Market search returned {len(price_data)} results")
             
             # If we got market data, use it immediately
             if price_data:
+                logger.info(f"✓ Using market data ({len(price_data)} price points)")
                 adjusted_prices = self._adjust_for_condition(price_data, condition)
                 final_estimate = self._calculate_final_estimate(
                     adjusted_prices, 
@@ -73,7 +86,7 @@ class AIPriceEstimator:
                 return final_estimate
             
             # Step 2: If no market data, fall back to category-based estimate
-            logger.info("No market data found, using fallback estimate")
+            logger.info("⚠ No market data found, using fallback estimate")
             return self._get_fallback_estimate(category, condition)
             
         except Exception as e:
@@ -212,6 +225,7 @@ Return as JSON format."""
             return []
         
         try:
+            logger.info(f"🔍 Starting Google API search (timeout=15s) for: {query[:50]}...")
             # Search parameters
             params = {
                 'key': self.google_api_key,
@@ -220,23 +234,33 @@ Return as JSON format."""
                 'num': 10  # Get top 10 results
             }
             
+            logger.info(f"📡 Making request to Google Custom Search API...")
             response = requests.get(
                 'https://www.googleapis.com/customsearch/v1',
                 params=params,
-                timeout=8
+                timeout=15
             )
+            
+            logger.info(f"✓ Google API response received: Status {response.status_code}")
             
             if response.status_code == 200:
                 results = response.json().get('items', [])
                 prices = self._extract_prices_from_results(results)
-                logger.info(f"Found {len(prices)} price references for: {query}")
+                logger.info(f"✓ Found {len(prices)} price references from {len(results)} results")
                 return prices
             else:
-                logger.warning(f"Google Search API error: {response.status_code}")
+                logger.warning(f"⚠ Google Search API error: {response.status_code}")
                 return []
                 
+        except requests.exceptions.ConnectTimeout:
+            logger.error(f"❌ TIMEOUT: Google API connection timeout (15 seconds)")
+            logger.error(f"   This suggests network issues or Google servers unreachable")
+            return []
+        except requests.exceptions.ReadTimeout:
+            logger.error(f"❌ TIMEOUT: Google API read timeout (no data after 15s)")
+            return []
         except Exception as e:
-            logger.error(f"Price search failed: {str(e)}", exc_info=True)
+            logger.error(f"❌ Google API Error ({type(e).__name__}): {str(e)}")
             return []
     
     def _extract_prices_from_results(self, results: List[Dict]) -> List[Dict]:
@@ -319,11 +343,11 @@ Return as JSON format."""
         
         # Confidence based on data points
         if count >= 8:
-            confidence = "high"
+            confidence = "High"
         elif count >= 4:
-            confidence = "medium"
+            confidence = "Medium"
         else:
-            confidence = "low"
+            confidence = "Low"
         
         return {
             'estimated_price': round(median_price, 2),
@@ -345,24 +369,36 @@ Return as JSON format."""
         when API data is unavailable
         """
         
+        # Normalize category name for matching
+        category_key = category.lower().replace(' / ', ' ').replace(' & ', ' ').split()[0] if category else 'other'
+        
         # Category-based average prices
         category_averages = {
             'electronics': 150,
+            'phones': 150,
+            'gadgets': 150,
             'furniture': 200,
+            'fashion': 30,
             'clothing': 30,
-            'books': 15,
-            'toys': 25,
+            'footwear': 40,
+            'home': 80,
+            'kitchen': 80,
+            'beauty': 25,
+            'personal': 25,
             'sports': 50,
-            'tools': 75,
-            'appliances': 120,
-            'jewelry': 100,
-            'art': 80,
-            'collectibles': 60,
+            'outdoors': 50,
+            'groceries': 15,
+            'books': 15,
+            'stationery': 15,
+            'toys': 25,
+            'games': 25,
+            'health': 40,
+            'wellness': 40,
             'automotive': 300,
             'other': 50
         }
         
-        base_price = category_averages.get(category.lower(), 50)
+        base_price = category_averages.get(category_key, 50)
         
         # Adjust for condition
         condition_multipliers = {
@@ -384,7 +420,7 @@ Return as JSON format."""
                 'max': round(estimated_price * 1.3, 2),
                 'average': round(estimated_price, 2)
             },
-            'confidence': 'low',
+            'confidence': 'Low',
             'data_points': 0,
             'currency': 'USD',
             'timestamp': datetime.utcnow().isoformat(),
@@ -410,7 +446,7 @@ Return as JSON format."""
             'gross_value': round(gross_value, 2),
             'platform_commission': round(commission, 2),
             'commission_rate': f"{platform_commission * 100}%",
-            'net_credit_value': round(net_credit_value, 2),
+            'credit_value': round(net_credit_value, 2),
             'explanation': f"You'll receive approximately ${net_credit_value:.2f} in credits after {platform_commission * 100}% platform fee"
         }
 

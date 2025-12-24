@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from datetime import datetime
 import random
 import secrets
+from sqlalchemy.orm import validates
 
 
 class User(db.Model, UserMixin):
@@ -19,6 +20,16 @@ class User(db.Model, UserMixin):
     # Credits & first login flag
     credits = db.Column(db.Integer, default=0)
     first_login = db.Column(db.Boolean, default=True)
+    
+    # Checkout transaction tracking (CRITICAL: for audit trail and fraud detection)
+    last_checkout_transaction_id = db.Column(db.String(8), nullable=True)
+    last_checkout_timestamp = db.Column(db.DateTime, nullable=True)
+    
+    # Email verification (CRITICAL: users cannot log in until email is verified)
+    email_verified = db.Column(db.Boolean, default=False)
+    email_verification_token = db.Column(db.String(255), nullable=True, unique=True)
+    email_verification_sent_at = db.Column(db.DateTime, nullable=True)
+    email_verification_expires_at = db.Column(db.DateTime, nullable=True)
     
     # Gamification - Level, Tier, Referrals
     level = db.Column(db.Integer, default=1)  # User level based on trades
@@ -77,6 +88,30 @@ class User(db.Model, UserMixin):
             code = f"REF{self.id}{random.randint(1000, 9999)}"
             self.referral_code = code
         return self.referral_code
+
+    def generate_email_verification_token(self):
+        """Generate a secure email verification token"""
+        from datetime import datetime, timedelta
+        self.email_verification_token = secrets.token_urlsafe(32)
+        self.email_verification_sent_at = datetime.utcnow()
+        self.email_verification_expires_at = datetime.utcnow() + timedelta(hours=24)  # Token valid for 24 hours
+        return self.email_verification_token
+    
+    def verify_email_token(self, token):
+        """Verify if the provided token is valid and not expired"""
+        from datetime import datetime
+        if not self.email_verification_token or self.email_verification_token != token:
+            return False
+        if not self.email_verification_expires_at or datetime.utcnow() > self.email_verification_expires_at:
+            return False
+        return True
+    
+    def mark_email_verified(self):
+        """Mark email as verified and clear verification token"""
+        self.email_verified = True
+        self.email_verification_token = None
+        self.email_verification_expires_at = None
+        return True
 
 
 class Admin(db.Model):
@@ -159,6 +194,45 @@ class Item(db.Model):
     )
     
     images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
+    
+    # Valid condition values for items
+    VALID_CONDITIONS = {'Brand New', 'Like New', 'Lightly Used', 'Fairly Used', 'Used', 'For Parts'}
+    
+    @validates('value')
+    def validate_value(self, key, value):
+        """Validate that item price/value is positive"""
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise ValueError('Price must be a number')
+            if value < 0:
+                raise ValueError('Price cannot be negative')
+            if value == 0:
+                raise ValueError('Price must be greater than 0')
+        return value
+    
+    @validates('condition')
+    def validate_condition(self, key, condition):
+        """Validate that item condition is one of allowed values"""
+        if condition is not None:
+            condition = str(condition).strip()
+            if condition not in self.VALID_CONDITIONS:
+                valid_options = ', '.join(sorted(self.VALID_CONDITIONS))
+                raise ValueError(f'Invalid condition. Must be one of: {valid_options}')
+        return condition
+    
+    # Database indexes for frequently queried fields (performance optimization)
+    # ✅ user_id: Used in dashboard, user profile, "my items" queries
+    # ✅ category: Used in marketplace filtering and search
+    # ✅ is_available: Used in marketplace listings, available items queries
+    # ✅ status: Used in filtering pending/approved/rejected items
+    __table_args__ = (
+        db.Index('idx_item_user_id', 'user_id'),
+        db.Index('idx_item_category', 'category'),
+        db.Index('idx_item_is_available', 'is_available'),
+        db.Index('idx_item_status', 'status'),
+        # Composite index for common combined queries
+        db.Index('idx_item_category_available', 'category', 'is_available'),
+    )
 
 
 
@@ -201,6 +275,15 @@ class Trade(db.Model):
     status = db.Column(db.String(20), nullable=False, default='pending')
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Database indexes for frequently queried fields (performance optimization)
+    # ✅ status: Used in filtering trades by status (pending, completed, etc.)
+    # ✅ sender_id/receiver_id: Used for user's trade history
+    __table_args__ = (
+        db.Index('idx_trade_status', 'status'),
+        db.Index('idx_trade_sender_id', 'sender_id'),
+        db.Index('idx_trade_receiver_id', 'receiver_id'),
+    )
 
 
 class Order(db.Model):
@@ -271,9 +354,34 @@ class CreditTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     amount = db.Column(db.Integer, nullable=False)
-    transaction_type = db.Column(db.String(50))  # e.g., 'credit', 'debit'
+    transaction_type = db.Column(db.String(50))  # e.g., 'credit', 'debit', 'purchase', 'referral_bonus'
+    description = db.Column(db.String(255), nullable=True)  # Detailed description for user
+    reason = db.Column(db.String(100), nullable=True)  # Reason for transaction (e.g., 'item_purchase', 'sign_up_bonus')
+    balance_before = db.Column(db.Float, nullable=True)  # User's credit balance before transaction
+    balance_after = db.Column(db.Float, nullable=True)  # User's credit balance after transaction
+    related_order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=True)  # Link to order if applicable
+    related_item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=True)  # Link to item if applicable
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('User', back_populates='transactions')  # Assuming User has a transactions relationship
+    
+    def get_human_readable_description(self):
+        """Generate a human-readable explanation of the transaction"""
+        if self.description:
+            return self.description
+        
+        # Default descriptions based on transaction type
+        if self.transaction_type == 'purchase':
+            return f"Paid ₦{self.amount:,.0f} for item purchase"
+        elif self.transaction_type == 'referral_signup_bonus':
+            return f"Earned ₦{self.amount:,.0f} referral bonus from new signup"
+        elif self.transaction_type == 'referral_purchase_bonus':
+            return f"Earned ₦{self.amount:,.0f} referral bonus from purchase"
+        elif self.transaction_type == 'admin_credit':
+            return f"Received ₦{self.amount:,.0f} from admin"
+        elif self.transaction_type == 'refund':
+            return f"Refunded ₦{self.amount:,.0f}"
+        else:
+            return f"{self.transaction_type.replace('_', ' ').title()}: ₦{self.amount:,.0f}"
     
 
 
@@ -287,6 +395,12 @@ class Cart(db.Model):
     # Relationships
     user = db.relationship('User', backref='cart_items')
     items = db.relationship('CartItem', backref='cart', cascade='all, delete-orphan')
+    
+    # Database indexes for frequently queried fields (performance optimization)
+    # ✅ user_id: Used in Cart.query.filter_by(user_id=...) for user cart lookups
+    __table_args__ = (
+        db.Index('idx_cart_user_id', 'user_id'),
+    )
 
 
     def get_total_cost(self):
@@ -314,8 +428,12 @@ class CartItem(db.Model):
     # Relationships
     item = db.relationship('Item', backref='cart_items')
     
-    # Composite unique constraint to prevent duplicate items in same cart
-    __table_args__ = (db.UniqueConstraint('cart_id', 'item_id', name='unique_cart_item'),)
+    # Composite unique constraint + indexes for performance optimization
+    # ✅ cart_id: Used in CartItem.query.filter_by(cart_id=...) for cart item lookups
+    __table_args__ = (
+        db.UniqueConstraint('cart_id', 'item_id', name='unique_cart_item'),
+        db.Index('idx_cartitem_cart_id', 'cart_id'),
+    )
 
 
 class Referral(db.Model):

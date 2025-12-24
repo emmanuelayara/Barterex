@@ -21,10 +21,15 @@ load_dotenv()
 app = Flask(__name__)
 
 UPLOAD_FOLDER = 'static/uploads/'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max size: 50MB
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max size: 50MB (global limit)
+app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
+
+# ✅ File upload security configuration
+app.config['FILE_UPLOAD_MAX_SIZE'] = 10 * 1024 * 1024  # 10MB default per file
+app.config['FILE_UPLOAD_ENABLE_VIRUS_SCAN'] = False  # Set to True if ClamAV is available (apt-get install clamav)
 
 # ✅ Load config from environment variables
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
@@ -35,7 +40,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # No JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)  # 1 hour timeout
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # 30 days for Remember Me functionality
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)  # Remember Me cookie lasts 30 days
+app.config['REMEMBER_COOKIE_SECURE'] = True  # HTTPS only for remember cookie
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True  # No JavaScript access to remember cookie
 app.config['WTF_CSRF_ENABLED'] = True  # Enable CSRF protection
 app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit for CSRF tokens
 
@@ -52,17 +60,13 @@ app.config['MAIL_DEFAULT_SENDER'] = (mail_sender_name.strip(), mail_sender_email
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'
+login_manager.remember_cookie_duration = timedelta(days=30)  # Remember Me for 30 days
+login_manager.remember_cookie_secure = True  # HTTPS only
+login_manager.remember_cookie_httponly = True  # No JavaScript access
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-# Import models and blueprints
-from models import *
-from routes import auth_bp, marketplace_bp, user_bp, items_bp, admin_bp
-from routes.notifications_api import notifications_bp
-from routes_account import account_bp
-from notifications import NotificationService
-
-# ✅ Initialize rate limiter AFTER models are imported
+# ✅ Initialize rate limiter BEFORE importing routes (to avoid circular import)
 if LIMITER_AVAILABLE:
     limiter = Limiter(
         app=app,
@@ -72,6 +76,13 @@ if LIMITER_AVAILABLE:
     )
 else:
     limiter = None
+
+# Import models and blueprints
+from models import *
+from routes import auth_bp, marketplace_bp, user_bp, items_bp, admin_bp
+from routes.notifications_api import notifications_bp
+from routes_account import account_bp
+from notifications import NotificationService
 
 # ✅ User loader for Flask-Login
 @login_manager.user_loader
