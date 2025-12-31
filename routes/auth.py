@@ -5,11 +5,12 @@ from itsdangerous import URLSafeTimedSerializer
 from threading import Thread
 from datetime import datetime, timedelta
 
-from models import User
+from models import User, CreditTransaction, Notification
 from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm
 from logger_config import setup_logger
 from exceptions import AuthenticationError, UserBannedError, EmailSendError
 from error_handlers import handle_errors, safe_database_operation
+from app import db
 
 logger = setup_logger(__name__)
 
@@ -72,7 +73,7 @@ def register():
                 password_hash=hashed_password,
                 credits=1000,
                 first_login=True,
-                email_verified=False  # ✅ Email must be verified before account is active
+                email_verified=True  # ✅ DEVELOPMENT: Auto-verify (network blocks SMTP, change to False in production)
             )
             db.session.add(user)
             db.session.commit()

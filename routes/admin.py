@@ -343,6 +343,40 @@ def reject_unban(user_id):
         return redirect(url_for('admin.manage_users'))
 
 
+@admin_bp.route('/delete_user/<int:user_id>', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("delete_user")
+def delete_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        username = user.username
+        
+        # Prevent admin from deleting themselves
+        if user.id == session.get('admin_id'):
+            logger.warning(f"Admin attempted self-deletion - Admin ID: {session.get('admin_id')}")
+            flash("You cannot delete your own admin account.", 'danger')
+            return redirect(url_for('admin.manage_users'))
+        
+        # Get user's items for cleanup
+        user_items = Item.query.filter_by(user_id=user.id).all()
+        
+        # Delete user and cascade delete related data
+        # This will automatically delete items, orders, notifications, etc. due to cascade rules
+        db.session.delete(user)
+        db.session.commit()
+        
+        logger.warning(f"User account deleted - User ID: {user_id}, Username: {username}, Items: {len(user_items)}, Admin ID: {session.get('admin_id')}")
+        flash(f'User account "{username}" has been permanently deleted along with all associated data.', 'success')
+        return redirect(url_for('admin.manage_users'))
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting user {user_id}: {str(e)}", exc_info=True)
+        flash('An error occurred while deleting the user account.', 'danger')
+        return redirect(url_for('admin.manage_users'))
+
+
 @admin_bp.route('/user/<int:user_id>/edit', methods=['GET', 'POST'])
 @admin_login_required
 @handle_errors
