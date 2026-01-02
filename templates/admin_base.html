@@ -342,11 +342,11 @@
         </div>
         
         <div class="nav-item">
-          <a href="{{ url_for('admin.approve_items') }}" class="nav-link">
-            <i class="bi bi-check-circle"></i>
-            Approve Items
-            <!-- Add notification badge if needed -->
-            <!-- <span class="count-badge">3</span> -->
+          <a href="{{ url_for('admin.approve_items') }}" class="nav-link d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-check-circle"></i> Approve Items</span>
+            {% if pending_items_count > 0 %}
+            <span class="badge bg-danger rounded-pill ms-2" title="{{ pending_items_count }} items pending approval">{{ pending_items_count }}</span>
+            {% endif %}
           </a>
         </div>
         
@@ -354,6 +354,13 @@
           <a href="{{ url_for('admin.manage_users') }}" class="nav-link">
             <i class="bi bi-people"></i>
             Manage Users
+          </a>
+        </div>
+        
+        <div class="nav-item">
+          <a href="{{ url_for('admin.audit_log') }}" class="nav-link">
+            <i class="bi bi-shield-check"></i>
+            Audit Log
           </a>
         </div>
         

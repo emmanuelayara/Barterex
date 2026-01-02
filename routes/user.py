@@ -1,5 +1,7 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file
+from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, Response
 from flask_login import login_required, current_user, logout_user
+from sqlalchemy.orm import joinedload
+from typing import Dict, Any, Union, Tuple
 import os
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -12,6 +14,10 @@ from exceptions import ResourceNotFoundError, ValidationError, AuthorizationErro
 from error_handlers import handle_errors, safe_database_operation
 from transaction_clarity import generate_pdf_receipt, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
+from input_validators import (
+    validate_email, validate_phone, validate_address, 
+    validate_item_name, validate_description, validate_search_query
+)
 from rank_rewards import get_tier_info, get_tier_badge
 from trading_points import get_points_to_next_level, MAX_LEVEL
 
@@ -28,7 +34,7 @@ user_bp = Blueprint('user', __name__)
 @user_bp.route('/dashboard')
 @login_required
 @handle_errors
-def dashboard():
+def dashboard() -> Union[str, Response]:
     try:
         if current_user.is_banned:
             logger.warning(f"Banned user attempted to access dashboard: {current_user.username}")
@@ -77,7 +83,8 @@ def dashboard():
         orders_placed = Order.query.filter_by(user_id=current_user.id).count()
         
         # Get similar items (recommendations) - get 2 most recent items from other users that are approved and available
-        similar_items = Item.query.filter(
+        # Using eager loading to prevent N+1 queries
+        similar_items = Item.query.options(joinedload(Item.user)).filter(
             Item.user_id != current_user.id,
             Item.is_approved == True,
             Item.is_available == True
@@ -127,24 +134,10 @@ def dashboard():
         return redirect(url_for('marketplace.home'))
 
 
-@user_bp.route('/valuate')
-@login_required
-@handle_errors
-def valuate():
-    """Valuate item page - users can get AI price estimates without uploading"""
-    try:
-        logger.info(f"User accessed valuate page - User: {current_user.username}")
-        return render_template('valuate.html')
-    except Exception as e:
-        logger.error(f"Error loading valuate page for user {current_user.username}: {str(e)}", exc_info=True)
-        flash('An error occurred while loading the valuation page.', 'danger')
-        return redirect(url_for('user.dashboard'))
-
-
 @user_bp.route('/user-items')
 @login_required
 @handle_errors
-def user_items():
+def user_items() -> Union[str, Response]:
     try:
         page = request.args.get('page', 1, type=int)
         # Get items uploaded by the user, excluding items that were purchased (in OrderItem)
@@ -163,7 +156,7 @@ def user_items():
 @login_required
 @handle_errors
 @safe_database_operation("edit_item")
-def edit_item(item_id):
+def edit_item(item_id: int) -> Union[str, Response]:
     try:
         item = Item.query.get_or_404(item_id)
         
@@ -328,16 +321,42 @@ def notification_settings():
 @login_required
 @handle_errors
 @safe_database_operation("profile_settings")
-def profile_settings():
+def profile_settings() -> Union[str, Response]:
     try:
         form = ProfileUpdateForm(obj=current_user)
 
         if request.method == 'POST':
-            current_user.email = request.form['email']
-            current_user.phone_number = request.form['phone_number']
-            current_user.address = request.form['address']
-            current_user.city = request.form['city']
-            current_user.state = request.form['state']
+            email = request.form.get('email', '').strip()
+            phone = request.form.get('phone_number', '').strip()
+            address = request.form.get('address', '').strip()
+            city = request.form.get('city', '').strip()
+            state = request.form.get('state', '').strip()
+            
+            # Validate email
+            is_valid, error_msg = validate_email(email)
+            if not is_valid:
+                flash(f"Invalid email: {error_msg}", 'danger')
+                return render_template('profile_settings.html', user=current_user, form=form)
+            
+            # Validate phone (optional)
+            if phone:
+                is_valid, error_msg = validate_phone(phone)
+                if not is_valid:
+                    flash(f"Invalid phone: {error_msg}", 'danger')
+                    return render_template('profile_settings.html', user=current_user, form=form)
+            
+            # Validate address (optional)
+            if address:
+                is_valid, error_msg = validate_address(address)
+                if not is_valid:
+                    flash(f"Invalid address: {error_msg}", 'danger')
+                    return render_template('profile_settings.html', user=current_user, form=form)
+            
+            current_user.email = email
+            current_user.phone_number = phone or None
+            current_user.address = address or None
+            current_user.city = city or None
+            current_user.state = state or None
             
             if form.profile_picture.data:
                 file = form.profile_picture.data
@@ -362,6 +381,7 @@ def profile_settings():
             else:
                 current_user.profile_picture = None
             
+            db.session.commit()
             logger.info(f"Profile updated successfully - User: {current_user.username}, Email: {current_user.email}")
             flash('Profile updated successfully', 'success')
             return redirect(url_for('user.dashboard'))

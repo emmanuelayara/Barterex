@@ -53,13 +53,17 @@ EXTENSION_MIME_MAP = {
 }
 
 # File size limits by type (in bytes)
+# Optimized for web usage while maintaining quality
 FILE_SIZE_LIMITS = {
-    'jpg': 10 * 1024 * 1024,      # 10MB for JPEG
-    'jpeg': 10 * 1024 * 1024,     # 10MB for JPEG
-    'png': 15 * 1024 * 1024,      # 15MB for PNG (larger due to lossless)
-    'gif': 5 * 1024 * 1024,       # 5MB for GIF
-    'webp': 10 * 1024 * 1024,     # 10MB for WebP
+    'jpg': 5 * 1024 * 1024,        # 5MB for JPEG (optimized for web)
+    'jpeg': 5 * 1024 * 1024,       # 5MB for JPEG
+    'png': 8 * 1024 * 1024,        # 8MB for PNG (lossless, larger files)
+    'gif': 3 * 1024 * 1024,        # 3MB for GIF (animated images)
+    'webp': 5 * 1024 * 1024,       # 5MB for WebP (modern format)
 }
+
+# Global max file size (safety limit)
+GLOBAL_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB absolute maximum
 
 
 def get_file_type_from_magic_bytes(file_data):
@@ -236,6 +240,12 @@ def validate_image_integrity(file_data, max_dimensions=(4096, 4096)):
         if width > max_width or height > max_height:
             logger.warning(f"Image dimensions too large: {width}x{height} > {max_width}x{max_height}")
             return False, f"Image dimensions too large: {width}x{height}. Maximum: {max_width}x{max_height}"
+        
+        # Check minimum dimensions (prevent tiny placeholder images)
+        min_width, min_height = 50, 50  # Minimum 50x50 pixels
+        if width < min_width or height < min_height:
+            logger.warning(f"Image dimensions too small: {width}x{height} < {min_width}x{min_height}")
+            return False, f"Image dimensions too small: {width}x{height}. Minimum: {min_width}x{min_height}"
         
         logger.debug(f"Image validation passed - Type: {img.format}, Size: {img.size}, Dimensions: {width}x{height}")
         return True, "Image valid"

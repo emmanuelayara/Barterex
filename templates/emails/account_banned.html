@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .alert {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #dc3545;
+            margin-bottom: 12px;
+        }
+        .reason-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #dc3545;
+        }
+        .appeal-info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .appeal-info strong {
+            color: #0c5460;
+        }
+        .timeline {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+        .timeline li {
+            padding: 10px 0;
+            padding-left: 25px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+        .timeline li:last-child {
+            border-bottom: none;
+        }
+        .timeline li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .button-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer-note {
+            margin: 10px 0;
+        }
+        .account-status {
+            background-color: #fff5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+            color: #dc3545;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Account Suspended</h1>
+        </div>
+
+        <div class="content">
+            <p>Hello <strong>{{ username }}</strong>,</p>
+
+            <p>We regret to inform you that your Barter Express account has been suspended effective immediately due to a violation of our platform's terms of service and community guidelines.</p>
+
+            <div class="account-status">
+                Your account is currently SUSPENDED
+            </div>
+
+            <div class="section">
+                <div class="section-title">Reason for Suspension</div>
+                <div class="reason-box">
+                    <p>{{ reason }}</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">What This Means</div>
+                <ul class="timeline">
+                    <li>You cannot log in to your account</li>
+                    <li>Your items are no longer visible on the marketplace</li>
+                    <li>You cannot place new orders or trades</li>
+                    <li>Your open orders may be affected</li>
+                </ul>
+            </div>
+
+            <div class="appeal-info">
+                <strong>📝 Appeal Process</strong>
+                <p>If you believe this suspension is in error or would like to appeal this decision, please contact our support team with:</p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Your username and email address</li>
+                    <li>A detailed explanation of why you believe the suspension should be lifted</li>
+                    <li>Any relevant supporting evidence</li>
+                </ul>
+                <p><strong>Email:</strong> support@barterex.com</p>
+                <p><strong>Include in subject:</strong> "Account Appeal - [Your Username]"</p>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Our Community Standards</div>
+                <p>We take the safety and integrity of our marketplace seriously. All users are expected to:</p>
+                <ul>
+                    <li>Follow our Terms of Service</li>
+                    <li>Treat other users with respect</li>
+                    <li>Provide accurate item descriptions</li>
+                    <li>Complete transactions fairly and honestly</li>
+                    <li>Respect intellectual property and copyright laws</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Next Steps</div>
+                <ol>
+                    <li>Review our <strong>Terms of Service</strong> and <strong>Community Guidelines</strong></li>
+                    <li>Understand what led to this suspension</li>
+                    <li>If you wish to appeal, contact support with a detailed explanation</li>
+                    <li>Appeals are reviewed within 3-5 business days</li>
+                </ol>
+            </div>
+
+            <div class="alert">
+                <strong>Important:</strong> Attempting to circumvent this suspension by creating new accounts or using alternate accounts will result in permanent removal from our platform.
+            </div>
+
+            <div class="button-container">
+                <a href="https://barterex.com/support" class="btn">Contact Support</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-note">This is an automated notification from Barter Express Account Services.</div>
+            <div class="footer-note">Please do not reply to this email. Use the contact form on our website instead.</div>
+            <div class="footer-note">© 2026 Barter Express. All rights reserved.</div>
+        </div>
+    </div>
+</body>
+</html>

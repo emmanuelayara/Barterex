@@ -498,46 +498,31 @@
           <!-- Email -->
           <div class="form-group">
             {{ profile_form.email.label(class="form-label") }}
-            <div class="input-wrapper">
-              {{ profile_form.email(class="form-control", placeholder="your.email@example.com") }}
-              <span class="input-icon">📧</span>
-            </div>
+            {{ profile_form.email(class="form-control", placeholder="your.email@example.com") }}
           </div>
 
           <!-- Phone Number -->
           <div class="form-group">
             {{ profile_form.phone_number.label(class="form-label") }}
-            <div class="input-wrapper">
-              {{ profile_form.phone_number(class="form-control", placeholder="+234 800 000 0000") }}
-              <span class="input-icon">📱</span>
-            </div>
+            {{ profile_form.phone_number(class="form-control", placeholder="+234 800 000 0000") }}
           </div>
 
           <!-- Address -->
           <div class="form-group full">
             {{ profile_form.address.label(class="form-label") }}
-            <div class="input-wrapper">
-              {{ profile_form.address(class="form-control", placeholder="Enter your street address", rows="3") }}
-              <span class="input-icon">🏠</span>
-            </div>
+            {{ profile_form.address(class="form-control", placeholder="Enter your street address") }}
           </div>
 
           <!-- City and State -->
           <div class="form-row">
             <div class="form-group">
               {{ profile_form.city.label(class="form-label") }}
-              <div class="input-wrapper">
-                {{ profile_form.city(class="form-control", placeholder="City") }}
-                <span class="input-icon">🏙️</span>
-              </div>
+              {{ profile_form.city(class="form-control", placeholder="City") }}
             </div>
 
             <div class="form-group">
               {{ profile_form.state.label(class="form-label") }}
-              <div class="input-wrapper">
-                {{ profile_form.state(class="form-control") }}
-                <span class="input-icon">🗺️</span>
-              </div>
+              {{ profile_form.state(class="form-control", placeholder="State") }}
             </div>
           </div>
 
@@ -556,7 +541,7 @@
         <form method="POST">
           <input type="hidden" name="form_type" value="password">
 
-          <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">🔐 Change Password</h2>
+          <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">Change Password</h2>
 
           <div class="alert alert-info">
             <i class="fas fa-info-circle"></i>
@@ -566,28 +551,19 @@
           <!-- Current Password -->
           <div class="form-group">
             <label class="form-label">Current Password</label>
-            <div class="input-wrapper">
-              <input type="password" name="current_password" class="form-control" placeholder="Enter your current password" required>
-              <span class="input-icon">🔒</span>
-            </div>
+            <input type="password" name="current_password" class="form-control" placeholder="Enter your current password" required>
           </div>
 
           <!-- New Password -->
           <div class="form-group">
             <label class="form-label">New Password</label>
-            <div class="input-wrapper">
-              <input type="password" name="new_password" class="form-control" placeholder="Enter new password" required minlength="8">
-              <span class="input-icon">🔑</span>
-            </div>
+            <input type="password" name="new_password" class="form-control" placeholder="Enter new password" required minlength="8">
           </div>
 
           <!-- Confirm New Password -->
           <div class="form-group">
             <label class="form-label">Confirm New Password</label>
-            <div class="input-wrapper">
-              <input type="password" name="confirm_password" class="form-control" placeholder="Confirm new password" required minlength="8">
-              <span class="input-icon">✓</span>
-            </div>
+            <input type="password" name="confirm_password" class="form-control" placeholder="Confirm new password" required minlength="8">
           </div>
 
           <div class="form-buttons">

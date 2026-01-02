@@ -8,8 +8,8 @@ from sqlalchemy.orm import validates
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     phone_number = db.Column(db.String(15), nullable=True)
     profile_picture = db.Column(db.String(200), nullable=True)  # URL to the profile picture
     address = db.Column(db.String(255))
@@ -26,22 +26,22 @@ class User(db.Model, UserMixin):
     last_checkout_timestamp = db.Column(db.DateTime, nullable=True)
     
     # Email verification (CRITICAL: users cannot log in until email is verified)
-    email_verified = db.Column(db.Boolean, default=False)
+    email_verified = db.Column(db.Boolean, default=False, index=True)
     email_verification_token = db.Column(db.String(255), nullable=True, unique=True)
     email_verification_sent_at = db.Column(db.DateTime, nullable=True)
     email_verification_expires_at = db.Column(db.DateTime, nullable=True)
     
     # Gamification - Level, Tier, Referrals
-    level = db.Column(db.Integer, default=1)  # User level based on trades
-    tier = db.Column(db.String(20), default='Beginner')  # User tier: Beginner, Novice, Intermediate, Advanced, Expert
+    level = db.Column(db.Integer, default=1, index=True)  # User level based on trades
+    tier = db.Column(db.String(20), default='Beginner', index=True)  # User tier: Beginner, Novice, Intermediate, Advanced, Expert
     trading_points = db.Column(db.Integer, default=0)  # Points earned from trading
     referral_code = db.Column(db.String(20), unique=True, nullable=True)
     referral_bonus_earned = db.Column(db.Integer, default=0)  # Total bonus from referrals
     referral_count = db.Column(db.Integer, default=0)  # Number of successful referrals
 
     # Admin/ban fields
-    is_admin = db.Column(db.Boolean, default=False)
-    is_banned = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False, index=True)
+    is_banned = db.Column(db.Boolean, default=False, index=True)
     ban_reason = db.Column(db.Text, nullable=True)
     unban_requested = db.Column(db.Boolean, default=False)
 
@@ -112,6 +112,37 @@ class User(db.Model, UserMixin):
         self.email_verification_token = None
         self.email_verification_expires_at = None
         return True
+    
+    def is_profile_complete(self):
+        """
+        Check if user has completed their profile (required fields filled).
+        Required fields: phone_number, address, city, state
+        Returns: True if all required profile fields are filled, False otherwise
+        """
+        required_fields = [
+            self.phone_number,
+            self.address,
+            self.city,
+            self.state
+        ]
+        # Check if all required fields are filled (not None and not empty string)
+        return all(field for field in required_fields)
+    
+    def get_incomplete_profile_fields(self):
+        """
+        Get list of incomplete profile fields.
+        Returns: List of field names that need to be filled
+        """
+        incomplete = []
+        if not self.phone_number:
+            incomplete.append('Phone Number')
+        if not self.address:
+            incomplete.append('Address')
+        if not self.city:
+            incomplete.append('City')
+        if not self.state:
+            incomplete.append('State')
+        return incomplete
 
 
 class Admin(db.Model):
@@ -140,6 +171,73 @@ class ActivityLog(db.Model):
     
     def __repr__(self):
         return f'<ActivityLog {self.user.username} - {self.activity_type} at {self.timestamp}>'
+
+
+class UserGamification(db.Model):
+    """
+    Extracted gamification data from User model for better normalization.
+    Contains: level, tier, trading_points, referral info
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, unique=True, index=True)
+    level = db.Column(db.Integer, default=1, nullable=False, index=True)
+    tier = db.Column(db.String(20), default='Beginner', nullable=False, index=True)
+    trading_points = db.Column(db.Integer, default=0, nullable=False)
+    referral_code = db.Column(db.String(20), unique=True, nullable=True)
+    referral_bonus_earned = db.Column(db.Integer, default=0, nullable=False)
+    referral_count = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationship
+    user = db.relationship('User', backref='gamification', uselist=False)
+    
+    def __repr__(self):
+        return f'<UserGamification user_id={self.user_id}, tier={self.tier}, level={self.level}>'
+
+
+class UserSecurity(db.Model):
+    """
+    Extracted security data from User model for better normalization.
+    Contains: failed login attempts, account locks, 2FA settings
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, unique=True, index=True)
+    failed_login_attempts = db.Column(db.Integer, default=0, nullable=False)
+    account_locked_until = db.Column(db.DateTime, nullable=True)
+    two_factor_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    two_factor_secret = db.Column(db.String(32), nullable=True)
+    last_password_change = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    password_change_required = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # Relationship
+    user = db.relationship('User', backref='security', uselist=False)
+    
+    def __repr__(self):
+        return f'<UserSecurity user_id={self.user_id}, 2fa_enabled={self.two_factor_enabled}>'
+
+
+class UserPreferences(db.Model):
+    """
+    Extracted user preferences from User model for better normalization.
+    Contains: notification preferences and other user settings
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, unique=True, index=True)
+    notification_preferences = db.Column(db.JSON, default=lambda: {
+        'email_order_updates': True,
+        'email_cart_items': False,
+        'push_cart_items': True,
+        'push_order_updates': True,
+        'notification_frequency': 'instant'
+    }, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationship
+    user = db.relationship('User', backref='preferences', uselist=False)
+    
+    def __repr__(self):
+        return f'<UserPreferences user_id={self.user_id}>'
 
 
 class SecuritySettings(db.Model):
@@ -244,10 +342,30 @@ class ItemImage(db.Model):
     order_index = db.Column(db.Integer, default=0)  # For ordering images
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Image metadata for quality analysis
+    width = db.Column(db.Integer, nullable=True)  # Image width in pixels
+    height = db.Column(db.Integer, nullable=True)  # Image height in pixels
+    file_size = db.Column(db.Integer, nullable=True)  # File size in bytes
+    quality_flags = db.Column(db.Text, nullable=True)  # JSON string of suspicious patterns detected
+    
     item = db.relationship('Item', back_populates='images')
 
     def __repr__(self):
         return f'<ItemImage {self.id} for Item {self.item_id}>'
+    
+    def get_quality_flags(self):
+        """Parse quality_flags JSON and return list of issues"""
+        if not self.quality_flags:
+            return []
+        import json
+        try:
+            return json.loads(self.quality_flags)
+        except:
+            return []
+    
+    def has_quality_issues(self):
+        """Check if image has any quality issues"""
+        return len(self.get_quality_flags()) > 0
     
 
 
@@ -459,3 +577,102 @@ class Referral(db.Model):
     
     def __repr__(self):
         return f'<Referral {self.referrer_id} -> {self.referred_user_id}>'
+
+
+class AuditLog(db.Model):
+    """Track all admin actions for compliance and auditing"""
+    id = db.Column(db.Integer, primary_key=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    admin = db.relationship('User', backref='audit_logs')
+    
+    action_type = db.Column(db.String(100), nullable=False, index=True)  # e.g., 'approve_item', 'ban_user', 'edit_credits'
+    target_type = db.Column(db.String(50), nullable=False)  # 'user', 'item', 'order', etc.
+    target_id = db.Column(db.Integer, nullable=True, index=True)  # ID of the affected user/item
+    target_name = db.Column(db.String(255), nullable=True)  # Name of user/item for reference
+    
+    description = db.Column(db.Text, nullable=True)  # What was done
+    reason = db.Column(db.Text, nullable=True)  # Why it was done (rejection reason, ban reason, etc.)
+    
+    before_value = db.Column(db.Text, nullable=True)  # JSON of previous state
+    after_value = db.Column(db.Text, nullable=True)  # JSON of new state
+    
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    ip_address = db.Column(db.String(45), nullable=True)  # IPv4 or IPv6
+    
+    def __repr__(self):
+        return f'<AuditLog {self.action_type} by Admin {self.admin_id} on {self.target_type} {self.target_id}>'
+    
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization"""
+        import json
+        return {
+            'id': self.id,
+            'admin_id': self.admin_id,
+            'admin_name': self.admin.username if self.admin else 'Unknown',
+            'action_type': self.action_type,
+            'target_type': self.target_type,
+            'target_id': self.target_id,
+            'target_name': self.target_name,
+            'description': self.description,
+            'reason': self.reason,
+            'before_value': json.loads(self.before_value) if self.before_value else None,
+            'after_value': json.loads(self.after_value) if self.after_value else None,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'ip_address': self.ip_address
+        }
+
+
+class SystemSettings(db.Model):
+    """Store system-wide settings and configuration"""
+    __tablename__ = 'system_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Maintenance mode
+    maintenance_mode = db.Column(db.Boolean, default=False, index=True)
+    maintenance_message = db.Column(db.Text, default='Platform under maintenance. Please try again later.')
+    maintenance_enabled_by = db.Column(db.Integer, db.ForeignKey('admin.id', name='fk_maintenance_admin'), nullable=True)
+    maintenance_admin = db.relationship('Admin', foreign_keys=[maintenance_enabled_by])
+    maintenance_enabled_at = db.Column(db.DateTime, nullable=True)
+    
+    # Feature flags
+    allow_uploads = db.Column(db.Boolean, default=True)
+    allow_trading = db.Column(db.Boolean, default=True)
+    allow_browsing = db.Column(db.Boolean, default=True)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<SystemSettings maintenance_mode={self.maintenance_mode}>'
+    
+    @staticmethod
+    def get_settings():
+        """Get or create system settings"""
+        settings = SystemSettings.query.first()
+        if not settings:
+            settings = SystemSettings()
+            db.session.add(settings)
+            db.session.commit()
+        return settings
+    
+    @staticmethod
+    def is_maintenance_enabled():
+        """Check if maintenance mode is enabled"""
+        settings = SystemSettings.get_settings()
+        return settings.maintenance_mode
+    
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'maintenance_mode': self.maintenance_mode,
+            'maintenance_message': self.maintenance_message,
+            'maintenance_enabled_by': self.maintenance_admin.username if self.maintenance_admin else None,
+            'maintenance_enabled_at': self.maintenance_enabled_at.isoformat() if self.maintenance_enabled_at else None,
+            'allow_uploads': self.allow_uploads,
+            'allow_trading': self.allow_trading,
+            'allow_browsing': self.allow_browsing,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }

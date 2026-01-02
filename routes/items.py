@@ -16,7 +16,6 @@ from error_handlers import handle_errors, safe_database_operation, retry_operati
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
 from trading_points import award_points_for_purchase, create_level_up_notification
-from services.ai_price_estimator import get_price_estimator
 
 # Import limiter - handle gracefully if not available
 try:
@@ -102,7 +101,41 @@ def upload_item():
             logout_user()
             return redirect(url_for('auth.login'))
 
+        # Check if user has completed their profile before allowing item upload
+        if not current_user.is_profile_complete():
+            incomplete_fields = current_user.get_incomplete_profile_fields()
+            logger.warning(f"User with incomplete profile attempted to upload item: {current_user.username}, Missing: {incomplete_fields}")
+            flash(f'Please complete your profile before uploading items. Missing: {", ".join(incomplete_fields)}', 'warning')
+            return redirect(url_for('user.settings'))
+
         form = UploadItemForm()
+        
+        # Debug: Log what we received
+        logger.info(f"Upload request received - User: {current_user.username}")
+        logger.info(f"Request files: {list(request.files.keys())}")
+        
+        # Manual image validation before form.validate_on_submit()
+        # because MultipleFileField has issues with form validation in AJAX submissions
+        images_from_request = request.files.getlist('images')
+        logger.info(f"Images from request: {len(images_from_request)} files")
+        
+        if images_from_request:
+            for idx, img in enumerate(images_from_request):
+                logger.info(f"  Image {idx}: name={img.filename}, type={img.content_type}, size={len(img.read())} bytes")
+                img.seek(0)  # Reset file pointer
+        
+        # Validate images manually
+        allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+        if not images_from_request:
+            form.images.errors = ('Please upload at least one image.',)
+        else:
+            for img_file in images_from_request:
+                if img_file and img_file.filename:
+                    file_ext = img_file.filename.rsplit('.', 1)[1].lower() if '.' in img_file.filename else ''
+                    if file_ext not in allowed_extensions:
+                        form.images.errors = (f'Invalid file type: {img_file.filename}. Only JPG, PNG, GIF, and WEBP allowed.',)
+                        logger.warning(f"Invalid file type rejected - File: {img_file.filename}, Extension: {file_ext}")
+        
         if form.validate_on_submit():
             new_item = Item(
                 name=form.name.data,
@@ -119,15 +152,19 @@ def upload_item():
             db.session.flush()
             
             uploaded_images = []
-            if form.images.data:
-                for index, file in enumerate(form.images.data):
+            # Use images_from_request instead of form.images.data since AJAX FormData doesn't populate form fields properly
+            if images_from_request:
+                from image_analyzer import analyze_image_url
+                import json
+                
+                for index, file in enumerate(images_from_request):
                     if file and file.filename:
                         try:
                             # Comprehensive file upload validation with STRICT security checks
                             validate_upload(
                                 file, 
                                 max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
-                                allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}),
+                                allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'}),
                                 enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
                             )
                             
@@ -135,15 +172,24 @@ def upload_item():
                             image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                             file.save(image_path)
                             
+                            image_url = f"/{image_path}"
+                            
+                            # Analyze image for metadata and quality issues
+                            analysis = analyze_image_url(image_url)
+                            
                             item_image = ItemImage(
                                 item_id=new_item.id,
-                                image_url=f"/{image_path}",
+                                image_url=image_url,
                                 is_primary=(index == 0),
-                                order_index=index
+                                order_index=index,
+                                width=analysis.get('width'),
+                                height=analysis.get('height'),
+                                file_size=analysis.get('file_size'),
+                                quality_flags=json.dumps(analysis.get('quality_flags', []))
                             )
                             db.session.add(item_image)
                             uploaded_images.append(item_image)
-                            logger.info(f"Image uploaded for item - Item: {new_item.id}, File: {unique_filename}")
+                            logger.info(f"Image uploaded for item - Item: {new_item.id}, File: {unique_filename}, Size: {analysis.get('file_size')} bytes")
                         except FileUploadError as e:
                             db.session.rollback()
                             logger.warning(f"File validation failed for user {current_user.username}: {str(e)}")
@@ -785,107 +831,4 @@ def order_item():
             return render_template('order_item.html', form=form, stations=stations, items=items)
     
     return render_template('order_item.html', form=form, stations=stations, items=items)
-
-
-# ==================== AI PRICE ESTIMATION API ====================
-
-@items_bp.route('/api/estimate-price', methods=['POST'])
-@rate_limit("5 per minute")  # Rate limit: 5 requests per minute per IP (stricter for AI processing)
-@login_required
-def estimate_item_price():
-    """
-    API endpoint to estimate item price using AI and web scraping
-    Accepts image(s) + description and returns estimated market value
-    Supports both single image (legacy) and multiple images (new)
-    """
-    try:
-        # Get form data
-        description = request.form.get('description', '')
-        item_name = request.form.get('item_name', '')
-        condition = request.form.get('condition', 'good')
-        category = request.form.get('category', 'other')
-        
-        # Get image file(s) - support both single (legacy) and multiple (new)
-        image_data = None
-        image_count = 0
-        primary_image_index = 0
-        
-        # Try multiple images first (new format)
-        image_files = request.files.getlist('images')
-        
-        # Fallback to single image (legacy format)
-        if not image_files:
-            image_file = request.files.get('image')
-            if image_file and allowed_file(image_file.filename):
-                image_files = [image_file]
-        
-        # Process the first/primary image for estimation
-        if image_files:
-            primary_image_index = int(request.form.get('primary_image_index', 0))
-            image_count = len(image_files)
-            
-            # Use the primary image or first image
-            primary_file = image_files[min(primary_image_index, len(image_files) - 1)]
-            if allowed_file(primary_file.filename):
-                image_data = primary_file.read()
-                primary_file.seek(0)
-        
-        # Validate inputs
-        if not description or len(description.strip()) < 10:
-            return jsonify({
-                'success': False,
-                'error': 'Please provide a detailed description (at least 10 characters)'
-            }), 400
-        
-        # Get price estimator service
-        estimator = get_price_estimator()
-        
-        # Estimate price
-        item_label = item_name if item_name else description[:50]
-        logger.info(f"Price estimation requested - User: {current_user.username}, Item: {item_label}, Images: {image_count}")
-        logger.info(f"DEBUG: Calling estimate_price with condition='{condition}', category='{category}'")
-        
-        price_estimate = estimator.estimate_price(
-            image_data=image_data,
-            description=description,
-            condition=condition,
-            category=category
-        )
-        
-        logger.info(f"DEBUG: estimate_price returned: {price_estimate}")
-        
-        # Adjust confidence based on number of images (optional enhancement)
-        if image_count > 1:
-            # Boost confidence slightly when multiple images provided
-            original_confidence = price_estimate.get('confidence', 'Low')
-            if original_confidence == 'Low':
-                price_estimate['confidence'] = 'Medium'
-            elif original_confidence == 'Medium':
-                price_estimate['confidence'] = 'High'
-        
-        # Calculate credit value
-        credit_info = estimator.get_credit_value_estimate(
-            price_estimate['estimated_price']
-        )
-        
-        # Combine results
-        result = {
-            'success': True,
-            'price_estimate': price_estimate,
-            'credit_value': credit_info,
-            'message': 'Price estimation completed successfully',
-            'confidence': price_estimate.get('confidence', 'Standard'),
-            'images_analyzed': image_count
-        }
-        
-        logger.info(f"Price estimated - Amount: ${price_estimate['estimated_price']}, Confidence: {price_estimate['confidence']}, Images: {image_count}")
-        return jsonify(result), 200
-        
-    except Exception as e:
-        logger.error(f"Price estimation API error: {str(e)}", exc_info=True)
-        return jsonify({
-            'success': False,
-            'error': 'Unable to estimate price at this time. Please try again later.',
-            'details': str(e) if app.debug else None
-        }), 500
 

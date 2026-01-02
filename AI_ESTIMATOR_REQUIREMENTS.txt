@@ -1,6 +1,0 @@
-# AI Price Estimator Dependencies
-# Add these to your existing requirements.txt
-
-requests==2.31.0          # HTTP library for API calls
-openai==1.3.0             # OpenAI API client
-python-dotenv==1.0.0      # Environment variable management (if not already included)

@@ -140,10 +140,8 @@ class UploadItemForm(FlaskForm):
         ("Automotive", "Automotive"), 
         ("Phones & Gadgets", "Phones & Gadgets")
     ], validators=[DataRequired()])
-    # Changed to support multiple files
-    images = MultipleFileField('Upload Images (Max 6)', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Images only!')
-    ])
+    # Changed to support multiple files - validation done in route handler
+    images = MultipleFileField('Upload Images (Max 6)')
     submit = SubmitField('Submit Item')
 
 

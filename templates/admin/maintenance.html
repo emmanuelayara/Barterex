@@ -1,0 +1,204 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Maintenance Mode{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">🔧 Maintenance Mode</h1>
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Alert -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if settings.maintenance_mode %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">⚠️ Maintenance Mode is ACTIVE</h4>
+                    <p class="mb-2">The platform is currently in maintenance mode. Users cannot upload items, trade, or perform other actions.</p>
+                    {% if settings.maintenance_enabled_at %}
+                        <p class="mb-2">
+                            <strong>Enabled:</strong> {{ settings.maintenance_enabled_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                            {% if settings.maintenance_admin %}
+                                by <strong>{{ settings.maintenance_admin.username }}</strong>
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                    <p class="mb-0">
+                        <strong>Current message:</strong><br>
+                        <em style="color: #666;">{{ settings.maintenance_message }}</em>
+                    </p>
+                </div>
+            {% else %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">✅ Maintenance Mode is OFF</h4>
+                    <p class="mb-0">The platform is operational. Users can access all features.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Controls -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">Maintenance Mode Control</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="maintenanceForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        {% if settings.maintenance_mode %}
+                            <!-- Disable Maintenance Mode -->
+                            <div class="mb-3">
+                                <p class="text-muted">Click the button below to disable maintenance mode and allow users to access the platform.</p>
+                                <button type="submit" name="action" value="disable" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-power-off"></i> Disable Maintenance Mode
+                                </button>
+                            </div>
+
+                            <!-- Update Message -->
+                            <hr>
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Update Maintenance Message</label>
+                                <textarea class="form-control" id="message" name="message" rows="4" placeholder="Enter maintenance message...">{{ settings.maintenance_message }}</textarea>
+                                <small class="text-muted">This message will be displayed to all users.</small>
+                            </div>
+                        {% else %}
+                            <!-- Enable Maintenance Mode -->
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Maintenance Message *</label>
+                                <textarea class="form-control" id="message" name="message" rows="4" placeholder="Enter maintenance message..." required>{{ settings.maintenance_message }}</textarea>
+                                <small class="text-muted">This message will be displayed to all users when they try to access the platform.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <button type="submit" name="action" value="enable" class="btn btn-danger btn-lg w-100">
+                                    <i class="fas fa-ban"></i> Enable Maintenance Mode
+                                </button>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <strong>Warning!</strong> Enabling maintenance mode will:
+                                <ul class="mb-0 mt-2">
+                                    <li>Block all user uploads</li>
+                                    <li>Disable trading and purchases</li>
+                                    <li>Show maintenance message to all users</li>
+                                    <li>Allow admin actions to continue</li>
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Sidebar -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">How Maintenance Mode Works</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">When Enabled:</h6>
+                    <ul class="small">
+                        <li>✅ Admins can still access admin panel</li>
+                        <li>✅ Admins can still perform actions</li>
+                        <li>✅ All audit logs are recorded</li>
+                        <li>❌ Users see maintenance message</li>
+                        <li>❌ Users cannot upload items</li>
+                        <li>❌ Users cannot create trades/orders</li>
+                        <li>❌ Users cannot browse marketplace (optional)</li>
+                    </ul>
+
+                    <h6 class="text-primary mt-3">Use Cases:</h6>
+                    <ul class="small">
+                        <li>Database maintenance or migration</li>
+                        <li>System upgrades or deployments</li>
+                        <li>Critical bug fixes</li>
+                        <li>Security updates</li>
+                        <li>Infrastructure scaling</li>
+                    </ul>
+
+                    <h6 class="text-primary mt-3">Best Practices:</h6>
+                    <ul class="small">
+                        <li>Set a clear message explaining the maintenance</li>
+                        <li>Give users an estimated time</li>
+                        <li>Provide contact info for urgent issues</li>
+                        <li>Disable only when necessary</li>
+                        <li>Re-enable as soon as possible</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if settings.maintenance_enabled_at %}
+                        <div class="small">
+                            <p class="mb-2">
+                                <strong>Last Changed:</strong><br>
+                                {{ settings.maintenance_enabled_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            </p>
+                            {% if settings.maintenance_admin %}
+                                <p class="mb-0">
+                                    <strong>By:</strong><br>
+                                    {{ settings.maintenance_admin.username }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-0">No maintenance mode activity yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Flags -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{{ url_for('admin.system_settings') }}" class="btn btn-outline-primary">
+                <i class="fas fa-sliders-h"></i> System Settings & Feature Flags
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 8px;
+    }
+
+    .card-header {
+        padding: 1rem;
+        font-weight: 600;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .alert {
+        border-radius: 8px;
+    }
+
+    .text-primary {
+        font-weight: 600;
+    }
+
+    ul.small li {
+        line-height: 1.8;
+    }
+</style>
+{% endblock %}

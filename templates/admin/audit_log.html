@@ -1,0 +1,544 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Admin Audit Log - Barterex{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="h3 mb-2">
+                <i class="bi bi-shield-check me-2"></i>Admin Activity Audit Log
+            </h1>
+            <p class="text-muted mb-0">Track all admin actions and changes made in the system</p>
+        </div>
+        <div class="col-lg-4 text-end">
+            <button class="btn btn-primary" id="exportCsvBtn">
+                <i class="bi bi-download me-2"></i>Export as CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-header bg-light border-bottom">
+            <h5 class="mb-0 d-flex align-items-center">
+                <i class="bi bi-funnel me-2"></i>Filters
+            </h5>
+        </div>
+        <div class="card-body">
+            <form id="filterForm" method="get" action="{{ url_for('admin.audit_log') }}" class="row g-2">
+                <!-- Admin Filter -->
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label for="adminFilter" class="form-label small fw-bold">Admin User</label>
+                    <select class="form-select form-select-sm" id="adminFilter" name="admin_id">
+                        <option value="">All Admins</option>
+                        {% for admin in admins %}
+                        <option value="{{ admin.id }}" {% if selected_admin_id == admin.id %}selected{% endif %}>
+                            {{ admin.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Action Type Filter -->
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label for="actionFilter" class="form-label small fw-bold">Action Type</label>
+                    <select class="form-select form-select-sm" id="actionFilter" name="action_type">
+                        <option value="">All Actions</option>
+                        {% for action in action_types %}
+                        <option value="{{ action }}" {% if selected_action_type == action %}selected{% endif %}>
+                            {{ action|replace('_', ' ')|title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Date From -->
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label for="dateFrom" class="form-label small fw-bold">From</label>
+                    <input type="date" class="form-control form-control-sm" id="dateFrom" name="date_from" value="{{ date_from or '' }}">
+                </div>
+
+                <!-- Date To -->
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label for="dateTo" class="form-label small fw-bold">To</label>
+                    <input type="date" class="form-control form-control-sm" id="dateTo" name="date_to" value="{{ date_to or '' }}">
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-12 col-lg-2 d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                        <i class="bi bi-search me-1"></i><span class="d-none d-lg-inline">Filter</span>
+                    </button>
+                    <a href="{{ url_for('admin.audit_log') }}" class="btn btn-secondary btn-sm" title="Reset filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <p class="text-muted">
+                <strong>Total Records:</strong> {{ total_logs }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Audit Log Table -->
+    {% if audit_logs %}
+    <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th style="width: 15%; min-width: 120px;">Timestamp</th>
+                    <th style="width: 10%; min-width: 100px;">Admin</th>
+                    <th style="width: 12%; min-width: 110px;">Action</th>
+                    <th style="width: 10%; min-width: 90px;">Target</th>
+                    <th style="width: 25%; min-width: 150px;">Description</th>
+                    <th style="width: 15%; min-width: 110px;">Reason</th>
+                    <th style="width: 8%; min-width: 85px;">IP</th>
+                    <th style="width: 5%; min-width: 50px; text-align: center;">View</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in audit_logs %}
+                <tr>
+                    <td>
+                        <small class="text-monospace" title="{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
+                            {{ log.timestamp.strftime('%m/%d %H:%M') }}
+                        </small>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">{{ log.admin.username if log.admin else 'Unknown' }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-info text-dark" title="{{ log.action_type|replace('_', ' ')|title }}">
+                            {{ log.action_type|replace('_', ' ')|truncate(12, True)|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <small class="text-truncate d-block" title="{{ log.target_type|title }}{% if log.target_id %} #{{ log.target_id }}{% endif %}">
+                            {{ log.target_type|title }}<br>
+                            {% if log.target_id %}<span class="text-muted">#{{ log.target_id }}</span>{% endif %}
+                        </small>
+                    </td>
+                    <td>
+                        <small class="text-truncate d-block" title="{{ log.description or '-' }}">
+                            {{ log.description or '-' }}
+                        </small>
+                    </td>
+                    <td>
+                        {% if log.reason %}
+                        <small class="badge bg-warning text-dark" title="{{ log.reason }}">
+                            {{ log.reason|truncate(15, True) }}
+                        </small>
+                        {% else %}
+                        <small class="text-muted">-</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-monospace text-muted d-block text-truncate" title="{{ log.ip_address or '-' }}">
+                            {{ log.ip_address or '-' }}
+                        </small>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-secondary p-1 view-details-btn" 
+                                data-log-id="{{ log.id }}"
+                                title="View full details">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Hidden data storage for modal -->
+    <script type="text/template" id="audit-logs-data">
+    {
+        {% for log in audit_logs %}
+        "log-{{ log.id }}": {{ log.to_dict()|tojson }},
+        {% endfor %}
+        "_end": true
+    }
+    </script>
+
+    <!-- Empty State -->
+    {% else %}
+    <div class="alert alert-info text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 3rem; color: #0d6efd;"></i>
+        <h5 class="mt-3">No audit logs found</h5>
+        <p class="text-muted">Try adjusting your filters or there may be no admin activity yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Audit Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3 g-2">
+                    <div class="col-12">
+                        <div class="bg-light p-3 rounded">
+                            <div class="row g-3">
+                                <div class="col-md-6 col-lg-3">
+                                    <small class="text-muted d-block mb-1">Admin</small>
+                                    <p class="mb-0"><strong id="detailAdmin">-</strong></p>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <small class="text-muted d-block mb-1">Action</small>
+                                    <p class="mb-0"><strong id="detailAction">-</strong></p>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <small class="text-muted d-block mb-1">Target</small>
+                                    <p class="mb-0"><span id="detailTargetType">-</span> <span class="text-muted" id="detailTargetId">-</span></p>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <small class="text-muted d-block mb-1">Timestamp</small>
+                                    <p class="mb-0 text-monospace small" id="detailTimestamp">-</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h6 class="text-muted mb-2">Description</h6>
+                    <p id="detailDescription" class="border-start ps-3 mb-0">-</p>
+                </div>
+
+                <div class="mb-3" id="detailReasonSection">
+                    <h6 class="text-muted mb-2">Rejection Reason</h6>
+                    <div class="alert alert-warning mb-0 py-2">
+                        <p id="detailReason" class="mb-0">-</p>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-2">IP Address</h6>
+                <p class="text-monospace small mb-3 ps-3 border-start" id="detailIp">-</p>
+
+                <h6 class="text-muted mb-3">Changes Tracking</h6>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body p-2">
+                                <small class="text-muted d-block mb-2 fw-bold">Before</small>
+                                <pre id="detailBefore" class="mb-0" style="font-size: 0.75rem; max-height: 150px;"><code>-</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body p-2">
+                                <small class="text-muted d-block mb-2 fw-bold">After</small>
+                                <pre id="detailAfter" class="mb-0" style="font-size: 0.75rem; max-height: 150px;"><code>-</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Parse audit logs data
+let auditLogsData = {};
+try {
+    const dataScript = document.getElementById('audit-logs-data');
+    if (dataScript) {
+        const jsonStr = dataScript.textContent.trim();
+        // Remove trailing comma and _end property before parsing
+        const cleanJson = '{' + jsonStr.substring(1, jsonStr.length - 1).replace(/,\s*"_end":\s*true$/, '') + '}';
+        auditLogsData = JSON.parse(cleanJson);
+        console.log('Loaded audit logs data:', Object.keys(auditLogsData).length, 'items');
+    }
+} catch (error) {
+    console.error('Error loading audit logs data:', error);
+}
+
+// Export to CSV
+document.getElementById('exportCsvBtn').addEventListener('click', function() {
+    const params = new URLSearchParams();
+    const adminId = document.getElementById('adminFilter').value;
+    const actionType = document.getElementById('actionFilter').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    if (adminId) params.append('admin_id', adminId);
+    if (actionType) params.append('action_type', actionType);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    params.append('export', 'csv');
+    
+    window.location.href = '{{ url_for("admin.audit_log") }}?' + params.toString();
+});
+
+// Handle view details button clicks
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.view-details-btn');
+    if (btn) {
+        e.preventDefault();
+        const logId = btn.getAttribute('data-log-id');
+        const logKey = 'log-' + logId;
+        
+        console.log('Clicked log ID:', logId, 'Key:', logKey);
+        console.log('Available data keys:', Object.keys(auditLogsData));
+        
+        if (auditLogsData[logKey]) {
+            const logData = auditLogsData[logKey];
+            console.log('Found log data:', logData);
+            showDetails(logData);
+            // Show the modal manually
+            const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+        } else {
+            console.error('Log data not found for key:', logKey);
+            alert('Error: Could not find audit log data');
+        }
+    }
+});
+
+// Show details modal
+function showDetails(logData) {
+    console.log('showDetails called with:', logData);
+    
+    try {
+        // Handle null/undefined data
+        if (!logData) {
+            console.error('No log data provided');
+            return;
+        }
+        
+        console.log('Setting Admin:', logData.admin_name);
+        console.log('Setting Action:', logData.action_type);
+        
+        // Populate basic fields - with defensive checks
+        const adminEl = document.getElementById('detailAdmin');
+        if (adminEl) adminEl.textContent = logData.admin_name || 'Unknown';
+        
+        const actionEl = document.getElementById('detailAction');
+        if (actionEl) {
+            const actionText = logData.action_type ? logData.action_type.replace(/_/g, ' ') : 'Unknown';
+            actionEl.textContent = actionText.toUpperCase();
+        }
+        
+        // Format timestamp
+        const timestampEl = document.getElementById('detailTimestamp');
+        if (timestampEl) {
+            if (logData.timestamp) {
+                const date = new Date(logData.timestamp);
+                timestampEl.textContent = date.toLocaleString();
+            } else {
+                timestampEl.textContent = '-';
+            }
+        }
+        
+        // Target info
+        const targetTypeEl = document.getElementById('detailTargetType');
+        if (targetTypeEl) {
+            const targetType = logData.target_type ? logData.target_type.toUpperCase() : '-';
+            targetTypeEl.textContent = targetType;
+        }
+        
+        const targetIdEl = document.getElementById('detailTargetId');
+        if (targetIdEl) {
+            targetIdEl.textContent = logData.target_id ? `#${logData.target_id}` : '-';
+        }
+        
+        // IP Address
+        const ipEl = document.getElementById('detailIp');
+        if (ipEl) ipEl.textContent = logData.ip_address || '-';
+        
+        // Description
+        const descEl = document.getElementById('detailDescription');
+        if (descEl) descEl.textContent = logData.description || '-';
+        
+        // Handle reason field visibility
+        const reasonSection = document.getElementById('detailReasonSection');
+        const reasonEl = document.getElementById('detailReason');
+        if (reasonSection && reasonEl) {
+            if (logData.reason) {
+                reasonEl.textContent = logData.reason;
+                reasonSection.style.display = 'block';
+            } else {
+                reasonSection.style.display = 'none';
+            }
+        }
+        
+        // Format JSON for before/after values
+        const beforeEl = document.getElementById('detailBefore');
+        if (beforeEl) {
+            let beforeHtml = '-';
+            if (logData.before_value) {
+                try {
+                    const beforeData = typeof logData.before_value === 'string' ? 
+                        JSON.parse(logData.before_value) : logData.before_value;
+                    beforeHtml = JSON.stringify(beforeData, null, 2);
+                } catch (e) {
+                    beforeHtml = String(logData.before_value);
+                }
+            }
+            beforeEl.innerHTML = '<code>' + escapeHtml(beforeHtml) + '</code>';
+        }
+        
+        const afterEl = document.getElementById('detailAfter');
+        if (afterEl) {
+            let afterHtml = '-';
+            if (logData.after_value) {
+                try {
+                    const afterData = typeof logData.after_value === 'string' ? 
+                        JSON.parse(logData.after_value) : logData.after_value;
+                    afterHtml = JSON.stringify(afterData, null, 2);
+                } catch (e) {
+                    afterHtml = String(logData.after_value);
+                }
+            }
+            afterEl.innerHTML = '<code>' + escapeHtml(afterHtml) + '</code>';
+        }
+        
+        console.log('showDetails completed successfully');
+        
+    } catch (error) {
+        console.error('Error in showDetails:', error);
+        console.error('Stack:', error.stack);
+        const adminEl = document.getElementById('detailAdmin');
+        if (adminEl) adminEl.textContent = 'Error loading details: ' + error.message;
+    }
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+</script>
+
+<style>
+.text-monospace {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+}
+
+pre {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 150px;
+    border-radius: 4px;
+    padding: 8px;
+    margin: 0;
+}
+
+pre code {
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+/* Better responsive table */
+.table-responsive {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Text truncation with ellipsis */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Badge styling */
+.badge {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Filter form improvements */
+.form-select, .form-control {
+    border-color: #e2e8f0;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #054e97;
+    box-shadow: 0 0 0 0.2rem rgba(5, 78, 151, 0.25);
+}
+
+/* Modal improvements */
+.modal-dialog-scrollable .modal-body {
+    max-height: calc(100vh - 200px);
+}
+
+/* Better card styling */
+.card {
+    border-radius: 8px;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .badge {
+        display: block;
+        margin: 2px 0;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .sticky-top {
+        position: relative;
+        top: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-sm {
+        font-size: 0.75rem;
+    }
+    
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+    }
+    
+    h1.h3 {
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}

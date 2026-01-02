@@ -206,6 +206,13 @@
                                             <i class="bi bi-pencil"></i>
                                         </button>
 
+                                        <!-- Export Data Button (GDPR) -->
+                                        <button class="action-btn btn-export" 
+                                                onclick="location.href='{{ url_for('admin.export_user_data', user_id=user.id) }}'"
+                                                data-bs-toggle="tooltip" title="Export User Data (GDPR)">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+
                                         {% if not user.is_banned %}
                                             <!-- Ban Button -->
                                             <button class="action-btn btn-ban" 
@@ -767,6 +774,11 @@
 
     .btn-unban {
         background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .btn-export {
+        background: linear-gradient(135deg, #0dcaf0 0%, #0bb5d4 100%);
         color: white;
     }
 

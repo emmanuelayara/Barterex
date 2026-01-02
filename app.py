@@ -40,21 +40,25 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # No JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  # 30 days for Remember Me functionality
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # 7 days for standard sessions
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)  # Remember Me cookie lasts 30 days
 app.config['REMEMBER_COOKIE_SECURE'] = True  # HTTPS only for remember cookie
 app.config['REMEMBER_COOKIE_HTTPONLY'] = True  # No JavaScript access to remember cookie
 app.config['WTF_CSRF_ENABLED'] = True  # Enable CSRF protection
-app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit for CSRF tokens
+app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # CSRF tokens expire after 1 hour (security best practice)
 
 # ✅ Mail config from environment
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() in ['true', '1', 'yes']
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False').lower() in ['true', '1', 'yes']
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 mail_sender_name, mail_sender_email = os.getenv('MAIL_DEFAULT_SENDER', 'Barter Express,info.barterex@gmail.com').split(',')
 app.config['MAIL_DEFAULT_SENDER'] = (mail_sender_name.strip(), mail_sender_email.strip())
+
+# ✅ Suppress Flask-Mail debug output
+app.config['MAIL_DEBUG'] = os.getenv('MAIL_DEBUG', 'False').lower() in ['true', '1', 'yes']
 
 # ✅ Initialize extensions FIRST
 db = SQLAlchemy(app)
@@ -88,6 +92,45 @@ from notifications import NotificationService
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# ✅ Maintenance Mode Handler
+@app.before_request
+def check_maintenance_mode():
+    """Check if maintenance mode is enabled and restrict user actions"""
+    from models import SystemSettings
+    
+    # Allow admin routes even in maintenance mode
+    if request.blueprint and request.blueprint.startswith('admin'):
+        return
+    
+    # Check maintenance mode
+    settings = SystemSettings.get_settings()
+    if settings.maintenance_mode:
+        # Allow only essential user routes (login, etc.)
+        allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'static']
+        current_route = request.endpoint
+        
+        if current_route not in allowed_routes:
+            return render_template('maintenance_page.html', 
+                                 message=settings.maintenance_message), 503
+    
+    # Check individual feature flags for user actions
+    if settings and not settings.maintenance_mode:
+        current_route = request.endpoint or ''
+        
+        # Check upload restrictions
+        if 'upload' in current_route and not settings.allow_uploads:
+            flash('Item uploads are currently disabled. Please try again later.', 'warning')
+            return redirect(url_for('marketplace.index'))
+        
+        # Check trading restrictions
+        if any(x in current_route for x in ['trade', 'order', 'checkout']) and not settings.allow_trading:
+            flash('Trading is currently disabled. Please try again later.', 'warning')
+            return redirect(url_for('marketplace.index'))
+        
+        # Check browsing restrictions
+        if 'marketplace' in current_route and not settings.allow_browsing:
+            return render_template('marketplace_disabled.html'), 503
 
 # ✅ Context processor for cart info and CSRF token
 @app.context_processor

@@ -1537,16 +1537,12 @@
 
   <!-- Main Content -->
   <div class="main-content">
-    <!-- Welcome Section with Settings and Valuate Buttons -->
+    <!-- Welcome Section with Settings Button -->
     <div class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
       <div>
         <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
       </div>
       <div style="display: flex; gap: 12px; align-items: center;">
-        <a href="{{ url_for('user.valuate') }}" class="action-btn action-btn-secondary">
-          <i class="fas fa-gem"></i>
-          <span>Valuate Item</span>
-        </a>
         <a href="{{ url_for('user.settings') }}" class="settings-btn-dashboard">
           <i class="fas fa-user-cog"></i>
           <span>Manage Account</span>

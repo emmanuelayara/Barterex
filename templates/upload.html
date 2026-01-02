@@ -1392,11 +1392,35 @@
     }
 
     // Create FormData to handle file uploads properly
-    const formData = new FormData(form);
+    const formData = new FormData();
     
-    // Remove existing images from formData and add our selected files
-    formData.delete('images');
+    // Add form fields
+    formData.append('name', form.elements['name'].value);
+    formData.append('description', form.elements['description'].value);
+    formData.append('condition', form.elements['condition'].value);
+    formData.append('category', form.elements['category'].value);
+    
+    // Debug: Log form fields
+    console.log('Form fields:', {
+      name: form.elements['name'].value,
+      description: form.elements['description'].value,
+      condition: form.elements['condition'].value,
+      category: form.elements['category'].value
+    });
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('[name="csrf_token"]');
+    if (csrfToken) {
+      formData.append('csrf_token', csrfToken.value);
+      console.log('CSRF token added:', csrfToken.value);
+    } else {
+      console.warn('WARNING: CSRF token not found!');
+    }
+    
+    // Add selected image files
+    console.log('Number of files to upload:', selectedFiles.length);
     selectedFiles.forEach((file, index) => {
+      console.log(`File ${index}:`, {name: file.name, size: file.size, type: file.type});
       formData.append('images', file);
     });
     

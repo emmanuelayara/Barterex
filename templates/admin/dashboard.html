@@ -130,6 +130,24 @@
       50% { transform: scale(1.05); }
     }
 
+    /* Pending button pulse animation */
+    .animate-pending {
+      animation: button-pulse 2s infinite;
+      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+    }
+
+    @keyframes button-pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+      }
+    }
+
     /* Dashboard Container */
     .dashboard-container {
       max-width: 1200px;
@@ -641,11 +659,11 @@
       <span class="d-inline d-sm-none">All</span>
       <span class="count-badge">{{ total_items }}</span>
     </a>
-    <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="btn {{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }}">
+    <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="btn {{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }} {% if pending_items > 0 %}animate-pending{% endif %}">
       <i class="bi bi-clock-history"></i>
       <span class="d-none d-sm-inline">Pending</span>
       <span class="d-inline d-sm-none">Pending</span>
-      <span class="count-badge">{{ pending_items }}</span>
+      <span class="count-badge {% if pending_items > 0 %}pulse-badge{% endif %}">{{ pending_items }}</span>
     </a>
     <a href="{{ url_for('admin.admin_dashboard', status='approved') }}" class="btn {{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">
       <i class="bi bi-check-circle"></i>
@@ -678,6 +696,21 @@
       <i class="bi bi-geo-alt"></i>
       <span class="d-none d-sm-inline">Manage Pickup Stations</span>
       <span class="d-inline d-sm-none">Stations</span>
+    </a>
+    <a href="{{ url_for('admin.maintenance_mode') }}" class="btn btn-outline-light">
+      <i class="bi bi-tools"></i>
+      <span class="d-none d-sm-inline">Maintenance Mode</span>
+      <span class="d-inline d-sm-none">Maint.</span>
+    </a>
+    <a href="{{ url_for('admin.system_settings') }}" class="btn btn-outline-light">
+      <i class="bi bi-sliders"></i>
+      <span class="d-none d-sm-inline">System Settings</span>
+      <span class="d-inline d-sm-none">Settings</span>
+    </a>
+    <a href="{{ url_for('admin.audit_log') }}" class="btn btn-outline-light">
+      <i class="bi bi-file-earmark-text"></i>
+      <span class="d-none d-sm-inline">Audit Log</span>
+      <span class="d-inline d-sm-none">Log</span>
     </a>
     <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light">
       <i class="bi bi-box-arrow-right"></i>
@@ -718,20 +751,48 @@
     <div class="list-group">
       {% for item in items.items %}
       <div class="list-group-item">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-start">
           <div class="item-content flex-grow-1">
-            <h5><i class="bi bi-box me-2"></i>{{ item.name }}</h5>
-            <div class="item-number">
-              <i class="bi bi-hash"></i>{{ item.item_number }}
-            </div>
-            <div class="item-meta">
-              <i class="bi bi-person-circle"></i>
-              <span>by <strong>{{ item.user.username }}</strong></span>
+            <div class="d-flex align-items-start gap-3 mb-2">
+              {% set item_images = [] %}
+              {% if item.images and item.images|length > 0 %}
+                {% set item_images = item.images|map(attribute='image_url')|list %}
+              {% elif item.image_url %}
+                {% set item_images = [item.image_url] %}
+              {% endif %}
+              
+              {% if item_images|length > 0 %}
+              <img src="{{ item_images[0] }}" alt="{{ item.name }}" 
+                   class="dashboard-item-image" 
+                   data-item-images='{{ item_images|tojson|safe }}'
+                   style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;"
+                   title="Click to view all images">
+              {% else %}
+              <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
+                <i class="bi bi-image"></i>
+              </div>
+              {% endif %}
+              
+              <div class="flex-grow-1">
+                <h5 class="mb-1"><i class="bi bi-box me-2"></i>{{ item.name }}</h5>
+                <div class="item-number mb-1">
+                  <i class="bi bi-hash"></i>{{ item.item_number }}
+                </div>
+                <div class="item-meta mb-2">
+                  <i class="bi bi-person-circle"></i>
+                  <span>by <strong>{{ item.user.username }}</strong></span>
+                </div>
+                {% if item.description %}
+                <div style="font-size: 0.875rem; color: #6c757d; max-width: 300px; line-height: 1.4;">
+                  {{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}
+                </div>
+                {% endif %}
+              </div>
             </div>
           </div>
           
-          <div class="item-actions">
-            <span class="badge 
+          <div class="item-actions d-flex flex-column gap-2" style="min-width: 180px;">
+            <span class="badge text-center
                 {% if item.status == 'pending' %} bg-warning text-dark
                 {% elif item.status == 'approved' %} bg-success
                 {% elif item.status == 'rejected' %} bg-danger
@@ -745,6 +806,43 @@
               {% endif %}
               {{ item.status|capitalize }}
             </span>
+            
+            {% if item.status == 'pending' %}
+            <div class="btn-group btn-group-sm gap-2" role="group">
+              {% set item_images = item.images|map(attribute='image_url')|list if item.images else ([item.image_url] if item.image_url else []) %}
+              {% set image_metadata = [] %}
+              {% if item.images %}
+                {% for img in item.images %}
+                  {% set meta = {
+                    'url': img.image_url,
+                    'width': img.width,
+                    'height': img.height,
+                    'file_size': img.file_size,
+                    'quality_flags': img.quality_flags
+                  } %}
+                  {% set _ = image_metadata.append(meta) %}
+                {% endfor %}
+              {% endif %}
+              <button type="button" class="btn btn-success btn-sm approve-btn" 
+                      data-item-id="{{ item.id }}" 
+                      data-item-name="{{ item.name }}"
+                      data-item-description="{{ item.description or '' }}"
+                      data-item-images="{{ item_images|tojson }}"
+                      data-image-metadata="{{ image_metadata|tojson|safe }}">
+                <i class="bi bi-check-lg"></i>
+                <span class="d-none d-md-inline ms-1">Approve</span>
+              </button>
+              <button type="button" class="btn btn-danger btn-sm reject-btn" 
+                      data-item-id="{{ item.id }}" 
+                      data-item-name="{{ item.name }}"
+                      data-item-description="{{ item.description or '' }}"
+                      data-item-images="{{ item_images|tojson }}"
+                      data-image-metadata="{{ image_metadata|tojson|safe }}">
+                <i class="bi bi-x-lg"></i>
+                <span class="d-none d-md-inline ms-1">Reject</span>
+              </button>
+            </div>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -797,6 +895,144 @@
       </div>
     </nav>
     {% endif %}
+  </div>
+</div>
+
+<!-- Image Lightbox Modal with Slideshow -->
+<div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-labelledby="imageLightboxLabel" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content bg-dark">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-white" id="imageLightboxLabel">Item Image Preview</h5>
+        <div class="text-white ms-auto me-3" id="imageCounter" style="font-size: 14px; min-width: 50px;">1 of 1</div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-flex align-items-center justify-content-center position-relative" style="min-height: 80vh; background: #111;">
+        <button type="button" class="btn btn-light" id="prevImageBtn" style="position: absolute; left: 20px; z-index: 10; border-radius: 50%; width: 50px; height: 50px; padding: 0; display: none;" title="Previous image (← arrow)">
+          <i class="bi bi-chevron-left" style="font-size: 24px;"></i>
+        </button>
+        
+        <div style="max-width: 90%; max-height: 90vh; display: flex; align-items: center; justify-content: center;">
+          <img id="lightboxImage" src="" alt="Full size item image" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        </div>
+        
+        <button type="button" class="btn btn-light" id="nextImageBtn" style="position: absolute; right: 20px; z-index: 10; border-radius: 50%; width: 50px; height: 50px; padding: 0; display: none;" title="Next image (→ arrow)">
+          <i class="bi bi-chevron-right" style="font-size: 24px;"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Approve/Reject Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="approvalModalLabel">Item Review</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Item Preview -->
+        <div class="mb-4 p-3 rounded" style="background: #f8f9fa;">
+          <div class="d-flex gap-3">
+            <div style="position: relative; flex-shrink: 0;">
+              <img id="modalItemImage" src="" alt="Item image" 
+                   style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;">
+              <button type="button" class="btn btn-sm btn-light" id="expandImageBtn" 
+                      style="position: absolute; bottom: 5px; right: 5px; padding: 3px 6px; border-radius: 4px;" 
+                      title="Click to view full image">
+                <i class="bi bi-expand"></i>
+              </button>
+            </div>
+            <div class="flex-grow-1">
+              <h6 class="mb-2">Item Details</h6>
+              <p class="mb-1"><strong>Name:</strong> <span id="modalItemName"></span></p>
+              <p class="mb-1"><strong>Number:</strong> <span id="modalItemNumber"></span></p>
+              <p id="modalDescriptionBlock" class="mb-0" style="display: none;">
+                <strong>Description:</strong><br>
+                <span id="modalItemDescription" style="font-size: 0.9rem; color: #6c757d;"></span>
+              </p>
+              <!-- Image Metadata -->
+              <div id="imageMetadataBlock" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #dee2e6;">
+                <h6 class="mb-2" style="font-size: 0.95rem;">Image Analysis</h6>
+                <p class="mb-1" style="font-size: 0.85rem;"><strong>Dimensions:</strong> <span id="imageDimensions">-</span></p>
+                <p class="mb-1" style="font-size: 0.85rem;"><strong>File Size:</strong> <span id="imageFileSize">-</span></p>
+                <div id="imageQualityFlags" style="display: none; margin-top: 8px;">
+                  <strong style="font-size: 0.85rem; color: #ff6b6b;">⚠ Quality Issues:</strong>
+                  <ul id="qualityFlagsList" style="margin: 6px 0 0 20px; padding: 0; font-size: 0.85rem;"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Tabs -->
+        <ul class="nav nav-pills mb-4" id="approvalTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="approve-tab" data-bs-toggle="pill" data-bs-target="#approve-pane" 
+                    type="button" role="tab" aria-controls="approve-pane" aria-selected="true">
+              <i class="bi bi-check-lg me-2"></i>Approve
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reject-tab" data-bs-toggle="pill" data-bs-target="#reject-pane" 
+                    type="button" role="tab" aria-controls="reject-pane" aria-selected="false">
+              <i class="bi bi-x-lg me-2"></i>Reject
+            </button>
+          </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="approvalTabContent">
+          <!-- Approve Tab -->
+          <div class="tab-pane fade show active" id="approve-pane" role="tabpanel" aria-labelledby="approve-tab">
+            <form id="approveForm">
+              <div class="mb-3">
+                <label for="itemValue" class="form-label"><strong>Item Value (Credits)</strong></label>
+                <input type="number" class="form-control" id="itemValue" name="value" 
+                       placeholder="e.g. 500" min="1" step="1" required>
+                <small class="text-muted">Enter the credit value for this item</small>
+              </div>
+              <input type="hidden" id="itemIdInput" name="item_id">
+            </form>
+          </div>
+
+          <!-- Reject Tab -->
+          <div class="tab-pane fade" id="reject-pane" role="tabpanel" aria-labelledby="reject-tab">
+            <form id="rejectForm">
+              <div class="mb-3">
+                <label for="rejectionReason" class="form-label"><strong>Rejection Reason</strong></label>
+                <select class="form-select mb-2" id="rejectionReasonSelect">
+                  <option value="">-- Select a reason or enter custom --</option>
+                  <option value="Inappropriate content">Inappropriate content</option>
+                  <option value="Poor image quality">Poor image quality</option>
+                  <option value="Misleading description">Misleading description</option>
+                  <option value="Duplicate listing">Duplicate listing</option>
+                  <option value="Spam/suspicious">Spam/suspicious</option>
+                  <option value="Other (custom)">Other (custom)</option>
+                </select>
+                <textarea class="form-control" id="rejectionReason" name="rejection_reason" 
+                          placeholder="Explain why this item is being rejected..." rows="3" required></textarea>
+                <small class="text-muted">Be specific - users will see this feedback</small>
+              </div>
+              <input type="hidden" id="itemIdInput2" name="item_id">
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer border-top-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="submitApprove" disabled>
+          <i class="bi bi-check-lg me-2"></i>Approve Item
+        </button>
+        <button type="button" class="btn btn-danger" id="submitReject" disabled style="display: none;">
+          <i class="bi bi-x-lg me-2"></i>Reject Item
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -869,6 +1105,444 @@
           clearInterval(timer);
         }
       }, 50);
+    });
+
+    // ===== APPROVAL MODAL FUNCTIONALITY =====
+    const approvalModal = new bootstrap.Modal(document.getElementById('approvalModal'));
+    const imageLightboxModal = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
+    const modalElement = document.getElementById('approvalModal');
+
+    // Slideshow state
+    let lightboxImages = [];
+    let currentImageIndex = 0;
+    let isLightboxOpen = false;
+    let currentImageMetadata = [];
+
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+      if (!bytes) return '-';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let size = bytes;
+      let unitIndex = 0;
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+      }
+      return size.toFixed(1) + ' ' + units[unitIndex];
+    }
+
+    // Helper function to display image metadata
+    function displayImageMetadata(metadata) {
+      const metadataBlock = document.getElementById('imageMetadataBlock');
+      const dimensionsSpan = document.getElementById('imageDimensions');
+      const fileSizeSpan = document.getElementById('imageFileSize');
+      const qualityFlagsDiv = document.getElementById('imageQualityFlags');
+      const qualityFlagsList = document.getElementById('qualityFlagsList');
+      
+      // Clear previous flags
+      qualityFlagsList.innerHTML = '';
+      
+      if (!metadata || Object.keys(metadata).length === 0) {
+        metadataBlock.style.display = 'none';
+        return;
+      }
+      
+      // Display dimensions
+      if (metadata.width && metadata.height) {
+        dimensionsSpan.textContent = metadata.width + 'x' + metadata.height + ' px';
+      } else {
+        dimensionsSpan.textContent = '-';
+      }
+      
+      // Display file size
+      if (metadata.file_size) {
+        fileSizeSpan.textContent = formatFileSize(metadata.file_size);
+      } else {
+        fileSizeSpan.textContent = '-';
+      }
+      
+      // Display quality flags
+      let qualityFlags = [];
+      if (metadata.quality_flags) {
+        try {
+          if (typeof metadata.quality_flags === 'string') {
+            qualityFlags = JSON.parse(metadata.quality_flags);
+          } else {
+            qualityFlags = metadata.quality_flags;
+          }
+        } catch (e) {
+          console.warn('Could not parse quality flags:', e);
+        }
+      }
+      
+      if (qualityFlags && qualityFlags.length > 0) {
+        qualityFlagsDiv.style.display = 'block';
+        qualityFlags.forEach(flag => {
+          const li = document.createElement('li');
+          const icon = flag.severity === 'error' ? '❌' : (flag.severity === 'warning' ? '⚠️' : 'ℹ️');
+          li.innerHTML = `<span style="color: ${flag.severity === 'error' ? '#dc3545' : (flag.severity === 'warning' ? '#ff6b6b' : '#0d6efd')};">${icon} ${flag.message}</span>`;
+          qualityFlagsList.appendChild(li);
+        });
+      } else {
+        qualityFlagsDiv.style.display = 'none';
+      }
+      
+      metadataBlock.style.display = 'block';
+    }
+
+
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        const itemName = this.dataset.itemName;
+        const itemDescription = this.dataset.itemDescription;
+        const itemImagesJson = this.dataset.itemImages || '[]';
+        const imageMetadataJson = this.dataset.imageMetadata || '[]';
+
+        // Populate modal
+        document.getElementById('modalItemName').textContent = itemName;
+        document.getElementById('modalItemNumber').textContent = 'Item #' + itemId;
+        document.getElementById('itemIdInput').value = itemId;
+        document.getElementById('itemValue').value = '';
+
+        // Set images
+        try {
+          const images = JSON.parse(itemImagesJson);
+          lightboxImages = (Array.isArray(images) && images.length > 0) ? images : [];
+        } catch (e) {
+          console.error('Error parsing images JSON:', e);
+          lightboxImages = [];
+        }
+
+        // Set image metadata
+        try {
+          const metadata = JSON.parse(imageMetadataJson);
+          currentImageMetadata = (Array.isArray(metadata) && metadata.length > 0) ? metadata : [];
+        } catch (e) {
+          console.error('Error parsing image metadata JSON:', e);
+          currentImageMetadata = [];
+        }
+
+        const imageElement = document.getElementById('modalItemImage');
+        if (lightboxImages && lightboxImages.length > 0) {
+          imageElement.src = lightboxImages[0];
+          imageElement.style.display = 'block';
+          // Display metadata for the first image
+          if (currentImageMetadata.length > 0) {
+            displayImageMetadata(currentImageMetadata[0]);
+          } else {
+            displayImageMetadata({});
+          }
+        } else {
+          imageElement.style.display = 'none';
+          displayImageMetadata({});
+        }
+
+        if (itemDescription) {
+          document.getElementById('modalItemDescription').textContent = itemDescription;
+          document.getElementById('modalDescriptionBlock').style.display = 'block';
+        } else {
+          document.getElementById('modalDescriptionBlock').style.display = 'none';
+        }
+
+        // Switch to approve tab
+        document.getElementById('approve-tab').click();
+        document.getElementById('submitApprove').style.display = 'inline-block';
+        document.getElementById('submitReject').style.display = 'none';
+
+        approvalModal.show();
+      });
+    });
+
+    // Open modal for reject
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const itemId = this.dataset.itemId;
+        const itemName = this.dataset.itemName;
+        const itemDescription = this.dataset.itemDescription;
+        const itemImagesJson = this.dataset.itemImages || '[]';
+        const imageMetadataJson = this.dataset.imageMetadata || '[]';
+
+        // Populate modal
+        document.getElementById('modalItemName').textContent = itemName;
+        document.getElementById('modalItemNumber').textContent = 'Item #' + itemId;
+        document.getElementById('itemIdInput2').value = itemId;
+        document.getElementById('rejectionReason').value = '';
+        document.getElementById('rejectionReasonSelect').value = '';
+
+        // Set images
+        try {
+          const images = JSON.parse(itemImagesJson);
+          lightboxImages = (Array.isArray(images) && images.length > 0) ? images : [];
+        } catch (e) {
+          console.error('Error parsing images JSON:', e);
+          lightboxImages = [];
+        }
+
+        // Set image metadata
+        try {
+          const metadata = JSON.parse(imageMetadataJson);
+          currentImageMetadata = (Array.isArray(metadata) && metadata.length > 0) ? metadata : [];
+        } catch (e) {
+          console.error('Error parsing image metadata JSON:', e);
+          currentImageMetadata = [];
+        }
+
+        const imageElement = document.getElementById('modalItemImage');
+        if (lightboxImages && lightboxImages.length > 0) {
+          imageElement.src = lightboxImages[0];
+          imageElement.style.display = 'block';
+          // Display metadata for the first image
+          if (currentImageMetadata.length > 0) {
+            displayImageMetadata(currentImageMetadata[0]);
+          } else {
+            displayImageMetadata({});
+          }
+        } else {
+          imageElement.style.display = 'none';
+          displayImageMetadata({});
+        }
+
+        if (itemDescription) {
+          document.getElementById('modalItemDescription').textContent = itemDescription;
+          document.getElementById('modalDescriptionBlock').style.display = 'block';
+        } else {
+          document.getElementById('modalDescriptionBlock').style.display = 'none';
+        }
+
+        // Switch to reject tab
+        document.getElementById('reject-tab').click();
+        document.getElementById('submitApprove').style.display = 'none';
+        document.getElementById('submitReject').style.display = 'inline-block';
+
+        approvalModal.show();
+      });
+    });
+
+    // Lightbox slideshow functions
+    function updateLightboxImage() {
+      if (lightboxImages.length === 0) return;
+      
+      const imageElement = document.getElementById('lightboxImage');
+      imageElement.src = lightboxImages[currentImageIndex];
+      
+      // Update counter
+      document.getElementById('imageCounter').textContent = `${currentImageIndex + 1} of ${lightboxImages.length}`;
+      
+      // Show/hide navigation buttons
+      const prevBtn = document.getElementById('prevImageBtn');
+      const nextBtn = document.getElementById('nextImageBtn');
+      
+      if (lightboxImages.length > 1) {
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+        
+        // Disable prev button if at start
+        if (currentImageIndex === 0) {
+          prevBtn.style.opacity = '0.5';
+          prevBtn.style.pointerEvents = 'none';
+        } else {
+          prevBtn.style.opacity = '1';
+          prevBtn.style.pointerEvents = 'auto';
+        }
+        
+        // Disable next button if at end
+        if (currentImageIndex === lightboxImages.length - 1) {
+          nextBtn.style.opacity = '0.5';
+          nextBtn.style.pointerEvents = 'none';
+        } else {
+          nextBtn.style.opacity = '1';
+          nextBtn.style.pointerEvents = 'auto';
+        }
+      } else {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      }
+    }
+
+    function showNextImage() {
+      if (lightboxImages.length > 1 && currentImageIndex < lightboxImages.length - 1) {
+        currentImageIndex++;
+        updateLightboxImage();
+      }
+    }
+
+    function showPrevImage() {
+      if (lightboxImages.length > 1 && currentImageIndex > 0) {
+        currentImageIndex--;
+        updateLightboxImage();
+      }
+    }
+
+    // Handle image expand button - open lightbox
+    document.getElementById('expandImageBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      if (lightboxImages.length > 0) {
+        currentImageIndex = 0;
+        updateLightboxImage();
+        imageLightboxModal.show();
+      }
+    });
+
+    // Also allow clicking the image itself to expand
+    document.getElementById('modalItemImage').addEventListener('click', function() {
+      if (lightboxImages.length > 0) {
+        currentImageIndex = 0;
+        updateLightboxImage();
+        imageLightboxModal.show();
+      }
+    });
+
+    // Handle dashboard item images - click to open lightbox
+    document.querySelectorAll('.dashboard-item-image').forEach(img => {
+      img.addEventListener('click', function(e) {
+        e.preventDefault();
+        const itemImagesJson = this.dataset.itemImages || '[]';
+        
+        try {
+          const images = JSON.parse(itemImagesJson);
+          lightboxImages = (Array.isArray(images) && images.length > 0) ? images : [];
+        } catch (err) {
+          console.error('Error parsing dashboard images JSON:', err);
+          lightboxImages = [];
+        }
+        
+        if (lightboxImages.length > 0) {
+          currentImageIndex = 0;
+          updateLightboxImage();
+          imageLightboxModal.show();
+        }
+      });
+    });
+
+    // Lightbox navigation buttons
+    document.getElementById('prevImageBtn').addEventListener('click', showPrevImage);
+    document.getElementById('nextImageBtn').addEventListener('click', showNextImage);
+
+    // Keyboard navigation in lightbox
+    document.addEventListener('keydown', function(e) {
+      if (isLightboxOpen) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          showPrevImage();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          showNextImage();
+        }
+      }
+    });
+
+    // Track lightbox open/close state
+    document.getElementById('imageLightboxModal').addEventListener('shown.bs.modal', function() {
+      isLightboxOpen = true;
+    });
+
+    document.getElementById('imageLightboxModal').addEventListener('hidden.bs.modal', function() {
+      isLightboxOpen = false;
+      currentImageIndex = 0;
+    });
+
+    // Handle rejection reason select
+    document.getElementById('rejectionReasonSelect').addEventListener('change', function() {
+      if (this.value && this.value !== 'Other (custom)') {
+        document.getElementById('rejectionReason').value = this.value;
+      } else if (this.value === 'Other (custom)') {
+        document.getElementById('rejectionReason').value = '';
+        document.getElementById('rejectionReason').focus();
+      }
+    });
+
+    // Handle approve submit
+    document.getElementById('submitApprove').addEventListener('click', function() {
+      const itemId = document.getElementById('itemIdInput').value;
+      const value = document.getElementById('itemValue').value;
+
+      if (!value || value < 1) {
+        alert('Please enter a valid item value');
+        return;
+      }
+
+      // Show loading state
+      this.disabled = true;
+      const originalText = this.innerHTML;
+      this.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+      // Submit via fetch - construct URL dynamically without url_for placeholder
+      fetch(`/admin/approve/${itemId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'value=' + encodeURIComponent(value)
+      })
+      .then(response => {
+        if (response.ok) {
+          // Success - reload page to show updated list
+          setTimeout(() => location.reload(), 500);
+        } else {
+          throw new Error('Approval failed');
+        }
+      })
+      .catch(error => {
+        alert('Error: ' + error.message);
+        this.disabled = false;
+        this.innerHTML = originalText;
+      });
+    });
+
+    // Handle reject submit
+    document.getElementById('submitReject').addEventListener('click', function() {
+      const itemId = document.getElementById('itemIdInput2').value;
+      const reason = document.getElementById('rejectionReason').value;
+
+      if (!reason || reason.trim().length === 0) {
+        alert('Please provide a rejection reason');
+        return;
+      }
+
+      // Show loading state
+      this.disabled = true;
+      const originalText = this.innerHTML;
+      this.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+      // Submit via fetch - construct URL dynamically without url_for placeholder
+      fetch(`/admin/reject/${itemId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'rejection_reason=' + encodeURIComponent(reason)
+      })
+      .then(response => {
+        if (response.ok) {
+          // Success - reload page to show updated list
+          setTimeout(() => location.reload(), 500);
+        } else {
+          throw new Error('Rejection failed');
+        }
+      })
+      .catch(error => {
+        alert('Error: ' + error.message);
+        this.disabled = false;
+        this.innerHTML = originalText;
+      });
+    });
+
+    // Enable/disable buttons based on form validation
+    document.getElementById('itemValue').addEventListener('input', function() {
+      document.getElementById('submitApprove').disabled = !this.value || this.value < 1;
+    });
+
+    document.getElementById('rejectionReason').addEventListener('input', function() {
+      document.getElementById('submitReject').disabled = !this.value || this.value.trim().length === 0;
+    });
+
+    // Reset button states when modal closes
+    modalElement.addEventListener('hidden.bs.modal', function() {
+      document.getElementById('submitApprove').disabled = false;
+      document.getElementById('submitReject').disabled = false;
+      document.getElementById('submitApprove').innerHTML = '<i class="bi bi-check-lg me-2"></i>Approve Item';
+      document.getElementById('submitReject').innerHTML = '<i class="bi bi-x-lg me-2"></i>Reject Item';
     });
   });
 

@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, Response
 from flask_login import login_required, current_user, logout_user
 from flask_wtf.csrf import generate_csrf
 from sqlalchemy import and_
+from sqlalchemy.orm import joinedload
+from typing import Dict, Any, Union, List
 
 from app import db
 from models import Item, ItemImage
@@ -29,7 +31,7 @@ marketplace_bp = Blueprint('marketplace', __name__)
 @marketplace_bp.route('/')
 @marketplace_bp.route('/marketplace')
 @handle_errors
-def marketplace():
+def marketplace() -> Union[str, Response]:
     try:
         page = request.args.get('page', 1, type=int)
         condition_filter = request.args.get('condition')
@@ -95,9 +97,10 @@ def marketplace():
 
 @marketplace_bp.route('/home')
 @handle_errors
-def home():
+def home() -> Union[str, Response]:
     try:
-        trending_items = Item.query.filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()
+        # Using eager loading to prevent N+1 queries when accessing item.user in template
+        trending_items = Item.query.options(joinedload(Item.user)).filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()
         logger.info(f"Home page loaded - {len(trending_items)} trending items displayed")
         breadcrumbs = ['Home']
         return render_template('home.html', trending_items=trending_items, breadcrumbs=breadcrumbs)
@@ -109,7 +112,7 @@ def home():
 
 @marketplace_bp.route('/item/<int:item_id>', methods=['GET', 'POST'])
 @handle_errors
-def view_item(item_id):
+def view_item(item_id: int) -> Union[str, Response]:
     try:
         item = Item.query.get_or_404(item_id)
         
@@ -123,7 +126,7 @@ def view_item(item_id):
             
             item_images = [TempImage(item.image_url)]
 
-        related_items = Item.query.filter(
+        related_items = Item.query.options(joinedload(Item.user)).filter(
             Item.category == item.category,
             Item.id != item.id,
             Item.is_available == True

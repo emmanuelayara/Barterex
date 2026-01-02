@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace Unavailable - Barter Express</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container-custom {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 60px 40px;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 70px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .alert-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .button-group {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-custom {
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom {
+            background: #f5576c;
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            background: #d83d56;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary-custom {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary-custom:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .container-custom {
+                padding: 40px 25px;
+                margin: 20px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-custom {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-custom">
+        <div class="icon">👀</div>
+        <h1>Marketplace Unavailable</h1>
+        <p>The marketplace is temporarily unavailable. We're making improvements to serve you better!</p>
+
+        <div class="alert-box">
+            <strong>⏳ Estimated Time:</strong><br>
+            We expect to be back online within the next few hours. Check back soon!
+        </div>
+
+        <p>In the meantime, you can still:</p>
+        <ul style="text-align: left; display: inline-block;">
+            <li>View your account and settings</li>
+            <li>Check your order history</li>
+            <li>Manage your notifications</li>
+        </ul>
+
+        <div class="button-group">
+            <a href="{{ url_for('auth.login') }}" class="btn-custom btn-primary-custom">
+                ← Go to Account
+            </a>
+            <a href="javascript:location.reload()" class="btn-custom btn-secondary-custom">
+                🔄 Refresh
+            </a>
+        </div>
+    </div>
+</body>
+</html>

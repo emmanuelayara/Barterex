@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Mode - Barter Express</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .maintenance-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 60px 40px;
+            max-width: 700px;
+            text-align: center;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .maintenance-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .message-box {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .message-content {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #333;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-section {
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .info-section h3 {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-section h3::before {
+            content: "→";
+            margin-right: 10px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .info-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-list li {
+            padding: 8px 0;
+            color: #666;
+            font-size: 15px;
+        }
+
+        .info-list li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .timer {
+            font-size: 48px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .refresh-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .social-links {
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social-links a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            color: #667eea;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        .social-links a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .button-group {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-custom {
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary-custom {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            background: #5568d3;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary-custom {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary-custom:hover {
+            background: #e8e8e8;
+            color: #333;
+            border-color: #bbb;
+        }
+
+        @media (max-width: 768px) {
+            .maintenance-container {
+                padding: 40px 25px;
+                margin: 20px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            .maintenance-icon {
+                font-size: 60px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .timer {
+                font-size: 36px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-custom {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-container">
+        <!-- Icon -->
+        <div class="maintenance-icon">🔧</div>
+
+        <!-- Status Badge -->
+        <div class="status-badge">⚠️ Maintenance Mode</div>
+
+        <!-- Main Heading -->
+        <h1>Platform Under Maintenance</h1>
+
+        <!-- Subtitle -->
+        <p class="subtitle">
+            We're working hard to improve your experience. We'll be back online shortly!
+        </p>
+
+        <!-- Custom Message -->
+        {% if message %}
+            <div class="message-box">
+                <div class="message-content">
+                    {{ message }}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <h3>What You Can Do Right Now</h3>
+            <ul class="info-list">
+                <li>Check our status page for updates</li>
+                <li>Follow us on social media for announcements</li>
+                <li>Contact support if you have urgent questions</li>
+                <li>Try refreshing the page in a few moments</li>
+            </ul>
+        </div>
+
+        <!-- Refresh Info -->
+        <div class="refresh-info">
+            <strong>💡 Tip:</strong> This page will automatically refresh every 30 seconds. 
+            You can also manually refresh your browser to check if we're back online.
+        </div>
+
+        <!-- Buttons -->
+        <div class="button-group">
+            <a href="javascript:location.reload()" class="btn-custom btn-primary-custom">
+                <span class="spinner"></span> Refresh Page
+            </a>
+            <a href="https://status.barterex.com" class="btn-custom btn-secondary-custom" target="_blank">
+                📊 Status Page
+            </a>
+        </div>
+
+        <!-- Social Links -->
+        <div class="social-links">
+            <a href="https://twitter.com/barterex" target="_blank" title="Twitter">𝕏</a>
+            <a href="https://facebook.com/barterex" target="_blank" title="Facebook">f</a>
+            <a href="https://instagram.com/barterex" target="_blank" title="Instagram">📷</a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-note">
+            <p>Barter Express™ • We appreciate your patience!</p>
+            <p style="margin-top: 8px;">Questions? Contact us at support@barterex.com</p>
+        </div>
+    </div>
+
+    <!-- Auto-refresh every 30 seconds -->
+    <script>
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

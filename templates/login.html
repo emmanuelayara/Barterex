@@ -812,7 +812,12 @@
 
                     <div class="form-group">
                         <label class="form-label">{{ form.password.label }}</label>
-                        {{ form.password(class="form-input", placeholder="Enter your password", id="password") }}
+                        <div style="position: relative; display: flex; align-items: center;">
+                            {{ form.password(class="form-input", placeholder="Enter your password", id="password", style="padding-right: 45px;") }}
+                            <button type="button" class="password-toggle-btn" id="togglePassword" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #718096;">
+                                👁️
+                            </button>
+                        </div>
                         <div class="form-hint" id="passwordHint">Your password for account security</div>
                         <div class="error-message"></div>
                     </div>
@@ -864,6 +869,20 @@
     </div>
 
     <script>
+        // ===== PASSWORD TOGGLE FUNCTIONALITY =====
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (togglePasswordBtn && passwordInput) {
+            togglePasswordBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.textContent = type === 'password' ? '👁️' : '🙈';
+            });
+        }
+
+        // ===== LOGIN FORM HANDLING =====
         const rememberCheckbox = document.getElementById('rememberCheckbox');
         const submitBtn = document.getElementById('submitBtn');
         const form = document.getElementById('loginForm');

@@ -765,7 +765,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">{{ form.password.label }}</label>
-                        {{ form.password(class="form-input", placeholder="Create a strong password", id="password") }}
+                        <div style="position: relative; display: flex; align-items: center;">
+                            {{ form.password(class="form-input", placeholder="Create a strong password", id="password", style="padding-right: 45px;") }}
+                            <button type="button" class="password-toggle-btn" id="togglePassword" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #718096;">
+                                👁️
+                            </button>
+                        </div>
                         
                         <!-- Password Requirements Checklist -->
                         <div class="password-requirements" id="passwordRequirements">
@@ -805,7 +810,12 @@
 
                     <div class="form-group">
                         <label class="form-label">{{ form.confirm_password.label }}</label>
-                        {{ form.confirm_password(class="form-input", placeholder="Confirm your password", id="confirm_password") }}
+                        <div style="position: relative; display: flex; align-items: center;">
+                            {{ form.confirm_password(class="form-input", placeholder="Confirm your password", id="confirm_password", style="padding-right: 45px;") }}
+                            <button type="button" class="password-toggle-btn" id="toggleConfirmPassword" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #718096;">
+                                👁️
+                            </button>
+                        </div>
                         <div class="form-hint" id="confirmHint">Must match your password exactly</div>
                         {% for error in form.confirm_password.errors %}
                             <div class="flask-error">{{ error }}</div>
@@ -842,10 +852,30 @@
     </div>
 
     <script>
-        // Password strength checker
+        // ===== PASSWORD TOGGLE FUNCTIONALITY =====
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPassword');
         const passwordInput = document.getElementById('password');
-        const passwordStrength = document.getElementById('passwordStrength');
         const confirmPasswordInput = document.getElementById('confirm_password');
+
+        // Toggle password visibility
+        togglePasswordBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+
+        // Toggle confirm password visibility
+        toggleConfirmPasswordBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+
+        // ===== PASSWORD STRENGTH CHECKER =====
+        const passwordStrength = document.getElementById('passwordStrength');
         const termsCheckbox = document.getElementById('termsCheckbox');
         const submitBtn = document.querySelector('input[type="submit"], button[type="submit"]');
         const form = document.getElementById('registrationForm');

@@ -1,7 +1,7 @@
 """Add checkout transaction tracking fields to user model
 
 Revision ID: add_checkout_tracking
-Revises: 3ed17ab84b11
+Revises: add_database_indexes
 Create Date: 2025-12-24
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_checkout_tracking'
-down_revision = '3ed17ab84b11'
+down_revision = 'add_database_indexes'
 branch_labels = None
 depends_on = None
 

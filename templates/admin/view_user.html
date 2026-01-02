@@ -63,6 +63,11 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="fas fa-envelope text-primary small"></i>
                                     <span class="text-dark small text-truncate">{{ user.email }}</span>
+                                    {% if email_verified %}
+                                    <span class="badge bg-success ms-auto">Verified</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark ms-auto">Unverified</span>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="info-group mb-2 mb-md-3">
@@ -70,6 +75,38 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="fas fa-phone text-primary small"></i>
                                     <span class="text-dark small">{{ user.phone_number or 'Not Provided' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Timeline -->
+                        <div class="col-12 col-md-6">
+                            <h6 class="text-muted text-uppercase fw-bold mb-2 mb-md-3 d-flex align-items-center gap-2 small">
+                                <i class="fas fa-calendar text-primary"></i>
+                                Account Timeline
+                            </h6>
+                            <div class="info-group mb-2 mb-md-3">
+                                <label class="text-muted small fw-semibold mb-1">Account Created</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-birthday-cake text-primary small"></i>
+                                    <div>
+                                        <span class="text-dark small d-block">{{ user.created_at.strftime('%B %d, %Y') }}</span>
+                                        <small class="text-muted">{{ account_age_str }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="info-group mb-2 mb-md-3">
+                                <label class="text-muted small fw-semibold mb-1">Last Login</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-sign-in-alt text-primary small"></i>
+                                    <div>
+                                        {% if last_login %}
+                                        <span class="text-dark small d-block">{{ last_login.strftime('%B %d, %Y %H:%M') }}</span>
+                                        <small class="text-muted">{{ last_login_str }}</small>
+                                        {% else %}
+                                        <span class="text-dark small">Never logged in</span>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -108,6 +145,35 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- User Rating -->
+                        <div class="col-12 col-md-6">
+                            <h6 class="text-muted text-uppercase fw-bold mb-2 mb-md-3 d-flex align-items-center gap-2 small">
+                                <i class="fas fa-star text-primary"></i>
+                                User Rating
+                            </h6>
+                            <div class="info-group mb-2 mb-md-3">
+                                <label class="text-muted small fw-semibold mb-1">Overall Score</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-award text-warning small"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="text-dark fw-bold">{{ "%.1f"|format(user_rating) }}</span>
+                                            <div class="text-warning small">
+                                                {% for i in range(5) %}
+                                                    {% if i < user_rating|int %}
+                                                    <i class="fas fa-star"></i>
+                                                    {% else %}
+                                                    <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Based on completed trades</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -139,7 +205,7 @@
                     </h6>
                 </div>
                 <div class="card-body p-0">
-                    <!-- Items Uploaded -->
+                    <!-- Items Breakdown -->
                     <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
                         <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
                             <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
@@ -156,21 +222,142 @@
                         </div>
                     </div>
 
-                    <!-- Items Traded -->
-                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3">
+                    <!-- Approved Items -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
                         <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
                             <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
                                  style="width: 35px; height: 35px; background: rgba(40,167,69,0.1);">
-                                <i class="fas fa-handshake text-success small"></i>
+                                <i class="fas fa-check-circle text-success small"></i>
                             </div>
                             <div class="min-width-0 flex-grow-1">
-                                <h6 class="mb-0 fw-semibold small text-truncate">Items Traded</h6>
-                                <small class="text-muted">Successful trades</small>
+                                <h6 class="mb-0 fw-semibold small">Approved</h6>
+                                <small class="text-muted">Ready to trade</small>
                             </div>
                         </div>
                         <div class="text-end flex-shrink-0">
-                            <h5 class="mb-0 text-success fw-bold h6 h5-md">{{ items_traded }}</h5>
+                            <h5 class="mb-0 text-success fw-bold h6 h5-md">{{ items_approved }}</h5>
                         </div>
+                    </div>
+
+                    <!-- Pending Items -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                 style="width: 35px; height: 35px; background: rgba(255,193,7,0.1);">
+                                <i class="fas fa-clock text-warning small"></i>
+                            </div>
+                            <div class="min-width-0 flex-grow-1">
+                                <h6 class="mb-0 fw-semibold small">Pending Review</h6>
+                                <small class="text-muted">Awaiting approval</small>
+                            </div>
+                        </div>
+                        <div class="text-end flex-shrink-0">
+                            <h5 class="mb-0 text-warning fw-bold h6 h5-md">{{ items_pending }}</h5>
+                        </div>
+                    </div>
+
+                    <!-- Rejected Items -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                 style="width: 35px; height: 35px; background: rgba(220,53,69,0.1);">
+                                <i class="fas fa-times-circle text-danger small"></i>
+                            </div>
+                            <div class="min-width-0 flex-grow-1">
+                                <h6 class="mb-0 fw-semibold small">Rejected</h6>
+                                <small class="text-muted">Not approved</small>
+                            </div>
+                        </div>
+                        <div class="text-end flex-shrink-0">
+                            <h5 class="mb-0 text-danger fw-bold h6 h5-md">{{ items_rejected }}</h5>
+                        </div>
+                    </div>
+
+                    <!-- Items Traded -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                 style="width: 35px; height: 35px; background: rgba(108,117,125,0.1);">
+                                <i class="fas fa-handshake text-secondary small"></i>
+                            </div>
+                            <div class="min-width-0 flex-grow-1">
+                                <h6 class="mb-0 fw-semibold small">Traded/Sold</h6>
+                                <small class="text-muted">Completed transactions</small>
+                            </div>
+                        </div>
+                        <div class="text-end flex-shrink-0">
+                            <h5 class="mb-0 text-secondary fw-bold h6 h5-md">{{ items_traded }}</h5>
+                        </div>
+                    </div>
+
+                    <!-- Trade Completion Rate -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                                 style="width: 35px; height: 35px; background: rgba(23,162,184,0.1);">
+                                <i class="fas fa-percentage text-info small"></i>
+                            </div>
+                            <div class="min-width-0 flex-grow-1">
+                                <h6 class="mb-0 fw-semibold small">Completion Rate</h6>
+                                <small class="text-muted">Trade success rate</small>
+                            </div>
+                        </div>
+                        <div class="text-end flex-shrink-0">
+                            <h5 class="mb-0 text-info fw-bold h6 h5-md">
+                                {% if total_orders > 0 %}
+                                {{ trade_completion_rate }}%
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Stats Card -->
+            <div class="card border-0 shadow-sm mt-3 mt-md-4">
+                <div class="card-header bg-light border-0 p-2 p-md-3">
+                    <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2 small">
+                        <i class="fas fa-shopping-cart text-primary"></i>
+                        Trade Statistics
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Orders Placed -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1">
+                            <i class="fas fa-arrow-right text-primary small"></i>
+                            <div>
+                                <h6 class="mb-0 fw-semibold small">Orders Placed</h6>
+                                <small class="text-muted">As buyer</small>
+                            </div>
+                        </div>
+                        <h5 class="mb-0 text-primary fw-bold h6 h5-md">{{ orders_placed }}</h5>
+                    </div>
+
+                    <!-- Items Sold -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1">
+                            <i class="fas fa-arrow-left text-success small"></i>
+                            <div>
+                                <h6 class="mb-0 fw-semibold small">Items Sold</h6>
+                                <small class="text-muted">As seller</small>
+                            </div>
+                        </div>
+                        <h5 class="mb-0 text-success fw-bold h6 h5-md">{{ orders_sold }}</h5>
+                    </div>
+
+                    <!-- Orders Completed -->
+                    <div class="d-flex align-items-center justify-content-between p-2 p-md-3">
+                        <div class="d-flex align-items-center gap-2 gap-md-3 flex-grow-1">
+                            <i class="fas fa-check-double text-info small"></i>
+                            <div>
+                                <h6 class="mb-0 fw-semibold small">Orders Completed</h6>
+                                <small class="text-muted">Delivered successfully</small>
+                            </div>
+                        </div>
+                        <h5 class="mb-0 text-info fw-bold h6 h5-md">{{ orders_completed }}</h5>
                     </div>
                 </div>
             </div>

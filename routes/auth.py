@@ -25,9 +25,9 @@ def send_async_email(app, msg):
             from flask_mail import Mail
             mail = Mail(app)
             mail.send(msg)
-            print(f"✅ Email sent successfully to {msg.recipients}")
+            logger.info(f"✅ Email sent successfully to {msg.recipients}")
         except Exception as e:
-            print(f"❌ Email sending failed: {e}")
+            logger.error(f"❌ Email sending failed: {e}", exc_info=True)
 
 def send_email_async(subject, recipients, html_body, sender=None):
     """Helper function to send emails asynchronously"""
@@ -39,9 +39,11 @@ def send_email_async(subject, recipients, html_body, sender=None):
             recipients=recipients if isinstance(recipients, list) else [recipients]
         )
         msg.html = html_body
+        logger.debug(f"Sending email to {recipients} with subject: {subject}")
         Thread(target=send_async_email, args=(current_app._get_current_object(), msg), daemon=True).start()
+        logger.info(f"Email task queued for {recipients}")
     except Exception as e:
-        print(f"❌ Failed to send email: {e}")
+        logger.error(f"❌ Failed to queue email: {e}", exc_info=True)
 
 def generate_reset_token(email, expires_sec=3600):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
@@ -73,7 +75,7 @@ def register():
                 password_hash=hashed_password,
                 credits=1000,
                 first_login=True,
-                email_verified=True  # ✅ DEVELOPMENT: Auto-verify (network blocks SMTP, change to False in production)
+                email_verified=False  # ✅ Email must be verified before account is active
             )
             db.session.add(user)
             db.session.commit()
