@@ -43,7 +43,10 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False, index=True)
     is_banned = db.Column(db.Boolean, default=False, index=True)
     ban_reason = db.Column(db.Text, nullable=True)
+    ban_date = db.Column(db.DateTime, nullable=True)  # When the user was banned
     unban_requested = db.Column(db.Boolean, default=False)
+    unban_request_date = db.Column(db.DateTime, nullable=True)  # When unban was requested
+    appeal_message = db.Column(db.Text, nullable=True)  # User's appeal message explaining why they should be unbanned
 
     # Security - failed login tracking for brute force protection
     failed_login_attempts = db.Column(db.Integer, default=0)

@@ -40,6 +40,21 @@
             margin: 20px 0;
             border-radius: 4px;
         }
+        .alert-info {
+            background-color: #e7f3ff;
+            border-left: 4px solid #0d6efd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #004085;
+        }
+        .alert-danger {
+            background-color: #fff5f5;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
         .section {
             margin: 25px 0;
         }
@@ -49,43 +64,23 @@
             color: #dc3545;
             margin-bottom: 12px;
         }
-        .reason-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 15px 0;
-            border-left: 4px solid #dc3545;
-        }
-        .appeal-info {
-            background-color: #d1ecf1;
-            border-left: 4px solid #17a2b8;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
-        .appeal-info strong {
-            color: #0c5460;
-        }
-        .timeline {
-            list-style: none;
-            padding: 0;
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f9f9f9;
             margin: 15px 0;
         }
-        .timeline li {
-            padding: 10px 0;
-            padding-left: 25px;
-            position: relative;
-            border-bottom: 1px solid #eee;
+        .details-table tr {
+            border-bottom: 1px solid #ddd;
         }
-        .timeline li:last-child {
-            border-bottom: none;
+        .details-table td {
+            padding: 10px;
+            color: #333;
         }
-        .timeline li:before {
-            content: "→";
-            position: absolute;
-            left: 0;
-            color: #dc3545;
-            font-weight: bold;
+        .details-table td:first-child {
+            font-weight: 600;
+            width: 35%;
+            color: #333;
         }
         .button-container {
             text-align: center;
@@ -93,12 +88,13 @@
         }
         .btn {
             display: inline-block;
-            padding: 12px 30px;
-            background-color: #007bff;
+            padding: 14px 40px;
+            background-color: #0d6efd;
             color: white;
             text-decoration: none;
-            border-radius: 4px;
-            font-weight: 500;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
             transition: background-color 0.3s;
         }
         .btn:hover {
@@ -115,14 +111,19 @@
         .footer-note {
             margin: 10px 0;
         }
-        .account-status {
-            background-color: #fff5f5;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-            text-align: center;
-            color: #dc3545;
-            font-weight: 600;
+        .list-styled {
+            padding-left: 20px;
+            color: #333;
+        }
+        .list-styled li {
+            margin-bottom: 8px;
+        }
+        ol {
+            padding-left: 20px;
+            color: #333;
+        }
+        ol li {
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -135,76 +136,107 @@
         <div class="content">
             <p>Hello <strong>{{ username }}</strong>,</p>
 
-            <p>We regret to inform you that your Barter Express account has been suspended effective immediately due to a violation of our platform's terms of service and community guidelines.</p>
+            <p>We're writing to inform you that your Barterex account has been <strong>temporarily suspended</strong> due to a violation of our community guidelines.</p>
 
-            <div class="account-status">
-                Your account is currently SUSPENDED
+            <!-- Suspension Details -->
+            <div class="section">
+                <div class="section-title">Suspension Details</div>
+                <table class="details-table">
+                    <tr>
+                        <td>Account:</td>
+                        <td>{{ username }}</td>
+                    </tr>
+                    <tr>
+                        <td>Suspension Date:</td>
+                        <td>{{ ban_date.strftime('%B %d, %Y at %I:%M %p') if ban_date else 'Today' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Status:</td>
+                        <td><strong style="color: #dc3545;">Suspended</strong></td>
+                    </tr>
+                </table>
             </div>
 
+            <!-- Reason for Suspension -->
             <div class="section">
                 <div class="section-title">Reason for Suspension</div>
-                <div class="reason-box">
-                    <p>{{ reason }}</p>
+                <div class="alert-danger">
+                    <p style="margin: 0; color: #333;">{{ reason }}</p>
                 </div>
             </div>
 
+            <!-- What This Means -->
             <div class="section">
-                <div class="section-title">What This Means</div>
-                <ul class="timeline">
-                    <li>You cannot log in to your account</li>
-                    <li>Your items are no longer visible on the marketplace</li>
-                    <li>You cannot place new orders or trades</li>
-                    <li>Your open orders may be affected</li>
+                <div class="section-title">Account Restrictions</div>
+                <ul class="list-styled">
+                    <li>You cannot access your account at this time</li>
+                    <li>You cannot buy or sell items on the marketplace</li>
+                    <li>You cannot manage your credits or trading history</li>
+                    <li>Your items are no longer visible to other users</li>
                 </ul>
             </div>
 
-            <div class="appeal-info">
-                <strong>📝 Appeal Process</strong>
-                <p>If you believe this suspension is in error or would like to appeal this decision, please contact our support team with:</p>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>Your username and email address</li>
-                    <li>A detailed explanation of why you believe the suspension should be lifted</li>
-                    <li>Any relevant supporting evidence</li>
-                </ul>
-                <p><strong>Email:</strong> support@barterex.com</p>
-                <p><strong>Include in subject:</strong> "Account Appeal - [Your Username]"</p>
-            </div>
-
+            <!-- How to Appeal -->
             <div class="section">
-                <div class="section-title">Our Community Standards</div>
-                <p>We take the safety and integrity of our marketplace seriously. All users are expected to:</p>
-                <ul>
-                    <li>Follow our Terms of Service</li>
-                    <li>Treat other users with respect</li>
-                    <li>Provide accurate item descriptions</li>
-                    <li>Complete transactions fairly and honestly</li>
-                    <li>Respect intellectual property and copyright laws</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <div class="section-title">Next Steps</div>
+                <div class="section-title">How to Request Unban</div>
+                <p>We believe in fairness and second chances. If you believe this suspension was issued in error or would like to appeal, you can submit a request directly from your account page. Here's how:</p>
                 <ol>
-                    <li>Review our <strong>Terms of Service</strong> and <strong>Community Guidelines</strong></li>
-                    <li>Understand what led to this suspension</li>
-                    <li>If you wish to appeal, contact support with a detailed explanation</li>
-                    <li>Appeals are reviewed within 3-5 business days</li>
+                    <li><strong>Click the button below</strong> to access your suspension page</li>
+                    <li><strong>Write your appeal:</strong> Explain why you believe you should be unbanned (minimum 20 characters)</li>
+                    <li><strong>Submit:</strong> Our admin team will review your appeal</li>
+                    <li><strong>Wait for response:</strong> We typically respond within 3-5 business days</li>
+                    <li><strong>Check email:</strong> You'll receive an email notification with the decision</li>
                 </ol>
             </div>
 
+            <!-- Appeal Button -->
+            <div class="button-container">
+                <a href="{{ unban_url }}" class="btn" style="background-color: #0d6efd;">
+                    Submit Unban Appeal
+                </a>
+            </div>
+
+            <!-- Community Guidelines -->
+            <div class="section">
+                <div class="section-title">Community Guidelines</div>
+                <p>To prevent future suspensions, please familiarize yourself with our community guidelines. Common violations include:</p>
+                <ul class="list-styled">
+                    <li>Fraudulent or scam activity</li>
+                    <li>Offensive, abusive, or harassing behavior</li>
+                    <li>Selling prohibited or counterfeit items</li>
+                    <li>Creating multiple accounts to bypass restrictions</li>
+                    <li>Violating payment terms or refusing to fulfill orders</li>
+                    <li>Copyright or intellectual property violations</li>
+                </ul>
+            </div>
+
+            <!-- Timeline Information -->
+            <div class="alert-info">
+                <strong>⏱️ Appeal Timeline:</strong> Our admin team typically reviews suspension appeals within 3-5 business days. You'll receive an email notification once a decision has been made. Please note that we may take longer during high-volume periods.
+            </div>
+
+            <!-- Contact Support -->
+            <div class="section">
+                <div class="section-title">Questions?</div>
+                <p>If you have questions about your suspension or need further assistance, please don't hesitate to contact our support team:</p>
+                <p><strong>Email:</strong> <a href="mailto:support@barterex.com" style="color: #0d6efd; text-decoration: none;">support@barterex.com</a></p>
+                <p style="font-size: 14px; color: #666;">Include your username in the subject line when contacting support for faster resolution.</p>
+            </div>
+
+            <!-- Important Notice -->
             <div class="alert">
                 <strong>Important:</strong> Attempting to circumvent this suspension by creating new accounts or using alternate accounts will result in permanent removal from our platform.
             </div>
 
-            <div class="button-container">
-                <a href="https://barterex.com/support" class="btn">Contact Support</a>
-            </div>
+            <p>We're committed to maintaining a safe and fair trading environment for all Barterex users.</p>
+
+            <p>Best regards,<br>
+            <strong>The Barterex Team</strong></p>
         </div>
 
         <div class="footer">
-            <div class="footer-note">This is an automated notification from Barter Express Account Services.</div>
-            <div class="footer-note">Please do not reply to this email. Use the contact form on our website instead.</div>
-            <div class="footer-note">© 2026 Barter Express. All rights reserved.</div>
+            <div class="footer-note">This is an automated notification from Barterex Account Services.</div>
+            <div class="footer-note">© 2026 Barterex. All rights reserved.</div>
         </div>
     </div>
 </body>

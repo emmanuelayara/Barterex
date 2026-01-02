@@ -1,11 +1,586 @@
-<h2>You have been banned</h2>
-<p>Reason: {{ reason }}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Suspended - Barterex</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% if not unban_requested %}
-<form action="{{ url_for('auth.request_unban') }}" method="POST">
-    {{ csrf_token() }}
-    <button type="submit">Request Unban</button>
-</form>
-{% else %}
-<p>You have already requested to be unbanned. Please wait for admin review.</p>
-{% endif %}
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .banned-container {
+            width: 100%;
+            max-width: 700px;
+            padding: 20px;
+        }
+
+        .banned-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .banned-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banned-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .banned-icon {
+            font-size: 70px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            animation: shake 0.6s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-5deg) scale(1.05); }
+            50% { transform: rotate(0deg) scale(1); }
+            75% { transform: rotate(5deg) scale(1.05); }
+        }
+
+        .banned-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .banned-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .banned-body {
+            padding: 50px 40px;
+        }
+
+        .reason-section {
+            background: #fff5f5;
+            border-left: 5px solid #dc3545;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 35px;
+        }
+
+        .reason-section h5 {
+            color: #dc3545;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .reason-section p {
+            color: #333;
+            margin: 0;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .info-section {
+            background: #f0f8ff;
+            border-left: 5px solid #0d6efd;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 35px;
+        }
+
+        .info-section h5 {
+            color: #0d6efd;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-list li {
+            padding: 10px 0;
+            color: #333;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            line-height: 1.6;
+        }
+
+        .info-list li i {
+            color: #0d6efd;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status-badge.pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-badge.new {
+            background: #cfe2ff;
+            color: #084298;
+            border: 1px solid #b6d4fe;
+        }
+
+        .action-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .action-section h5 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .unban-form {
+            width: 100%;
+        }
+
+        .unban-button {
+            width: 100%;
+            padding: 14px 30px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+            border: none;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .unban-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(13, 110, 253, 0.3);
+            background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+            color: white;
+            text-decoration: none;
+        }
+
+        .unban-button:active {
+            transform: translateY(0);
+        }
+
+        .already-requested {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .already-requested i {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .already-requested p {
+            margin: 10px 0 0 0;
+            font-weight: 500;
+        }
+
+        .help-section {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .help-section h6 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .help-section p {
+            color: #666;
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .help-section a {
+            color: #0d6efd;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .help-section a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-text {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        @media (max-width: 576px) {
+            .banned-header {
+                padding: 30px 20px;
+            }
+
+            .banned-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .banned-header p {
+                font-size: 1rem;
+            }
+
+            .banned-body {
+                padding: 30px 20px;
+            }
+
+            .banned-icon {
+                font-size: 50px;
+            }
+
+            .reason-section,
+            .info-section {
+                padding: 20px;
+            }
+
+            .unban-button {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banned-container">
+        <div class="banned-card">
+            <!-- Header Section -->
+            <div class="banned-header">
+                <div class="banned-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <h1>Account Suspended</h1>
+                <p>Your account has been temporarily suspended</p>
+            </div>
+
+            <!-- Body Section -->
+            <div class="banned-body">
+                <!-- Ban Details Section -->
+                <div class="info-section" style="background: #f0f8ff; border-left: 5px solid #0d6efd;">
+                    <h5>
+                        <i class="bi bi-file-earmark-text"></i>
+                        Suspension Details
+                    </h5>
+                    <ul class="info-list">
+                        <li>
+                            <i class="bi bi-person"></i>
+                            <div><strong>Account:</strong> {{ username }}</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-envelope"></i>
+                            <div><strong>Email:</strong> {{ user_email }}</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Ban Reason -->
+                {% if reason %}
+                <div class="reason-section">
+                    <h5>
+                        <i class="bi bi-info-circle"></i>
+                        Reason for Suspension
+                    </h5>
+                    <p>{{ reason }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Information Section -->
+                <div class="info-section">
+                    <h5>
+                        <i class="bi bi-question-circle"></i>
+                        Account Status & Restrictions
+                    </h5>
+                    <ul class="info-list">
+                        <li>
+                            <i class="bi bi-x-circle"></i>
+                            <div><strong>Cannot access:</strong> Your account, dashboard, and trading history</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-x-circle"></i>
+                            <div><strong>Cannot trade:</strong> Buy, sell, or list items on the marketplace</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-x-circle"></i>
+                            <div><strong>Cannot manage:</strong> Credits, orders, or cart items</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-exclamation-circle"></i>
+                            <div><strong>Duration:</strong> Your account remains suspended until appeal approval</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- What You Need to Do Section -->
+                <div class="info-section" style="background: #fffbf0; border-left: 5px solid #fd7e14;">
+                    <h5>
+                        <i class="bi bi-list-check"></i>
+                        What You Need to Do
+                    </h5>
+                    <ul class="info-list">
+                        <li>
+                            <i class="bi bi-1-circle"></i>
+                            <div><strong>Review the reason:</strong> Carefully read why your account was suspended above</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-2-circle"></i>
+                            <div><strong>Understand the guidelines:</strong> Review our <a href="#" style="color: #fd7e14; text-decoration: underline;">community guidelines</a> to avoid future violations</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-3-circle"></i>
+                            <div><strong>Submit an appeal:</strong> Click the "Request Unban" button below to submit your appeal</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-4-circle"></i>
+                            <div><strong>Wait for review:</strong> Our team will review your appeal within 3-5 business days</div>
+                        </li>
+                        <li>
+                            <i class="bi bi-5-circle"></i>
+                            <div><strong>Check email:</strong> You'll receive notification via email about the decision</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Action Section -->
+                <div class="action-section">
+                    {% if not unban_requested %}
+                        <h5>
+                            <i class="bi bi-send"></i>
+                            Submit Your Unban Appeal
+                        </h5>
+                        <p style="color: #666; margin-bottom: 20px; font-size: 0.95rem;">
+                            Use the form below to submit your appeal explaining why you believe your account should be unbanned. Our team will review and respond within 3-5 business days.
+                        </p>
+                        
+                        <!-- Appeal Guidelines -->
+                        <div style="background: #f0f8ff; border-left: 5px solid #0d6efd; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                            <h6 style="color: #0d6efd; font-weight: 600; margin-bottom: 12px;">
+                                <i class="bi bi-lightbulb"></i> Appeal Guidelines
+                            </h6>
+                            <ul style="list-style: none; padding: 0; margin: 0; color: #333; font-size: 0.9rem;">
+                                <li style="padding: 8px 0;"><i class="bi bi-check-circle" style="color: #0d6efd; margin-right: 8px;"></i>Be honest and sincere</li>
+                                <li style="padding: 8px 0;"><i class="bi bi-check-circle" style="color: #0d6efd; margin-right: 8px;"></i>Acknowledge the violation</li>
+                                <li style="padding: 8px 0;"><i class="bi bi-check-circle" style="color: #0d6efd; margin-right: 8px;"></i>Explain why it won't happen again</li>
+                                <li style="padding: 8px 0;"><i class="bi bi-check-circle" style="color: #0d6efd; margin-right: 8px;"></i>Minimum 20 characters required</li>
+                            </ul>
+                        </div>
+
+                        <!-- Appeal Form -->
+                        <form action="{{ url_for('auth.request_unban') }}" method="POST" class="unban-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div style="margin-bottom: 15px;">
+                                <label for="appeal_message" style="display: block; margin-bottom: 10px; color: #333; font-weight: 600;">Your Appeal Message</label>
+                                <textarea id="appeal_message" name="appeal_message" class="form-control" rows="6" 
+                                          placeholder="Explain why you believe your account should be unbanned. Be honest and thorough..." 
+                                          style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px; font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; resize: vertical; min-height: 120px;"
+                                          required></textarea>
+                                <small style="color: #999; display: block; margin-top: 5px;"><span id="charCount">0</span> / 2000 characters</small>
+                            </div>
+                            <button type="submit" class="unban-button">
+                                <i class="bi bi-hand-thumbs-up"></i>
+                                Submit Appeal
+                            </button>
+                        </form>
+
+                        <script>
+                            const textarea = document.getElementById('appeal_message');
+                            const charCount = document.getElementById('charCount');
+                            textarea.addEventListener('input', function() {
+                                charCount.textContent = this.value.length;
+                                if (this.value.length < 20) {
+                                    this.style.borderColor = '#ffc107';
+                                } else {
+                                    this.style.borderColor = '#28a745';
+                                }
+                            });
+                        </script>
+                    {% else %}
+                        <!-- Status Tracking Section -->
+                        <div class="already-requested">
+                            <i class="bi bi-hourglass-split"></i>
+                            <p><strong>Appeal Submitted</strong></p>
+                            <p style="margin-top: 8px; font-size: 0.95rem;">Your appeal has been submitted and is pending admin review.</p>
+                            {% if unban_request_date %}
+                            <p style="margin-top: 8px; font-size: 0.9rem; color: #666;">
+                                <i class="bi bi-calendar3"></i> Submitted: {{ unban_request_date.strftime('%B %d, %Y at %I:%M %p') }}
+                            </p>
+                            {% endif %}
+                            <p style="margin-top: 12px; font-size: 0.9rem; color: #666; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 12px;">
+                                Expected response: 3-5 business days
+                            </p>
+                        </div>
+
+                        <!-- Your Appeal Message (If Submitted) -->
+                        {% if appeal_message %}
+                        <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                            <h6 style="color: #333; font-weight: 600; margin-bottom: 12px;">
+                                <i class="bi bi-chat-quote"></i> Your Submitted Appeal
+                            </h6>
+                            <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #0d6efd; color: #333; line-height: 1.6;">
+                                {{ appeal_message }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- Help Section -->
+                <div class="help-section">
+                    <h6>
+                        <i class="bi bi-question-lg"></i>
+                        Need Help?
+                    </h6>
+                    <p>
+                        If you believe this is a mistake or have questions about your suspension, please <a href="mailto:support@barterex.com">contact our support team</a>.
+                    </p>
+                </div>
+
+                <!-- Community Guidelines Section -->
+                <div style="background: #f9f9f9; padding: 25px; border-radius: 10px; margin-top: 30px; border: 1px solid #ddd;">
+                    <h6 style="color: #333; font-weight: 600; margin-bottom: 15px;">
+                        <i class="bi bi-book"></i> Community Guidelines
+                    </h6>
+                    <p style="color: #666; margin-bottom: 12px; font-size: 0.95rem;">
+                        To prevent future suspensions, please review our community guidelines and understand what behaviors are not tolerated on Barterex:
+                    </p>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="padding: 8px 0; color: #333; border-bottom: 1px solid #e0e0e0;">
+                            <i class="bi bi-x-circle" style="color: #dc3545; margin-right: 8px;"></i>
+                            <strong>Fraud & Scams:</strong> Any fraudulent or deceptive trading practices
+                        </li>
+                        <li style="padding: 8px 0; color: #333; border-bottom: 1px solid #e0e0e0;">
+                            <i class="bi bi-x-circle" style="color: #dc3545; margin-right: 8px;"></i>
+                            <strong>Harassment:</strong> Offensive, abusive, or harassing behavior toward other users
+                        </li>
+                        <li style="padding: 8px 0; color: #333; border-bottom: 1px solid #e0e0e0;">
+                            <i class="bi bi-x-circle" style="color: #dc3545; margin-right: 8px;"></i>
+                            <strong>Prohibited Items:</strong> Selling illegal, counterfeit, or restricted items
+                        </li>
+                        <li style="padding: 8px 0; color: #333; border-bottom: 1px solid #e0e0e0;">
+                            <i class="bi bi-x-circle" style="color: #dc3545; margin-right: 8px;"></i>
+                            <strong>Multiple Accounts:</strong> Creating alternate accounts to bypass restrictions
+                        </li>
+                        <li style="padding: 8px 0; color: #333; border-bottom: 1px solid #e0e0e0;">
+                            <i class="bi bi-x-circle" style="color: #dc3545; margin-right: 8px;"></i>
+                            <strong>Transaction Violations:</strong> Refusing to fulfill orders or violating payment terms
+                        </li>
+                        <li style="padding: 8px 0; color: #333;">
+                            <i class="bi bi-x-circle" style="color: #dc3545; margin-right: 8px;"></i>
+                            <strong>Intellectual Property:</strong> Copyright or trademark violations
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Contact Support Section -->
+                <div style="background: #e7f3ff; border: 2px solid #0d6efd; padding: 20px; border-radius: 10px; margin-top: 30px;">
+                    <h6 style="color: #0d6efd; font-weight: 600; margin-bottom: 12px;">
+                        <i class="bi bi-headset"></i> Contact Support
+                    </h6>
+                    <p style="color: #004085; margin: 0 0 10px 0; font-size: 0.95rem;">
+                        If you have any questions about your suspension or need further assistance, our support team is ready to help.
+                    </p>
+                    <p style="color: #004085; margin: 0; font-size: 0.95rem;">
+                        <strong>Email:</strong> <a href="mailto:support@barterex.com" style="color: #0d6efd; text-decoration: none; font-weight: 600;">support@barterex.com</a><br>
+                        <strong>Response Time:</strong> Usually within 24 hours
+                    </p>
+                </div>
+
+                <!-- Footer -->
+                <div class="footer-text">
+                    <p>
+                        <strong>Barterex</strong> | Community Guidelines Enforcement<br>
+                        Account suspension is applied when community guidelines are violated.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

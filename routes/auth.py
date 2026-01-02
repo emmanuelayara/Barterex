@@ -302,10 +302,22 @@ def login():
 
             if user and user.is_banned:
                 logger.warning(f"Banned user attempted login: {username}")
+                # ✅ FIX: Log them in so they can submit unban appeals
+                if user and check_password_hash(user.password_hash, password):
+                    user.failed_login_attempts = 0
+                    user.account_locked_until = None
+                    db.session.commit()
+                    login_user(user, remember=False)
+                    logger.info(f"Banned user session created for appeal submission: {username}")
                 return render_template(
                     "banned.html",
                     reason=user.ban_reason,
-                    unban_requested=user.unban_requested
+                    unban_requested=user.unban_requested,
+                    appeal_message=user.appeal_message,
+                    ban_date=user.ban_date,
+                    unban_request_date=user.unban_request_date,
+                    username=user.username,
+                    user_email=user.email
                 )
 
             if user and check_password_hash(user.password_hash, password):
@@ -430,10 +442,25 @@ def banned():
     if not current_user.is_banned:
         return redirect(url_for('auth.login'))
 
+    from datetime import datetime, timedelta
+    
+    # Calculate days since ban
+    ban_date = current_user.ban_date
+    if ban_date:
+        days_since_ban = (datetime.utcnow() - ban_date).days
+    else:
+        days_since_ban = 0
+
     return render_template(
         'banned.html',
         reason=current_user.ban_reason,
-        unban_requested=current_user.unban_requested
+        unban_requested=current_user.unban_requested,
+        appeal_message=current_user.appeal_message,
+        ban_date=current_user.ban_date,
+        unban_request_date=current_user.unban_request_date,
+        username=current_user.username,
+        user_email=current_user.email,
+        days_since_ban=days_since_ban
     )
 
 
@@ -441,16 +468,39 @@ def banned():
 @login_required
 def request_unban():
     from app import db
+    from datetime import datetime
     
     if not current_user.is_banned:
         flash("You are not banned.", "info")
         return redirect(url_for('user.dashboard'))
 
-    if not current_user.unban_requested:
+    # Get appeal message from form
+    appeal_message = request.form.get('appeal_message', '').strip()
+    
+    if not appeal_message:
+        flash('Please provide an explanation for your unban request.', 'warning')
+        return redirect(url_for('auth.banned'))
+
+    if len(appeal_message) < 20:
+        flash('Your appeal message must be at least 20 characters long.', 'warning')
+        return redirect(url_for('auth.banned'))
+
+    if len(appeal_message) > 2000:
+        flash('Your appeal message cannot exceed 2000 characters.', 'warning')
+        return redirect(url_for('auth.banned'))
+
+    try:
+        # Always update/save the appeal message and date
         current_user.unban_requested = True
+        current_user.unban_request_date = datetime.utcnow()
+        current_user.appeal_message = appeal_message
         db.session.commit()
-        flash('Your unban request has been submitted. Please wait for admin review.', 'info')
-    else:
-        flash('You have already submitted an unban request.', 'warning')
+        
+        flash('Your unban appeal has been submitted. Our team will review it within 3-5 business days.', 'success')
+        logger.info(f"Unban appeal submitted - User ID: {current_user.id}, Username: {current_user.username}, Message length: {len(appeal_message)}")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error submitting unban appeal for user {current_user.id}: {str(e)}", exc_info=True)
+        flash('An error occurred while submitting your appeal. Please try again.', 'danger')
 
     return redirect(url_for('auth.banned'))

@@ -358,6 +358,15 @@
         </div>
         
         <div class="nav-item">
+          <a href="{{ url_for('admin.pending_appeals') }}" class="nav-link d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-chat-left-quote"></i> Unban Appeals</span>
+            <span class="badge bg-warning text-dark rounded-pill ms-2" title="Pending unban appeals">
+              <i class="bi bi-hourglass-split me-1"></i>{{ pending_appeals }}
+            </span>
+          </a>
+        </div>
+        
+        <div class="nav-item">
           <a href="{{ url_for('admin.audit_log') }}" class="nav-link">
             <i class="bi bi-shield-check"></i>
             Audit Log

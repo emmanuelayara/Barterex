@@ -197,6 +197,13 @@ def admin_dashboard():
         rejected_items = Item.query.filter_by(status='rejected').count()
         traded_items = Item.query.filter_by(is_available=False).count()
         total_credits_traded = db.session.query(db.func.sum(Item.value)).filter_by(is_available=False).scalar() or 0
+        
+        # Count pending unban appeals
+        pending_appeals = User.query.filter(
+            User.is_banned == True,
+            User.appeal_message != None,
+            User.unban_request_date != None
+        ).count()
 
         logger.info(f"Admin dashboard accessed - Page: {page}, Search: '{search}', Status: {status}")
 
@@ -210,6 +217,7 @@ def admin_dashboard():
             rejected_items=rejected_items,
             traded_items=traded_items,
             total_credits_traded=total_credits_traded,
+            pending_appeals=pending_appeals,
             search=search,
             status=status
         )
@@ -234,6 +242,29 @@ def manage_users():
     except Exception as e:
         logger.error(f"Error loading user management: {str(e)}", exc_info=True)
         flash('An error occurred while loading users.', 'danger')
+        return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/pending_appeals')
+@admin_login_required
+@handle_errors
+def pending_appeals():
+    """View all pending unban appeals from banned users"""
+    try:
+        # Get users with pending appeals (banned and have submitted an appeal message)
+        pending_appeals = User.query.filter(
+            User.is_banned == True,
+            User.appeal_message != None,
+            User.appeal_message != '',
+            User.unban_request_date != None
+        ).all()
+        
+        logger.info(f"Pending appeals page accessed - Total pending: {len(pending_appeals)}")
+        return render_template('admin/pending_appeals.html', appeals=pending_appeals, now=datetime.utcnow())
+        
+    except Exception as e:
+        logger.error(f"Error loading pending appeals: {str(e)}", exc_info=True)
+        flash('An error occurred while loading pending appeals.', 'danger')
         return redirect(url_for('admin.admin_dashboard'))
 
 
@@ -312,6 +343,12 @@ def view_user(user_id):
         
         logger.info(f"User profile viewed - User ID: {user_id}, Username: {user.username}")
         
+        # Calculate days since ban
+        days_since_ban = None
+        if user.ban_date:
+            ban_duration = datetime.utcnow() - user.ban_date
+            days_since_ban = ban_duration.days
+        
         return render_template('admin/view_user.html', 
                              user=user,
                              items_uploaded=items_uploaded,
@@ -329,7 +366,8 @@ def view_user(user_id):
                              orders_completed=orders_completed,
                              total_orders=orders_placed + user_items_sold,
                              trade_completion_rate=trade_completion_rate,
-                             user_rating=user_rating)
+                             user_rating=user_rating,
+                             days_since_ban=days_since_ban)
     except Exception as e:
         logger.error(f"Error viewing user {user_id}: {str(e)}", exc_info=True)
         flash('An error occurred while loading the user profile.', 'danger')
@@ -343,6 +381,7 @@ def view_user(user_id):
 def ban_user(user_id):
     try:
         from routes.auth import send_email_async
+        from datetime import datetime
         
         user = User.query.get_or_404(user_id)
 
@@ -358,15 +397,18 @@ def ban_user(user_id):
 
         user.is_banned = True
         user.ban_reason = reason
+        user.ban_date = datetime.utcnow()  # Record when the ban was issued
         logger.warning(f"User banned - User ID: {user_id}, Username: {user.username}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
 
-        # Send ban notification email
+        # Send ban notification email with detailed information
         try:
             html_body = render_template('emails/account_banned.html', 
                                       username=user.username,
-                                      reason=reason)
+                                      reason=reason,
+                                      ban_date=user.ban_date,
+                                      unban_url=url_for('auth.banned', _external=True))
             send_email_async(
-                subject="Your account has been banned",
+                subject="Your Barterex Account Has Been Suspended",
                 recipients=[user.email],
                 html_body=html_body
             )
@@ -437,6 +479,36 @@ def unban_user(user_id):
         flash(f"{user.username} has been unbanned.", "success")
         return redirect(url_for('admin.admin_banned_users'))
         
+    except Exception as e:
+        logger.error(f"Error unbanning user {user_id}: {str(e)}", exc_info=True)
+        flash('An error occurred while unbanning the user.', 'danger')
+        return redirect(url_for('admin.manage_users'))
+
+
+@admin_bp.route('/reject_unban_appeal/<int:user_id>', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("reject_unban_appeal")
+def reject_unban_appeal(user_id):
+    """Reject a user's unban appeal by clearing the appeal message"""
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Clear the appeal
+        user.appeal_message = None
+        user.unban_request_date = None
+        user.unban_requested = False
+        db.session.commit()
+        
+        logger.info(f"Unban appeal rejected - User ID: {user_id}, Username: {user.username}, Admin ID: {session.get('admin_id')}")
+        flash(f"Appeal from {user.username} has been rejected and cleared.", "success")
+        
+        return redirect(url_for('admin.view_user', user_id=user_id))
+        
+    except Exception as e:
+        logger.error(f"Error rejecting unban appeal for user {user_id}: {str(e)}", exc_info=True)
+        flash('An error occurred while rejecting the appeal.', 'danger')
+        return redirect(url_for('admin.manage_users'))
     except Exception as e:
         logger.error(f"Error unbanning user {user_id}: {str(e)}", exc_info=True)
         flash('An error occurred while unbanning the user.', 'danger')
@@ -1293,9 +1365,16 @@ def system_settings():
 @admin_login_required
 @handle_errors
 def export_user_data(user_id):
-    """Export all user data as ZIP file (GDPR compliance)"""
+    """Export all user data as PDF files in a ZIP (GDPR compliance)"""
     try:
         from models import CreditTransaction
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
+        from reportlab.lib import colors
+        from reportlab.pdfgen import canvas
+        from datetime import datetime as dt
         
         user = User.query.get_or_404(user_id)
         admin = Admin.query.get(session.get('admin_id'))
@@ -1305,30 +1384,178 @@ def export_user_data(user_id):
         
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             
+            # Helper function to create PDF with enhanced styling
+            def create_pdf_buffer(title, data_items, include_header=True):
+                """Create a professionally styled PDF buffer from data items"""
+                pdf_buffer = io.BytesIO()
+                doc = SimpleDocTemplate(
+                    pdf_buffer, 
+                    pagesize=letter, 
+                    topMargin=0.75*inch, 
+                    bottomMargin=0.75*inch,
+                    leftMargin=0.5*inch,
+                    rightMargin=0.5*inch
+                )
+                story = []
+                styles = getSampleStyleSheet()
+                
+                # Create custom styles
+                title_style = ParagraphStyle(
+                    'CustomTitle',
+                    parent=styles['Heading1'],
+                    fontSize=24,
+                    textColor=colors.HexColor('#054e97'),
+                    spaceAfter=6,
+                    alignment=0,  # Left align
+                    fontName='Helvetica-Bold'
+                )
+                
+                subtitle_style = ParagraphStyle(
+                    'CustomSubtitle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    textColor=colors.HexColor('#666666'),
+                    spaceAfter=16,
+                    alignment=0,
+                    fontName='Helvetica'
+                )
+                
+                section_style = ParagraphStyle(
+                    'SectionTitle',
+                    parent=styles['Heading2'],
+                    fontSize=14,
+                    textColor=colors.HexColor('#054e97'),
+                    spaceAfter=10,
+                    spaceBefore=12,
+                    fontName='Helvetica-Bold'
+                )
+                
+                # Header section
+                if include_header:
+                    story.append(Paragraph("BARTEREX", title_style))
+                    story.append(Paragraph("Data Export Report - GDPR Compliance", subtitle_style))
+                    
+                    # Divider line
+                    story.append(Spacer(1, 0.1*inch))
+                    
+                    # Export info box
+                    export_info = [
+                        ['Export Date:', dt.utcnow().strftime('%Y-%m-%d %H:%M:%S')],
+                        ['Username:', user.username],
+                        ['Email:', user.email],
+                        ['Report Generated By:', admin.username if admin else 'System'],
+                    ]
+                    
+                    info_table = Table(export_info, colWidths=[1.8*inch, 3.2*inch])
+                    info_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f0f0')),
+                        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#333333')),
+                        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+                        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+                        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, -1), 9),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                        ('TOPPADDING', (0, 0), (-1, -1), 8),
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+                    ]))
+                    
+                    story.append(info_table)
+                    story.append(Spacer(1, 0.25*inch))
+                
+                # Title section
+                story.append(Paragraph(title, section_style))
+                story.append(Spacer(1, 0.15*inch))
+                
+                # Data table
+                if data_items:
+                    # Get headers from first item
+                    headers = list(data_items[0].keys())
+                    table_data = [headers]
+                    
+                    # Add data rows
+                    for item in data_items:
+                        row = [str(item.get(header, '')).strip() for header in headers]
+                        table_data.append(row)
+                    
+                    # Calculate column widths based on content
+                    num_cols = len(headers)
+                    col_widths = [6.5*inch / num_cols] * num_cols
+                    
+                    # Create table
+                    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+                    table.setStyle(TableStyle([
+                        # Header styling
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#054e97')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                        ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 9),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+                        ('TOPPADDING', (0, 0), (-1, 0), 10),
+                        
+                        # Row styling
+                        ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+                        ('VALIGN', (0, 1), (-1, -1), 'TOP'),
+                        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                        ('FONTSIZE', (0, 1), (-1, -1), 8),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                        ('TOPPADDING', (0, 1), (-1, -1), 8),
+                        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+                        
+                        # Grid styling
+                        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#dddddd')),
+                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f8f8')]),
+                        
+                        # Border styling
+                        ('LINEBELOW', (0, 0), (-1, 0), 2, colors.HexColor('#054e97')),
+                    ]))
+                    story.append(table)
+                else:
+                    empty_style = ParagraphStyle(
+                        'Empty',
+                        parent=styles['Normal'],
+                        fontSize=10,
+                        textColor=colors.HexColor('#999999'),
+                        alignment=0
+                    )
+                    story.append(Paragraph("No data available.", empty_style))
+                
+                # Footer with timestamp and page numbers
+                story.append(Spacer(1, 0.3*inch))
+                footer_style = ParagraphStyle(
+                    'Footer',
+                    parent=styles['Normal'],
+                    fontSize=7,
+                    textColor=colors.HexColor('#999999'),
+                    alignment=2  # Right align
+                )
+                story.append(Paragraph(f"Confidential - GDPR Compliant Export | Generated on {dt.utcnow().strftime('%Y-%m-%d %H:%M:%S')}", footer_style))
+                
+                doc.build(story)
+                pdf_buffer.seek(0)
+                return pdf_buffer.getvalue()
+            
             # 1. USER PROFILE DATA
             profile_data = {
                 'User ID': user.id,
                 'Username': user.username,
                 'Email': user.email,
-                'Phone': user.phone_number,
-                'Address': user.address,
-                'City': user.city,
-                'State': user.state,
-                'Account Created': user.created_at.isoformat() if user.created_at else None,
-                'Last Login': user.last_login.isoformat() if user.last_login else None,
+                'Phone': user.phone_number or 'N/A',
+                'City': user.city or 'N/A',
+                'State': user.state or 'N/A',
+                'Account Created': user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A',
+                'Last Login': user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never',
                 'Account Status': 'Banned' if user.is_banned else 'Active',
-                'Ban Reason': user.ban_reason if user.is_banned else None,
-                'Email Verified': user.email_verified,
-                'Level': user.level,
-                'Tier': user.tier,
-                'Trading Points': user.trading_points,
-                'Credits': user.credits,
-                'Two-Factor Enabled': user.two_factor_enabled,
-                'GDPR Consent Date': user.gdpr_consent_date.isoformat() if user.gdpr_consent_date else None,
+                'Email Verified': 'Yes' if user.email_verified else 'No',
+                'Level': user.level or 'N/A',
+                'Trading Points': user.trading_points or 0,
+                'Credits': user.credits or 0,
             }
             
-            profile_json = json.dumps(profile_data, indent=2)
-            zip_file.writestr('01_user_profile.json', profile_json)
+            profile_pdf = create_pdf_buffer('User Profile Information', [profile_data])
+            zip_file.writestr('01_user_profile.pdf', profile_pdf)
             
             # 2. ITEMS LISTING
             items = Item.query.filter_by(user_id=user_id).all()
@@ -1337,26 +1564,16 @@ def export_user_data(user_id):
             for item in items:
                 items_data.append({
                     'Item ID': item.id,
-                    'Name': item.name,
-                    'Item Number': item.item_number,
-                    'Description': item.description,
+                    'Name': item.name[:40],
+                    'Item #': item.item_number,
                     'Category': item.category,
-                    'Status': item.status,
-                    'Is Approved': item.is_approved,
-                    'Is Available': item.is_available,
-                    'Created At': item.created_at.isoformat() if item.created_at else None,
-                    'Rejection Reason': item.rejection_reason if item.status == 'rejected' else None,
+                    'Status': item.status.upper(),
+                    'Approved': '✓' if item.is_approved else '✗',
+                    'Available': '✓' if item.is_available else '✗',
                 })
             
-            items_csv = io.StringIO()
-            if items_data:
-                writer = csv.DictWriter(items_csv, fieldnames=items_data[0].keys())
-                writer.writeheader()
-                writer.writerows(items_data)
-            else:
-                items_csv.write('No items found for this user.')
-            
-            zip_file.writestr('02_items_listing.csv', items_csv.getvalue())
+            items_pdf = create_pdf_buffer('Items Listing', items_data if items_data else [{'Status': 'No items found'}])
+            zip_file.writestr('02_items_listing.pdf', items_pdf)
             
             # 3. TRADING HISTORY
             orders = Order.query.filter_by(user_id=user_id).all()
@@ -1365,87 +1582,67 @@ def export_user_data(user_id):
             for order in orders:
                 trading_data.append({
                     'Order ID': order.id,
+                    'Order #': order.order_number,
                     'Status': order.status,
-                    'Total Price': order.total_price,
-                    'Created At': order.created_at.isoformat() if order.created_at else None,
-                    'Updated At': order.updated_at.isoformat() if order.updated_at else None,
-                    'Number of Items': len(order.order_items) if order.order_items else 0,
+                    'Credits': f"₦{order.total_credits:,.0f}",
+                    'Used': f"₦{order.credits_used:,.0f}",
+                    'Date': order.date_ordered.strftime('%Y-%m-%d') if order.date_ordered else 'N/A',
+                    'Delivery': order.delivery_method,
                 })
             
-            trading_csv = io.StringIO()
-            if trading_data:
-                writer = csv.DictWriter(trading_csv, fieldnames=trading_data[0].keys())
-                writer.writeheader()
-                writer.writerows(trading_data)
-            else:
-                trading_csv.write('No trading history found for this user.')
-            
-            zip_file.writestr('03_trading_history.csv', trading_csv.getvalue())
+            trading_pdf = create_pdf_buffer('Trading History', trading_data if trading_data else [{'Status': 'No orders found'}])
+            zip_file.writestr('03_trading_history.pdf', trading_pdf)
             
             # 4. ACCOUNT ACTIVITY / LOGIN HISTORY
-            activity_logs = ActivityLog.query.filter_by(user_id=user_id).order_by(ActivityLog.timestamp.desc()).all()
+            activity_logs = ActivityLog.query.filter_by(user_id=user_id).order_by(ActivityLog.timestamp.desc()).limit(50).all()
             activity_data = []
             
             for log in activity_logs:
                 activity_data.append({
-                    'Timestamp': log.timestamp.isoformat() if log.timestamp else None,
+                    'Date & Time': log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A',
                     'Action': log.action,
-                    'Details': log.details,
-                    'IP Address': log.ip_address,
+                    'Details': log.details[:50] if log.details else 'N/A',
+                    'IP': log.ip_address or 'N/A',
                 })
             
-            activity_csv = io.StringIO()
-            if activity_data:
-                writer = csv.DictWriter(activity_csv, fieldnames=activity_data[0].keys())
-                writer.writeheader()
-                writer.writerows(activity_data)
-            else:
-                activity_csv.write('No activity logs found for this user.')
-            
-            zip_file.writestr('04_activity_history.csv', activity_csv.getvalue())
+            activity_pdf = create_pdf_buffer('Account Activity History', activity_data if activity_data else [{'Action': 'No activity logs found'}])
+            zip_file.writestr('04_activity_history.pdf', activity_pdf)
             
             # 5. CREDIT TRANSACTIONS
-            transactions = CreditTransaction.query.filter_by(user_id=user_id).order_by(CreditTransaction.created_at.desc()).all()
+            transactions = CreditTransaction.query.filter_by(user_id=user_id).order_by(CreditTransaction.timestamp.desc()).limit(50).all()
             credits_data = []
             
             for trans in transactions:
                 credits_data.append({
-                    'Transaction ID': trans.id,
-                    'Amount': trans.amount,
-                    'Type': trans.type,
-                    'Description': trans.description,
-                    'Reason': trans.reason,
-                    'Balance Before': trans.balance_before,
-                    'Balance After': trans.balance_after,
-                    'Created At': trans.created_at.isoformat() if trans.created_at else None,
+                    'Trans ID': trans.id,
+                    'Amount': f"₦{trans.amount:,.0f}",
+                    'Type': trans.transaction_type,
+                    'Reason': trans.reason or 'N/A',
+                    'Before': f"₦{trans.balance_before:,.0f}" if trans.balance_before else 'N/A',
+                    'After': f"₦{trans.balance_after:,.0f}" if trans.balance_after else 'N/A',
+                    'Date': trans.timestamp.strftime('%Y-%m-%d %H:%M') if trans.timestamp else 'N/A',
                 })
             
-            credits_csv = io.StringIO()
-            if credits_data:
-                writer = csv.DictWriter(credits_csv, fieldnames=credits_data[0].keys())
-                writer.writeheader()
-                writer.writerows(credits_data)
-            else:
-                credits_csv.write('No credit transactions found for this user.')
-            
-            zip_file.writestr('05_credit_transactions.csv', credits_csv.getvalue())
+            credits_pdf = create_pdf_buffer('Credit Transactions', credits_data if credits_data else [{'Type': 'No transactions found'}])
+            zip_file.writestr('05_credit_transactions.pdf', credits_pdf)
             
             # 6. EXPORT METADATA
             metadata = {
-                'Export Date': datetime.utcnow().isoformat(),
-                'Exported By Admin': admin.username if admin else 'Unknown',
+                'Export Date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                'Exported By': admin.username if admin else 'System',
                 'User ID': user.id,
                 'Username': user.username,
                 'Email': user.email,
                 'Total Items': len(items),
                 'Total Orders': len(orders),
-                'Total Activity Logs': len(activity_logs),
+                'Total Activities': len(activity_logs),
                 'Total Transactions': len(transactions),
-                'Purpose': 'GDPR Data Export Request',
+                'Export Type': 'GDPR Data Portability Request',
             }
             
-            metadata_json = json.dumps(metadata, indent=2)
-            zip_file.writestr('00_EXPORT_METADATA.json', metadata_json)
+            metadata_pdf = create_pdf_buffer('Export Summary & Metadata', [metadata], include_header=True)
+            zip_file.writestr('00_export_summary.pdf', metadata_pdf)
+
         
         # Prepare ZIP file for download
         zip_buffer.seek(0)
@@ -1462,8 +1659,7 @@ def export_user_data(user_id):
                 target_type='user',
                 target_id=user_id,
                 target_name=user.username,
-                description=f'User data exported as ZIP file',
-                reason='GDPR data export request'
+                description=f'User data exported as PDF files in ZIP',
             )
         except Exception as e:
             logger.error(f"Error logging data export: {str(e)}")
