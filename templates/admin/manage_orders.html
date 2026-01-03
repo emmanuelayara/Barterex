@@ -117,6 +117,12 @@
                         {% endif %}
                         {{ order.status }}
                     </span>
+                    {% if order.status == 'Cancelled' and order.cancellation_reason %}
+                    <div style="margin-top: 8px; font-size: 0.85rem; color: #666; font-style: italic; padding: 8px; background: rgba(0,0,0,0.02); border-radius: 4px; border-left: 3px solid #e74c3c;">
+                        <strong style="display: block; color: #333; margin-bottom: 4px;">Reason:</strong>
+                        {{ order.cancellation_reason }}
+                    </div>
+                    {% endif %}
                     </td>
                     <td class="actions-cell">
                     {% if order.status != 'Delivered' and order.status != 'Cancelled' %}

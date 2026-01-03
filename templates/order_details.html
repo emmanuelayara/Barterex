@@ -431,6 +431,13 @@
     <strong>{{ transaction_exp['status_explanation']['icon'] }} {{ transaction_exp['status_explanation']['title'] }}</strong>
     <p>{{ transaction_exp['status_explanation']['description'] }}</p>
     <p><em>{{ transaction_exp['status_explanation']['what_happens'] }}</em></p>
+    
+    {% if order.status == 'Cancelled' and order.cancellation_reason %}
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.1);">
+      <p style="margin: 5px 0; font-weight: 600; color: var(--text-primary);">Cancellation Reason:</p>
+      <p style="margin: 5px 0; color: var(--text-secondary); font-style: italic;">{{ order.cancellation_reason }}</p>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Info Grid -->
@@ -481,6 +488,7 @@
   <!-- Items Section -->
   <div class="items-section">
     <h3>📦 Items in Your Order</h3>
+    {% if transaction_exp['items'] and transaction_exp['items']|length > 0 %}
     <table class="items-table">
       <thead>
         <tr>
@@ -501,6 +509,11 @@
         {% endfor %}
       </tbody>
     </table>
+    {% else %}
+    <div style="padding: 20px; text-align: center; color: var(--text-secondary); background: var(--surface-alt); border-radius: 8px;">
+      <p>No items found in this order.</p>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Credits Summary -->

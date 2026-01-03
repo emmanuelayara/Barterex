@@ -64,39 +64,52 @@ def log_audit_action(action_type, target_type, target_id=None, target_name=None,
         db.session.rollback()
 
 
-def log_item_approval(item_id, item_name, value):
-    """Log item approval"""
+def log_item_approval(item_id, item_name, value, user_id=None, user_name=None):
+    """Log item approval with optional user details"""
+    description = f'Item "{item_name}" approved with value {value} credits'
+    if user_name and user_id:
+        description += f' for user {user_name} (ID: {user_id})'
+    
     log_audit_action(
         action_type='approve_item',
         target_type='item',
         target_id=item_id,
         target_name=item_name,
-        description=f'Item approved with value {value} credits',
+        description=description,
         after_value={'value': value, 'status': 'approved', 'is_available': True}
     )
 
 
-def log_item_rejection(item_id, item_name, reason):
-    """Log item rejection"""
+def log_item_rejection(item_id, item_name, reason, user_id=None, user_name=None):
+    """Log item rejection with optional user details"""
+    description = f'Item "{item_name}" rejected'
+    if user_name and user_id:
+        description += f' for user {user_name} (ID: {user_id})'
+    
     log_audit_action(
         action_type='reject_item',
         target_type='item',
         target_id=item_id,
         target_name=item_name,
-        description='Item rejected',
+        description=description,
         reason=reason,
         after_value={'status': 'rejected', 'is_available': False}
     )
 
 
-def log_user_ban(user_id, username, reason):
-    """Log user ban"""
+def log_user_ban(user_id, username, reason, user_email=None):
+    """Log user ban with optional email"""
+    description = f'User {username} (ID: {user_id}'
+    if user_email:
+        description += f', Email: {user_email}'
+    description += ') banned'
+    
     log_audit_action(
         action_type='ban_user',
         target_type='user',
         target_id=user_id,
         target_name=username,
-        description=f'User banned',
+        description=description,
         reason=reason,
         after_value={'is_banned': True}
     )

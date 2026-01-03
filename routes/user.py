@@ -417,7 +417,7 @@ def user_orders():
 def view_order_details(order_id):
     """View detailed order information with transaction clarity"""
     try:
-        order = Order.query.get_or_404(order_id)
+        order = Order.query.options(joinedload(Order.items)).get_or_404(order_id)
         
         # Verify user owns this order
         if order.user_id != current_user.id:

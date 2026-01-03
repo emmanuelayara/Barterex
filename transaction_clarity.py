@@ -91,6 +91,26 @@ def generate_transaction_explanation(order, user):
         dict with transaction details and explanations
     """
     try:
+        # Build items list with safe access
+        items_list = []
+        for item in order.items:
+            try:
+                if item.item:  # Check if item relationship exists
+                    items_list.append({
+                        'name': item.item.name or 'Unknown Item',
+                        'condition': item.item.condition or 'Unknown',
+                        'value': f"₦{item.item.value:,.0f}" if item.item.value else '₦0',
+                        'location': item.item.location or 'Unknown'
+                    })
+            except Exception as item_error:
+                logger.error(f"Error processing item {item.id}: {str(item_error)}")
+                items_list.append({
+                    'name': 'Error Loading Item',
+                    'condition': 'N/A',
+                    'value': '₦0',
+                    'location': 'N/A'
+                })
+        
         explanation = {
             'order_number': order.order_number,
             'date_ordered': order.date_ordered.strftime('%d %b %Y, %H:%M'),
@@ -110,21 +130,32 @@ def generate_transaction_explanation(order, user):
             
             # Items summary
             'items_count': len(order.items),
-            'items': [
-                {
-                    'name': item.item.name,
-                    'condition': item.item.condition,
-                    'value': f"₦{item.item.value:,.0f}",
-                    'location': item.item.location
-                } for item in order.items
-            ]
+            'items': items_list
         }
         
-        logger.info(f"Generated transaction explanation - Order: {order.order_number}")
+        logger.info(f"Generated transaction explanation - Order: {order.order_number}, Items: {len(items_list)}")
         return explanation
     except Exception as e:
         logger.error(f"Error generating transaction explanation: {str(e)}", exc_info=True)
-        return {}
+        # Return a minimal dict instead of empty dict so template doesn't break
+        return {
+            'order_number': getattr(order, 'order_number', 'Unknown'),
+            'items': [],
+            'items_count': 0,
+            'credits': {
+                'balance_before': '₦0',
+                'total_items_value': '₦0',
+                'credits_used': '₦0',
+                'balance_after': '₦0',
+                'explanation': 'Error loading transaction details'
+            },
+            'status_explanation': {
+                'title': 'Unknown Status',
+                'description': 'Unable to load order status',
+                'what_happens': 'Please try again later',
+                'icon': '❓'
+            }
+        }
 
 def get_status_explanation(status):
     """

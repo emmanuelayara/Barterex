@@ -111,6 +111,18 @@ def admin_login():
                 db.session.commit()
                 
                 session['admin_id'] = admin.id
+                session['admin_username'] = admin.username
+                
+                # Log admin login
+                from audit_logger import log_audit_action
+                log_audit_action(
+                    action_type='admin_login',
+                    target_type='admin',
+                    target_id=admin.id,
+                    target_name=admin.username,
+                    description=f'Admin {admin.username} logged in'
+                )
+                
                 logger.info(f"Admin logged in successfully: {admin.username}")
                 flash('Logged in successfully!', 'success')
                 return redirect(url_for('admin.admin_dashboard'))
@@ -143,9 +155,22 @@ def admin_login():
 @admin_bp.route('/logout')
 def admin_logout():
     admin_id = session.get('admin_id')
-    session.pop('admin_id', None)
+    admin_username = session.get('admin_username')
+    
+    # Log admin logout before clearing session
     if admin_id:
+        from audit_logger import log_audit_action
+        log_audit_action(
+            action_type='admin_logout',
+            target_type='admin',
+            target_id=admin_id,
+            target_name=admin_username,
+            description=f'Admin {admin_username} logged out'
+        )
         logger.info(f"Admin logged out - Admin ID: {admin_id}")
+    
+    session.pop('admin_id', None)
+    session.pop('admin_username', None)
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin.admin_login'))
 
@@ -420,7 +445,7 @@ def ban_user(user_id):
         # Log to audit log
         try:
             from audit_logger import log_user_ban
-            log_user_ban(user_id, user.username, reason)
+            log_user_ban(user_id, user.username, reason, user_email=user.email)
         except Exception as e:
             logger.error(f"Error logging ban to audit log: {str(e)}", exc_info=True)
 
@@ -455,11 +480,23 @@ def admin_banned_users():
 def unban_user(user_id):
     try:
         from routes.auth import send_email_async
+        from audit_logger import log_audit_action
         
         user = User.query.get_or_404(user_id)
         user.is_banned = False
         user.ban_reason = None
         user.unban_requested = False
+        db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='unban_user',
+            target_type='user',
+            target_id=user_id,
+            target_name=user.username,
+            description=f'User {user.username} (ID: {user_id}, Email: {user.email}) unbanned'
+        )
+        
         logger.info(f"User unbanned - User ID: {user_id}, Username: {user.username}, Admin ID: {session.get('admin_id')}")
 
         # Send unban notification email
@@ -492,6 +529,8 @@ def unban_user(user_id):
 def reject_unban_appeal(user_id):
     """Reject a user's unban appeal by clearing the appeal message"""
     try:
+        from audit_logger import log_audit_action
+        
         user = User.query.get_or_404(user_id)
         
         # Clear the appeal
@@ -499,6 +538,15 @@ def reject_unban_appeal(user_id):
         user.unban_request_date = None
         user.unban_requested = False
         db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='reject_unban_appeal',
+            target_type='user',
+            target_id=user_id,
+            target_name=user.username,
+            description=f'Unban appeal rejected for user {user.username} (ID: {user_id}, Email: {user.email})'
+        )
         
         logger.info(f"Unban appeal rejected - User ID: {user_id}, Username: {user.username}, Admin ID: {session.get('admin_id')}")
         flash(f"Appeal from {user.username} has been rejected and cleared.", "success")
@@ -522,12 +570,24 @@ def reject_unban_appeal(user_id):
 def approve_unban(user_id):
     try:
         from routes.auth import send_email_async
+        from audit_logger import log_audit_action
         
         user = User.query.get_or_404(user_id)
         if user.is_banned:
             user.is_banned = False
             user.unban_requested = False
             user.ban_reason = None
+            db.session.commit()
+            
+            # Log to audit log
+            log_audit_action(
+                action_type='approve_unban',
+                target_type='user',
+                target_id=user_id,
+                target_name=user.username,
+                description=f'Unban request approved for user {user.username} (ID: {user_id}, Email: {user.email})'
+            )
+            
             logger.info(f"Unban request approved - User ID: {user_id}, Username: {user.username}, Admin ID: {session.get('admin_id')}")
             
             # Send unban notification email
@@ -559,9 +619,22 @@ def approve_unban(user_id):
 @safe_database_operation("reject_unban")
 def reject_unban(user_id):
     try:
+        from audit_logger import log_audit_action
+        
         user = User.query.get_or_404(user_id)
         if user.is_banned and user.unban_requested:
             user.unban_requested = False
+            db.session.commit()
+            
+            # Log to audit log
+            log_audit_action(
+                action_type='reject_unban',
+                target_type='user',
+                target_id=user_id,
+                target_name=user.username,
+                description=f'Unban request rejected for user {user.username} (ID: {user_id}, Email: {user.email})'
+            )
+            
             logger.info(f"Unban request rejected - User ID: {user_id}, Username: {user.username}, Admin ID: {session.get('admin_id')}")
             flash(f'User {user.username}\'s unban request has been rejected.', 'danger')
         return redirect(url_for('admin.manage_users'))
@@ -578,6 +651,8 @@ def reject_unban(user_id):
 @safe_database_operation("delete_user")
 def delete_user(user_id):
     try:
+        from audit_logger import log_audit_action
+        
         user = User.query.get_or_404(user_id)
         username = user.username
         
@@ -594,6 +669,15 @@ def delete_user(user_id):
         # This will automatically delete items, orders, notifications, etc. due to cascade rules
         db.session.delete(user)
         db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='delete_user',
+            target_type='user',
+            target_id=user_id,
+            target_name=username,
+            description=f'User account "{username}" (ID: {user_id}, Email: {user.email}) permanently deleted. Items deleted: {len(user_items)}. All associated orders and data cascaded deleted.'
+        )
         
         logger.warning(f"User account deleted - User ID: {user_id}, Username: {username}, Items: {len(user_items)}, Admin ID: {session.get('admin_id')}")
         flash(f'User account "{username}" has been permanently deleted along with all associated data.', 'success')
@@ -612,6 +696,8 @@ def delete_user(user_id):
 @safe_database_operation("edit_user")
 def edit_user(user_id):
     try:
+        from audit_logger import log_audit_action
+        
         user = User.query.get_or_404(user_id)
 
         if request.method == 'POST':
@@ -622,6 +708,19 @@ def edit_user(user_id):
             
             old_credits = user.credits
             user.credits = new_credits
+            db.session.commit()
+            
+            # Log to audit log
+            log_audit_action(
+                action_type='edit_user',
+                target_type='user',
+                target_id=user_id,
+                target_name=user.username,
+                description=f'User {user.username} (ID: {user_id}, Email: {user.email}) credits updated from {old_credits} to {new_credits}',
+                before_value=str(old_credits),
+                after_value=str(new_credits)
+            )
+            
             logger.info(f"User credits updated - User ID: {user_id}, Old: {old_credits}, New: {new_credits}, Admin ID: {session.get('admin_id')}")
             flash(f"{user.username}'s credits updated from {old_credits} to {new_credits}.", "success")
             return redirect(url_for('admin.manage_users'))
@@ -702,7 +801,7 @@ def approve_item(item_id):
         flag_modified(item, 'value')
         
         # Log to audit log
-        log_item_approval(item_id, item.name, value)
+        log_item_approval(item_id, item.name, value, user_id=item.user_id, user_name=item.user.username)
         
         logger.info(f"Item approved - Item ID: {item_id}, Name: {item.name}, Value: {value}, User Credits: {item.user.credits}, Admin ID: {session.get('admin_id')}")
         
@@ -774,7 +873,7 @@ def reject_item(item_id):
         logger.info(f"Item rejected - Item ID: {item_id}, Name: {item.name}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
         
         # Log to audit log
-        log_item_rejection(item_id, item.name, reason)
+        log_item_rejection(item_id, item.name, reason, user_id=item.user_id, user_name=item.user.username)
         
         # Send rejection email to user
         try:
@@ -876,11 +975,27 @@ def reject_item(item_id):
 @safe_database_operation("update_item_status")
 def update_item_status():
     try:
+        from audit_logger import log_audit_action
+        
         item_id = request.form.get('item_id')
         new_status = request.form.get('status')
 
         item = Item.query.get_or_404(item_id)
+        old_status = item.status
         item.status = new_status
+        db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='update_item_status',
+            target_type='item',
+            target_id=item_id,
+            target_name=item.name,
+            description=f'Item status updated to {new_status}',
+            before_value=old_status,
+            after_value=new_status
+        )
+        
         logger.info(f"Item status updated - Item ID: {item_id}, Name: {item.name}, New Status: {new_status}, Admin ID: {session.get('admin_id')}")
 
         flash(f"Item '{item.name}' has been marked as {new_status}.", "success")
@@ -898,6 +1013,8 @@ def update_item_status():
 @safe_database_operation("fix_misclassified_items")
 def fix_misclassified_items():
     try:
+        from audit_logger import log_audit_action
+        
         items_to_fix = Item.query.filter(Item.is_approved == True, Item.status == 'pending').all()
         count = 0
 
@@ -905,6 +1022,18 @@ def fix_misclassified_items():
             item.status = 'approved'
             count += 1
 
+        db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='fix_misclassified_items',
+            target_type='system',
+            target_id=0,
+            target_name='Item Status Fix',
+            description=f'Fixed {count} misclassified item(s) - moved from pending to approved',
+            after_value=str(count)
+        )
+        
         logger.info(f"Fixed misclassified items - Count: {count}, Admin ID: {session.get('admin_id')}")
         flash(f"{count} item(s) with approved status were moved from 'pending' to 'approved'.", "info")
         return redirect(url_for('admin.admin_dashboard', status='approved'))
@@ -921,6 +1050,8 @@ def fix_misclassified_items():
 @safe_database_operation("fix_missing_credits")
 def fix_missing_credits():
     try:
+        from audit_logger import log_audit_action
+        
         items_to_fix = Item.query.filter(
             Item.is_approved == True,
             Item.credited == False,
@@ -936,6 +1067,18 @@ def fix_missing_credits():
                 item.credited = True
                 count += 1
 
+        db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='fix_missing_credits',
+            target_type='system',
+            target_id=0,
+            target_name='Credit Fix Operation',
+            description=f'Fixed missing credits for {count} item(s). Total credits added: ₦{total_credits:,}',
+            after_value=str(total_credits)
+        )
+        
         logger.info(f"Fixed missing credits - Items: {count}, Total Credits: {total_credits}, Admin ID: {session.get('admin_id')}")
         flash(f"{count} item(s) were fixed and {total_credits} credits added to users.", "success")
         return redirect(url_for('admin.admin_dashboard'))
@@ -952,6 +1095,8 @@ def fix_missing_credits():
 @safe_database_operation("add_pickup_station")
 def add_pickup_station():
     try:
+        from audit_logger import log_audit_action
+        
         form = PickupStationForm()
         if form.validate_on_submit():
             station = PickupStation(
@@ -961,6 +1106,17 @@ def add_pickup_station():
                 city=form.city.data
             )
             db.session.add(station)
+            db.session.commit()
+            
+            # Log to audit log
+            log_audit_action(
+                action_type='add_pickup_station',
+                target_type='pickup_station',
+                target_id=station.id,
+                target_name=station.name,
+                description=f'Pickup station added: {station.name}, {station.city}, {station.state}'
+            )
+            
             logger.info(f"Pickup station added - Name: {station.name}, State: {station.state}, Admin ID: {session.get('admin_id')}")
             flash("Pickup station added successfully!", "success")
             return redirect(url_for('admin.manage_pickup_stations'))
@@ -984,14 +1140,33 @@ def add_pickup_station():
 @safe_database_operation("edit_pickup_station")
 def edit_pickup_station(station_id):
     try:
+        from audit_logger import log_audit_action
+        
         station = PickupStation.query.get_or_404(station_id)
         form = PickupStationForm(obj=station)
 
         if form.validate_on_submit():
+            old_data = f"{station.name}, {station.address}, {station.city}, {station.state}"
+            
             station.name = form.name.data
             station.address = form.address.data
             station.city = form.city.data
             station.state = form.state.data
+            db.session.commit()
+            
+            new_data = f"{station.name}, {station.address}, {station.city}, {station.state}"
+            
+            # Log to audit log
+            log_audit_action(
+                action_type='edit_pickup_station',
+                target_type='pickup_station',
+                target_id=station_id,
+                target_name=station.name,
+                description=f'Pickup station updated',
+                before_value=old_data,
+                after_value=new_data
+            )
+            
             logger.info(f"Pickup station updated - ID: {station_id}, Name: {station.name}, Admin ID: {session.get('admin_id')}")
             flash('Pickup station updated successfully!', 'success')
             return redirect(url_for('admin.manage_pickup_stations'))
@@ -1014,9 +1189,22 @@ def edit_pickup_station(station_id):
 @safe_database_operation("delete_pickup_station")
 def delete_pickup_station(station_id):
     try:
+        from audit_logger import log_audit_action
+        
         station = PickupStation.query.get_or_404(station_id)
         station_name = station.name
         db.session.delete(station)
+        db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='delete_pickup_station',
+            target_type='pickup_station',
+            target_id=station_id,
+            target_name=station_name,
+            description=f'Pickup station deleted: {station_name}'
+        )
+        
         logger.info(f"Pickup station deleted - ID: {station_id}, Name: {station_name}, Admin ID: {session.get('admin_id')}")
         flash('Pickup Station deleted successfully!', 'danger')
         return redirect(url_for('admin.manage_pickup_stations'))
@@ -1068,6 +1256,7 @@ def manage_orders():
 def update_order_status(order_id):
     try:
         from trading_points import award_points_for_purchase, create_level_up_notification
+        from audit_logger import log_audit_action
         
         order = Order.query.get_or_404(order_id)
         old_status = order.status
@@ -1112,6 +1301,19 @@ def update_order_status(order_id):
                 note.message = f"{status_messages.get(order.status, f'Order status updated to {order.status}')} You earned 20 trading points!"
             
             db.session.add(note)
+
+        db.session.commit()
+        
+        # Log to audit log
+        log_audit_action(
+            action_type='update_order_status',
+            target_type='order',
+            target_id=order_id,
+            target_name=f'Order #{order.order_number}',
+            description=f'Order #{order.order_number} status updated to {order.status} for user {order.user.username} (ID: {order.user_id}, Email: {order.user.email})',
+            before_value=old_status,
+            after_value=order.status
+        )
 
         logger.info(f"Order status updated - Order ID: {order_id}, New Status: {order.status}, Admin ID: {session.get('admin_id')}")
         flash(f"Order status updated to {order.status}", "success")
@@ -1169,7 +1371,7 @@ def audit_log():
         audit_logs = query.order_by(AuditLog.timestamp.desc()).all()
         
         # Get unique admins for filter dropdown
-        admins = User.query.filter(User.is_admin == True).order_by(User.username).all()
+        admins = Admin.query.order_by(Admin.username).all()
         
         # Get unique action types
         action_types_query = db.session.query(AuditLog.action_type.distinct()).all()
@@ -1659,7 +1861,7 @@ def export_user_data(user_id):
                 target_type='user',
                 target_id=user_id,
                 target_name=user.username,
-                description=f'User data exported as PDF files in ZIP',
+                description=f'User data exported as PDF files in ZIP for {user.username} (ID: {user_id}, Email: {user.email})',
             )
         except Exception as e:
             logger.error(f"Error logging data export: {str(e)}")

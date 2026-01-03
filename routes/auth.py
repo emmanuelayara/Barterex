@@ -327,9 +327,10 @@ def login():
                     flash('❌ Please verify your email address before logging in. Check your inbox for the verification link.', 'warning')
                     return render_template('login.html', form=form, show_resend=True, email=user.email)
                 
-                # Successful login - reset failed attempts
+                # Successful login - reset failed attempts and update last login
                 user.failed_login_attempts = 0
                 user.account_locked_until = None
+                user.last_login = datetime.utcnow()
                 db.session.commit()
 
                 # ✅ Handle Remember Me functionality

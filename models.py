@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from datetime import datetime
 import random
 import secrets
+import json
 from sqlalchemy.orm import validates
 
 
@@ -590,8 +591,8 @@ class Referral(db.Model):
 class AuditLog(db.Model):
     """Track all admin actions for compliance and auditing"""
     id = db.Column(db.Integer, primary_key=True)
-    admin_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
-    admin = db.relationship('User', backref='audit_logs')
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False, index=True)
+    admin = db.relationship('Admin', backref='audit_logs')
     
     action_type = db.Column(db.String(100), nullable=False, index=True)  # e.g., 'approve_item', 'ban_user', 'edit_credits'
     target_type = db.Column(db.String(50), nullable=False)  # 'user', 'item', 'order', etc.
@@ -623,11 +624,21 @@ class AuditLog(db.Model):
             'target_name': self.target_name,
             'description': self.description,
             'reason': self.reason,
-            'before_value': json.loads(self.before_value) if self.before_value else None,
-            'after_value': json.loads(self.after_value) if self.after_value else None,
+            'before_value': self._parse_json_safe(self.before_value),
+            'after_value': self._parse_json_safe(self.after_value),
             'timestamp': self.timestamp.isoformat() if self.timestamp else None,
             'ip_address': self.ip_address
         }
+    
+    def _parse_json_safe(self, value):
+        """Safely parse JSON, returning plain string if not valid JSON"""
+        if not value:
+            return None
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            # If not valid JSON, return as plain string
+            return value
 
 
 class SystemSettings(db.Model):

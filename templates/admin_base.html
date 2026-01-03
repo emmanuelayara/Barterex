@@ -326,6 +326,14 @@
         </div>
       </a>
 
+      <!-- Admin Name Display -->
+      {% if session.get('admin_username') %}
+      <div class="admin-info" style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; color: white; font-weight: 500;">
+        <i class="bi bi-person-circle" style="font-size: 1.2rem;"></i>
+        <span>{{ session.get('admin_username') }}</span>
+      </div>
+      {% endif %}
+
       <!-- Mobile Menu Toggle -->
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
         <i class="bi bi-list"></i>
