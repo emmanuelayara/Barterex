@@ -260,6 +260,53 @@
     font-size: 0.9rem;
   }
 
+  .order-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 8px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .action-view {
+    background: linear-gradient(135deg, #054e97, #0066cc);
+    color: white;
+  }
+
+  .action-view:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 78, 151, 0.3);
+  }
+
+  .action-cancel {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+
+  .action-cancel:hover {
+    background: #dc2626;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  }
+
   .status-badge {
     display: inline-flex;
     align-items: center;
@@ -889,7 +936,7 @@
           <div class="order-content">
             <!-- Items in this Order -->
             <div class="order-items">
-              {% for order_item in order.order_items %}
+              {% for order_item in order.items %}
                 <div class="order-item">
                   <div class="item-name">{{ order_item.item.name }}</div>
                   <div class="item-number">🏷️ Item #{{ order_item.item.item_number }}</div>
@@ -958,6 +1005,19 @@
                 </div>
               {% endif %}
             </div>
+
+            <!-- Quick Actions -->
+            <div class="order-actions">
+              <a href="{{ url_for('user.view_order_details', order_id=order.id) }}" class="action-btn action-view">
+                👁️ View Details
+              </a>
+              
+              {% if order.status.lower() in ['pending', 'processing'] and not order.cancelled %}
+              <button class="action-btn action-cancel" onclick="event.preventDefault(); openCancelOrderModal({{ order.id }})">
+                ✕ Cancel
+              </button>
+              {% endif %}
+            </div>
           </div>
         </div>
       {% endfor %}
@@ -1018,5 +1078,62 @@
     </div>
   </div>
 </div>
+
+<!-- Cancel Order Modal -->
+<div id="cancelOrderModal" class="cancel-order-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <h3 style="margin-top: 0; color: #dc2626; font-size: 1.3rem;">⚠️ Cancel Order?</h3>
+    <p style="color: #4a5568; line-height: 1.6;">Are you sure you want to cancel this order? If you cancel, your credits will be refunded to your account.</p>
+    
+    <div style="margin: 15px 0;">
+      <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1a202c;">Reason for Cancellation (Optional)</label>
+      <textarea id="cancelReason" placeholder="Tell us why you're cancelling..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: Arial; resize: vertical; min-height: 80px;"></textarea>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button onclick="closeCancelModal()" style="padding: 10px 20px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;">Keep Order</button>
+      <button onclick="confirmCancelFromList()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;">Yes, Cancel Order</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentCancelOrderId = null;
+
+  function openCancelOrderModal(orderId) {
+    currentCancelOrderId = orderId;
+    document.getElementById('cancelOrderModal').style.display = 'flex';
+  }
+
+  function closeCancelModal() {
+    document.getElementById('cancelOrderModal').style.display = 'none';
+    document.getElementById('cancelReason').value = '';
+    currentCancelOrderId = null;
+  }
+
+  function confirmCancelFromList() {
+    if (!currentCancelOrderId) return;
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("user.cancel_order", order_id=0) }}'.replace('/0', '/' + currentCancelOrderId);
+    
+    const reasonInput = document.createElement('input');
+    reasonInput.type = 'hidden';
+    reasonInput.name = 'cancellation_reason';
+    reasonInput.value = document.getElementById('cancelReason').value;
+    
+    form.appendChild(reasonInput);
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  // Close modal when clicking outside
+  document.getElementById('cancelOrderModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeCancelModal();
+    }
+  });
+</script>
 
 {% endblock %}

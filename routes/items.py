@@ -4,7 +4,7 @@ from flask_wtf.csrf import generate_csrf
 import os
 import time
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app import db, app
 from models import Item, ItemImage, Cart, CartItem, Trade, Order, OrderItem, PickupStation, Notification
@@ -453,16 +453,16 @@ def finalize_purchase():
             
             if not item.is_available:
                 logger.warning(f"[TXN:{transaction_id}] Item became unavailable - Item: {item.id}")
-                raise CheckoutError(f"Item '{item.title}' is no longer available.")
+                raise CheckoutError(f"Item '{item.name}' is no longer available.")
             
             seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
             if not seller_id:
                 logger.error(f"[TXN:{transaction_id}] Item has no owner - Item: {item.id}")
-                raise CheckoutError(f"Item '{item.title}' has invalid seller information.")
+                raise CheckoutError(f"Item '{item.name}' has invalid seller information.")
             
             if item.user_id == current_user.id:
                 logger.warning(f"[TXN:{transaction_id}] User already owns item - Item: {item.id}")
-                raise CheckoutError(f"You already own item '{item.title}'.")
+                raise CheckoutError(f"You already own item '{item.name}'.")
             
             available.append(item)
         
@@ -516,13 +516,13 @@ def finalize_purchase():
                 # Commit this item's savepoint
                 savepoint.commit()
                 purchased_items.append(item)
-                logger.debug(f"[TXN:{transaction_id}] Item purchased - Item: {item.id}, Title: {item.title}")
+                logger.debug(f"[TXN:{transaction_id}] Item purchased - Item: {item.id}, Title: {item.name}")
                 
             except Exception as e:
                 savepoint.rollback()
                 failed_items.append({
                     'item_id': item.id,
-                    'title': item.title,
+                    'title': item.name,
                     'error': str(e)
                 })
                 logger.warning(f"[TXN:{transaction_id}] Item purchase failed - Item: {item.id}, Error: {str(e)}")
@@ -561,9 +561,195 @@ def finalize_purchase():
         if failed_items:
             logger.warning(f"[TXN:{transaction_id}] ⚠ Some items failed: {failed_items}")
         
+        # CRITICAL: Create Order record for transaction history
+        order_number = None
+        try:
+            # Get delivery information from session
+            pending_delivery = session.get('pending_delivery', {})
+            
+            # Generate order number: ORD-YYYYMMDD-XXXXX
+            order_counter = Order.query.filter(
+                Order.date_ordered >= datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            ).count()
+            
+            order_date = datetime.utcnow().strftime('%Y%m%d')
+            order_number = f"ORD-{order_date}-{order_counter + 1:05d}"
+            
+            # Create Order record
+            order = Order(
+                user_id=current_user.id,
+                delivery_method=pending_delivery.get('method', 'home delivery'),
+                delivery_address=pending_delivery.get('delivery_address'),
+                pickup_station_id=pending_delivery.get('pickup_station_id'),
+                order_number=order_number,
+                total_credits=total_cost,
+                credits_used=total_cost,
+                credits_balance_before=current_user.credits + total_cost,
+                credits_balance_after=current_user.credits,
+                status='Pending',
+                date_ordered=datetime.utcnow(),
+                estimated_delivery_date=datetime.utcnow() + timedelta(days=7),
+                transaction_notes=f"Purchase of {len(purchased_items)} item(s)"
+            )
+            
+            # Link items to order
+            for item in purchased_items:
+                order_item = OrderItem(order=order, item=item)
+                db.session.add(order_item)
+            
+            db.session.add(order)
+            db.session.commit()
+            
+            logger.info(f"[TXN:{transaction_id}] Order created - Order ID: {order.id}, Order #: {order_number}")
+            
+        except Exception as e:
+            logger.error(f"[TXN:{transaction_id}] Failed to create order record: {str(e)}", exc_info=True)
+            flash("Warning: Order record could not be saved. Please contact support.", "warning")
+        
         # Clear pending items from session
         session.pop('pending_checkout_items', None)
-        flash(f"✓ Purchase complete! {len(purchased_items)} item(s) purchased.", "success")
+        session.pop('pending_delivery', None)
+        
+        # CRITICAL: Create order confirmation notification and email
+        try:
+            pending_delivery = session.get('pending_delivery', {})
+            delivery_method = pending_delivery.get('method', 'home delivery')
+            delivery_info = ""
+            
+            if delivery_method == 'home delivery':
+                delivery_address = pending_delivery.get('delivery_address', 'Not specified')
+                delivery_info = f"Delivery Address: {delivery_address}"
+            else:  # pickup
+                pickup_station_id = pending_delivery.get('pickup_station_id')
+                if pickup_station_id:
+                    station = PickupStation.query.get(pickup_station_id)
+                    if station:
+                        delivery_info = f"Pickup Station: {station.name} ({station.state})"
+            
+            # Build items list for notification
+            items_list = "<br>".join([
+                f"• {item.name} - ₦{item.value:,.0f} Credits"
+                for item in purchased_items
+            ])
+            
+            notification_message = f"""
+            ✓ Order Confirmed!<br><br>
+            Order #: {order_number}<br>
+            Items: {len(purchased_items)}<br>
+            Total Cost: ₦{total_cost:,.0f} Credits<br><br>
+            <strong>Items Ordered:</strong><br>
+            {items_list}<br><br>
+            <strong>Delivery Method:</strong> {delivery_method.title()}<br>
+            {delivery_info}<br><br>
+            <strong>Estimated Delivery:</strong> 7 business days<br><br>
+            Your purchase has been processed successfully. You will receive updates about your order shortly.
+            """
+            
+            # Create notification in database
+            notification = Notification(user_id=current_user.id, message=notification_message)
+            db.session.add(notification)
+            db.session.commit()
+            
+            # Send confirmation email
+            if current_user.email:
+                email_html = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; background: #f8f9fa; }}
+                        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 10px; }}
+                        .header {{ background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+                        .header h1 {{ margin: 0; font-size: 28px; }}
+                        .order-details {{ background: #f8f9fa; padding: 20px; margin: 20px 0; border-left: 4px solid #ff7a00; }}
+                        .order-number {{ font-size: 18px; font-weight: bold; color: #ff7a00; }}
+                        .items-section {{ margin: 20px 0; }}
+                        .item {{ background: white; padding: 10px; margin: 8px 0; border-left: 3px solid #ff7a00; }}
+                        .summary {{ background: #f0f0f0; padding: 15px; margin: 15px 0; border-radius: 5px; }}
+                        .summary-row {{ display: flex; justify-content: space-between; margin: 8px 0; }}
+                        .total {{ font-size: 18px; font-weight: bold; color: #ff7a00; }}
+                        .delivery-info {{ background: #e8f5e9; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #10b981; }}
+                        .next-steps {{ background: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 5px; }}
+                        .next-steps h3 {{ margin-top: 0; color: #ff7a00; }}
+                        .next-steps ol {{ margin: 10px 0; padding-left: 20px; }}
+                        .next-steps li {{ margin: 8px 0; }}
+                        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666; }}
+                        .button {{ display: inline-block; background: #ff7a00; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 15px 0; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>✓ Order Confirmed!</h1>
+                            <p>Your purchase has been successfully processed</p>
+                        </div>
+                        
+                        <div class="order-details">
+                            <p>Thank you for your purchase, <strong>{current_user.username}</strong>!</p>
+                            <p class="order-number">Order #: {order_number}</p>
+                            <p>Order Date: {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p')}</p>
+                        </div>
+                        
+                        <div class="items-section">
+                            <h3 style="color: #333; border-bottom: 2px solid #ff7a00; padding-bottom: 10px;">Items Ordered ({len(purchased_items)})</h3>
+                            {''.join([f'<div class="item">{item.name}<br><span style="color: #ff7a00; font-weight: bold;">₦{item.value:,.0f} Credits</span></div>' for item in purchased_items])}
+                        </div>
+                        
+                        <div class="summary">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span>₦{total_cost:,.0f}</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total Cost:</span>
+                                <span>₦{total_cost:,.0f} Credits</span>
+                            </div>
+                        </div>
+                        
+                        <div class="delivery-info">
+                            <h3 style="margin-top: 0; color: #10b981;">🚚 Delivery Information</h3>
+                            <p><strong>Delivery Method:</strong> {delivery_method.title()}</p>
+                            {'<p><strong>Delivery Address:</strong> ' + pending_delivery.get('delivery_address', 'Not specified') + '</p>' if delivery_method == 'home delivery' else ''}
+                            {f'<p><strong>Pickup Station:</strong> {PickupStation.query.get(pending_delivery.get("pickup_station_id")).name} ({PickupStation.query.get(pending_delivery.get("pickup_station_id")).state})</p>' if delivery_method == 'pickup' and pending_delivery.get('pickup_station_id') else ''}
+                            <p><strong>Estimated Delivery:</strong> 7 business days from order date</p>
+                        </div>
+                        
+                        <div class="next-steps">
+                            <h3>📋 What Happens Next?</h3>
+                            <ol>
+                                <li><strong>Order Confirmation:</strong> Your order has been recorded and is being processed</li>
+                                <li><strong>Item Preparation:</strong> The seller(s) will prepare your items for delivery</li>
+                                <li><strong>Shipping:</strong> Your items will be shipped to your {'delivery address' if delivery_method == 'home delivery' else 'pickup station'}</li>
+                                <li><strong>Tracking:</strong> You will receive updates about your order status</li>
+                                <li><strong>Delivery:</strong> Items will arrive within the estimated timeframe</li>
+                            </ol>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="{url_for('user.dashboard', _external=True)}" class="button">Track Your Order</a>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>This is an automated confirmation email. Please do not reply to this email.</p>
+                            <p>If you have any questions, please contact our support team.</p>
+                            <p>© 2026 Barterex. All rights reserved.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+                
+                send_email_async(
+                    subject=f"Order Confirmation #{order_number} - Barterex",
+                    recipients=[current_user.email],
+                    html_body=email_html
+                )
+                logger.info(f"[TXN:{transaction_id}] Order confirmation email sent to {current_user.email}")
+            
+        except Exception as e:
+            logger.error(f"[TXN:{transaction_id}] Failed to create order notification/email: {str(e)}", exc_info=True)
+        
+        flash(f"✓ Purchase complete! {len(purchased_items)} item(s) purchased. Order #{order_number if order_number else 'unknown'}", "success")
         return redirect(url_for('user.dashboard'))
 
     except InsufficientCreditsError as e:
@@ -604,17 +790,17 @@ def finalize_purchase():
             
             if not item.is_available:
                 logger.warning(f"[TXN:{transaction_id}] Item became unavailable during validation - Item: {item.id}")
-                raise CheckoutError(f"Item '{item.title}' is no longer available.")
+                raise CheckoutError(f"Item '{item.name}' is no longer available.")
             
             seller_id = getattr(item, "owner_id", None) or getattr(item, "user_id", None)
             if not seller_id:
                 logger.error(f"[TXN:{transaction_id}] Item has no owner - Item: {item.id}")
-                raise CheckoutError(f"Item '{item.title}' has invalid seller information.")
+                raise CheckoutError(f"Item '{item.name}' has invalid seller information.")
             
             # Check that item is not already owned by current user (shouldn't happen, but double-check)
             if item.user_id == current_user.id:
                 logger.warning(f"[TXN:{transaction_id}] User already owns item - Item: {item.id}, User: {current_user.id}")
-                raise CheckoutError(f"You already own item '{item.title}'.")
+                raise CheckoutError(f"You already own item '{item.name}'.")
 
         # PHASE 2: CALCULATE - Compute total cost
         logger.debug(f"[TXN:{transaction_id}] Phase 2: Calculating total cost")
@@ -674,14 +860,14 @@ def finalize_purchase():
                 # Commit this item's savepoint
                 savepoint.commit()
                 purchased_items.append(item)
-                logger.debug(f"[TXN:{transaction_id}] Item processed - Item: {item.id}, Title: {item.title}")
+                logger.debug(f"[TXN:{transaction_id}] Item processed - Item: {item.id}, Title: {item.name}")
                 
             except Exception as e:
                 # Rollback only THIS item's changes, not the entire transaction
                 savepoint.rollback()
                 failed_items.append({
                     'item_id': item.id,
-                    'title': item.title,
+                    'title': item.name,
                     'error': str(e)
                 })
                 logger.warning(f"[TXN:{transaction_id}] Item processing failed - Item: {item.id}, Error: {str(e)}")
@@ -788,41 +974,7 @@ def order_item():
                                  delivery_address=delivery_address,
                                  pickup_station_id=pickup_station_id,
                                  total_credits=total_credits,
-                                 csrf_token=generate_csrf)
-        
-        except Exception as e:
-            logger.error(f"Error in delivery setup for user {current_user.id}: {str(e)}", exc_info=True)
-            flash('An error occurred while setting up delivery. Please try again.', 'danger')
-            return render_template('order_item.html', form=form, stations=stations, items=items)
-    
-    return render_template('order_item.html', form=form, stations=stations, items=items)
-    
-    if request.method == 'GET' and current_user.address:
-        form.delivery_address.data = current_user.address
-    
-    if form.validate_on_submit():
-        try:
-            delivery_method = form.delivery_method.data
-            pickup_station_id = form.pickup_station.data if delivery_method == 'pickup' else None
-            delivery_address = form.delivery_address.data if delivery_method == 'home delivery' else None
-            
-            # Store delivery details in session for finalize_purchase to use
-            session['pending_delivery'] = {
-                'method': delivery_method,
-                'pickup_station_id': pickup_station_id,
-                'delivery_address': delivery_address
-            }
-            logger.info(f"Delivery setup completed - User: {current_user.username}, Method: {delivery_method}")
-            
-            # Render the order review page with delivery details and purchase confirmation button
-            total_credits = sum(item.value for item in items)
-            return render_template('order_review.html', 
-                                 form=form, 
-                                 items=items,
-                                 delivery_method=delivery_method,
-                                 delivery_address=delivery_address,
-                                 pickup_station_id=pickup_station_id,
-                                 total_credits=total_credits,
+                                 stations=stations,
                                  csrf_token=generate_csrf)
         
         except Exception as e:

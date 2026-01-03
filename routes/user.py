@@ -3,6 +3,7 @@ from flask_login import login_required, current_user, logout_user
 from sqlalchemy.orm import joinedload
 from typing import Dict, Any, Union, Tuple
 import os
+from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -478,6 +479,138 @@ def download_receipt(order_id):
     except Exception as e:
         logger.error(f"Error downloading receipt: {str(e)}", exc_info=True)
         flash('An error occurred while downloading the receipt.', 'danger')
+        return redirect(url_for('user.view_order_details', order_id=order_id))
+
+
+@user_bp.route('/order/<int:order_id>/cancel', methods=['POST'])
+@login_required
+@handle_errors
+def cancel_order(order_id):
+    """Cancel a pending order that hasn't been shipped"""
+    try:
+        order = Order.query.get_or_404(order_id)
+        
+        # Verify user owns this order
+        if order.user_id != current_user.id:
+            logger.warning(f"Unauthorized order cancellation attempt - User: {current_user.username}, Order: {order_id}")
+            flash("You don't have access to cancel this order", 'danger')
+            return redirect(url_for('user.user_orders'))
+        
+        # Verify order can be cancelled (must be pending and not shipped)
+        if order.status.lower() not in ['pending', 'processing']:
+            logger.info(f"Cannot cancel order - Status: {order.status}, Order: {order_id}")
+            flash(f"Order cannot be cancelled. Current status: {order.status}", 'warning')
+            return redirect(url_for('user.view_order_details', order_id=order_id))
+        
+        # Get cancellation reason from request
+        cancellation_reason = request.form.get('cancellation_reason', '').strip()
+        
+        # Update order status
+        order.status = 'Cancelled'
+        order.cancelled = True
+        order.cancelled_at = datetime.utcnow()
+        order.cancellation_reason = cancellation_reason
+        
+        # Restore items to marketplace (make them available again for purchase)
+        for order_item in order.items:
+            order_item.item.is_available = True
+            logger.info(f"Item restored to marketplace - Item: {order_item.item.name} (ID: {order_item.item.id})")
+        
+        # Refund credits back to user
+        refund_amount = order.credits_used
+        if refund_amount > 0:
+            current_user.credits += refund_amount
+            
+            # Log credit transaction
+            from models import CreditTransaction
+            transaction = CreditTransaction(
+                user_id=current_user.id,
+                amount=refund_amount,
+                transaction_type='refund',
+                description=f'Refund for cancelled order {order.order_number}',
+                balance_after=current_user.credits
+            )
+            db.session.add(transaction)
+        
+        db.session.commit()
+        
+        # Send cancellation notification
+        from models import Notification
+        item_names = [f"{oi.item.name}" for oi in order.items]
+        items_text = ', '.join(item_names) if item_names else "Items"
+        
+        notification_message = f"Order {order.order_number} cancelled. {items_text}. Credits refunded: ₦{refund_amount:,.0f}"
+        
+        notification = Notification(
+            user_id=current_user.id,
+            message=notification_message,
+            is_read=False
+        )
+        db.session.add(notification)
+        db.session.commit()
+        
+        # Send email notification
+        try:
+            from app import send_email_async
+            send_email_async(
+                subject=f"Order Cancellation Confirmation - {order.order_number}",
+                recipients=[current_user.email],
+                text_body=f"""
+Dear {current_user.username},
+
+Your order {order.order_number} has been successfully cancelled.
+
+Order Details:
+- Order Number: {order.order_number}
+- Items: {', '.join(item_names)}
+- Credits Refunded: ₦{refund_amount:,.0f}
+- Cancellation Date: {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p')}
+{f'Reason: {cancellation_reason}' if cancellation_reason else ''}
+
+Your refund has been processed and added back to your account.
+
+Best regards,
+Barterex Team
+                """,
+                html_body=f"""
+<html>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #ff7a00;">Order Cancellation Confirmation</h2>
+      
+      <p>Dear <strong>{current_user.username}</strong>,</p>
+      
+      <p>Your order has been successfully cancelled.</p>
+      
+      <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #ff7a00;">Order Details</h3>
+        <p><strong>Order Number:</strong> {order.order_number}</p>
+        <p><strong>Items:</strong> {', '.join(item_names)}</p>
+        <p><strong>Credits Refunded:</strong> <span style="color: #28a745; font-size: 18px; font-weight: bold;">₦{refund_amount:,.0f}</span></p>
+        <p><strong>Cancellation Date:</strong> {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p')}</p>
+        {f'<p><strong>Reason:</strong> {cancellation_reason}</p>' if cancellation_reason else ''}
+      </div>
+      
+      <p style="color: #28a745; font-weight: bold;">✓ Your refund has been processed and added back to your account.</p>
+      
+      <p>If you have any questions about your cancelled order, please contact our support team.</p>
+      
+      <p>Best regards,<br><strong>Barterex Team</strong></p>
+    </div>
+  </body>
+</html>
+                """
+            )
+        except Exception as e:
+            logger.error(f"Error sending cancellation email: {str(e)}", exc_info=True)
+        
+        logger.info(f"Order cancelled - User: {current_user.username}, Order: {order_id}, Refund: ₦{refund_amount}")
+        flash(f'Order cancelled successfully. ₦{refund_amount:,.0f} has been refunded to your account.', 'success')
+        return redirect(url_for('user.view_order_details', order_id=order_id))
+    
+    except Exception as e:
+        logger.error(f"Error cancelling order: {str(e)}", exc_info=True)
+        flash('An error occurred while cancelling the order.', 'danger')
         return redirect(url_for('user.view_order_details', order_id=order_id))
 
 

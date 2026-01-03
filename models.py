@@ -416,6 +416,11 @@ class Order(db.Model):
     date_ordered = db.Column(db.DateTime, default=db.func.now())
     pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
     
+    # Cancellation fields
+    cancelled = db.Column(db.Boolean, default=False)  # Track if order was cancelled
+    cancelled_at = db.Column(db.DateTime, nullable=True)  # Timestamp of cancellation
+    cancellation_reason = db.Column(db.Text, nullable=True)  # Reason for cancellation
+    
     # Transaction Clarity fields
     order_number = db.Column(db.String(50), unique=True, nullable=False)  # e.g., ORD-20251207-00042
     total_credits = db.Column(db.Float, default=0)  # Total credit value of items

@@ -649,7 +649,7 @@
 
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <form method="POST" action="{{ url_for('items.process_checkout') }}" style="flex: 1;">
+                <form method="POST" action="{{ url_for('items.order_item') }}" style="flex: 1;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="confirm-btn">
                         <i class="fas fa-shopping-cart"></i>

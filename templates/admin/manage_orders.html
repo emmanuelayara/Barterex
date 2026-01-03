@@ -155,12 +155,17 @@
 </div>
 
 <style>
+* {
+    box-sizing: border-box;
+}
+
 .order-management-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 20px;
-    background: #f8fafc;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f0f4f8 0%, #f9fafb 100%);
     min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* Header Section */
@@ -168,11 +173,12 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 30px;
+    margin-bottom: 2.5rem;
     background: white;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 122, 0, 0.1);
 }
 
 .header-content {
@@ -180,124 +186,150 @@
 }
 
 .page-title {
-    margin: 0 0 8px 0;
-    color: #1a202c;
-    font-size: 2rem;
-    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: #1a1a1a;
+    font-size: 2.2rem;
+    font-weight: 800;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 1rem;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .title-icon {
-    font-size: 1.8rem;
+    font-size: 2rem;
+    background: none;
+    -webkit-text-fill-color: unset;
 }
 
 .page-subtitle {
-    color: #64748b;
+    color: #666;
     font-size: 1rem;
     margin: 0;
+    font-weight: 500;
 }
 
 .header-stats {
     display: flex;
-    gap: 20px;
+    gap: 1.5rem;
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
     color: white;
-    padding: 20px 25px;
-    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    border-radius: 16px;
     text-align: center;
-    min-width: 120px;
+    min-width: 140px;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.25);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(255, 122, 0, 0.35);
 }
 
 .stat-number {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 4px;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
 }
 
 .stat-label {
     font-size: 0.85rem;
-    opacity: 0.9;
+    opacity: 0.95;
+    font-weight: 500;
 }
 
 /* Filters Section */
 .filters-section {
     display: flex;
-    gap: 20px;
+    gap: 1.5rem;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 2rem;
     flex-wrap: wrap;
 }
 
 .search-box {
     position: relative;
     flex: 1;
-    min-width: 300px;
+    min-width: 320px;
 }
 
 .search-input {
     width: 100%;
-    padding: 12px 45px 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 14px;
+    padding: 0.9rem 3rem 0.9rem 1.2rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    font-size: 0.95rem;
     background: white;
     transition: all 0.3s ease;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.search-input::placeholder {
+    color: #9ca3af;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #ff7a00;
+    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.1);
 }
 
 .search-icon {
     position: absolute;
-    right: 16px;
+    right: 1.2rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #94a3b8;
+    color: #9ca3af;
+    pointer-events: none;
 }
 
 .filter-buttons {
     display: flex;
-    gap: 8px;
+    gap: 0.75rem;
     flex-wrap: wrap;
 }
 
 .filter-btn {
-    padding: 10px 18px;
-    border: 2px solid #e2e8f0;
+    padding: 0.8rem 1.2rem;
+    border: 2px solid #e5e7eb;
     background: white;
-    color: #64748b;
-    border-radius: 10px;
+    color: #666;
+    border-radius: 12px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
     white-space: nowrap;
 }
 
 .filter-btn:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
+    border-color: #ff7a00;
+    background: #fff5f0;
+    color: #ff7a00;
 }
 
 .filter-btn.active {
-    background: #667eea;
-    border-color: #667eea;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+    border-color: transparent;
     color: white;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.25);
 }
 
 /* Table Container */
 .table-container {
     background: white;
-    border-radius: 16px;
+    border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f0f0f0;
 }
 
 .table-wrapper {
@@ -307,42 +339,46 @@
 .orders-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .orders-table thead th {
-    background: #f8fafc;
-    padding: 18px 16px;
+    background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+    padding: 1.25rem 1.25rem;
     text-align: left;
-    font-weight: 600;
-    color: #374151;
-    border-bottom: 2px solid #e5e7eb;
+    font-weight: 700;
+    color: #1a1a1a;
+    border-bottom: 2px solid #f0f0f0;
     white-space: nowrap;
+    font-size: 0.9rem;
 }
 
 .sortable {
     cursor: pointer;
     user-select: none;
     position: relative;
+    transition: all 0.2s ease;
 }
 
 .sortable:hover {
-    background: #f1f5f9;
+    background: linear-gradient(180deg, #f0f0f0 0%, #efefef 100%);
+    color: #ff7a00;
 }
 
 .sort-indicator {
-    margin-left: 8px;
-    opacity: 0.5;
-    font-size: 0.8rem;
+    margin-left: 0.5rem;
+    opacity: 0.4;
+    font-size: 0.75rem;
 }
 
 .order-row {
-    transition: all 0.3s ease;
-    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f9fafb;
 }
 
 .order-row:hover {
-    background: #f8fafc;
+    background: #fafafa;
+    box-shadow: inset 0 0 8px rgba(255, 122, 0, 0.05);
 }
 
 .order-row:last-child {
@@ -350,24 +386,25 @@
 }
 
 .orders-table td {
-    padding: 16px;
-    vertical-align: top;
+    padding: 1.1rem 1.25rem;
+    vertical-align: middle;
 }
 
 /* Order ID */
 .order-id {
-    font-weight: 700;
-    color: #1e293b;
+    font-weight: 800;
+    color: #ff7a00;
+    font-size: 1rem;
 }
 
 .id-wrapper {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 0.25rem;
 }
 
 .id-hash {
-    color: #64748b;
+    color: #999;
     font-weight: 400;
 }
 
@@ -375,12 +412,23 @@
 .item-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0.5rem;
+}
+
+.item-info ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.item-info li {
+    color: #374151;
+    font-weight: 500;
+    line-height: 1.5;
 }
 
 .item-name {
     font-weight: 600;
-    color: #1e293b;
+    color: #1a1a1a;
     line-height: 1.4;
 }
 
@@ -388,12 +436,13 @@
 .buyer-details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0.3rem;
 }
 
 .buyer-name {
-    font-weight: 500;
-    color: #1e293b;
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 0.95rem;
 }
 
 /* Delivery Info */
@@ -402,74 +451,75 @@
 }
 
 .delivery-method {
-    margin-bottom: 8px;
+    margin-bottom: 0.75rem;
 }
 
 .method-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
 }
 
 .method-pickup {
-    background: #fef3c7;
+    background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
     color: #92400e;
 }
 
 .method-delivery {
-    background: #dbeafe;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
     color: #1e40af;
 }
 
 .delivery-details {
-    color: #64748b;
-    font-size: 0.9rem;
-    line-height: 1.4;
+    color: #666;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    font-weight: 500;
 }
 
 .pickup-location {
-    font-weight: 500;
-    color: #374151;
+    font-weight: 700;
+    color: #1a1a1a;
 }
 
 .pickup-state {
-    color: #64748b;
+    color: #999;
 }
 
 /* Status */
 .status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .status-pending {
-    background: #fef3c7;
+    background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
     color: #92400e;
 }
 
 .status-shipped {
-    background: #dbeafe;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
     color: #1e40af;
 }
 
 .status-delivered {
-    background: #d1fae5;
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
     color: #065f46;
 }
 
 .status-cancelled {
-    background: #fee2e2;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
     color: #991b1b;
 }
 
@@ -477,89 +527,95 @@
 .date-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0.2rem;
 }
 
 .date {
-    font-weight: 500;
-    color: #374151;
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 0.95rem;
 }
 
 .time {
-    font-size: 0.85rem;
-    color: #64748b;
+    font-size: 0.8rem;
+    color: #999;
 }
 
 /* Actions */
 .actions-cell {
-    width: 120px;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 6px;
+    min-width: 140px;
 }
 
 .action-btn {
-    width: 32px;
-    height: 32px;
+    padding: 0.7rem 1rem;
     border: none;
-    border-radius: 8px;
-    background: #f1f5f9;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
     transition: all 0.2s ease;
-    font-size: 14px;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .action-btn:hover {
-    background: #e2e8f0;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.view-btn:hover {
-    background: #dbeafe;
-}
-
-.edit-btn:hover {
-    background: #fef3c7;
-}
-
-.more-btn:hover {
-    background: #f3e8ff;
+.status-complete {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
-    padding: 60px 20px;
-    color: #64748b;
+    padding: 4rem 2rem;
+    color: #999;
+    background: white;
+    border-radius: 18px;
+    border: 2px dashed #e5e7eb;
 }
 
 .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 16px;
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
 }
 
 .empty-state h3 {
-    margin: 0 0 8px 0;
-    color: #374151;
+    margin: 0 0 0.5rem 0;
+    color: #1a1a1a;
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 
 .empty-state p {
     margin: 0;
+    color: #666;
+    font-weight: 500;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
     .order-management-container {
-        padding: 15px;
+        padding: 1.5rem;
     }
     
     .page-header {
-        padding: 20px;
+        padding: 1.5rem;
+        flex-direction: column;
+        gap: 1.5rem;
     }
     
     .page-title {
@@ -567,39 +623,47 @@
     }
     
     .title-icon {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
+    }
+    
+    .header-stats {
+        gap: 1rem;
     }
     
     .stat-card {
-        min-width: 100px;
-        padding: 16px 20px;
+        min-width: 110px;
+        padding: 1.25rem 1.5rem;
     }
     
     .stat-number {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
+    }
+    
+    .search-box {
+        min-width: 250px;
     }
 }
 
 @media (max-width: 768px) {
     .order-management-container {
-        padding: 10px;
+        padding: 1rem;
     }
     
     .page-header {
         flex-direction: column;
-        gap: 16px;
-        align-items: stretch;
-        padding: 16px;
-        margin-bottom: 20px;
+        gap: 1.25rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
     }
     
     .page-title {
         font-size: 1.5rem;
-        gap: 8px;
+        gap: 0.5rem;
     }
     
     .title-icon {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
     }
     
     .page-subtitle {
@@ -608,17 +672,19 @@
     
     .header-stats {
         justify-content: center;
-        gap: 12px;
+        gap: 1rem;
+        width: 100%;
     }
     
     .stat-card {
-        min-width: 80px;
-        padding: 12px 16px;
+        min-width: 90px;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
     }
     
     .stat-number {
-        font-size: 1.4rem;
-        margin-bottom: 2px;
+        font-size: 1.3rem;
+        margin-bottom: 0.2rem;
     }
     
     .stat-label {
@@ -628,8 +694,8 @@
     .filters-section {
         flex-direction: column;
         align-items: stretch;
-        gap: 12px;
-        margin-bottom: 20px;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
     
     .search-box {
@@ -637,18 +703,20 @@
     }
     
     .search-input {
-        padding: 10px 40px 10px 14px;
-        font-size: 13px;
+        padding: 0.8rem 2.5rem 0.8rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 10px;
     }
     
     .filter-buttons {
         justify-content: flex-start;
-        gap: 6px;
+        gap: 0.5rem;
     }
     
     .filter-btn {
-        padding: 8px 14px;
+        padding: 0.7rem 1rem;
         font-size: 0.85rem;
+        border-radius: 10px;
     }
     
     .orders-table {
@@ -656,53 +724,65 @@
     }
     
     .orders-table thead th {
-        padding: 12px 8px;
+        padding: 1rem 0.75rem;
         font-size: 0.8rem;
     }
     
     .orders-table td {
-        padding: 10px 6px;
+        padding: 0.9rem 0.75rem;
     }
     
     .delivery-info {
-        min-width: 120px;
+        min-width: 140px;
     }
     
     .method-badge {
-        font-size: 0.7rem;
-        padding: 3px 8px;
+        font-size: 0.75rem;
+        padding: 0.4rem 0.7rem;
     }
     
     .status-badge {
-        font-size: 0.7rem;
-        padding: 4px 8px;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.8rem;
     }
     
     .action-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.8rem;
+    }
+    
+    .table-container {
+        border-radius: 14px;
+    }
+    
+    .empty-state {
+        padding: 3rem 1.5rem;
+        border-radius: 14px;
+    }
+    
+    .empty-icon {
+        font-size: 2.5rem;
     }
 }
 
 @media (max-width: 480px) {
     .order-management-container {
-        padding: 8px;
+        padding: 0.75rem;
     }
     
     .page-header {
-        padding: 12px;
+        padding: 1rem;
         border-radius: 12px;
-        margin-bottom: 16px;
+        margin-bottom: 1.25rem;
     }
     
     .page-title {
         font-size: 1.3rem;
-        gap: 6px;
+        gap: 0.4rem;
     }
     
     .title-icon {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     
     .page-subtitle {
@@ -710,36 +790,41 @@
     }
     
     .header-stats {
-        gap: 8px;
+        gap: 0.75rem;
     }
     
     .stat-card {
         min-width: 70px;
-        padding: 10px 12px;
-        border-radius: 8px;
+        padding: 0.9rem 1rem;
+        border-radius: 10px;
     }
     
     .stat-number {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     
     .stat-label {
         font-size: 0.7rem;
     }
     
+    .filters-section {
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+    
     .search-input {
-        padding: 9px 35px 9px 12px;
-        font-size: 12px;
+        padding: 0.75rem 2.2rem 0.75rem 0.9rem;
+        font-size: 0.9rem;
         border-radius: 8px;
     }
     
     .search-icon {
-        right: 12px;
-        font-size: 0.9rem;
+        right: 0.8rem;
+        font-size: 0.85rem;
     }
     
     .filter-btn {
-        padding: 7px 12px;
+        padding: 0.6rem 0.9rem;
         font-size: 0.8rem;
         border-radius: 8px;
     }
@@ -753,12 +838,12 @@
     }
     
     .orders-table thead th {
-        padding: 10px 6px;
-        font-size: 0.75rem;
+        padding: 0.8rem 0.6rem;
+        font-size: 0.7rem;
     }
     
     .orders-table td {
-        padding: 8px 4px;
+        padding: 0.75rem 0.6rem;
     }
     
     .order-id {
@@ -775,14 +860,14 @@
     
     .method-badge, .status-badge {
         font-size: 0.65rem;
-        padding: 2px 6px;
-        gap: 4px;
+        padding: 0.3rem 0.6rem;
+        gap: 0.3rem;
     }
     
     .action-btn {
-        width: 24px;
-        height: 24px;
-        font-size: 10px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        border-radius: 8px;
     }
     
     .date-info .date {
@@ -794,20 +879,21 @@
     }
     
     .empty-state {
-        padding: 40px 15px;
+        padding: 2.5rem 1rem;
+        border-radius: 12px;
     }
     
     .empty-icon {
-        font-size: 3rem;
-        margin-bottom: 12px;
+        font-size: 2.5rem;
+        margin-bottom: 0.8rem;
     }
     
     .empty-state h3 {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     
     .empty-state p {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 }
 
@@ -822,8 +908,8 @@
     }
     
     .stat-card {
-        min-width: 60px;
-        padding: 8px 10px;
+        min-width: 65px;
+        padding: 0.8rem 0.9rem;
     }
     
     .stat-number {
@@ -835,22 +921,27 @@
     }
     
     .filter-btn {
-        padding: 6px 10px;
+        padding: 0.55rem 0.85rem;
         font-size: 0.75rem;
     }
     
     .orders-table thead th {
-        padding: 8px 4px;
-        font-size: 0.7rem;
+        padding: 0.7rem 0.5rem;
+        font-size: 0.65rem;
     }
     
     .orders-table td {
-        padding: 6px 3px;
+        padding: 0.6rem 0.4rem;
     }
     
     .method-badge, .status-badge {
         font-size: 0.6rem;
-        padding: 2px 5px;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .action-btn {
+        padding: 0.5rem 0.65rem;
+        font-size: 0.7rem;
     }
 }
 </style>

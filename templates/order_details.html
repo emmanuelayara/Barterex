@@ -234,6 +234,124 @@
     color: white;
   }
 
+  .btn-danger {
+    background: var(--danger-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-danger:hover {
+    background: #d64830;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .modal.show {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: var(--shadow-hover);
+    animation: slideUp 0.3s ease;
+  }
+
+  .modal-header {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--danger-color);
+    margin-bottom: 15px;
+  }
+
+  .modal-body {
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .modal-footer .btn-secondary {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .modal-footer .btn-danger {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .cancel-reason {
+    margin: 15px 0;
+  }
+
+  .cancel-reason label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .cancel-reason textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
   .explanation-box {
     background: #f0f7ff;
     border-left: 4px solid var(--primary-color);
@@ -378,7 +496,7 @@
           <td>{{ item['name'] }}</td>
           <td>{{ item['condition'] }}</td>
           <td>{{ item['location'] }}</td>
-          <td>₦{{ "{:,.2f}".format(item['value']) }}</td>
+          <td>{{ item['value'] }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -390,19 +508,19 @@
     <h3 style="margin-top: 0; color: white;">💰 Credit Transaction Summary</h3>
     <div class="credits-row">
       <span>Your Balance Before Order:</span>
-      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['balance_before']) }}</strong>
+      <strong>{{ transaction_exp['credits']['balance_before'] }}</strong>
     </div>
     <div class="credits-row">
       <span>Total Items Value:</span>
-      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['total_items_value']) }}</strong>
+      <strong>{{ transaction_exp['credits']['total_items_value'] }}</strong>
     </div>
     <div class="credits-row">
       <span>Credits Used:</span>
-      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['credits_used']) }}</strong>
+      <strong>{{ transaction_exp['credits']['credits_used'] }}</strong>
     </div>
     <div class="credits-row credits-total">
       <span>Your Balance After Order:</span>
-      <strong>₦{{ "{:,.2f}".format(transaction_exp['credits']['balance_after']) }}</strong>
+      <strong>{{ transaction_exp['credits']['balance_after'] }}</strong>
     </div>
     <div class="explanation-box" style="background: rgba(255, 255, 255, 0.1); border-color: white; color: white; margin-top: 15px;">
       {{ transaction_exp['credits']['explanation'] }}
@@ -414,10 +532,74 @@
     <a href="{{ url_for('user.download_receipt', order_id=order.id) }}" class="btn-primary">
       📥 Download Receipt
     </a>
+    
+    <!-- Cancel Button - Only show for pending/processing orders -->
+    {% if order.status.lower() in ['pending', 'processing'] and not order.cancelled %}
+    <button class="btn-danger" onclick="openCancelModal()">
+      ✕ Cancel Order
+    </button>
+    {% endif %}
+    
     <a href="{{ url_for('user.user_orders') }}" class="btn-secondary">
       ← Back to Orders
     </a>
   </div>
+
+  <!-- Cancellation Modal -->
+  <div id="cancelModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">⚠️ Cancel Order?</div>
+      <div class="modal-body">
+        <p>Are you sure you want to cancel order <strong>{{ order.order_number }}</strong>?</p>
+        <p style="font-size: 0.9rem; color: var(--text-secondary);">
+          This order is currently <strong>{{ order.status }}</strong>. If you cancel, your credits will be refunded to your account.
+        </p>
+        
+        <div class="cancel-reason">
+          <label for="cancellationReason">Reason for Cancellation (Optional)</label>
+          <textarea id="cancellationReason" placeholder="Tell us why you're cancelling this order..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeCancelModal()">Keep Order</button>
+        <button class="btn-danger" onclick="confirmCancelOrder()">Yes, Cancel Order</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openCancelModal() {
+      document.getElementById('cancelModal').classList.add('show');
+    }
+
+    function closeCancelModal() {
+      document.getElementById('cancelModal').classList.remove('show');
+      document.getElementById('cancellationReason').value = '';
+    }
+
+    function confirmCancelOrder() {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{{ url_for("user.cancel_order", order_id=order.id) }}';
+      
+      const reasonInput = document.createElement('input');
+      reasonInput.type = 'hidden';
+      reasonInput.name = 'cancellation_reason';
+      reasonInput.value = document.getElementById('cancellationReason').value;
+      
+      form.appendChild(reasonInput);
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+      const modal = document.getElementById('cancelModal');
+      if (event.target === modal) {
+        closeCancelModal();
+      }
+    }
+  </script>
 </div>
 
 {% endblock %}

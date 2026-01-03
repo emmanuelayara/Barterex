@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% block title %}Review Order{% endblock %}
+
+{% block content %}
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff7a00;
+            --primary-light: #fff5f0;
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1a1a1a;
+        }
+
+        .review-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Header Section */
+        .review-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .review-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        /* Main Content Card */
+        .content-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-medium);
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Section Styling */
+        .review-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .review-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+            margin: 2rem 0;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        /* Item Cards */
+        .item-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .item-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .item-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .item-category {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-value {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Delivery Info Section */
+        .delivery-info {
+            background: linear-gradient(135deg, #f0fdf4 0%, #f5f3ff 100%);
+            border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 1.5rem;
+            border-left: 4px solid #10b981;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .info-value {
+            color: #1a1a1a;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        /* Payment Summary */
+        .payment-summary {
+            background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            font-size: 1rem;
+        }
+
+        .summary-row:last-child {
+            padding-top: 1rem;
+            border-top: 2px solid #e5e7eb;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+
+        /* Credit Balance Info */
+        .credit-info {
+            background: linear-gradient(135deg, #fff5f0 0%, #fef3c7 100%);
+            border: 1px solid #fed7aa;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .current-balance {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-after {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe8cc 100%);
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .warning-icon {
+            color: #ff9533;
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+            font-size: 1.3rem;
+        }
+
+        .warning-text {
+            margin: 0;
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            background: var(--success-gradient);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-confirm:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-back {
+            flex: 0.3;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-back:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+            color: var(--primary-color);
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .review-container {
+                padding: 1.5rem 1rem;
+            }
+
+            .review-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .content-card {
+                padding: 1.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-back {
+                flex: 1;
+            }
+
+            .item-card {
+                flex-direction: column;
+            }
+
+            .item-image {
+                width: 100%;
+                height: 150px;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .info-value {
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .review-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+            }
+
+            .content-card {
+                padding: 1rem;
+                border-radius: 16px;
+            }
+
+            .action-buttons {
+                gap: 0.75rem;
+            }
+
+            .btn-confirm,
+            .btn-back {
+                padding: 0.875rem 1.5rem;
+                font-size: 0.95rem;
+            }
+
+            .item-image {
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="review-container">
+        <!-- Header Section -->
+        <div class="review-header">
+            <h1>📦 Review Your Order</h1>
+            <p>Please verify all details before completing your purchase</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-card">
+            <!-- Items Section -->
+            <div class="review-section">
+                <div class="section-title">
+                    <i class="fas fa-shopping-bag"></i>
+                    Items in Your Order ({{ items|length }})
+                </div>
+                {% for item in items %}
+                <div class="item-card">
+                    <div class="item-image">
+                        {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                        {% else %}
+                            <i class="fas fa-box"></i>
+                        {% endif %}
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">{{ item.name }}</div>
+                        <div class="item-category">{{ item.category }} • {{ item.location }}</div>
+                        <div class="item-value">
+                            <i class="fas fa-coins"></i>
+                            ₦{{ "{:,.2f}".format(item.value) }} Credits
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Payment Summary Section -->
+            <div class="review-section">
+                <div class="section-title">
+                    <i class="fas fa-receipt"></i>
+                    Payment Summary
+                </div>
+                <div class="payment-summary">
+                    {% for item in items %}
+                    <div class="summary-row">
+                        <span>{{ item.name }}</span>
+                        <span>{{ "{:,.0f}".format(item.value) }} Credits</span>
+                    </div>
+                    {% endfor %}
+                    <div class="summary-row">
+                        <span style="font-weight: 600; color: #666;">Total Credits Required:</span>
+                        <span style="color: var(--primary-color); font-weight: 800; font-size: 1.2rem;">
+                            ₦{{ "{:,.0f}".format(total_credits) }} Credits
+                        </span>
+                    </div>
+                </div>
+
+                <div class="credit-info">
+                    <div class="current-balance">
+                        <i class="fas fa-wallet"></i> Current Balance: ₦{{ "{:,.2f}".format(current_user.credits) }} Credits
+                    </div>
+                    <div class="balance-after">
+                        Balance after purchase: ₦{{ "{:,.2f}".format(current_user.credits - total_credits) }} Credits
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Delivery Information Section -->
+            <div class="review-section">
+                <div class="section-title">
+                    <i class="fas fa-truck"></i>
+                    Delivery Information
+                </div>
+                <div class="delivery-info">
+                    <div class="info-row">
+                        <span class="info-label">
+                            <i class="fas fa-shipment"></i> Delivery Method:
+                        </span>
+                        <span class="info-value">
+                            {% if delivery_method == 'home delivery' %}
+                                🏠 Home Delivery
+                            {% elif delivery_method == 'pickup' %}
+                                🏪 Pickup Station
+                            {% else %}
+                                {{ delivery_method|title }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if delivery_address %}
+                    <div class="info-row">
+                        <span class="info-label">
+                            <i class="fas fa-map-marker-alt"></i> Delivery Address:
+                        </span>
+                        <span class="info-value">{{ delivery_address }}</span>
+                    </div>
+                    {% endif %}
+                    {% if pickup_station_id %}
+                    <div class="info-row">
+                        <span class="info-label">
+                            <i class="fas fa-location-dot"></i> Pickup Station:
+                        </span>
+                        <span class="info-value">
+                            {% for station in stations %}
+                                {% if station.id == pickup_station_id %}
+                                    {{ station.name }} — {{ station.state }}
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Warning Message -->
+            <div class="warning-box">
+                <div class="warning-icon">
+                    <i class="fas fa-triangle-exclamation"></i>
+                </div>
+                <p class="warning-text">
+                    <strong>Important:</strong> Once you confirm, your credits will be permanently deducted and items marked as purchased. This action cannot be undone. Your order will be processed immediately.
+                </p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('items.view_cart') }}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <form method="POST" action="{{ url_for('items.finalize_purchase') }}" style="flex: 1;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn-confirm" style="width: 100%;">
+                    <i class="fas fa-check-circle"></i> Confirm & Complete Purchase
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const confirmBtn = document.querySelector('.btn-confirm');
+        
+        confirmBtn.addEventListener('click', function(e) {
+            const itemCount = {{ items|length }};
+            const totalCredits = {{ total_credits }};
+            
+            if (!confirm(`Confirm purchase of ${itemCount} item(s) for ₦${totalCredits.toLocaleString()} credits?`)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Auto-close flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.flash-alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+{% endblock %}
