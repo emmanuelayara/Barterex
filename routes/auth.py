@@ -341,7 +341,7 @@ def login():
 
                 if user.first_login:
                     flash(
-                        "Welcome Beta Tester! You've been given 5000 credits as a signup bonus.",
+                        "🎉 Welcome to Barterex! You've received 1000 starter credits. Let's get trading!",
                         "success"
                     )
                     user.first_login = False
