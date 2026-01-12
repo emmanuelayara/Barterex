@@ -1070,7 +1070,7 @@
     {% for item in trending_items[:3] %}
     <div class="trending-card">
       {% if item.image_url %}
-      <img src="{{ item.image_url }}" alt="{{ item.name }}">
+      <img src="{{ item.image_url | image_url }}" alt="{{ item.name }}">
       {% endif %}
       <div class="trending-card-content">
         <h3>{{ item.name }}</h3>

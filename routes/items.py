@@ -16,6 +16,10 @@ from error_handlers import handle_errors, safe_database_operation, retry_operati
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename
 from trading_points import award_points_for_purchase, create_level_up_notification
+from upload_validation_helper import (
+    validate_upload_request, validate_image_type, validate_image_size, 
+    validate_image_dimensions, get_user_friendly_error_message
+)
 
 # Import limiter - handle gracefully if not available
 try:
@@ -124,19 +128,33 @@ def upload_item():
                 logger.info(f"  Image {idx}: name={img.filename}, type={img.content_type}, size={len(img.read())} bytes")
                 img.seek(0)  # Reset file pointer
         
-        # Validate images manually
+        # Validate images manually with user-friendly error messages
         allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
-        if not images_from_request:
-            form.images.errors = ('Please upload at least one image.',)
-        else:
-            for img_file in images_from_request:
-                if img_file and img_file.filename:
-                    file_ext = img_file.filename.rsplit('.', 1)[1].lower() if '.' in img_file.filename else ''
-                    if file_ext not in allowed_extensions:
-                        form.images.errors = (f'Invalid file type: {img_file.filename}. Only JPG, PNG, GIF, and WEBP allowed.',)
-                        logger.warning(f"Invalid file type rejected - File: {img_file.filename}, Extension: {file_ext}")
+        image_validation_errors = []
         
-        if form.validate_on_submit():
+        if not images_from_request or len([f for f in images_from_request if f and f.filename]) == 0:
+            image_validation_errors.append('Please upload at least one image so buyers can see your item.')
+        else:
+            # Check image count
+            valid_images = [f for f in images_from_request if f and f.filename]
+            if len(valid_images) > 6:
+                image_validation_errors.append(
+                    f'You\'ve uploaded {len(valid_images)} images, but the maximum is 6 images. '
+                    f'Please remove {len(valid_images) - 6} image(s) and try again.'
+                )
+            
+            # Check each image type
+            for img_file in valid_images:
+                is_valid, error_msg = validate_image_type(img_file.filename, allowed_extensions)
+                if not is_valid:
+                    image_validation_errors.append(error_msg)
+                    logger.warning(f"Invalid file type rejected - File: {img_file.filename}")
+        
+        if image_validation_errors:
+            for error in image_validation_errors:
+                flash(error, 'danger')
+        
+        if form.validate_on_submit() and not image_validation_errors:
             new_item = Item(
                 name=form.name.data,
                 description=form.description.data,
@@ -152,6 +170,8 @@ def upload_item():
             db.session.flush()
             
             uploaded_images = []
+            upload_error_occurred = False
+            
             # Use images_from_request instead of form.images.data since AJAX FormData doesn't populate form fields properly
             if images_from_request:
                 from image_analyzer import analyze_image_url
@@ -160,22 +180,62 @@ def upload_item():
                 for index, file in enumerate(images_from_request):
                     if file and file.filename:
                         try:
+                            # First validate file type
+                            is_valid, error_msg = validate_image_type(file.filename, allowed_extensions)
+                            if not is_valid:
+                                flash(error_msg, 'danger')
+                                upload_error_occurred = True
+                                continue
+                            
+                            # Check file size before full validation
+                            file.seek(0, 2)  # Seek to end
+                            file_size = file.tell()
+                            file.seek(0)  # Reset
+                            
+                            is_valid, error_msg = validate_image_size(file_size, file.filename, max_size_mb=10)
+                            if not is_valid:
+                                flash(error_msg, 'danger')
+                                upload_error_occurred = True
+                                continue
+                            
                             # Comprehensive file upload validation with STRICT security checks
-                            validate_upload(
-                                file, 
-                                max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
-                                allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'}),
-                                enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
-                            )
+                            try:
+                                validate_upload(
+                                    file, 
+                                    max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
+                                    allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'}),
+                                    enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+                                )
+                            except FileUploadError as e:
+                                # Convert technical error to user-friendly message
+                                user_message = get_user_friendly_error_message(str(e), 'images')
+                                flash(user_message, 'danger')
+                                logger.warning(f"File validation failed for user {current_user.username}: {str(e)}")
+                                upload_error_occurred = True
+                                continue
                             
                             unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
                             image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                             file.save(image_path)
                             
-                            image_url = f"/{image_path}"
+                            # Store URL without leading slash for consistency across localhost and production
+                            image_url = image_path
                             
-                            # Analyze image for metadata and quality issues
+                            # Analyze image for metadata and quality issues (pass relative path)
                             analysis = analyze_image_url(image_url)
+                            
+                            # Validate image dimensions if available
+                            if analysis.get('width') and analysis.get('height'):
+                                is_valid, error_msg = validate_image_dimensions(
+                                    analysis.get('width'),
+                                    analysis.get('height'),
+                                    file.filename,
+                                    min_width=400,
+                                    min_height=300
+                                )
+                                if not is_valid:
+                                    # Log warning but don't block - just inform user
+                                    logger.warning(f"Image dimension warning for {file.filename}: {error_msg}")
                             
                             item_image = ItemImage(
                                 item_id=new_item.id,
@@ -190,15 +250,24 @@ def upload_item():
                             db.session.add(item_image)
                             uploaded_images.append(item_image)
                             logger.info(f"Image uploaded for item - Item: {new_item.id}, File: {unique_filename}, Size: {analysis.get('file_size')} bytes")
-                        except FileUploadError as e:
-                            db.session.rollback()
-                            logger.warning(f"File validation failed for user {current_user.username}: {str(e)}")
-                            flash(f"Image upload failed: {str(e)}", 'danger')
-                            return redirect(url_for('items.upload_item'))
                         except Exception as e:
                             db.session.rollback()
                             logger.error(f"Error uploading image: {str(e)}", exc_info=True)
-                            raise FileUploadError("Failed to upload one or more images")
+                            user_message = get_user_friendly_error_message(str(e), 'images')
+                            flash(user_message, 'danger')
+                            upload_error_occurred = True
+                            continue
+            
+            # If any images failed to upload, abort the entire transaction
+            if upload_error_occurred:
+                db.session.rollback()
+                logger.warning(f"Item upload aborted due to image errors - User: {current_user.username}")
+                return redirect(url_for('items.upload_item'))
+            
+            if not uploaded_images:
+                db.session.rollback()
+                flash('No images were successfully uploaded. Please try again.', 'danger')
+                return redirect(url_for('items.upload_item'))
             
             if uploaded_images:
                 new_item.image_url = uploaded_images[0].image_url
@@ -206,25 +275,35 @@ def upload_item():
             try:
                 db.session.commit()
                 logger.info(f"Item submitted for approval - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")
-                flash(f"Item submitted for approval with {len(uploaded_images)} images!", "info")
+                flash(f'✅ Success! Your item has been submitted for approval with {len(uploaded_images)} image(s). We\'ll review it shortly.', "success")
                 return redirect(url_for('marketplace.marketplace'))
             except Exception as e:
                 db.session.rollback()
                 logger.error(f"Error committing item upload: {str(e)}", exc_info=True)
-                raise DatabaseError("Failed to save item. Please try again.")
+                flash('There was a problem saving your item. Please try again.', 'danger')
+                return redirect(url_for('items.upload_item'))
         else:
-            # Log form validation errors
+            # Log form validation errors and show user-friendly messages
             if form.errors:
                 logger.warning(f"Form validation failed for user {current_user.username}: {form.errors}")
                 for field, errors in form.errors.items():
                     for error in errors:
-                        flash(f"{field}: {error}", "danger")
+                        # Show user-friendly field names
+                        field_names = {
+                            'name': 'Item Name',
+                            'description': 'Item Description',
+                            'condition': 'Item Condition',
+                            'category': 'Item Category'
+                        }
+                        field_display = field_names.get(field, field)
+                        flash(f"{field_display}: {error}", "danger")
 
         return render_template('upload.html', form=form)
         
     except (FileUploadError, DatabaseError) as e:
         logger.warning(f"Upload error: {str(e)}")
-        flash(str(e.message), 'danger')
+        user_message = get_user_friendly_error_message(str(e))
+        flash(user_message, 'danger')
         return redirect(url_for('items.upload_item'))
 
 

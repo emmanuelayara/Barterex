@@ -769,7 +769,7 @@
             <div class="item-card">
               <!-- Item Image -->
               {% if item.image_url %}
-                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image">
+                <img src="{{ item.image_url | image_url }}" alt="{{ item.name }}" class="item-image">
               {% else %}
                 <div class="item-image">📦</div>
               {% endif %}

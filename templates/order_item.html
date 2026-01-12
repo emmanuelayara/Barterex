@@ -537,7 +537,7 @@
                 <div class="item-section">
                     <div class="item-header">
                         {% if item.image_url %}
-                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-image-small">
+                            <img src="{{ item.image_url | image_url }}" alt="{{ item.name }}" class="item-image-small">
                         {% else %}
                             <div class="image-placeholder-small">📦</div>
                         {% endif %}

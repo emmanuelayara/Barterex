@@ -122,9 +122,17 @@ class ProfileUpdateForm(FlaskForm):
 
 
 class UploadItemForm(FlaskForm):
-    name = StringField('Item Name', validators=[DataRequired()])
-    description = TextAreaField('Description', validators=[Length(max=2000), DataRequired()])
-    condition = SelectField('Condition', choices=[('Brand New', 'Brand New'), ('Fairly Used', 'Fairly Used')], validators=[DataRequired()])
+    name = StringField('Item Name', validators=[
+        DataRequired(message='Please enter an item name.'),
+        Length(min=3, max=100, message='Item name must be between 3 and 100 characters.')
+    ])
+    description = TextAreaField('Description', validators=[
+        DataRequired(message='Please provide a description for your item.'),
+        Length(min=20, max=2000, message='Description must be between 20 and 2000 characters.')
+    ])
+    condition = SelectField('Condition', choices=[('Brand New', 'Brand New'), ('Fairly Used', 'Fairly Used')], validators=[
+        DataRequired(message='Please select the condition of your item.')
+    ])
     category = SelectField('Category', choices=[
         ("Electronics", "Electronics"),
         ("Fashion / Clothing", "Fashion / Clothing"),
@@ -139,7 +147,9 @@ class UploadItemForm(FlaskForm):
         ("Health & Wellness", "Health & Wellness"),
         ("Automotive", "Automotive"), 
         ("Phones & Gadgets", "Phones & Gadgets")
-    ], validators=[DataRequired()])
+    ], validators=[
+        DataRequired(message='Please select a category for your item.')
+    ])
     # Changed to support multiple files - validation done in route handler
     images = MultipleFileField('Upload Images (Max 6)')
     submit = SubmitField('Submit Item')

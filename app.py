@@ -93,6 +93,17 @@ from notifications import NotificationService
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# ✅ Jinja filter to ensure image URLs are absolute paths
+@app.template_filter('image_url')
+def format_image_url(url):
+    """Convert image URLs to absolute paths for proper serving"""
+    if not url:
+        return '/static/placeholder.png'
+    # Ensure the URL starts with /
+    if not url.startswith('/'):
+        url = '/' + url
+    return url
+
 # ✅ Maintenance Mode Handler
 @app.before_request
 def check_maintenance_mode():

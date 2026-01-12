@@ -887,7 +887,7 @@
                   {% for image in item_images %}
                     <div class="slide">
                       {% if image.image_url %}
-                        <img src="{{ image.image_url }}" alt="{{ item.name }} - Image {{ loop.index }}" onclick="openFullscreen('{{ image.image_url }}')">
+                        <img src="{{ image.image_url | image_url }}" alt="{{ item.name }} - Image {{ loop.index }}" onclick="openFullscreen('{{ image.image_url | image_url }}')">
                       {% else %}
                         <div class="slide-placeholder">📦</div>
                       {% endif %}
@@ -913,7 +913,7 @@
                   {% for image in item_images %}
                     <div class="thumbnail {% if loop.first %}active{% endif %}" onclick="goToSlide({{ loop.index0 }})">
                       {% if image.image_url %}
-                        <img src="{{ image.image_url }}" alt="Thumbnail {{ loop.index }}">
+                        <img src="{{ image.image_url | image_url }}" alt="Thumbnail {{ loop.index }}">
                       {% else %}
                         <div class="thumbnail-placeholder">📦</div>
                       {% endif %}
@@ -993,7 +993,7 @@
             <div class="related-item">
               <a href="{{ url_for('marketplace.view_item', item_id=related.id) }}">
                 {% if related.image_url %}
-                  <img src="{{ related.image_url }}" alt="{{ related.name }}" class="related-image">
+                  <img src="{{ related.image_url | image_url }}" alt="{{ related.name }}" class="related-image">
                 {% else %}
                   <div class="related-image">📦</div>
                 {% endif %}

@@ -999,9 +999,9 @@
               {% if trade.item.images %}
                 {% set primary_image = trade.item.images|selectattr('is_primary', 'equalto', True)|first %}
                 {% set display_image = primary_image or trade.item.images|first %}
-                <img src="{{ display_image.image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
+                <img src="{{ display_image.image_url | image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
               {% elif trade.item.image_url %}
-                <img src="{{ trade.item.image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
+                <img src="{{ trade.item.image_url | image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
               {% else %}
                 <div class="trade-card-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #ff7a00, #ff9933); color: white; font-size: 3rem;">📦</div>
               {% endif %}
@@ -1063,9 +1063,9 @@
               {% if trade.item.images %}
                 {% set primary_image = trade.item.images|selectattr('is_primary', 'equalto', True)|first %}
                 {% set display_image = primary_image or trade.item.images|first %}
-                <img src="{{ display_image.image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
+                <img src="{{ display_image.image_url | image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
               {% elif trade.item.image_url %}
-                <img src="{{ trade.item.image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
+                <img src="{{ trade.item.image_url | image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
               {% else %}
                 <div class="trade-card-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #ff7a00, #ff9933); color: white; font-size: 3rem;">📦</div>
               {% endif %}
