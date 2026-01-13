@@ -164,20 +164,32 @@ def get_trending_searches(limit=6):
 
 # ==================== RECOMMENDATIONS ====================
 
-def get_trending_items(days=TRENDING_PERIOD_DAYS, limit=6):
+def get_trending_items(days=TRENDING_PERIOD_DAYS, limit=6, user_id=None):
     """
     Get trending items from past N days (most recently added)
+    Optionally exclude items from a specific user
+    
+    Args:
+        days: Number of days to look back
+        limit: Maximum number of items to return
+        user_id: If provided, exclude items from this user
+    
     Returns: list of Item objects
     """
     try:
         cutoff_date = datetime.utcnow() - timedelta(days=days)
         
-        trending = Item.query.filter(
+        filters = [
             Item.is_approved == True,
             Item.is_available == True,
             Item.value.isnot(None),
             Item.id > 0  # Recent items have higher IDs
-        ).order_by(
+        ]
+        
+        if user_id:
+            filters.append(Item.user_id != user_id)
+        
+        trending = Item.query.filter(*filters).order_by(
             Item.id.desc()
         ).limit(limit).all()
         
@@ -200,7 +212,7 @@ def get_personalized_recommendations(user_id, limit=8):
     try:
         user = User.query.get(user_id)
         if not user:
-            return get_trending_items(limit=limit)
+            return get_trending_items(limit=limit, user_id=user_id)
         
         # Get categories from user's items to understand their interests
         user_categories = db.session.query(Item.category).filter(
@@ -209,8 +221,8 @@ def get_personalized_recommendations(user_id, limit=8):
         user_category_list = [cat[0] for cat in user_categories] if user_categories else []
         
         if not user_category_list:
-            # If no user history, return trending items
-            return get_trending_items(limit=limit)
+            # If no user history, return trending items (excluding user's own items)
+            return get_trending_items(limit=limit, user_id=user_id)
         
         # Get items from similar categories, excluding user's own items
         recommendations = Item.query.filter(
@@ -227,7 +239,7 @@ def get_personalized_recommendations(user_id, limit=8):
         return recommendations
     except Exception as e:
         logger.error(f"Error generating personalized recommendations: {str(e)}", exc_info=True)
-        return get_trending_items(limit=limit)
+        return get_trending_items(limit=limit, user_id=user_id)
 
 
 def get_similar_items(item_id, limit=5):

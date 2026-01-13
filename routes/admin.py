@@ -258,12 +258,80 @@ def admin_dashboard():
 @handle_errors
 def manage_users():
     try:
-        users = User.query.all()
-        unban_requests = User.query.filter_by(unban_requested=True, is_banned=True).all()
-        banned_users = User.query.filter_by(is_banned=True).all()
-        logger.info(f"User management page accessed - Total users: {len(users)}, Banned: {len(banned_users)}")
-        return render_template('admin/users.html', users=users, unban_requests=unban_requests,
-            banned_users=banned_users, csrf_token=generate_csrf)
+        # Get pagination and search parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 25, type=int)
+        search = request.args.get('search', '').strip()
+        status_filter = request.args.get('status', 'all')
+        sort_by = request.args.get('sort_by', 'id')
+        sort_order = request.args.get('sort_order', 'desc')
+        
+        # Build query
+        query = User.query
+        
+        # Apply search filter
+        if search:
+            query = query.filter(
+                db.or_(
+                    User.username.ilike(f'%{search}%'),
+                    User.email.ilike(f'%{search}%'),
+                    User.id == int(search) if search.isdigit() else False
+                )
+            )
+        
+        # Apply status filter
+        if status_filter == 'banned':
+            query = query.filter(User.is_banned == True)
+        elif status_filter == 'active':
+            query = query.filter(User.is_banned == False)
+        elif status_filter == 'unverified':
+            query = query.filter(User.email_verified == False)
+        elif status_filter == 'appeal_pending':
+            query = query.filter(
+                User.is_banned == True,
+                User.unban_requested == True,
+                User.appeal_message != None,
+                User.appeal_message != ''
+            )
+        
+        # Apply sorting
+        if sort_by == 'created_at':
+            query = query.order_by(User.created_at.desc() if sort_order == 'desc' else User.created_at.asc())
+        elif sort_by == 'credits':
+            query = query.order_by(User.credits.desc() if sort_order == 'desc' else User.credits.asc())
+        elif sort_by == 'username':
+            query = query.order_by(User.username.asc() if sort_order == 'asc' else User.username.desc())
+        else:
+            query = query.order_by(User.id.desc() if sort_order == 'desc' else User.id.asc())
+        
+        # Paginate results
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        users = pagination.items
+        
+        # Get summary stats
+        total_users = User.query.count()
+        banned_users = User.query.filter_by(is_banned=True).count()
+        unverified_users = User.query.filter_by(email_verified=False).count()
+        appeal_pending = User.query.filter(
+            User.is_banned == True,
+            User.unban_requested == True,
+            User.appeal_message != None,
+            User.appeal_message != ''
+        ).count()
+        
+        logger.info(f"User management page accessed - Page: {page}, Search: '{search}', Status: {status_filter}")
+        return render_template('admin/users.html', 
+                             users=users, 
+                             pagination=pagination,
+                             search=search,
+                             status_filter=status_filter,
+                             sort_by=sort_by,
+                             sort_order=sort_order,
+                             total_users=total_users,
+                             banned_users=banned_users,
+                             unverified_users=unverified_users,
+                             appeal_pending=appeal_pending,
+                             csrf_token=generate_csrf)
     except Exception as e:
         logger.error(f"Error loading user management: {str(e)}", exc_info=True)
         flash('An error occurred while loading users.', 'danger')
@@ -1239,10 +1307,72 @@ def manage_pickup_stations():
 @handle_errors
 def manage_orders():
     try:
-        orders = Order.query.order_by(Order.date_ordered.desc()).all()
-        items = Item.query.all()
-        logger.info(f"Order management page accessed - Total orders: {len(orders)}")
-        return render_template('admin/manage_orders.html', orders=orders, items=items)
+        # Get pagination and filter parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 25, type=int)
+        search = request.args.get('search', '').strip()
+        status_filter = request.args.get('status', 'all')
+        delivery_filter = request.args.get('delivery', 'all')
+        sort_by = request.args.get('sort_by', 'date')
+        sort_order = request.args.get('sort_order', 'desc')
+        
+        # Build query
+        query = Order.query
+        
+        # Apply search filter (order ID, username, item name)
+        if search:
+            if search.isdigit():
+                query = query.filter(Order.id == int(search))
+            else:
+                query = query.join(User).filter(
+                    db.or_(
+                        User.username.ilike(f'%{search}%'),
+                        User.email.ilike(f'%{search}%')
+                    )
+                )
+        
+        # Apply status filter
+        if status_filter != 'all':
+            query = query.filter(Order.status == status_filter)
+        
+        # Apply delivery method filter
+        if delivery_filter != 'all':
+            query = query.filter(Order.delivery_method == delivery_filter)
+        
+        # Apply sorting
+        if sort_by == 'user':
+            query = query.order_by(User.username.asc() if sort_order == 'asc' else User.username.desc())
+        elif sort_by == 'status':
+            query = query.order_by(Order.status.asc() if sort_order == 'asc' else Order.status.desc())
+        elif sort_by == 'amount':
+            query = query.order_by(Order.total_amount.desc() if sort_order == 'desc' else Order.total_amount.asc())
+        else:
+            query = query.order_by(Order.date_ordered.desc() if sort_order == 'desc' else Order.date_ordered.asc())
+        
+        # Paginate results
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        orders = pagination.items
+        
+        # Get summary stats
+        total_orders = Order.query.count()
+        pending_count = Order.query.filter_by(status='Pending').count()
+        shipped_count = Order.query.filter_by(status='Shipped').count()
+        delivered_count = Order.query.filter_by(status='Delivered').count()
+        
+        logger.info(f"Order management page accessed - Page: {page}, Search: '{search}', Status: {status_filter}")
+        return render_template('admin/manage_orders.html', 
+                             orders=orders,
+                             pagination=pagination,
+                             search=search,
+                             status_filter=status_filter,
+                             delivery_filter=delivery_filter,
+                             sort_by=sort_by,
+                             sort_order=sort_order,
+                             total_orders=total_orders,
+                             pending_count=pending_count,
+                             shipped_count=shipped_count,
+                             delivered_count=delivered_count,
+                             csrf_token=generate_csrf)
     except Exception as e:
         logger.error(f"Error loading orders management: {str(e)}", exc_info=True)
         flash('An error occurred while loading orders.', 'danger')
@@ -1367,8 +1497,12 @@ def audit_log():
             except ValueError:
                 pass
         
-        # Order by newest first
-        audit_logs = query.order_by(AuditLog.timestamp.desc()).all()
+        # Apply pagination
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        
+        pagination = query.order_by(AuditLog.timestamp.desc()).paginate(page=page, per_page=per_page, error_out=False)
+        audit_logs = pagination.items
         
         # Get unique admins for filter dropdown
         admins = Admin.query.order_by(Admin.username).all()
@@ -1426,13 +1560,14 @@ def audit_log():
         return render_template(
             'admin/audit_log.html',
             audit_logs=audit_logs,
+            pagination=pagination,
             admins=admins,
             action_types=action_types,
             selected_admin_id=admin_id,
             selected_action_type=action_type,
             date_from=date_from,
             date_to=date_to,
-            total_logs=len(audit_logs)
+            total_logs=pagination.total
         )
         
     except Exception as e:
@@ -1879,3 +2014,187 @@ def export_user_data(user_id):
         logger.error(f"Error exporting user data for user {user_id}: {str(e)}", exc_info=True)
         flash('An error occurred while exporting user data.', 'danger')
         return redirect(url_for('admin.manage_users'))
+
+
+# ==================== REAL-TIME DASHBOARD ENDPOINTS ====================
+
+@admin_bp.route('/orders/stream', methods=['GET'])
+@admin_login_required
+def orders_stream():
+    """
+    Server-Sent Events (SSE) endpoint for real-time order updates.
+    Streams live order status changes and counts to the dashboard.
+    """
+    def generate_order_updates():
+        """Generate order updates as server-sent events."""
+        import time
+        last_check = datetime.utcnow()
+        
+        # Send initial data
+        try:
+            total_orders = Order.query.count()
+            pending_count = Order.query.filter_by(status='Pending').count()
+            shipped_count = Order.query.filter_by(status='Shipped').count()
+            out_for_delivery = Order.query.filter_by(status='Out for Delivery').count()
+            delivered_count = Order.query.filter_by(status='Delivered').count()
+            
+            initial_data = {
+                'type': 'initial',
+                'total_orders': total_orders,
+                'pending_count': pending_count,
+                'shipped_count': shipped_count,
+                'out_for_delivery': out_for_delivery,
+                'delivered_count': delivered_count,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            yield f'data: {json.dumps(initial_data)}\n\n'
+        except Exception as e:
+            logger.error(f"Error generating initial order data: {str(e)}")
+        
+        # Keep connection alive and send updates every 5 seconds
+        while True:
+            try:
+                time.sleep(5)
+                
+                # Get current counts
+                current_total = Order.query.count()
+                current_pending = Order.query.filter_by(status='Pending').count()
+                current_shipped = Order.query.filter_by(status='Shipped').count()
+                current_out_for_delivery = Order.query.filter_by(status='Out for Delivery').count()
+                current_delivered = Order.query.filter_by(status='Delivered').count()
+                
+                # Check for recent updates (last 30 seconds)
+                recent_updates = Order.query.filter(
+                    Order.date_ordered >= (datetime.utcnow().timestamp() - 30)
+                ).all()
+                
+                update_data = {
+                    'type': 'update',
+                    'total_orders': current_total,
+                    'pending_count': current_pending,
+                    'shipped_count': current_shipped,
+                    'out_for_delivery': current_out_for_delivery,
+                    'delivered_count': current_delivered,
+                    'recent_updates': len(recent_updates),
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                
+                yield f'data: {json.dumps(update_data)}\n\n'
+                
+            except GeneratorExit:
+                # Client disconnected
+                break
+            except Exception as e:
+                logger.error(f"Error in orders_stream: {str(e)}")
+                break
+    
+    return generate_order_updates(), {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no',
+        'Connection': 'keep-alive'
+    }
+
+
+@admin_bp.route('/api/order-updates', methods=['GET'])
+@admin_login_required
+def get_order_updates():
+    """
+    JSON API endpoint for getting latest order updates.
+    Returns orders that changed in the last N minutes.
+    Used as fallback if SSE connection drops.
+    """
+    try:
+        minutes = request.args.get('minutes', 5, type=int)
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 25, type=int)
+        
+        # Get orders updated in last N minutes
+        cutoff_time = datetime.utcnow()
+        recent_orders = Order.query.order_by(
+            Order.date_ordered.desc()
+        ).limit(100).all()
+        
+        # Get summary statistics
+        total_orders = Order.query.count()
+        pending_count = Order.query.filter_by(status='Pending').count()
+        shipped_count = Order.query.filter_by(status='Shipped').count()
+        out_for_delivery = Order.query.filter_by(status='Out for Delivery').count()
+        delivered_count = Order.query.filter_by(status='Delivered').count()
+        
+        orders_data = []
+        for order in recent_orders[:25]:
+            orders_data.append({
+                'id': order.id,
+                'order_number': order.order_number,
+                'status': order.status,
+                'user_id': order.user_id,
+                'username': order.user.username if order.user else 'Unknown',
+                'total_credits': order.total_credits,
+                'delivery_method': order.delivery_method,
+                'date_ordered': order.date_ordered.isoformat() if order.date_ordered else None,
+                'estimated_delivery': order.estimated_delivery_date.isoformat() if order.estimated_delivery_date else None
+            })
+        
+        return {
+            'success': True,
+            'stats': {
+                'total_orders': total_orders,
+                'pending_count': pending_count,
+                'shipped_count': shipped_count,
+                'out_for_delivery': out_for_delivery,
+                'delivered_count': delivered_count
+            },
+            'recent_orders': orders_data,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting order updates: {str(e)}", exc_info=True)
+        return {'success': False, 'error': str(e)}, 500
+
+
+@admin_bp.route('/api/order/<int:order_id>/details', methods=['GET'])
+@admin_login_required
+def get_order_details(order_id):
+    """
+    Get detailed information about a specific order.
+    Includes items, customer info, and status history.
+    """
+    try:
+        order = Order.query.get(order_id)
+        if not order:
+            return {'success': False, 'error': 'Order not found'}, 404
+        
+        items_data = []
+        for item in order.items:
+            items_data.append({
+                'id': item.item.id,
+                'name': item.item.name,
+                'category': item.item.category,
+                'credit_value': item.item.credit_value
+            })
+        
+        order_data = {
+            'id': order.id,
+            'order_number': order.order_number,
+            'status': order.status,
+            'customer': {
+                'id': order.user_id,
+                'username': order.user.username,
+                'email': order.user.email
+            },
+            'items': items_data,
+            'delivery_method': order.delivery_method,
+            'delivery_address': order.delivery_address,
+            'total_credits': order.total_credits,
+            'date_ordered': order.date_ordered.isoformat() if order.date_ordered else None,
+            'estimated_delivery': order.estimated_delivery_date.isoformat() if order.estimated_delivery_date else None,
+            'actual_delivery': order.actual_delivery_date.isoformat() if order.actual_delivery_date else None,
+            'cancelled': order.cancelled,
+            'cancellation_reason': order.cancellation_reason
+        }
+        
+        return {'success': True, 'order': order_data}, 200
+    except Exception as e:
+        logger.error(f"Error getting order details: {str(e)}", exc_info=True)
+        return {'success': False, 'error': str(e)}, 500

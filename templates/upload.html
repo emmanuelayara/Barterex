@@ -20,12 +20,25 @@
     --shadow-hover: 0 16px 50px rgba(0, 0, 0, 0.15);
   }
 
+  html.dark-mode {
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --surface: #1e293b;
+    --surface-hover: #334155;
+    --glass-bg: rgba(30, 41, 59, 0.1);
+    --glass-border: rgba(71, 85, 105, 0.2);
+  }
+
   /* Page background */
   .upload-page {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
     padding: 25px 15px;
     position: relative;
+  }
+
+  html.dark-mode .upload-page {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   }
 
   .upload-page::before {
@@ -61,6 +74,11 @@
     position: relative;
     overflow: hidden;
     animation: slideInDown 0.6s ease-out;
+  }
+
+  html.dark-mode .upload-header {
+    background: #1e293b;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   }
 
   @keyframes slideInDown {
@@ -139,6 +157,12 @@
     overflow: hidden;
   }
 
+  html.dark-mode .guidelines-section {
+    background: linear-gradient(135deg, #3f3f3f 0%, #4a4a4a 100%);
+    border-color: #ff9500;
+    color: #f1f5f9;
+  }
+
   .guidelines-section::before {
     content: '';
     position: absolute;
@@ -202,6 +226,11 @@
     position: relative;
   }
 
+  html.dark-mode .guidelines-list li {
+    background: rgba(51, 65, 85, 0.7);
+    color: #e2e8f0;
+  }
+
   .guidelines-list li:hover {
     transform: translateX(3px);
     background: rgba(255, 255, 255, 0.8);
@@ -238,6 +267,11 @@
     animation: slideInUp 0.6s ease-out 0.1s both;
   }
 
+  html.dark-mode .form-container {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+
   .form-group {
     margin-bottom: 20px;
     animation: slideInUp 0.5s ease-out backwards;
@@ -272,6 +306,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: color 0.3s ease;
   }
 
   .label-icon {
@@ -288,6 +323,9 @@
     width: 100%;
     padding: 14px 16px;
     border: 2px solid #e5e7eb;
+    color: var(--text-primary);
+    background-color: var(--surface);
+    transition: all 0.3s ease;
     border-radius: 12px;
     font-size: 0.9rem;
     transition: all 0.3s ease;
@@ -296,11 +334,31 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
+  html.dark-mode .form-input,
+  html.dark-mode .form-textarea,
+  html.dark-mode .form-select {
+    border-color: #475569;
+    background-color: #334155;
+    color: #f1f5f9;
+  }
+
+  html.dark-mode .form-input::placeholder,
+  html.dark-mode .form-textarea::placeholder {
+    color: #94a3b8;
+  }
+
   .form-input:focus, .form-textarea:focus, .form-select:focus {
     outline: none;
     border-color: #ff7a00;
     box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
     transform: translateY(-1px);
+  }
+
+  html.dark-mode .form-input:focus,
+  html.dark-mode .form-textarea:focus,
+  html.dark-mode .form-select:focus {
+    border-color: #ff9500;
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2);
   }
 
   .form-textarea {
@@ -323,6 +381,12 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
+  }
+
+  html.dark-mode .file-upload-area {
+    border-color: #475569;
+    background: #334155;
+    color: #f1f5f9;
   }
 
   .file-upload-area::before {

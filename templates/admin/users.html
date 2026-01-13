@@ -18,7 +18,7 @@
                         <i class="bi bi-people"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 class="stat-number">{{ users|length }}</h3>
+                        <h3 class="stat-number">{{ total_users }}</h3>
                         <p class="stat-label">Total Users</p>
                     </div>
                 </div>
@@ -29,7 +29,7 @@
                         <i class="bi bi-check-circle"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 class="stat-number">{{ (users|length) - (banned_users|length) }}</h3>
+                        <h3 class="stat-number">{{ total_users - banned_users }}</h3>
                         <p class="stat-label">Active Users</p>
                     </div>
                 </div>
@@ -40,7 +40,7 @@
                         <i class="bi bi-ban"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 class="stat-number">{{ banned_users|length }}</h3>
+                        <h3 class="stat-number">{{ banned_users }}</h3>
                         <p class="stat-label">Banned Users</p>
                     </div>
                 </div>
@@ -48,11 +48,11 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-warning">
-                        <i class="bi bi-currency-exchange"></i>
+                        <i class="bi bi-exclamation-circle"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 class="stat-number">₦<span id="totalCredits">{{ users|sum(attribute='credits')|int }}</span></h3>
-                        <p class="stat-label">Total Credits</p>
+                        <h3 class="stat-number">{{ unverified_users }}</h3>
+                        <p class="stat-label">Unverified</p>
                     </div>
                 </div>
             </div>
@@ -63,27 +63,70 @@
     <div class="search-filter-section mb-5">
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="search-box">
-                            <i class="bi bi-search search-icon"></i>
-                            <input type="text" id="userSearch" class="form-control ps-5" 
-                                   placeholder="Search users by username, email, or ID...">
+                <form method="GET" action="{{ url_for('admin.manage_users') }}" class="search-filter-form">
+                    <div class="row align-items-end g-3">
+                        <!-- Search Box -->
+                        <div class="col-md-5">
+                            <label for="searchInput" class="form-label text-muted small fw-600">Search</label>
+                            <div class="search-box">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="searchInput" name="search" class="form-control ps-5" 
+                                       placeholder="Username, email, or ID..." value="{{ search }}">
+                            </div>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label text-muted small fw-600">Status</label>
+                            <select name="status" id="statusFilter" class="form-select">
+                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Users</option>
+                                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                                <option value="banned" {% if status_filter == 'banned' %}selected{% endif %}>Banned</option>
+                                <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>Unverified Email</option>
+                                <option value="appeal_pending" {% if status_filter == 'appeal_pending' %}selected{% endif %}>Appeal Pending</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Options -->
+                        <div class="col-md-2">
+                            <label for="sortBy" class="form-label text-muted small fw-600">Sort by</label>
+                            <select name="sort_by" id="sortBy" class="form-select">
+                                <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
+                                <option value="username" {% if sort_by == 'username' %}selected{% endif %}>Username</option>
+                                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Date Joined</option>
+                                <option value="credits" {% if sort_by == 'credits' %}selected{% endif %}>Credits</option>
+                            </select>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="col-md-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="bi bi-search me-1"></i>Search
+                            </button>
+                            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-secondary flex-fill">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                            </a>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="filter-buttons d-flex gap-2 justify-content-md-end justify-content-start mt-3 mt-md-0">
-                            <button class="btn btn-filter active" data-filter="all">
-                                <i class="bi bi-grid-3x3-gap me-1"></i>All Users
-                            </button>
-                            <button class="btn btn-filter" data-filter="active">
-                                <i class="bi bi-check-circle me-1"></i>Active
-                            </button>
-                            <button class="btn btn-filter" data-filter="banned">
-                                <i class="bi bi-ban me-1"></i>Banned
-                            </button>
-                        </div>
-                    </div>
+                </form>
+
+                <!-- Quick Filter Buttons -->
+                <div class="filter-buttons d-flex gap-2 justify-content-start mt-3 flex-wrap">
+                    <a href="{{ url_for('admin.manage_users', status='all') }}" class="btn btn-filter {% if status_filter == 'all' %}active{% endif %}">
+                        <i class="bi bi-grid-3x3-gap me-1"></i>All ({{ total_users }})
+                    </a>
+                    <a href="{{ url_for('admin.manage_users', status='active') }}" class="btn btn-filter {% if status_filter == 'active' %}active{% endif %}">
+                        <i class="bi bi-check-circle me-1"></i>Active ({{ total_users - banned_users }})
+                    </a>
+                    <a href="{{ url_for('admin.manage_users', status='banned') }}" class="btn btn-filter {% if status_filter == 'banned' %}active{% endif %}">
+                        <i class="bi bi-ban me-1"></i>Banned ({{ banned_users }})
+                    </a>
+                    <a href="{{ url_for('admin.manage_users', status='unverified') }}" class="btn btn-filter {% if status_filter == 'unverified' %}active{% endif %}">
+                        <i class="bi bi-exclamation-circle me-1"></i>Unverified ({{ unverified_users }})
+                    </a>
+                    <a href="{{ url_for('admin.manage_users', status='appeal_pending') }}" class="btn btn-filter {% if status_filter == 'appeal_pending' %}active{% endif %}">
+                        <i class="bi bi-question-circle me-1"></i>Appeals ({{ appeal_pending }})
+                    </a>
                 </div>
             </div>
         </div>
@@ -268,6 +311,64 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Controls -->
+                {% if pagination.pages > 1 %}
+                <nav aria-label="Page navigation" class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <div class="pagination-info text-muted small">
+                        Showing <strong>{{ pagination.start }} - {{ pagination.end }}</strong> of <strong>{{ pagination.total }}</strong> users
+                    </div>
+                    
+                    <ul class="pagination mb-0">
+                        <!-- Previous Page -->
+                        {% if pagination.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.manage_users', page=pagination.prev_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link"><i class="bi bi-chevron-left"></i> Previous</span>
+                            </li>
+                        {% endif %}
+
+                        <!-- Page Numbers -->
+                        {% for page_num in pagination.iter_pages(left_margin=1, right_margin=1) %}
+                            {% if page_num %}
+                                {% if page_num == pagination.page %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin.manage_users', page=page_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
+                                            {{ page_num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Next Page -->
+                        {% if pagination.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.manage_users', page=pagination.next_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next <i class="bi bi-chevron-right"></i></span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
             </div>
         </div>
     </div>

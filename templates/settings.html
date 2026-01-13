@@ -11,6 +11,11 @@
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     padding-bottom: 80px;
+    transition: background 0.3s ease;
+  }
+  
+  html.dark-mode .page-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   }
 
   .settings-wrapper {
@@ -44,6 +49,47 @@
     margin-bottom: 32px;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
+  }
+  
+  .dark-mode-toggle-wrapper {
+    margin-left: auto;
+    order: -1;
+  }
+  
+  .dark-mode-toggle {
+    padding: 12px 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+  }
+  
+  .dark-mode-toggle:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px) rotate(20deg);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .dark-mode-toggle:active {
+    transform: translateY(0) rotate(20deg);
+  }
+  
+  html.dark-mode .dark-mode-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  html.dark-mode .dark-mode-toggle i {
+    color: #fbbf24;
   }
 
   .tab-button {
@@ -93,12 +139,18 @@
   }
 
   .settings-card {
-    background: rgba(255, 255, 255, 0.98);
+    background: var(--card-bg);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 32px 24px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+  }
+  
+  html.dark-mode .settings-card {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(71, 85, 105, 0.4);
   }
 
   .form-group {
@@ -123,6 +175,11 @@
     font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    transition: color 0.3s ease;
+  }
+  
+  html.dark-mode .form-label {
+    color: #f1f5f9;
   }
 
   .form-control {
@@ -136,12 +193,28 @@
     background: #f8fafc;
     color: #054e97;
   }
+  
+  html.dark-mode .form-control {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+  
+  html.dark-mode .form-control::placeholder {
+    color: #94a3b8;
+  }
 
   .form-control:focus {
     outline: none;
     border-color: #ff7a00;
     background: white;
     box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.15), 0 4px 12px rgba(255, 122, 0, 0.1);
+  }
+  
+  html.dark-mode .form-control:focus {
+    background: #1e293b;
+    border-color: #ff7a00;
+    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.2), 0 4px 12px rgba(255, 122, 0, 0.15);
   }
 
   .form-control::placeholder {
@@ -169,6 +242,10 @@
     pointer-events: none;
     z-index: 2;
     transition: all 0.3s ease;
+  }
+  
+  html.dark-mode .input-icon {
+    color: #94a3b8;
   }
 
   .input-wrapper.focused .input-icon {
@@ -280,12 +357,22 @@
     background: #e2e8f0;
     color: #054e97;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  html.dark-mode .btn-secondary {
+    background: #475569;
+    color: #f1f5f9;
   }
 
   .btn-secondary:hover {
     background: #cbd5e1;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  html.dark-mode .btn-secondary:hover {
+    background: #64748b;
   }
 
   .btn-danger {
@@ -323,16 +410,34 @@
     border-left: 4px solid #dc2626;
   }
 
+  html.dark-mode .alert-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-left-color: #ef4444;
+  }
+
   .alert-success {
     background: #f0fdf4;
     color: #166534;
     border-left: 4px solid #22c55e;
   }
 
+  html.dark-mode .alert-success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border-left-color: #22c55e;
+  }
+
   .alert-info {
     background: #eff6ff;
     color: #1e40af;
     border-left: 4px solid #3b82f6;
+  }
+
+  html.dark-mode .alert-info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border-left-color: #3b82f6;
   }
 
   @keyframes slideIn {
@@ -354,6 +459,11 @@
     margin-top: 32px;
   }
 
+  html.dark-mode .danger-zone {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+  }
+
   .danger-zone h3 {
     color: #dc2626;
     margin: 0 0 16px 0;
@@ -363,11 +473,29 @@
     gap: 8px;
   }
 
+  html.dark-mode .danger-zone h3 {
+    color: #fca5a5;
+  }
+
   .danger-zone p {
     color: #7f1d1d;
     margin: 0 0 16px 0;
     font-size: 0.95rem;
     line-height: 1.5;
+  }
+
+  html.dark-mode .danger-zone p {
+    color: #fecaca;
+  }
+
+  .delete-account-title {
+    color: #dc2626;
+    margin: 0 0 28px 0;
+    font-size: 1.3rem;
+  }
+
+  html.dark-mode .delete-account-title {
+    color: #fca5a5;
   }
 
   .checkbox-wrapper {
@@ -456,6 +584,13 @@
 
     <!-- Tab Buttons -->
     <div class="settings-tabs">
+      <!-- Dark Mode Toggle -->
+      <div class="dark-mode-toggle-wrapper">
+        <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+      
       <button class="tab-button active" onclick="switchTab('profile', event)">
         <i class="fas fa-user"></i> Profile
       </button>
@@ -581,7 +716,7 @@
         <form method="POST">
           <input type="hidden" name="form_type" value="delete">
 
-          <h2 style="color: #dc2626; margin: 0 0 28px 0; font-size: 1.3rem;">⚠️ Delete Account</h2>
+          <h2 class="delete-account-title">⚠️ Delete Account</h2>
 
           <div class="danger-zone">
             <h3>
@@ -678,6 +813,55 @@
         preview.innerHTML = '<img src="' + event.target.result + '" alt="Profile Picture">';
       };
       reader.readAsDataURL(file);
+    }
+  });
+  
+  // Dark Mode Toggle Handler
+  document.addEventListener('DOMContentLoaded', function() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
+    if (darkModeToggle) {
+      // Wait for darkModeManager to be available
+      const checkManager = setInterval(() => {
+        if (window.darkModeManager) {
+          clearInterval(checkManager);
+          setupToggle();
+        }
+      }, 100);
+      
+      // Fallback if manager is already available
+      if (window.darkModeManager) {
+        setupToggle();
+      }
+      
+      function setupToggle() {
+        // Update button icon based on current mode
+        function updateToggleIcon() {
+          const icon = darkModeToggle.querySelector('i');
+          if (document.documentElement.classList.contains('dark-mode')) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+          } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+          }
+        }
+        
+        // Initial icon update
+        updateToggleIcon();
+        
+        // Toggle dark mode on button click
+        darkModeToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (window.darkModeManager) {
+            window.darkModeManager.toggle();
+            updateToggleIcon();
+            console.log('Dark mode toggled from settings:', window.darkModeManager.getMode());
+          }
+        });
+      }
     }
   });
 </script>

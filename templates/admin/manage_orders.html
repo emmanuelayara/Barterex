@@ -23,16 +23,57 @@
 
     <!-- Filters Section -->
     <div class="filters-section">
-        <div class="search-box">
-            <input type="text" id="searchOrders" placeholder="Search by Order ID, Item, or Buyer..." class="search-input">
-            <span class="search-icon">🔍</span>
-        </div>
+        <form method="GET" action="{{ url_for('admin.manage_orders') }}" class="filter-form">
+            <div class="search-box">
+                <input type="text" id="searchOrders" name="search" placeholder="Search by Order ID, Item, or Buyer..." 
+                       class="search-input" value="{{ search }}">
+                <span class="search-icon">🔍</span>
+            </div>
+            
+            <div class="filter-controls">
+                <!-- Status Filter -->
+                <select name="status" class="filter-select" id="statusFilter">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Orders</option>
+                    <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Shipped" {% if status_filter == 'Shipped' %}selected{% endif %}>Shipped</option>
+                    <option value="Out for Delivery" {% if status_filter == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+                    <option value="Delivered" {% if status_filter == 'Delivered' %}selected{% endif %}>Delivered</option>
+                    <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+
+                <!-- Delivery Method Filter -->
+                <select name="delivery" class="filter-select" id="deliveryFilter">
+                    <option value="all" {% if delivery_filter == 'all' %}selected{% endif %}>All Delivery Methods</option>
+                    <option value="pickup" {% if delivery_filter == 'pickup' %}selected{% endif %}>Pickup</option>
+                    <option value="delivery" {% if delivery_filter == 'delivery' %}selected{% endif %}>Home Delivery</option>
+                </select>
+
+                <!-- Sort By -->
+                <select name="sort_by" class="filter-select" id="sortBy">
+                    <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Latest Orders</option>
+                    <option value="amount" {% if sort_by == 'amount' %}selected{% endif %}>By Amount</option>
+                    <option value="status" {% if sort_by == 'status' %}selected{% endif %}>By Status</option>
+                </select>
+
+                <button type="submit" class="filter-btn-submit">Search</button>
+                <a href="{{ url_for('admin.manage_orders') }}" class="filter-btn-reset">Reset</a>
+            </div>
+        </form>
+
+        <!-- Quick Status Buttons -->
         <div class="filter-buttons">
-            <button class="filter-btn active" data-status="all">All Orders</button>
-            <button class="filter-btn" data-status="Pending">Pending</button>
-            <button class="filter-btn" data-status="Shipped">Shipped</button>
-            <button class="filter-btn" data-status="Delivered">Delivered</button>
-            <button class="filter-btn" data-status="Cancelled">Cancelled</button>
+            <a href="{{ url_for('admin.manage_orders', status='all') }}" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">
+                All Orders ({{ total_orders }})
+            </a>
+            <a href="{{ url_for('admin.manage_orders', status='Pending') }}" class="filter-btn {% if status_filter == 'Pending' %}active{% endif %}">
+                ⏳ Pending ({{ pending_count }})
+            </a>
+            <a href="{{ url_for('admin.manage_orders', status='Shipped') }}" class="filter-btn {% if status_filter == 'Shipped' %}active{% endif %}">
+                🚛 Shipped ({{ shipped_count }})
+            </a>
+            <a href="{{ url_for('admin.manage_orders', status='Delivered') }}" class="filter-btn {% if status_filter == 'Delivered' %}active{% endif %}">
+                ✅ Delivered ({{ delivered_count }})
+            </a>
         </div>
     </div>
 
@@ -150,6 +191,55 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination Controls -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Order pagination" class="pagination-section">
+            <div class="pagination-info">
+                Showing <strong>{{ pagination.start }} - {{ pagination.end }}</strong> of <strong>{{ pagination.total }}</strong> orders
+            </div>
+            
+            <ul class="pagination-list">
+                <!-- Previous Page -->
+                {% if pagination.has_prev %}
+                    <li>
+                        <a href="{{ url_for('admin.manage_orders', page=pagination.prev_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}" 
+                           class="pagination-link">
+                            ← Previous
+                        </a>
+                    </li>
+                {% endif %}
+
+                <!-- Page Numbers -->
+                {% for page_num in pagination.iter_pages(left_margin=1, right_margin=1) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}
+                            <li><span class="pagination-link active">{{ page_num }}</span></li>
+                        {% else %}
+                            <li>
+                                <a href="{{ url_for('admin.manage_orders', page=page_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}" 
+                                   class="pagination-link">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li><span class="pagination-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next Page -->
+                {% if pagination.has_next %}
+                    <li>
+                        <a href="{{ url_for('admin.manage_orders', page=pagination.next_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}" 
+                           class="pagination-link">
+                            Next →
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 
     <!-- Empty State (hidden by default) -->
@@ -260,10 +350,87 @@
     flex-wrap: wrap;
 }
 
+.filter-form {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
 .search-box {
     position: relative;
     flex: 1;
     min-width: 320px;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    flex: 1;
+    align-items: flex-end;
+}
+
+.filter-select {
+    padding: 0.9rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    background: white;
+    color: #1a1a1a;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #ff7a00;
+    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.1);
+}
+
+.filter-select:hover {
+    border-color: #ff7a00;
+}
+
+.filter-btn-submit {
+    padding: 0.9rem 1.5rem;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.filter-btn-submit:hover {
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.25);
+    transform: translateY(-2px);
+}
+
+.filter-btn-reset {
+    padding: 0.9rem 1.2rem;
+    background: white;
+    color: #666;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.filter-btn-reset:hover {
+    border-color: #ff7a00;
+    color: #ff7a00;
+    background: #fff5f0;
 }
 
 .search-input {
@@ -769,6 +936,58 @@
     .empty-icon {
         font-size: 2.5rem;
     }
+
+    /* Pagination styles */
+    .pagination-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        border-top: 1px solid #f0f0f0;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .pagination-info {
+        color: #666;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .pagination-list {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .pagination-link {
+        display: inline-block;
+        padding: 0.6rem 1rem;
+        border: 2px solid #e5e7eb;
+        background: white;
+        color: #666;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .pagination-link:hover {
+        border-color: #ff7a00;
+        color: #ff7a00;
+        background: #fff5f0;
+    }
+
+    .pagination-link.active {
+        background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
+        border-color: transparent;
+        color: white;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1054,6 +1273,235 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add dropdown menu or additional options here
         }
     });
+
+    // ==================== REAL-TIME UPDATES ====================
+
+    // Initialize real-time order updates using Server-Sent Events (SSE)
+    function initializeRealTimeUpdates() {
+        const eventSource = new EventSource('{{ url_for("admin.orders_stream") }}');
+        let updateIndicator = document.getElementById('realtimeIndicator');
+        
+        // Create update indicator if it doesn't exist
+        if (!updateIndicator) {
+            updateIndicator = document.createElement('div');
+            updateIndicator.id = 'realtimeIndicator';
+            updateIndicator.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 16px;
+                background: #10b981;
+                color: white;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            document.body.appendChild(updateIndicator);
+        }
+
+        eventSource.onopen = function() {
+            console.log('[SSE] Connection established');
+            updateIndicator.innerHTML = '🟢 Live Updates Active';
+            updateIndicator.style.background = '#10b981';
+        };
+
+        eventSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'initial') {
+                    console.log('[SSE] Initial data received:', data);
+                } else if (data.type === 'update') {
+                    console.log('[SSE] Update received:', data);
+                    updateDashboardCounts(data);
+                    
+                    // Show update pulse animation
+                    showUpdatePulse(data);
+                }
+            } catch (e) {
+                console.error('[SSE] Error parsing message:', e);
+            }
+        };
+
+        eventSource.onerror = function(error) {
+            console.error('[SSE] Connection error:', error);
+            updateIndicator.innerHTML = '🔴 Live Updates Offline - Fallback to polling';
+            updateIndicator.style.background = '#ef4444';
+            
+            // Close the connection and switch to polling
+            eventSource.close();
+            
+            // Fallback: Poll every 10 seconds
+            startPollingUpdates();
+        };
+
+        // Graceful cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            eventSource.close();
+        });
+    }
+
+    // Update dashboard counts from real-time data
+    function updateDashboardCounts(data) {
+        const filterButtons = {
+            'Pending': data.pending_count,
+            'Shipped': data.shipped_count,
+            'Out for Delivery': data.out_for_delivery,
+            'Delivered': data.delivered_count
+        };
+
+        // Update quick filter buttons
+        const buttons = document.querySelectorAll('.filter-btn');
+        buttons.forEach(btn => {
+            const text = btn.textContent;
+            for (const [status, count] of Object.entries(filterButtons)) {
+                if (text.includes(status)) {
+                    const countMatch = text.match(/\((\d+)\)/);
+                    if (countMatch) {
+                        btn.textContent = btn.textContent.replace(/\(\d+\)/, `(${count})`);
+                    }
+                    break;
+                }
+            }
+            
+            // Update "All Orders" count
+            if (text.includes('All Orders')) {
+                btn.textContent = btn.textContent.replace(/\(\d+\)/, `(${data.total_orders})`);
+            }
+        });
+
+        // Update header stats
+        const headerStats = document.querySelector('.header-stats');
+        if (headerStats) {
+            const statNumber = headerStats.querySelector('.stat-number');
+            if (statNumber) {
+                statNumber.textContent = data.total_orders;
+                statNumber.style.animation = 'countChange 0.5s ease-out';
+            }
+        }
+
+        // Update pagination info
+        const paginationInfo = document.querySelector('.pagination-info');
+        if (paginationInfo) {
+            const oldCount = parseInt(paginationInfo.textContent.match(/of\s+(\d+)/)[1]);
+            if (oldCount !== data.total_orders) {
+                paginationInfo.style.background = 'rgba(251, 191, 36, 0.1)';
+                paginationInfo.style.padding = '8px 12px';
+                paginationInfo.style.borderRadius = '6px';
+                paginationInfo.style.transition = 'background 0.3s';
+                
+                setTimeout(() => {
+                    paginationInfo.style.background = 'transparent';
+                }, 1500);
+            }
+        }
+    }
+
+    // Show visual feedback when updates occur
+    function showUpdatePulse(data) {
+        if (data.recent_updates > 0) {
+            // Add pulse animation to affected status badges
+            const statusBadges = document.querySelectorAll('.status-badge');
+            statusBadges.forEach(badge => {
+                const badgeStatus = badge.textContent.trim().split(' ').pop();
+                
+                if (badgeStatus === 'Pending' && data.recent_updates > 0) {
+                    badge.style.animation = 'statusPulse 1.5s ease-out';
+                }
+            });
+        }
+    }
+
+    // Fallback polling mechanism (used if SSE fails)
+    function startPollingUpdates() {
+        console.log('[Polling] Starting fallback polling every 10 seconds');
+        
+        setInterval(async function() {
+            try {
+                const response = await fetch('{{ url_for("admin.get_order_updates") }}?minutes=5');
+                const data = await response.json();
+                
+                if (data.success && data.stats) {
+                    console.log('[Polling] Update received:', data.stats);
+                    updateDashboardCounts(data.stats);
+                    
+                    // Update timestamp
+                    const indicator = document.getElementById('realtimeIndicator');
+                    if (indicator) {
+                        const updateTime = new Date().toLocaleTimeString();
+                        indicator.textContent = `📊 Last update: ${updateTime}`;
+                    }
+                }
+            } catch (error) {
+                console.error('[Polling] Error fetching updates:', error);
+            }
+        }, 10000); // Poll every 10 seconds
+    }
+
+    // Start real-time updates when page loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeRealTimeUpdates);
+    } else {
+        initializeRealTimeUpdates();
+    }
 });
 </script>
+
+<style>
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes countChange {
+    0% {
+        transform: scale(1);
+        color: #ff7a00;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes statusPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+@keyframes updateBlink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+#realtimeIndicator {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+</style>
+
 {% endblock %}
