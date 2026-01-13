@@ -71,6 +71,12 @@
             position: relative;
         }
 
+        html.dark-mode .content-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-color: rgba(75, 85, 105, 0.3);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
         .content-section::before {
             content: '';
             position: absolute;
@@ -123,9 +129,17 @@
             text-align: justify;
         }
 
+        html.dark-mode .section-content p {
+            color: #cbd5e1;
+        }
+
         .section-content strong {
             color: #054e97;
             font-weight: 600;
+        }
+
+        html.dark-mode .section-content strong {
+            color: #f1f5f9;
         }
 
         /* Product Features List */

@@ -25,6 +25,12 @@
     border-radius: 0 0 20px 20px;
   }
 
+  html.dark-mode .top-nav {
+    background: rgba(30, 41, 59, 0.95);
+    border-bottom: 1px solid rgba(75, 85, 105, 0.3);
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+  }
+
   .nav-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -67,12 +73,24 @@
     text-align: center;
   }
 
+  html.dark-mode .nav-link {
+    background: rgba(51, 65, 85, 0.6);
+    color: #f1f5f9;
+    border: 1px solid rgba(75, 85, 105, 0.4);
+  }
+
   .nav-link:hover {
     background: rgba(255, 122, 0, 0.1);
     color: #ff7a00;
     transform: translateY(-1px);
     box-shadow: 0 3px 10px rgba(255, 122, 0, 0.15);
     border-radius: 12px;
+  }
+
+  html.dark-mode .nav-link:hover {
+    background: rgba(255, 122, 0, 0.15);
+    color: #ff9500;
+    box-shadow: 0 3px 10px rgba(255, 149, 0, 0.25);
   }
 
   .nav-link.active {
@@ -120,6 +138,12 @@
     overflow: hidden;
   }
 
+  html.dark-mode .summary-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(75, 85, 105, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+
   .summary-card::before {
     content: '';
     position: absolute;
@@ -153,11 +177,19 @@
     margin-bottom: 4px;
   }
 
+  html.dark-mode .summary-title {
+    color: #cbd5e1;
+  }
+
   .summary-value {
     color: #1a202c;
     font-size: 1.2rem;
     font-weight: 700;
     line-height: 1;
+  }
+
+  html.dark-mode .summary-value {
+    color: #f1f5f9;
   }
 
   .notifications-container {
@@ -167,6 +199,12 @@
     padding: 18px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  html.dark-mode .notifications-container {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(75, 85, 105, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   }
 
   .container-header {
@@ -201,6 +239,10 @@
     font-weight: 600;
     color: #1a202c;
     margin: 0;
+  }
+
+  html.dark-mode .container-title h2 {
+    color: #f1f5f9;
   }
 
   .filter-buttons {
@@ -246,14 +288,30 @@
     gap: 12px;
   }
 
+  html.dark-mode .notification-item {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(75, 85, 105, 0.3);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
   .notification-item:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     border-color: rgba(255, 122, 0, 0.2);
   }
 
+  html.dark-mode .notification-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 149, 0, 0.4);
+  }
+
   .notification-item.unread {
     border-left: 3px solid #ff7a00;
     background: rgba(255, 122, 0, 0.02);
+  }
+
+  html.dark-mode .notification-item.unread {
+    border-left-color: #ff9500;
+    background: rgba(255, 149, 0, 0.1);
   }
 
   .notification-badge {
@@ -297,6 +355,11 @@
     white-space: nowrap;
   }
 
+  html.dark-mode .notification-type {
+    background: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
+  }
+
   .notification-message {
     color: #2d3748;
     font-size: 0.85rem;
@@ -304,10 +367,18 @@
     margin-bottom: 4px;
   }
 
+  html.dark-mode .notification-message {
+    color: #f1f5f9;
+  }
+
   .notification-time {
     color: #718096;
     font-size: 0.7rem;
     font-weight: 500;
+  }
+
+  html.dark-mode .notification-time {
+    color: #cbd5e1;
   }
 
   .notification-actions {
@@ -328,6 +399,11 @@
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+  }
+
+  html.dark-mode .action-btn {
+    background: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
   }
 
   .action-btn:hover {
@@ -405,6 +481,11 @@
     border: 1px solid rgba(255, 122, 0, 0.15);
     position: relative;
     z-index: 1;
+  }
+
+  html.dark-mode .empty-state-help {
+    background: rgba(51, 65, 85, 0.6);
+    border: 1px solid rgba(75, 85, 105, 0.3);
   }
 
   .empty-state-help-title {

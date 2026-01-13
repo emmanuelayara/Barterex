@@ -111,11 +111,21 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
+  html.dark-mode .tab-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
   .tab-button.active {
     background: white;
     color: #ff7a00;
     border-color: white;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  html.dark-mode .tab-button.active {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ff9500;
+    border-color: rgba(255, 149, 0, 0.4);
   }
 
   .tab-content {

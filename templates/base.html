@@ -499,15 +499,33 @@
             border-color: #ef4444;
         }
 
+        html.dark-mode .flash.error {
+            background: rgba(220, 38, 38, 0.1);
+            color: #fca5a5;
+            border-color: #ef4444;
+        }
+
         .flash.warning {
             background: #fffbeb;
             color: #d97706;
             border-color: #f59e0b;
         }
 
+        html.dark-mode .flash.warning {
+            background: rgba(217, 119, 6, 0.1);
+            color: #fbbf24;
+            border-color: #f59e0b;
+        }
+
         .flash.info {
             background: #eff6ff;
             color: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        html.dark-mode .flash.info {
+            background: rgba(37, 99, 235, 0.1);
+            color: #93c5fd;
             border-color: #3b82f6;
         }
 
@@ -528,9 +546,21 @@
             border-color: #22c55e;
         }
 
+        html.dark-mode .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #86efac;
+            border-color: #22c55e;
+        }
+
         .alert-danger {
             background: #fef2f2;
             color: #dc2626;
+            border-color: #ef4444;
+        }
+
+        html.dark-mode .alert-danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: #fca5a5;
             border-color: #ef4444;
         }
 
@@ -540,9 +570,21 @@
             border-color: #f59e0b;
         }
 
+        html.dark-mode .alert-warning {
+            background: rgba(217, 119, 6, 0.1);
+            color: #fbbf24;
+            border-color: #f59e0b;
+        }
+
         .alert-info {
             background: #eff6ff;
             color: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        html.dark-mode .alert-info {
+            background: rgba(37, 99, 235, 0.1);
+            color: #93c5fd;
             border-color: #3b82f6;
         }
 
@@ -1288,10 +1330,19 @@ document.addEventListener('DOMContentLoaded', function() {
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
+        html.dark-mode .loading-content {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
         .loading-text {
             color: #333;
             font-weight: 500;
             margin: 0;
+        }
+
+        html.dark-mode .loading-text {
+            color: #f1f5f9;
         }
 
         /* Toast Notification Styles */
