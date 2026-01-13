@@ -378,11 +378,11 @@
         <div class="section-header mb-4">
             <h2 class="section-title text-danger">
                 <i class="bi bi-ban me-2"></i>Banned Users
-                <span class="section-badge bg-danger">{{ banned_users|length }}</span>
+                <span class="section-badge bg-danger">{{ banned_users }}</span>
             </h2>
         </div>
         
-        {% if banned_users %}
+        {% if banned_users > 0 %}
         <div class="enhanced-card border-danger">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0">
@@ -402,7 +402,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for user in banned_users %}
+                            {% for user in users %}
+                            {% if user.is_banned %}
                             <tr class="banned-user-row">
                                 <td><span class="user-id">#{{ user.id }}</span></td>
                                 <td>
@@ -460,6 +461,7 @@
                                     </form>
                                 </td>
                             </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>

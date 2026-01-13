@@ -32,6 +32,10 @@
     padding: 15px 0;
   }
 
+  html.dark-mode .marketplace-page {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
   .marketplace-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -48,6 +52,12 @@
     position: relative;
     overflow: hidden;
     border: 2px solid var(--primary-light);
+  }
+
+  html.dark-mode .marketplace-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: rgba(255, 122, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   }
 
   .marketplace-header::before {
@@ -80,6 +90,10 @@
     line-height: 1.3;
   }
 
+  html.dark-mode .marketplace-header p {
+    color: #cbd5e1;
+  }
+
   .filter-section {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%);
     border-radius: 12px;
@@ -88,6 +102,12 @@
     box-shadow: 0 4px 16px rgba(255, 122, 0, 0.08);
     border: 1.5px solid rgba(255, 122, 0, 0.15);
     box-sizing: border-box;
+  }
+
+  html.dark-mode .filter-section {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+    border-color: rgba(255, 122, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(255, 122, 0, 0.15);
   }
 
   .filter-header {
@@ -100,6 +120,10 @@
     border-bottom: 2px solid rgba(255, 122, 0, 0.1);
   }
 
+  html.dark-mode .filter-header {
+    border-bottom-color: rgba(255, 122, 0, 0.25);
+  }
+
   .filter-header h3 {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 1rem;
@@ -108,6 +132,10 @@
     margin: 0;
     z-index: 10;
     position: relative;
+  }
+
+  html.dark-mode .filter-header h3 {
+    color: #ff9500;
   }
 
   .filter-icon {
@@ -209,6 +237,10 @@
     gap: 2px;
   }
 
+  html.dark-mode .filter-section .form-group label {
+    color: #f1f5f9;
+  }
+
   .form-input, .form-select {
     padding: 7px 10px;
     border: 1px solid #d1d5db;
@@ -222,6 +254,17 @@
     box-sizing: border-box;
   }
 
+  html.dark-mode .filter-section .form-input,
+  html.dark-mode .filter-section .form-select {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+
+  html.dark-mode .filter-section .form-input::placeholder {
+    color: #94a3b8;
+  }
+
   .form-input::placeholder {
     color: #9ca3af;
   }
@@ -232,6 +275,13 @@
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
     transform: translateY(-1px);
+  }
+
+  html.dark-mode .filter-section .form-input:focus,
+  html.dark-mode .filter-section .form-select:focus {
+    background: #334155;
+    border-color: #ff9500;
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2);
   }
 
   .price-filter-group {
@@ -264,15 +314,29 @@
     box-sizing: border-box;
   }
 
+  html.dark-mode .filter-section .price-input {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+
   .price-input::placeholder {
     color: #9ca3af;
+  }
+
+  html.dark-mode .filter-section .price-input::placeholder {
+    color: #94a3b8;
   }
 
   .price-input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
-    transform: translateY(-1px);
+  }
+
+  html.dark-mode .filter-section .price-input:focus {
+    border-color: #ff9500;
+    box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2);
   }
 
   .price-toggle {
@@ -300,10 +364,22 @@
     white-space: nowrap;
   }
 
+  html.dark-mode .filter-section .toggle-btn {
+    background: #1e293b;
+    border-color: #475569;
+    color: #cbd5e1;
+  }
+
   .toggle-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
     background: rgba(255, 122, 0, 0.05);
+  }
+
+  html.dark-mode .filter-section .toggle-btn:hover {
+    background: rgba(255, 149, 0, 0.15);
+    border-color: #ff9500;
+    color: #ff9500;
   }
 
   .toggle-btn.active {
@@ -312,6 +388,11 @@
     border-color: var(--primary-color);
     box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
     transform: translateY(-2px);
+  }
+
+  html.dark-mode .filter-section .toggle-btn.active {
+    background: linear-gradient(135deg, #ff9500 0%, #ff8c00 100%);
+    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.4);
   }
 
   .filter-btn {
@@ -336,9 +417,18 @@
     min-width: 140px;
   }
 
+  html.dark-mode .filter-btn {
+    background: linear-gradient(135deg, #ff9500 0%, #ff8c00 100%);
+    box-shadow: 0 3px 10px rgba(255, 149, 0, 0.35);
+  }
+
   .filter-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(255, 122, 0, 0.4);
+  }
+
+  html.dark-mode .filter-btn:hover {
+    box-shadow: 0 6px 16px rgba(255, 149, 0, 0.5);
   }
 
   .filter-btn:active {
@@ -375,6 +465,17 @@
     box-shadow: 0 2px 8px rgba(255, 122, 0, 0.15);
   }
 
+  html.dark-mode .clear-filters-btn {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  html.dark-mode .clear-filters-btn:hover {
+    border-color: #ff9500;
+    color: #ff9500;
+    background: rgba(255, 149, 0, 0.1);
+  }
+
   .results-info {
     display: flex;
     justify-content: space-between;
@@ -387,10 +488,20 @@
     border: 1px solid var(--primary-light);
   }
 
+  html.dark-mode .results-info {
+    background: #1e293b;
+    border-color: #475569;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  }
+
   .results-count {
     font-weight: 600;
     color: var(--text-primary);
     font-size: 0.8rem;
+  }
+
+  html.dark-mode .results-count {
+    color: #f1f5f9;
   }
 
   .view-toggle {
@@ -399,6 +510,10 @@
     background: var(--primary-light);
     border-radius: 8px;
     padding: 2px;
+  }
+
+  html.dark-mode .view-toggle {
+    background: rgba(255, 149, 0, 0.15);
   }
 
   .view-btn {
@@ -412,11 +527,21 @@
     font-size: 0.7rem;
   }
 
+  html.dark-mode .view-btn {
+    color: #cbd5e1;
+  }
+
   .view-btn.active {
     background: var(--surface);
     color: var(--primary-color);
     box-shadow: 0 2px 6px var(--primary-medium);
     font-weight: 600;
+  }
+
+  html.dark-mode .view-btn.active {
+    background: rgba(255, 149, 0, 0.2);
+    color: #ff9500;
+    box-shadow: 0 2px 6px rgba(255, 149, 0, 0.2);
   }
 
   .marketplace-grid {
@@ -440,6 +565,12 @@
     border: 3px solid var(--primary-color);
     position: relative;
     /* REMOVED: opacity and transform that were hiding items */
+  }
+
+  html.dark-mode .marketplace-item {
+    background: #1e293b;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 122, 0, 0.5);
   }
 
   .marketplace-item:hover {
@@ -507,6 +638,10 @@
     height: 2.4em;
   }
 
+  html.dark-mode .item-title {
+    color: #f1f5f9;
+  }
+
   .marketplace-grid.compact .item-title {
     font-size: 0.8rem;
     margin-bottom: 6px;
@@ -526,6 +661,10 @@
     gap: 6px;
     font-size: 0.7rem;
     color: var(--text-secondary);
+  }
+
+  html.dark-mode .item-detail {
+    color: #cbd5e1;
   }
 
   .detail-icon {
@@ -596,6 +735,12 @@
     color: var(--text-secondary);
   }
 
+  html.dark-mode .marketplace-item .btn-secondary {
+    background: rgba(255, 149, 0, 0.15);
+    border-color: #475569;
+    color: #cbd5e1;
+  }
+
   .marketplace-grid.compact .btn-secondary {
     width: 28px;
     height: 28px;
@@ -619,6 +764,12 @@
     border: 1.5px solid var(--primary-light);
   }
 
+  html.dark-mode .empty-state {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: rgba(255, 122, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
   .empty-icon {
     width: 50px;
     height: 50px;
@@ -633,6 +784,12 @@
     color: var(--primary-color);
   }
 
+  html.dark-mode .empty-icon {
+    background: rgba(255, 149, 0, 0.15);
+    border-color: #475569;
+    color: #ff9500;
+  }
+
   .empty-title {
     font-family: 'Space Grotesk', sans-serif;
     font-size: 1.1rem;
@@ -641,11 +798,19 @@
     margin-bottom: 6px;
   }
 
+  html.dark-mode .empty-title {
+    color: #f1f5f9;
+  }
+
   .empty-description {
     color: var(--text-secondary);
     font-size: 0.8rem;
     margin-bottom: 16px;
     line-height: 1.3;
+  }
+
+  html.dark-mode .empty-description {
+    color: #cbd5e1;
   }
 
   .pagination {
@@ -659,6 +824,12 @@
     border-radius: 12px;
     box-shadow: var(--shadow-soft);
     border: 1px solid var(--primary-light);
+  }
+
+  html.dark-mode .pagination {
+    background: #1e293b;
+    border-color: #475569;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
   }
 
   .pagination-btn {
@@ -676,11 +847,23 @@
     font-size: 0.75rem;
   }
 
+  html.dark-mode .pagination-btn {
+    background: #334155;
+    border-color: #475569;
+    color: #cbd5e1;
+  }
+
   .pagination-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
     transform: translateY(-1px);
     box-shadow: 0 3px 10px var(--primary-light);
+  }
+
+  html.dark-mode .pagination-btn:hover {
+    border-color: #ff9500;
+    color: #ff9500;
+    box-shadow: 0 3px 10px rgba(255, 149, 0, 0.2);
   }
 
   .pagination-btn.active {
@@ -695,6 +878,10 @@
     font-weight: 600;
     color: var(--text-primary);
     font-size: 0.75rem;
+  }
+
+  html.dark-mode .pagination-info {
+    color: #f1f5f9;
   }
 
   @media (min-width: 769px) {
@@ -822,6 +1009,12 @@
     display: none;
   }
 
+  html.dark-mode .autocomplete-dropdown {
+    background: #1e293b;
+    border-color: #475569;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+
   .autocomplete-dropdown.show {
     display: block;
   }
@@ -836,9 +1029,19 @@
     gap: 12px;
   }
 
+  html.dark-mode .autocomplete-item {
+    border-bottom-color: #334155;
+    color: #f1f5f9;
+  }
+
   .autocomplete-item:hover {
     background: var(--primary-light);
     color: var(--primary-color);
+  }
+
+  html.dark-mode .autocomplete-item:hover {
+    background: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
   }
 
   .autocomplete-item:last-child {
@@ -849,6 +1052,10 @@
     font-size: 1rem;
     color: var(--primary-color);
     flex-shrink: 0;
+  }
+
+  html.dark-mode .autocomplete-icon {
+    color: #ff9500;
   }
 
   .autocomplete-content {
@@ -864,9 +1071,17 @@
     color: var(--text-primary);
   }
 
+  html.dark-mode .autocomplete-name {
+    color: #f1f5f9;
+  }
+
   .autocomplete-category {
     font-size: 0.75rem;
     color: var(--text-secondary);
+  }
+
+  html.dark-mode .autocomplete-category {
+    color: #cbd5e1;
   }
 
   .autocomplete-count {
@@ -876,6 +1091,11 @@
     padding: 2px 6px;
     border-radius: 4px;
     font-weight: 600;
+  }
+
+  html.dark-mode .autocomplete-count {
+    background: rgba(255, 149, 0, 0.2);
+    color: #ffb3b3;
   }
 
   .autocomplete-section-header {
@@ -889,11 +1109,21 @@
     border-bottom: 1px solid var(--primary-light);
   }
 
+  html.dark-mode .autocomplete-section-header {
+    background: #334155;
+    border-bottom-color: #475569;
+    color: #cbd5e1;
+  }
+
   .autocomplete-empty {
     padding: 20px 16px;
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.85rem;
+  }
+
+  html.dark-mode .autocomplete-empty {
+    color: #cbd5e1;
   }
 
   .category-pills {
@@ -918,9 +1148,21 @@
     transition: all 0.2s ease;
   }
 
+  html.dark-mode .filter-section .category-pill {
+    background: rgba(255, 149, 0, 0.15);
+    border-color: #475569;
+    color: #ffb3b3;
+  }
+
   .category-pill:hover {
     background: var(--primary-gradient);
     border-color: var(--primary-color);
+    color: white;
+  }
+
+  html.dark-mode .filter-section .category-pill:hover {
+    background: linear-gradient(135deg, #ff9500 0%, #ff8c00 100%);
+    border-color: #ff9500;
     color: white;
   }
 
@@ -940,6 +1182,11 @@
     animation: spin 0.8s linear infinite;
   }
 
+  html.dark-mode .search-loading {
+    border-color: #475569;
+    border-top-color: #ff9500;
+  }
+
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
@@ -949,6 +1196,10 @@
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.8rem;
+  }
+
+  html.dark-mode .no-results-suggestion {
+    color: #cbd5e1;
   }
 
   /* ==================== RECOMMENDATIONS SECTION ==================== */
@@ -962,6 +1213,12 @@
     border: 2px solid var(--primary-light);
     position: relative;
     overflow: hidden;
+  }
+
+  html.dark-mode .recommendations-section {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: rgba(255, 122, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   }
 
   .recommendations-section::before {
@@ -1023,6 +1280,11 @@
     cursor: pointer;
   }
 
+  html.dark-mode .recommendation-item {
+    background: #334155;
+    border-color: #475569;
+  }
+
   .recommendation-item:hover {
     border-color: var(--primary-color);
     box-shadow: 0 6px 16px var(--primary-light);
@@ -1052,10 +1314,18 @@
     margin-bottom: 4px;
   }
 
+  html.dark-mode .recommendation-name {
+    color: #f1f5f9;
+  }
+
   .recommendation-category {
     font-size: 0.65rem;
     color: var(--text-secondary);
     margin-bottom: 6px;
+  }
+
+  html.dark-mode .recommendation-category {
+    color: #cbd5e1;
   }
 
   .recommendation-value {
@@ -1070,10 +1340,18 @@
     color: var(--text-secondary);
   }
 
+  html.dark-mode .recommendations-empty {
+    color: #cbd5e1;
+  }
+
   .recommendations-loading {
     text-align: center;
     padding: 20px;
     color: var(--text-secondary);
+  }
+
+  html.dark-mode .recommendations-loading {
+    color: #cbd5e1;
   }
 
   @media (min-width: 769px) {
@@ -1226,14 +1504,14 @@
   <div class="marketplace-container">
     <div class="marketplace-header">
       <h1>🛒 Explore the Marketplace</h1>
-      <p>For the sake of the "beta-testing" items prices are not realistic.</p>
+      <p>For the sake of the "TESTING" items prices are not realistic.</p>
     </div>
 
     <div class="filter-section">
       <div class="filter-header">
         <div style="display: flex; align-items: center; gap: 8px;">
           <div class="filter-icon">🔍</div>
-          <h3>Shop your match</h3>
+          <h3>Shop your needs</h3>
         </div>
         <button type="button" class="filter-toggle-btn" id="filterToggleBtn">Filter Results</button>
       </div>

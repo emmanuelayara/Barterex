@@ -387,6 +387,15 @@
     box-shadow: 0 10px 30px rgba(220, 38, 38, 0.4);
   }
 
+  html.dark-mode .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  }
+
+  html.dark-mode .btn-danger:hover {
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
+  }
+
   .form-text {
     font-size: 0.85rem;
     color: #64748b;
@@ -460,8 +469,8 @@
   }
 
   html.dark-mode .danger-zone {
-    border-color: #ef4444;
-    background: rgba(239, 68, 68, 0.12);
+    border-color: #ff6b6b;
+    background: rgba(139, 0, 0, 0.25);
   }
 
   .danger-zone h3 {
@@ -474,7 +483,7 @@
   }
 
   html.dark-mode .danger-zone h3 {
-    color: #fca5a5;
+    color: #ff8787;
   }
 
   .danger-zone p {
@@ -485,7 +494,20 @@
   }
 
   html.dark-mode .danger-zone p {
-    color: #fecaca;
+    color: #ffb3b3;
+  }
+
+  html.dark-mode .danger-zone ul {
+    color: #ffb3b3 !important;
+  }
+
+  html.dark-mode .danger-zone ul li {
+    color: #ffb3b3;
+  }
+
+  html.dark-mode .danger-zone strong {
+    color: #ff8787;
+    font-weight: 600;
   }
 
   .delete-account-title {
@@ -495,7 +517,42 @@
   }
 
   html.dark-mode .delete-account-title {
-    color: #fca5a5;
+    color: #ff8787;
+  }
+
+  .danger-zone .info-box {
+    background: rgba(220, 38, 38, 0.1);
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 20px;
+  }
+
+  html.dark-mode .danger-zone .info-box {
+    background: rgba(255, 107, 107, 0.2);
+  }
+
+  .danger-zone .info-box p {
+    margin: 0;
+    color: #7f1d1d;
+    font-size: 0.9rem;
+  }
+
+  html.dark-mode .danger-zone .info-box p {
+    color: #ffb3b3;
+  }
+
+  .danger-zone-list {
+    margin: 12px 0;
+    padding-left: 20px;
+    color: #7f1d1d;
+  }
+
+  html.dark-mode .danger-zone-list {
+    color: #ffb3b3;
+  }
+
+  .danger-zone-list li {
+    margin-bottom: 8px;
   }
 
   .checkbox-wrapper {
@@ -503,6 +560,10 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 16px;
+  }
+
+  html.dark-mode .checkbox-wrapper label {
+    color: #ffb3b3;
   }
 
   .checkbox-wrapper input[type="checkbox"] {
@@ -726,7 +787,7 @@
             <p>
               Deleting your account is <strong>permanent and cannot be undone</strong>. All your:
             </p>
-            <ul style="margin: 12px 0; padding-left: 20px; color: #7f1d1d;">
+            <ul class="danger-zone-list">
               <li>Profile information and settings</li>
               <li>Uploaded items</li>
               <li>Trading history</li>
@@ -737,8 +798,8 @@
               will be <strong>permanently deleted</strong> from our system.
             </p>
 
-            <div style="background: rgba(220, 38, 38, 0.1); padding: 16px; border-radius: 8px; margin-top: 20px;">
-              <p style="margin: 0; color: #7f1d1d; font-size: 0.9rem;">
+            <div class="info-box">
+              <p>
                 <strong>Before you delete:</strong> Make sure you've settled all your trades and orders. Once deleted, we cannot recover your data.
               </p>
             </div>

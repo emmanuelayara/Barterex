@@ -20,10 +20,26 @@
     --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
   }
 
+  html.dark-mode {
+    --primary-color: #0066cc;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --surface: #1e293b;
+    --surface-alt: #334155;
+    --border-color: #475569;
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.4);
+  }
+
   .order-details-container {
     max-width: 900px;
     margin: 40px auto;
     padding: 20px;
+  }
+
+  html.dark-mode .order-details-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    min-height: 100vh;
   }
 
   .order-header {
@@ -33,6 +49,11 @@
     border-radius: 12px;
     margin-bottom: 30px;
     box-shadow: var(--shadow-soft);
+  }
+
+  html.dark-mode .order-header {
+    background: linear-gradient(135deg, #0066cc 0%, #004fa3 100%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
 
   .order-number {
@@ -66,6 +87,12 @@
   .status-delivered { background: #d1e7dd; color: #0f5132; }
   .status-cancelled { background: #f8d7da; color: #842029; }
 
+  html.dark-mode .status-pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+  html.dark-mode .status-processing { background: rgba(33, 150, 243, 0.2); color: #64b5f6; }
+  html.dark-mode .status-shipped { background: rgba(76, 175, 80, 0.2); color: #81c784; }
+  html.dark-mode .status-delivered { background: rgba(76, 175, 80, 0.2); color: #81c784; }
+  html.dark-mode .status-cancelled { background: rgba(244, 67, 54, 0.2); color: #ef5350; }
+
   .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -81,6 +108,12 @@
     box-shadow: var(--shadow-soft);
   }
 
+  html.dark-mode .info-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #475569;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
   .info-card h3 {
     color: var(--primary-color);
     font-size: 1.1rem;
@@ -88,6 +121,10 @@
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  html.dark-mode .info-card h3 {
+    color: #64b5f6;
   }
 
   .info-row {
@@ -121,10 +158,20 @@
     margin-bottom: 30px;
   }
 
+  html.dark-mode .items-section {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #475569;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
   .items-section h3 {
     color: var(--primary-color);
     margin-bottom: 15px;
     font-size: 1.1rem;
+  }
+
+  html.dark-mode .items-section h3 {
+    color: #64b5f6;
   }
 
   .items-table {
@@ -141,13 +188,26 @@
     font-weight: 600;
   }
 
+  html.dark-mode .items-table th {
+    background: linear-gradient(135deg, #0066cc 0%, #004fa3 100%);
+  }
+
   .items-table td {
     padding: 12px;
     border-bottom: 1px solid var(--border-color);
   }
 
+  html.dark-mode .items-table td {
+    border-bottom-color: #475569;
+    color: #f1f5f9;
+  }
+
   .items-table tr:hover {
     background: var(--surface-alt);
+  }
+
+  html.dark-mode .items-table tr:hover {
+    background: rgba(100, 181, 246, 0.1);
   }
 
   .items-table tr:last-child td {
@@ -181,10 +241,18 @@
     font-weight: 600;
   }
 
+  html.dark-mode .timeline-content h4 {
+    color: #64b5f6;
+  }
+
   .timeline-content p {
     margin: 0;
     color: var(--text-secondary);
     font-size: 0.9rem;
+  }
+
+  html.dark-mode .timeline-content p {
+    color: #cbd5e1;
   }
 
   .action-buttons {
@@ -229,9 +297,20 @@
     transition: all 0.3s ease;
   }
 
+  html.dark-mode .btn-secondary {
+    background: #334155;
+    border-color: #475569;
+    color: #64b5f6;
+  }
+
   .btn-secondary:hover {
     background: var(--primary-color);
     color: white;
+  }
+
+  html.dark-mode .btn-secondary:hover {
+    background: #0066cc;
+    border-color: #0066cc;
   }
 
   .btn-danger {
@@ -249,10 +328,18 @@
     transition: all 0.3s ease;
   }
 
+  html.dark-mode .btn-danger {
+    background: #ef5350;
+  }
+
   .btn-danger:hover {
     background: #d64830;
     transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
+  }
+
+  html.dark-mode .btn-danger:hover {
+    background: #e53935;
   }
 
   /* Modal Styles */
@@ -284,6 +371,11 @@
     animation: slideUp 0.3s ease;
   }
 
+  html.dark-mode .modal-content {
+    background-color: #1e293b;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  }
+
   .modal-header {
     font-size: 1.5rem;
     font-weight: 700;
@@ -291,10 +383,18 @@
     margin-bottom: 15px;
   }
 
+  html.dark-mode .modal-header {
+    color: #ef5350;
+  }
+
   .modal-body {
     color: var(--text-primary);
     line-height: 1.6;
     margin-bottom: 20px;
+  }
+
+  html.dark-mode .modal-body {
+    color: #f1f5f9;
   }
 
   .modal-footer {
