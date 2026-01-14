@@ -1759,7 +1759,7 @@
         <div class="recommendation-item" onclick="window.location.href='{{ url_for('marketplace.view_item', item_id=item.id) }}'">
           <div class="recommendation-image">
             {% if item.images and item.images[0] %}
-              <img src="{{ item.images[0].image_url }}" alt="{{ item.name }}">
+              <img src="{{ item.images[0].image_url | image_url }}" alt="{{ item.name }}">
             {% else %}
               <i class="fas fa-image"></i>
             {% endif %}

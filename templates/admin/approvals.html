@@ -772,7 +772,7 @@
             <!-- Ultra Compact Image -->
             {% if item.image_url %}
             <div class="card-image-container">
-              <img src="{{ item.image_url }}" class="card-image" alt="{{ item.name }}">
+              <img src="{{ item.image_url | image_url }}" class="card-image" alt="{{ item.name }}">
               <div class="image-overlay">📷</div>
             </div>
             {% endif %}

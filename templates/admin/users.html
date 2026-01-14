@@ -203,7 +203,7 @@
                                     <div class="user-info">
                                         <div class="user-avatar">
                                             {% if user.profile_picture %}
-                                                <img src="{{ user.profile_picture }}" alt="{{ user.username }}" class="profile-img" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                                <img src="{{ user.profile_picture | image_url }}" alt="{{ user.username }}" class="profile-img" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                                             {% else %}
                                                 {{ user.username[0].upper() }}
                                             {% endif %}

@@ -686,7 +686,7 @@
             <label class="form-label">Profile Picture</label>
             <div class="profile-picture-preview">
               {% if current_user.profile_picture %}
-                <img src="{{ current_user.profile_picture }}" alt="Profile Picture">
+                <img src="{{ current_user.profile_picture | image_url }}" alt="Profile Picture">
               {% else %}
                 <i class="fas fa-user"></i>
               {% endif %}

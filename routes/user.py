@@ -199,7 +199,7 @@ def edit_item(item_id: int) -> Union[str, Response]:
                         unique_filename = generate_safe_filename(file, current_user.id)
                         new_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                         file.save(new_path)
-                        item.image_url = f"/{new_path}"
+                        item.image_url = unique_filename
                         logger.info(f"Item image updated - Item: {item_id}, File: {unique_filename}")
                     except FileUploadError as e:
                         logger.warning(f"File validation failed: {str(e)}")
@@ -374,7 +374,7 @@ def profile_settings() -> Union[str, Response]:
                         unique_filename = generate_safe_filename(file, current_user.id)
                         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                         file.save(file_path)
-                        current_user.profile_picture = f"/{file_path}"
+                        current_user.profile_picture = unique_filename
                         logger.info(f"Profile picture updated - User: {current_user.username}, File: {unique_filename}")
                     except FileUploadError as e:
                         logger.warning(f"Profile picture upload failed: {str(e)}")
@@ -651,7 +651,7 @@ def settings():
                             unique_filename = generate_safe_filename(file, current_user.id)
                             file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                             file.save(file_path)
-                            current_user.profile_picture = f"/{file_path}"
+                            current_user.profile_picture = unique_filename
                             logger.info(f"Profile picture updated - User: {current_user.username}, File: {unique_filename}")
                         except FileUploadError as e:
                             logger.warning(f"Profile picture upload failed: {str(e)}")

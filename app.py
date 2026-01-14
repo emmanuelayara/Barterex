@@ -99,10 +99,16 @@ def format_image_url(url):
     """Convert image URLs to absolute paths for proper serving"""
     if not url:
         return '/static/placeholder.png'
-    # Ensure the URL starts with /
-    if not url.startswith('/'):
-        url = '/' + url
-    return url
+    
+    # If URL already has /static/ in it, return as-is
+    if '/static/' in url:
+        # Clean up any double slashes
+        return url.replace('//', '/')
+    
+    # Otherwise prepend /static/uploads/
+    # Remove any leading/trailing slashes from the filename
+    url = url.strip('/')
+    return f'/static/uploads/{url}'
 
 # ✅ Maintenance Mode Handler
 @app.before_request

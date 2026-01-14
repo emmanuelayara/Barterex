@@ -218,8 +218,8 @@ def upload_item():
                             image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                             file.save(image_path)
                             
-                            # Store URL without leading slash for consistency across localhost and production
-                            image_url = image_path
+                            # Store ONLY the filename, not the full path - the image_url filter will construct the proper URL
+                            image_url = unique_filename
                             
                             # Analyze image for metadata and quality issues (pass relative path)
                             analysis = analyze_image_url(image_url)

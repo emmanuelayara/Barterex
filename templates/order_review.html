@@ -491,7 +491,7 @@
                 <div class="item-card">
                     <div class="item-image">
                         {% if item.image_url %}
-                            <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                            <img src="{{ item.image_url | image_url }}" alt="{{ item.name }}">
                         {% else %}
                             <i class="fas fa-box"></i>
                         {% endif %}

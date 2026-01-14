@@ -38,7 +38,7 @@
                     <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold"
                          style="width: 45px; height: 45px; background: rgba(255,255,255,0.2); border-radius: 50%; backdrop-filter: blur(10px); font-size: 1.1rem; overflow: hidden;">
                         {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture }}" alt="{{ user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{{ user.profile_picture | image_url }}" alt="{{ user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
                         {% else %}
                             {{ user.username[0].upper() }}
                         {% endif %}
@@ -63,7 +63,7 @@
                             Profile Picture for Verification
                         </h6>
                         <div class="profile-picture-container d-inline-block" style="border: 3px solid #007BFF; border-radius: 15px; padding: 8px; background: linear-gradient(135deg, #e7f1ff 0%, #f0f7ff 100%); box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);">
-                            <img src="{{ user.profile_picture }}" alt="{{ user.username }}" class="profile-verification-img" 
+                            <img src="{{ user.profile_picture | image_url }}" alt="{{ user.username }}" class="profile-verification-img" 
                                  style="width: 280px; height: 280px; object-fit: cover; border-radius: 10px; display: block; background: white;">
                         </div>
                         <p class="text-muted small mt-2">
