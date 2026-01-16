@@ -695,3 +695,28 @@ class SystemSettings(db.Model):
             'allow_browsing': self.allow_browsing,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+
+# ==================== FAVORITES DATABASE MODEL ====================
+class Favorite(db.Model):
+    """User's saved items/favorites list"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='favorites')
+    item = db.relationship('Item', backref='favorited_by')
+    
+    # Database indexes for frequently queried fields (performance optimization)
+    # ✅ user_id: Used in Favorite.query.filter_by(user_id=...) for user favorites lookups
+    # ✅ item_id: Used to check if item is favorited by user
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'item_id', name='unique_user_favorite'),
+        db.Index('idx_favorite_user_id', 'user_id'),
+        db.Index('idx_favorite_item_id', 'item_id'),
+    )
+    
+    def __repr__(self):
+        return f'<Favorite user_id={self.user_id}, item_id={self.item_id}>'

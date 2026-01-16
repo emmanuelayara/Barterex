@@ -270,9 +270,11 @@
     padding: 25px 20px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     width: 100%;
     min-width: 0;
+    gap: 16px;
+    overflow: visible;
   }
 
   .item-header {
@@ -394,27 +396,57 @@
     overflow-wrap: break-word;
     word-break: break-word;
     white-space: normal;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 8px;
   }
 
   html.dark-mode .description-text {
     color: #cbd5e1;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 8px;
   }
 
   .action-section {
-    margin-top: auto;
-    padding-top: 20px;
-    border-top: 1px solid rgba(226, 232, 240, 0.8);
+    margin-top: 24px;
+    padding: 20px;
+    border-top: 2px solid rgba(226, 232, 240, 0.8);
+    border-bottom: 2px solid rgba(226, 232, 240, 0.8);
+    background: rgba(255, 250, 245, 0.5);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    width: 100%;
+    border-radius: 12px;
+    justify-content: flex-start;
+    min-height: 75px;
+    overflow: visible;
+    flex-wrap: wrap;
+  }
+
+  html.dark-mode .action-section {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(100, 116, 139, 0.3);
+  }
+
+  .action-section form {
+    flex: 1;
+    display: flex;
+    min-width: 0;
+    width: 100%;
   }
 
   .trade-button {
     width: 100%;
-    padding: 14px 20px;
-    background: linear-gradient(135deg, #ff7a00, #ff7a00);
+    min-width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #ff7a00, #ff8c00);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -423,6 +455,7 @@
     gap: 10px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
   }
 
   .trade-button::before {
@@ -441,12 +474,84 @@
   }
 
   .trade-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 122, 0, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 122, 0, 0.5);
   }
 
   .trade-button:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+  }
+
+  /* Mobile Responsive for action section */
+  @media (max-width: 640px) {
+    .action-section {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+      padding: 18px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+    }
+
+    .action-section form {
+      flex: 1;
+      min-width: 0;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .trade-button {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      min-height: 50px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .action-section {
+      gap: 16px;
+      padding: 20px;
+      margin-top: 24px;
+      margin-bottom: 20px;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .action-section form {
+      flex: 1;
+    }
+
+    .trade-button {
+      padding: 14px 20px;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .action-section {
+      gap: 16px;
+      padding: 20px;
+      margin-top: 24px;
+      justify-content: flex-start;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .action-section form {
+      flex: 1;
+    }
+
+    .trade-button {
+      padding: 16px 24px;
+      font-size: 1.05rem;
+      white-space: nowrap;
+    }
   }
 
   .related-section {
@@ -1024,8 +1129,8 @@
           </div>
 
           <div class="action-section">
-            <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}">
-              {{ csrf_token() }}
+            <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}" style="flex: 1;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="trade-button">
                 🛒 Add to Cart
               </button>

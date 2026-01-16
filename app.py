@@ -84,6 +84,7 @@ else:
 # Import models and blueprints
 from models import *
 from routes import auth_bp, marketplace_bp, user_bp, items_bp, admin_bp
+from routes.favorites import favorites_bp
 from routes.notifications_api import notifications_bp
 from routes_account import account_bp
 from notifications import NotificationService
@@ -154,6 +155,7 @@ def check_maintenance_mode():
 def inject_cart_info():
     from flask_login import current_user
     from flask_wtf.csrf import generate_csrf
+    from models import Favorite
     
     if current_user.is_authenticated:
         cart = Cart.query.filter_by(user_id=current_user.id).first()
@@ -161,8 +163,16 @@ def inject_cart_info():
             cart_count = cart.get_item_count()
         else:
             cart_count = 0
-        return {'cart_count': cart_count, 'csrf_token': generate_csrf}
-    return {'cart_count': 0, 'csrf_token': generate_csrf}
+        
+        # Get favorites count
+        favorites_count = Favorite.query.filter_by(user_id=current_user.id).count()
+        
+        return {
+            'cart_count': cart_count,
+            'favorites_count': favorites_count,
+            'csrf_token': generate_csrf
+        }
+    return {'cart_count': 0, 'favorites_count': 0, 'csrf_token': generate_csrf}
 
 # ✅ Register blueprints
 app.register_blueprint(auth_bp)
@@ -170,6 +180,7 @@ app.register_blueprint(marketplace_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(items_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(favorites_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(account_bp)
 
