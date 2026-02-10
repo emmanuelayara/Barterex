@@ -86,6 +86,7 @@ from models import *
 from routes import auth_bp, marketplace_bp, user_bp, items_bp, admin_bp
 from routes.favorites import favorites_bp
 from routes.notifications_api import notifications_bp
+from routes.wishlist import wishlist_bp
 from routes_account import account_bp
 from notifications import NotificationService
 
@@ -182,6 +183,7 @@ app.register_blueprint(items_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(favorites_bp)
 app.register_blueprint(notifications_bp)
+app.register_blueprint(wishlist_bp)
 app.register_blueprint(account_bp)
 
 # ✅ Error Handlers
@@ -283,9 +285,39 @@ def log_request():
     logger.debug(f"Request: {request.method} {request.path} from {request.remote_addr}")
 
 @app.after_request
-def log_response(response):
-    """Log outgoing responses."""
-    logger.debug(f"Response: {response.status_code} for {request.method} {request.path}")
+def apply_cache_control_headers(response):
+    """
+    Apply cache-control headers to prevent browser caching of dynamic pages.
+    CRITICAL FIX: Prevents infinite redirect loops when using browser back button.
+    
+    This handler applies no-cache headers to all dynamic content EXCEPT:
+    - Files with static extensions (.css, .js, .png, .jpg, .gif, .ico, .svg, .woff, .woff2, .ttf, .eot)
+    - Files served from /static/ directory
+    """
+    # Get the request path to check if it's a static file
+    path = request.path.lower()
+    static_extensions = ('.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.eot', '.mp4', '.webm')
+    
+    # Don't cache static files served from /static/
+    if path.startswith('/static/') and any(path.endswith(ext) for ext in static_extensions):
+        # Allow normal caching for static assets (1 year)
+        response.cache_control.max_age = 31536000
+        response.cache_control.public = True
+        logger.debug(f"Static asset caching allowed: {path}")
+        return response
+    
+    # CRITICAL: Apply no-cache headers to ALL other responses
+    # This prevents browser caching which causes infinite redirect loops when using back button
+    response.cache_control.no_cache = True
+    response.cache_control.no_store = True
+    response.cache_control.must_revalidate = True
+    response.cache_control.max_age = 0
+    response.cache_control.private = True
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    
+    logger.debug(f"Response: {response.status_code} for {request.method} {path} - Cache-control: no-cache")
+    
     return response
 
 if __name__ == '__main__':

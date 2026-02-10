@@ -258,10 +258,12 @@ def notifications():
         
         query = Notification.query.filter_by(user_id=current_user.id)
         
+        # Apply filter based on read status
         if filter_type == 'unread':
             query = query.filter_by(is_read=False)
         elif filter_type == 'read':
             query = query.filter_by(is_read=True)
+        # 'all' filter shows all notifications regardless of read status
         
         notes = query.order_by(Notification.created_at.desc()).paginate(page=page, per_page=9)
         

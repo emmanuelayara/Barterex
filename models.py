@@ -720,3 +720,71 @@ class Favorite(db.Model):
     
     def __repr__(self):
         return f'<Favorite user_id={self.user_id}, item_id={self.item_id}>'
+
+
+# ==================== WISHLIST DATABASE MODEL ====================
+class Wishlist(db.Model):
+    """User's watchlist for items they want or searching for"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    
+    # Either specific item name OR category
+    item_name = db.Column(db.String(255), nullable=True)  # e.g., "iPhone 13 Pro"
+    category = db.Column(db.String(100), nullable=True)   # e.g., "Electronics", "Furniture"
+    search_type = db.Column(db.String(20), default='item')  # 'item' for specific name, 'category' for category
+    
+    # Notification settings
+    is_active = db.Column(db.Boolean, default=True, index=True)  # User can pause/resume notifications
+    notify_via_email = db.Column(db.Boolean, default=True)  # Whether to send email notifications
+    notify_via_app = db.Column(db.Boolean, default=True)  # Whether to send in-app notifications
+    
+    # Tracking
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    last_notified_at = db.Column(db.DateTime, nullable=True)  # Prevent sending duplicate notifications
+    notification_count = db.Column(db.Integer, default=0)  # How many times user was notified
+    
+    # Relationships
+    user = db.relationship('User', backref='wishlists')
+    
+    # Database indexes for frequently queried fields
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'item_name', 'search_type', name='unique_wishlist_item'),
+        db.Index('idx_wishlist_user_id', 'user_id'),
+        db.Index('idx_wishlist_category', 'category'),
+        db.Index('idx_wishlist_active', 'is_active'),
+    )
+    
+    def __repr__(self):
+        if self.search_type == 'item':
+            return f'<Wishlist user_id={self.user_id}, item_name={self.item_name}>'
+        else:
+            return f'<Wishlist user_id={self.user_id}, category={self.category}>'
+
+
+# ==================== WISHLIST MATCH DATABASE MODEL ====================
+class WishlistMatch(db.Model):
+    """Track which items matched wishlists (prevent duplicate emails to same user)"""
+    id = db.Column(db.Integer, primary_key=True)
+    wishlist_id = db.Column(db.Integer, db.ForeignKey('wishlist.id'), nullable=False, index=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False, index=True)
+    
+    # Notification tracking
+    notification_sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    email_sent = db.Column(db.Boolean, default=False)
+    app_notification_sent = db.Column(db.Boolean, default=False)
+    notification_id = db.Column(db.Integer, db.ForeignKey('notification.id'), nullable=True)
+    
+    # Relationships
+    wishlist = db.relationship('Wishlist', backref='matched_items')
+    item = db.relationship('Item', backref='wishlist_matches')
+    notification = db.relationship('Notification', foreign_keys=[notification_id])
+    
+    # Database indexes for frequently queried fields
+    __table_args__ = (
+        db.UniqueConstraint('wishlist_id', 'item_id', name='unique_wishlist_match'),
+        db.Index('idx_wishlist_match_wishlist_id', 'wishlist_id'),
+        db.Index('idx_wishlist_match_item_id', 'item_id'),
+    )
+    
+    def __repr__(self):
+        return f'<WishlistMatch wishlist_id={self.wishlist_id}, item_id={self.item_id}>'

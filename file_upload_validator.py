@@ -406,7 +406,7 @@ def validate_upload(file_obj, max_size=10*1024*1024, allowed_extensions={'png', 
         logger.info(f"Virus scan result: {scan_msg}")
     
     # All validations passed
-    logger.info(f"✅ File upload passed ALL validation layers - File: {file_obj.filename}, Type: {detected_type}, Size: {len(file_data)} bytes")
+    logger.info(f"[UPLOAD] File upload passed ALL validation layers - File: {file_obj.filename}, Type: {detected_type}, Size: {len(file_data)} bytes")
     return True, "All validation layers passed", detected_type
 
 

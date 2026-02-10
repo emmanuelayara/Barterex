@@ -1,0 +1,881 @@
+{% extends "base.html" %}
+
+{% block title %}My Wishlists - Barterex{% endblock %}
+
+{% block content %}
+<div class="wishlist-manage-container">
+  <!-- Header Section -->
+  <div class="wishlist-header">
+    <div class="header-content">
+      <h1>My Wishlists</h1>
+      <p class="subtitle">Monitor items you're searching for and manage your preferences</p>
+    </div>
+    <button class="btn-primary" id="addWishlistBtn">
+      <span class="icon">+</span> Add Wishlist
+    </button>
+  </div>
+
+  <!-- Stats Section -->
+  <div class="wishlist-stats">
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Wishlists</div>
+        <div class="stat-value">{{ total_wishlists }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-content">
+        <div class="stat-label">Active Searches</div>
+        <div class="stat-value">{{ wishlists|selectattr('is_active')|list|length }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📧</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Notifications</div>
+        <div class="stat-value">{{ wishlists|map(attribute='notification_count')|sum }}</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✓</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Matches</div>
+        <div class="stat-value">{{ wishlists|map(attribute='match_count')|sum }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wishlists Grid -->
+  {% if wishlists %}
+    <div class="wishlists-grid">
+      {% for wishlist in wishlists %}
+        <div class="wishlist-card {% if not wishlist.is_active %}inactive{% endif %}">
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="wishlist-title">
+              {% if wishlist.search_type == 'item' %}
+                <div class="type-badge item-type">Item Search</div>
+                <h3>{{ wishlist.item_name }}</h3>
+              {% else %}
+                <div class="type-badge category-type">Category</div>
+                <h3>{{ wishlist.category }}</h3>
+              {% endif %}
+            </div>
+            <div class="status-badge {% if wishlist.is_active %}active{% else %}paused{% endif %}">
+              {% if wishlist.is_active %}
+                <span class="status-dot"></span> Active
+              {% else %}
+                <span class="status-dot paused"></span> Paused
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Card Metrics -->
+          <div class="card-metrics">
+            <div class="metric">
+              <span class="metric-label">Matches:</span>
+              <span class="metric-value">{{ wishlist.match_count }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Notifications:</span>
+              <span class="metric-value">{{ wishlist.notification_count }}</span>
+            </div>
+          </div>
+
+          <!-- Notification Settings -->
+          <div class="notification-settings">
+            <label class="setting-toggle">
+              <input type="checkbox" class="notify-email-toggle" 
+                     data-wishlist-id="{{ wishlist.id }}"
+                     {% if wishlist.notify_via_email %}checked{% endif %}>
+              <span class="toggle-label">
+                <span class="icon">📧</span> Email
+              </span>
+            </label>
+            <label class="setting-toggle">
+              <input type="checkbox" class="notify-app-toggle"
+                     data-wishlist-id="{{ wishlist.id }}"
+                     {% if wishlist.notify_via_app %}checked{% endif %}>
+              <span class="toggle-label">
+                <span class="icon">🔔</span> In-App
+              </span>
+            </label>
+          </div>
+
+          <!-- Card Footer with Actions -->
+          <div class="card-footer">
+            <div class="dates">
+              <small class="date-info">
+                Created: {{ wishlist.created_at.strftime('%b %d, %Y') }}
+              </small>
+              {% if wishlist.last_notified_at %}
+                <small class="date-info">
+                  Last: {{ wishlist.last_notified_at.strftime('%b %d, %Y %H:%M') }}
+                </small>
+              {% endif %}
+            </div>
+            
+            <div class="actions">
+              {% if wishlist.match_count > 0 %}
+                <a href="#" class="btn-secondary btn-sm" data-wishlist-id="{{ wishlist.id }}">
+                  View Matches ({{ wishlist.match_count }})
+                </a>
+              {% endif %}
+              
+              {% if wishlist.is_active %}
+                <button class="btn-warning btn-sm pause-btn" data-wishlist-id="{{ wishlist.id }}">
+                  Pause
+                </button>
+              {% else %}
+                <button class="btn-success btn-sm resume-btn" data-wishlist-id="{{ wishlist.id }}">
+                  Resume
+                </button>
+              {% endif %}
+              
+              <button class="btn-danger btn-sm remove-btn" data-wishlist-id="{{ wishlist.id }}">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+      <div class="pagination-section">
+        <nav class="pagination">
+          {% if pagination.has_prev %}
+            <a href="{{ url_for('wishlist.manage_wishlists', page=pagination.prev_num) }}" class="page-link">Previous</a>
+          {% endif %}
+          
+          <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          
+          {% if pagination.has_next %}
+            <a href="{{ url_for('wishlist.manage_wishlists', page=pagination.next_num) }}" class="page-link">Next</a>
+          {% endif %}
+        </nav>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h2>No Wishlists Yet</h2>
+      <p>Start creating wishlists to get notified when items matching your interests become available!</p>
+      <button class="btn-primary btn-lg" id="addWishlistBtnEmpty">
+        Create Your First Wishlist
+      </button>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Add Wishlist Modal -->
+<div class="modal" id="addWishlistModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Add New Wishlist</h2>
+      <button class="btn-close" id="closeModal">&times;</button>
+    </div>
+    
+    <form id="addWishlistForm" class="wishlist-form">
+      <!-- Search Type Toggle -->
+      <div class="form-group">
+        <label>What are you looking for?</label>
+        <div class="type-selector">
+          <label class="type-option">
+            <input type="radio" name="search_type" value="item" checked>
+            <span>Specific Item</span>
+          </label>
+          <label class="type-option">
+            <input type="radio" name="search_type" value="category">
+            <span>Category</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Item Name Input -->
+      <div class="form-group" id="itemNameGroup">
+        <label for="itemName">Item Name *</label>
+        <input type="text" id="itemName" name="item_name" 
+               placeholder="e.g., iPhone 13 Pro, Gaming Laptop"
+               class="form-control">
+        <small class="help-text">We'll notify you when similar items are available</small>
+      </div>
+
+      <!-- Category Input -->
+      <div class="form-group" id="categoryGroup" style="display:none;">
+        <label for="category">Category *</label>
+        <select id="category" name="category" class="form-control">
+          <option value="">Select a category...</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Furniture">Furniture</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Books">Books</option>
+          <option value="Home & Garden">Home & Garden</option>
+          <option value="Sports">Sports</option>
+          <option value="Art & Collectibles">Art & Collectibles</option>
+          <option value="Toys">Toys</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Notification Settings -->
+      <div class="form-group">
+        <label>Notification Preferences</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="notify_via_email" checked>
+            <span class="checkbox-text">
+              <span class="icon">📧</span> Email notifications
+            </span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="notify_via_app" checked>
+            <span class="checkbox-text">
+              <span class="icon">🔔</span> In-app notifications
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary">Create Wishlist</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .wishlist-manage-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .wishlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .header-content h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: #666;
+    font-size: 0.95rem;
+  }
+
+  /* Stats Section */
+  .wishlist-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    margin-right: 1rem;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+  }
+
+  /* Wishlists Grid */
+  .wishlists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .wishlist-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .wishlist-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .wishlist-card.inactive {
+    opacity: 0.7;
+    background: #f9f9f9;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .wishlist-title h3 {
+    margin: 0.5rem 0 0;
+    font-size: 1.2rem;
+    word-break: break-word;
+  }
+
+  .type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .item-type {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+
+  .category-type {
+    background: #f3e5f5;
+    color: #7b1fa2;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .status-badge.active {
+    background: #e8f5e9;
+    color: #388e3c;
+  }
+
+  .status-badge.paused {
+    background: #fff3e0;
+    color: #f57c00;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #388e3c;
+  }
+
+  .status-dot.paused {
+    background: #f57c00;
+  }
+
+  /* Card Metrics */
+  .card-metrics {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 8px;
+  }
+
+  .metric {
+    flex: 1;
+    text-align: center;
+  }
+
+  .metric-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+  }
+
+  .metric-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+  }
+
+  /* Notification Settings */
+  .notification-settings {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .setting-toggle {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  .setting-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  /* Card Footer */
+  .card-footer {
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+  }
+
+  .dates {
+    margin-bottom: 1rem;
+  }
+
+  .date-info {
+    display: block;
+    color: #999;
+    font-size: 0.8rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+  }
+
+  .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+
+  .btn-warning {
+    background: #ffc107;
+    color: #333;
+  }
+
+  .btn-warning:hover {
+    background: #ffb300;
+  }
+
+  .btn-success {
+    background: #28a745;
+    color: white;
+  }
+
+  .btn-success:hover {
+    background: #218838;
+  }
+
+  .btn-danger {
+    background: #dc3545;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background: #c82333;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #f9f9f9;
+    border-radius: 12px;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h2 {
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    color: #666;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  /* Forms */
+  .wishlist-form {
+    padding: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .type-selector {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .type-option {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .type-option input[type="radio"] {
+    cursor: pointer;
+  }
+
+  .type-option:has(input:checked) {
+    background: #f0f0f0;
+    border-color: #667eea;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .checkbox-text {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .help-text {
+    display: block;
+    margin-top: 0.5rem;
+    color: #999;
+    font-size: 0.85rem;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: #667eea;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+  }
+
+  .btn-secondary:hover {
+    background: #e0e0e0;
+  }
+
+  /* Pagination */
+  .pagination-section {
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .page-link {
+    padding: 0.5rem 1rem;
+    background: #f0f0f0;
+    color: #667eea;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .page-link:hover {
+    background: #667eea;
+    color: white;
+  }
+
+  .page-info {
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .wishlist-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .wishlist-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wishlists-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stat-card {
+      padding: 1rem;
+    }
+
+    .stat-icon {
+      font-size: 1.5rem;
+      margin-right: 0.75rem;
+    }
+  }
+</style>
+
+<script>
+  // Modal Management
+  const modal = document.getElementById('addWishlistModal');
+  const addButtons = document.querySelectorAll('#addWishlistBtn, #addWishlistBtnEmpty');
+  const closeBtn = document.getElementById('closeModal');
+  const cancelBtn = document.getElementById('cancelBtn');
+
+  addButtons.forEach(btn => {
+    btn.addEventListener('click', () => modal.classList.add('active'));
+  });
+
+  [closeBtn, cancelBtn].forEach(btn => {
+    btn.addEventListener('click', () => modal.classList.remove('active'));
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
+
+  // Toggle between Item and Category
+  const searchTypeInputs = document.querySelectorAll('input[name="search_type"]');
+  const itemNameGroup = document.getElementById('itemNameGroup');
+  const categoryGroup = document.getElementById('categoryGroup');
+
+  searchTypeInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      if (input.value === 'item') {
+        itemNameGroup.style.display = 'block';
+        categoryGroup.style.display = 'none';
+        document.getElementById('itemName').required = true;
+        document.getElementById('category').required = false;
+      } else {
+        itemNameGroup.style.display = 'none';
+        categoryGroup.style.display = 'block';
+        document.getElementById('itemName').required = false;
+        document.getElementById('category').required = true;
+      }
+    });
+  });
+
+  // Add Wishlist Form
+  document.getElementById('addWishlistForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = {
+      search_type: formData.get('search_type'),
+      item_name: formData.get('item_name'),
+      category: formData.get('category'),
+      notify_via_email: formData.has('notify_via_email'),
+      notify_via_app: formData.has('notify_via_app')
+    };
+
+    try {
+      const response = await fetch('/wishlist/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + error.error);
+      }
+    } catch (error) {
+      alert('Failed to add wishlist');
+    }
+  });
+
+  // Remove Wishlist
+  document.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to remove this wishlist?')) return;
+      
+      const wishlistId = btn.dataset.wishlistId;
+      try {
+        const response = await fetch(`/wishlist/remove/${wishlistId}`, { method: 'POST' });
+        if (response.ok) window.location.reload();
+        else alert('Failed to remove wishlist');
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+  });
+
+  // Pause/Resume
+  document.querySelectorAll('.pause-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const wishlistId = btn.dataset.wishlistId;
+      try {
+        const response = await fetch(`/wishlist/pause/${wishlistId}`, { method: 'POST' });
+        if (response.ok) window.location.reload();
+      } catch (error) {
+        alert('Error pausing wishlist');
+      }
+    });
+  });
+
+  document.querySelectorAll('.resume-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const wishlistId = btn.dataset.wishlistId;
+      try {
+        const response = await fetch(`/wishlist/resume/${wishlistId}`, { method: 'POST' });
+        if (response.ok) window.location.reload();
+      } catch (error) {
+        alert('Error resuming wishlist');
+      }
+    });
+  });
+</script>
+{% endblock %}

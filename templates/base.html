@@ -1113,20 +1113,20 @@
             
             <ul class="nav-links">
                 <li class="nav-item">
-                    <a href="{{ url_for('marketplace.marketplace') }}" class="nav-link" data-tooltip="Marketplace">
+                    <a href="{{ url_for('marketplace.marketplace') }}" class="nav-link{% if request.endpoint and (request.endpoint == 'marketplace.marketplace' or request.endpoint.startswith('marketplace.')) %} active{% endif %}" data-tooltip="Marketplace">
                         <i class="fas fa-store"></i>
                         <span class="nav-text">Marketplace</span>
                     </a>
                 </li>
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="{{ url_for('items.upload_item') }}" class="nav-link" data-tooltip="Upload Item">
+                        <a href="{{ url_for('items.upload_item') }}" class="nav-link{% if request.endpoint == 'items.upload_item' %} active{% endif %}" data-tooltip="Upload Item">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span class="nav-text">Upload</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ url_for('items.view_cart') }}" class="nav-link" data-tooltip="Shopping Cart" style="position: relative;">
+                        <a href="{{ url_for('items.view_cart') }}" class="nav-link{% if request.endpoint == 'items.view_cart' %} active{% endif %}" data-tooltip="Shopping Cart" style="position: relative;">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="nav-text">Cart</span>
                             {% if cart_count > 0 %}<span class="badge" style="position: absolute; top: -8px; right: -8px; background: var(--primary-orange); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">{{ cart_count }}</span>{% endif %}
@@ -1140,13 +1140,13 @@
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a href="{{ url_for('auth.login') }}" class="nav-link" data-tooltip="Login">
+                        <a href="{{ url_for('auth.login') }}" class="nav-link{% if request.endpoint == 'auth.login' %} active{% endif %}" data-tooltip="Login">
                             <i class="fas fa-sign-in-alt"></i>
                             <span class="nav-text">Login</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ url_for('auth.register') }}" class="nav-link" data-tooltip="Register">
+                        <a href="{{ url_for('auth.register') }}" class="nav-link{% if request.endpoint == 'auth.register' %} active{% endif %}" data-tooltip="Register">
                             <i class="fas fa-user-plus"></i>
                             <span class="nav-text">Register</span>
                         </a>
@@ -1268,6 +1268,11 @@ document.head.appendChild(style);
 
 // Initialize loading overlay and toast container on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // CRITICAL FIX: Hide any loading overlay immediately when page loads
+    // This fixes the issue where loading overlay stays visible from previous navigation
+    hideLoading();
+    clearTimeout(loadingTimeout);
+    
     // Create loading overlay
     const loadingOverlay = document.createElement('div');
     loadingOverlay.id = 'global-loading-overlay';
@@ -1787,46 +1792,126 @@ function notifyOrderStatus(orderId, status) {
    ======================================== */
 
 function showLoading(message = 'Loading...') {
-    const overlay = document.getElementById('loadingOverlay');
-    const text = overlay.querySelector('.spinner-text');
-    if (text) {
-        text.textContent = message;
+    // Use the global-loading-overlay that was created in DOMContentLoaded
+    const overlay = document.getElementById('global-loading-overlay');
+    if (overlay) {
+        const text = overlay.querySelector('.loading-text');
+        if (text) text.textContent = message;
+        overlay.style.display = 'flex';
     }
-    overlay.classList.remove('hidden');
+    // Also support the old loadingOverlay element if it exists
+    const oldOverlay = document.getElementById('loadingOverlay');
+    if (oldOverlay) {
+        oldOverlay.classList.remove('hidden');
+    }
 }
 
 function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    overlay.classList.add('hidden');
+    // Hide the global-loading-overlay
+    const overlay = document.getElementById('global-loading-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+    // Also hide the old loadingOverlay element if it exists
+    const oldOverlay = document.getElementById('loadingOverlay');
+    if (oldOverlay) {
+        oldOverlay.classList.add('hidden');
+    }
 }
 
-// Auto-hide loading on page load
+// Auto-hide loading on page load - with multiple safety nets
 window.addEventListener('load', function() {
-    setTimeout(hideLoading, 300);
+    clearTimeout(loadingTimeout);
+    setTimeout(hideLoading, 100);
+    console.log('[Loading] Auto-hide triggered by load event');
 });
+
+// CRITICAL: Run hideLoading as soon as script loads (not waiting for DOM)
+// This ensures loading is hidden even before DOMContentLoaded
+(function() {
+    // Call hideLoading immediately if loading overlay exists
+    const hideLoadingIfVisible = function() {
+        try {
+            const overlay = document.getElementById('global-loading-overlay');
+            if (overlay && overlay.style.display === 'flex') {
+                overlay.style.display = 'none';
+                console.log('[Loading] Hidden immediately on script execution');
+            }
+        } catch (e) {
+            console.log('[Loading] Early hide attempt (overlay not yet created)');
+        }
+    };
+    
+    // Try to hide immediately
+    hideLoadingIfVisible();
+    
+    // Also try after a very short delay
+    setTimeout(hideLoadingIfVisible, 50);
+})();
 
 // Show loading on form submission
 document.addEventListener('submit', function(event) {
     if (event.target && !event.target.classList.contains('no-loading')) {
         showLoading();
+        // Auto-hide after 10 seconds as a safeguard
+        loadingTimeout = setTimeout(function() {
+            hideLoading();
+            console.warn('Loading overlay auto-hidden after 10 second timeout');
+        }, 10000);
     }
 }, true);
 
-// Show loading on link click for navigation
+// Show loading on link click for navigation (but NOT for simple page views)
+// Only show loading for actions like checkout, form submissions, etc.
 document.addEventListener('click', function(event) {
     const link = event.target.closest('a');
     if (link && link.href && !link.target && !link.classList.contains('no-loading')) {
         const href = link.getAttribute('href');
-        // Don't show loading for hash links, external links, or javascript links
-        if (href && !href.startsWith('#') && !href.startsWith('javascript:') && href.startsWith('/')) {
+        // Only show loading for specific routes that need it (checkout, admin, etc.)
+        const showLoadingFor = ['/checkout', '/finalize_purchase', '/admin/', '/process', '/confirm', '/submit'];
+        const shouldShowLoading = showLoadingFor.some(route => href.includes(route));
+        
+        if (shouldShowLoading && href && !href.startsWith('#') && !href.startsWith('javascript:') && href.startsWith('/')) {
             showLoading();
+            // Auto-hide after 10 seconds as a safeguard
+            loadingTimeout = setTimeout(function() {
+                hideLoading();
+                console.warn('Loading overlay auto-hidden after 10 second timeout on navigation');
+            }, 10000);
         }
     }
 }, true);
 
-/* ========================================
-   SEARCH AUTOCOMPLETE
-   ======================================== */
+// Global variable for loading timeout
+let loadingTimeout;
+
+// Hide loading on navigation back (popstate)
+window.addEventListener('popstate', function(event) {
+    hideLoading();
+    clearTimeout(loadingTimeout);
+});
+
+// Hide loading on page visibility change (user switches tabs)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        clearTimeout(loadingTimeout);
+    }
+});
+
+// Hide loading if user tries to leave the page
+window.addEventListener('beforeunload', function() {
+    clearTimeout(loadingTimeout);
+});
+
+// CRITICAL FIX: Auto-hide loading after page becomes interactive
+// This fixes infinite loading when redirects prevent page.load from firing
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(hideLoading, 500);
+    });
+} else if (document.readyState === 'interactive') {
+    setTimeout(hideLoading, 500);
+}
 
 class SearchAutocomplete {
     constructor() {

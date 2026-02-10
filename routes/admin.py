@@ -908,6 +908,19 @@ def approve_item(item_id):
             )
         
         db.session.add(notification)
+        
+        # Find and notify users with matching wishlists
+        try:
+            from services.wishlist_service import find_wishlist_matches, send_wishlist_notification
+            matches = find_wishlist_matches(item)
+            for wishlist, user in matches:
+                send_wishlist_notification(wishlist, item, user)
+            if matches:
+                logger.info(f"Sent {len(matches)} wishlist notifications for approved item {item_id}")
+        except Exception as e:
+            logger.warning(f"Error processing wishlist matches for item {item_id}: {str(e)}", exc_info=True)
+            # Don't fail item approval if wishlist processing has issues
+        
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
         
     except ValidationError as e:

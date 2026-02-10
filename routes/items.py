@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify, make_response
 from flask_login import login_required, current_user, logout_user
 from flask_wtf.csrf import generate_csrf
 import os
@@ -171,6 +171,7 @@ def upload_item():
             
             uploaded_images = []
             upload_error_occurred = False
+            validation_errors = []  # Collect all errors to show together
             
             # Use images_from_request instead of form.images.data since AJAX FormData doesn't populate form fields properly
             if images_from_request:
@@ -183,7 +184,7 @@ def upload_item():
                             # First validate file type
                             is_valid, error_msg = validate_image_type(file.filename, allowed_extensions)
                             if not is_valid:
-                                flash(error_msg, 'danger')
+                                validation_errors.append(f"• {file.filename}: {error_msg}")
                                 upload_error_occurred = True
                                 continue
                             
@@ -194,7 +195,7 @@ def upload_item():
                             
                             is_valid, error_msg = validate_image_size(file_size, file.filename, max_size_mb=10)
                             if not is_valid:
-                                flash(error_msg, 'danger')
+                                validation_errors.append(f"• {file.filename}: {error_msg}")
                                 upload_error_occurred = True
                                 continue
                             
@@ -209,7 +210,7 @@ def upload_item():
                             except FileUploadError as e:
                                 # Convert technical error to user-friendly message
                                 user_message = get_user_friendly_error_message(str(e), 'images')
-                                flash(user_message, 'danger')
+                                validation_errors.append(f"• {file.filename}: {user_message}")
                                 logger.warning(f"File validation failed for user {current_user.username}: {str(e)}")
                                 upload_error_occurred = True
                                 continue
@@ -254,7 +255,7 @@ def upload_item():
                             db.session.rollback()
                             logger.error(f"Error uploading image: {str(e)}", exc_info=True)
                             user_message = get_user_friendly_error_message(str(e), 'images')
-                            flash(user_message, 'danger')
+                            validation_errors.append(f"• {file.filename}: {user_message}")
                             upload_error_occurred = True
                             continue
             
@@ -262,6 +263,16 @@ def upload_item():
             if upload_error_occurred:
                 db.session.rollback()
                 logger.warning(f"Item upload aborted due to image errors - User: {current_user.username}")
+                
+                # Flash all validation errors for user visibility
+                if validation_errors:
+                    # Flash individual errors for clarity
+                    flash("❌ Your upload failed due to the following issues:", 'danger')
+                    for error in validation_errors:
+                        flash(error, 'danger')
+                else:
+                    flash('❌ Image upload failed. Please check your files and try again.', 'danger')
+                
                 return redirect(url_for('items.upload_item'))
             
             if not uploaded_images:
@@ -434,6 +445,22 @@ def clear_cart():
         return redirect(url_for('items.view_cart'))
 
 
+@items_bp.route('/set_checkout_return_flag', methods=['POST'])
+@login_required
+def set_checkout_return_flag():
+    """
+    AJAX endpoint to set the returning_from_checkout flag in session.
+    This prevents infinite redirect loops when user navigates back from checkout.
+    """
+    try:
+        session['returning_from_checkout'] = True
+        logger.info(f"Checkout return flag set - User: {current_user.username}")
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error setting checkout return flag: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @items_bp.route('/checkout')
 @rate_limit("10 per minute")  # Rate limit: 10 requests per minute per IP
 @login_required
@@ -442,8 +469,17 @@ def checkout():
     """
     NEW FLOW: Checkout now only validates items and sets up pending order.
     Does NOT purchase yet - user must complete delivery setup first.
+    FIXED: Prevent infinite redirect loop when using browser back button.
     """
     try:
+        # CRITICAL FIX: If pending_checkout_items exists in session when user visits /checkout,
+        # it means they're using the browser back button (or returning from /order_item).
+        # Clear the session to prevent infinite redirect loop.
+        if session.get('pending_checkout_items'):
+            logger.info(f"Clearing pending checkout items (user navigated back) - User: {current_user.username}")
+            session.pop('pending_checkout_items', None)
+            session.pop('pending_delivery', None)
+        
         cart = Cart.query.filter_by(user_id=current_user.id).first()
         
         if not cart or not cart.items:
@@ -470,6 +506,7 @@ def checkout():
         logger.info(f"Checkout initialized - User: {current_user.username}, Items: {len(available_items)}, Total: {total_cost}")
         
         # Redirect to delivery setup page (no purchase yet)
+        # Cache-control headers are applied globally in app.py after_request handler
         return redirect(url_for('items.order_item'))
         
     except InsufficientCreditsError as e:
@@ -1046,6 +1083,7 @@ def order_item():
             
             # Render the order review page with delivery details and purchase confirmation button
             total_credits = sum(item.value for item in items)
+            # Cache-control headers are applied globally in app.py after_request handler
             return render_template('order_review.html', 
                                  form=form, 
                                  items=items,
@@ -1059,7 +1097,9 @@ def order_item():
         except Exception as e:
             logger.error(f"Error in delivery setup for user {current_user.id}: {str(e)}", exc_info=True)
             flash('An error occurred while setting up delivery. Please try again.', 'danger')
+            # Cache-control headers are applied globally in app.py after_request handler
             return render_template('order_item.html', form=form, stations=stations, items=items)
     
+    # Cache-control headers are applied globally in app.py after_request handler
     return render_template('order_item.html', form=form, stations=stations, items=items)
 
