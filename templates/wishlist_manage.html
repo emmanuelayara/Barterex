@@ -119,9 +119,13 @@
             
             <div class="actions">
               {% if wishlist.match_count > 0 %}
-                <a href="#" class="btn-secondary btn-sm" data-wishlist-id="{{ wishlist.id }}">
+                <button class="btn-secondary btn-sm view-matches-btn" 
+                        data-wishlist-id="{{ wishlist.id }}"
+                        data-search-type="{{ wishlist.search_type }}"
+                        data-item-name="{{ wishlist.item_name if wishlist.search_type == 'item' else '' }}"
+                        data-category="{{ wishlist.category if wishlist.search_type == 'category' else '' }}">
                   View Matches ({{ wishlist.match_count }})
-                </a>
+                </button>
               {% endif %}
               
               {% if wishlist.is_active %}
@@ -284,7 +288,7 @@
   .stat-card {
     display: flex;
     align-items: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #054e97 0%, #043a72 100%);
     color: white;
     padding: 1.5rem;
     border-radius: 12px;
@@ -315,22 +319,23 @@
   }
 
   .wishlist-card {
-    background: white;
-    border: 1px solid #ddd;
+    background: linear-gradient(135deg, #f0f5ff 0%, #e8f1ff 100%);
+    border: 1px solid #054e97;
     border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(5, 78, 151, 0.15);
     transition: all 0.3s ease;
   }
 
   .wishlist-card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(5, 78, 151, 0.25);
     transform: translateY(-2px);
+    background: linear-gradient(135deg, #e8f1ff 0%, #dde8ff 100%);
   }
 
   .wishlist-card.inactive {
     opacity: 0.7;
-    background: #f9f9f9;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ececec 100%);
   }
 
   .card-header {
@@ -342,7 +347,9 @@
 
   .wishlist-title h3 {
     margin: 0.5rem 0 0;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #054e97;
     word-break: break-word;
   }
 
@@ -356,13 +363,13 @@
   }
 
   .item-type {
-    background: #e3f2fd;
-    color: #1976d2;
+    background: #054e97;
+    color: white;
   }
 
   .category-type {
-    background: #f3e5f5;
-    color: #7b1fa2;
+    background: #054e97;
+    color: white;
   }
 
   .status-badge {
@@ -609,8 +616,8 @@
 
   .form-control:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #054e97;
+    box-shadow: 0 0 0 3px rgba(5, 78, 151, 0.1);
   }
 
   .type-selector {
@@ -635,8 +642,8 @@
   }
 
   .type-option:has(input:checked) {
-    background: #f0f0f0;
-    border-color: #667eea;
+    background: #e8f1ff;
+    border-color: #054e97;
   }
 
   .checkbox-group {
@@ -688,14 +695,14 @@
   }
 
   .btn-primary {
-    background: #667eea;
+    background: #054e97;
     color: white;
   }
 
   .btn-primary:hover {
-    background: #5568d3;
+    background: #043a72;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(5, 78, 151, 0.3);
   }
 
   .btn-secondary {
@@ -723,14 +730,14 @@
   .page-link {
     padding: 0.5rem 1rem;
     background: #f0f0f0;
-    color: #667eea;
+    color: #054e97;
     text-decoration: none;
     border-radius: 6px;
     transition: all 0.2s;
   }
 
   .page-link:hover {
-    background: #667eea;
+    background: #054e97;
     color: white;
   }
 
@@ -741,6 +748,10 @@
 
   /* Responsive */
   @media (max-width: 768px) {
+    .wishlist-manage-container {
+      padding: 1rem;
+    }
+
     .wishlist-header {
       flex-direction: column;
       align-items: flex-start;
@@ -749,10 +760,7 @@
 
     .wishlist-stats {
       grid-template-columns: repeat(2, 1fr);
-    }
-
-    .wishlists-grid {
-      grid-template-columns: 1fr;
+      gap: 0.75rem;
     }
 
     .stat-card {
@@ -762,6 +770,216 @@
     .stat-icon {
       font-size: 1.5rem;
       margin-right: 0.75rem;
+    }
+
+    .wishlists-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .wishlist-title h3 {
+      font-size: 1.2rem;
+    }
+
+    .wishlist-details {
+      font-size: 0.95rem;
+    }
+
+    .wishlist-details p {
+      font-size: 0.95rem;
+      margin: 0.4rem 0;
+    }
+
+    .card-metrics {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .metric {
+      flex: 1 1 calc(50% - 0.25rem);
+    }
+
+    .actions {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .btn-sm {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .btn-primary, .btn-secondary {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+    }
+
+    .type-selector {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .type-option {
+      padding: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .modal-content {
+      width: 95%;
+      max-height: 95vh;
+    }
+
+    .wishlist-form {
+      padding: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .form-control {
+      padding: 0.65rem;
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .wishlist-manage-container {
+      padding: 0.75rem;
+    }
+
+    .section-title {
+      font-size: 1.4rem;
+    }
+
+    .wishlist-stats {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .stat-card {
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+
+    .stat-icon {
+      font-size: 1.25rem;
+      margin-right: 0.5rem;
+    }
+
+    .stat-body {
+      flex: 1;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+    }
+
+    .wishlist-title h3 {
+      font-size: 1.1rem;
+      margin-top: 0.3rem;
+    }
+
+    .type-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .status-badge {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.75rem;
+    }
+
+    .card-metrics {
+      padding: 0.75rem;
+      gap: 0.25rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+    }
+
+    .metric-value {
+      font-size: 1.2rem;
+    }
+
+    .wishlist-details p {
+      font-size: 0.9rem;
+      margin: 0.3rem 0;
+    }
+
+    .actions {
+      gap: 0.35rem;
+    }
+
+    .btn-sm {
+      padding: 0.5rem 0.5rem;
+      font-size: 0.8rem;
+      min-height: 42px;
+    }
+
+    .modal-content {
+      width: 96%;
+      padding: 0;
+    }
+
+    .modal-header {
+      padding: 1rem;
+    }
+
+    .modal-header h2 {
+      font-size: 1.2rem;
+    }
+
+    .wishlist-form {
+      padding: 0.75rem;
+    }
+
+    .form-group {
+      margin-bottom: 0.9rem;
+    }
+
+    .form-group label {
+      font-size: 0.9rem;
+    }
+
+    .form-control {
+      padding: 0.6rem;
+      font-size: 16px;
+    }
+
+    .type-selector {
+      gap: 0.5rem;
+      flex-direction: column;
+    }
+
+    .type-option {
+      padding: 0.6rem;
+      font-size: 0.85rem;
+    }
+
+    .checkbox-label {
+      font-size: 0.9rem;
+    }
+
+    .help-text {
+      font-size: 0.8rem;
     }
   }
 </style>
@@ -835,6 +1053,25 @@
     } catch (error) {
       alert('Failed to add wishlist');
     }
+  });
+
+  // View Matches - Navigate to Marketplace with Filter
+  document.querySelectorAll('.view-matches-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const searchType = btn.dataset.searchType;
+      const itemName = btn.dataset.itemName;
+      const category = btn.dataset.category;
+      
+      let marketplaceUrl = '/marketplace';
+      
+      if (searchType === 'item' && itemName) {
+        marketplaceUrl += `?search=${encodeURIComponent(itemName)}`;
+      } else if (searchType === 'category' && category) {
+        marketplaceUrl += `?category=${encodeURIComponent(category)}`;
+      }
+      
+      window.location.href = marketplaceUrl;
+    });
   });
 
   // Remove Wishlist
