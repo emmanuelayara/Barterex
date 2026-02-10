@@ -15,38 +15,6 @@
     </button>
   </div>
 
-  <!-- Stats Section -->
-  <div class="wishlist-stats">
-    <div class="stat-card">
-      <div class="stat-icon">📋</div>
-      <div class="stat-content">
-        <div class="stat-label">Total Wishlists</div>
-        <div class="stat-value">{{ total_wishlists }}</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">🎯</div>
-      <div class="stat-content">
-        <div class="stat-label">Active Searches</div>
-        <div class="stat-value">{{ wishlists|selectattr('is_active')|list|length }}</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">📧</div>
-      <div class="stat-content">
-        <div class="stat-label">Total Notifications</div>
-        <div class="stat-value">{{ wishlists|map(attribute='notification_count')|sum }}</div>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">✓</div>
-      <div class="stat-content">
-        <div class="stat-label">Total Matches</div>
-        <div class="stat-value">{{ wishlists|map(attribute='match_count')|sum }}</div>
-      </div>
-    </div>
-  </div>
-
   <!-- Wishlists Grid -->
   {% if wishlists %}
     <div class="wishlists-grid">
