@@ -98,6 +98,7 @@ def generate_transaction_explanation(order, user):
                 if item.item:  # Check if item relationship exists
                     items_list.append({
                         'name': item.item.name or 'Unknown Item',
+                        'item_number': item.item.item_number or 'N/A',
                         'condition': item.item.condition or 'Unknown',
                         'value': f"₦{item.item.value:,.0f}" if item.item.value else '₦0',
                         'location': item.item.location or 'Unknown'
@@ -106,6 +107,7 @@ def generate_transaction_explanation(order, user):
                 logger.error(f"Error processing item {item.id}: {str(item_error)}")
                 items_list.append({
                     'name': 'Error Loading Item',
+                    'item_number': 'N/A',
                     'condition': 'N/A',
                     'value': '₦0',
                     'location': 'N/A'
@@ -309,18 +311,19 @@ def generate_pdf_receipt(order, user):
         
         # Items ordered
         elements.append(Paragraph("📋 Items in This Order", heading_style))
-        items_data = [['Item Name', 'Condition', 'Value (₦)']]
+        items_data = [['Item #', 'Item Name', 'Condition', 'Value (₦)']]
         
         for item in order.items:
             items_data.append([
-                item.item.name[:30],
+                item.item.item_number[:12],
+                item.item.name[:25],
                 item.item.condition,
                 f"₦{item.item.value:,.0f}"
             ])
         
-        items_data.append(['', 'TOTAL:', f"₦{order.total_credits:,.0f}"])
+        items_data.append(['', '', 'TOTAL:', f"₦{order.total_credits:,.0f}"])
         
-        items_table = Table(items_data, colWidths=[3*inch, 1.5*inch, 1.5*inch])
+        items_table = Table(items_data, colWidths=[1.2*inch, 2.3*inch, 1.2*inch, 1.3*inch])
         items_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#054e97')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),

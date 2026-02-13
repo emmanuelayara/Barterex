@@ -83,7 +83,7 @@ else:
 
 # Import models and blueprints
 from models import *
-from routes import auth_bp, marketplace_bp, user_bp, items_bp, admin_bp
+from routes import auth_bp, marketplace_bp, user_bp, items_bp, admin_bp, contact_bp
 from routes.favorites import favorites_bp
 from routes.notifications_api import notifications_bp
 from routes.wishlist import wishlist_bp
@@ -185,6 +185,7 @@ app.register_blueprint(favorites_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(wishlist_bp)
 app.register_blueprint(account_bp)
+app.register_blueprint(contact_bp)
 
 # ✅ Error Handlers
 from logger_config import setup_logger

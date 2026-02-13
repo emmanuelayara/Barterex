@@ -13,21 +13,34 @@
     padding-bottom: 80px;
     transition: background 0.3s ease;
   }
+
+  @media (max-width: 768px) {
+    .page-container {
+      padding-bottom: 0;
+      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
+    }
+  }
   
   html.dark-mode .page-container {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   }
 
   .settings-wrapper {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 24px 16px;
+    display: flex;
+    gap: 24px;
+    flex-direction: column;
   }
 
   .settings-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
     color: white;
+    width: 100%;
   }
 
   .settings-header h1 {
@@ -43,18 +56,55 @@
     margin: 0;
   }
 
+  @media (max-width: 768px) {
+    .settings-header {
+      margin-bottom: 20px;
+    }
+
+    .settings-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .settings-header p {
+      font-size: 0.9rem;
+    }
+  }
+
+  .settings-main {
+    display: flex;
+    gap: 28px;
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .settings-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+
   .settings-tabs {
     display: flex;
+    flex-direction: column;
     gap: 12px;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
+    margin-bottom: 0;
+    flex: 0;
+    width: 100%;
+  }
+
+  .settings-content-area {
+    flex: 1;
+    min-width: 0;
   }
   
   .dark-mode-toggle-wrapper {
-    margin-left: auto;
-    order: -1;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
   
   .dark-mode-toggle {
@@ -93,7 +143,7 @@
   }
 
   .tab-button {
-    padding: 12px 24px;
+    padding: 14px 16px;
     border: none;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.15);
@@ -101,8 +151,13 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 1rem;
+    font-size: 0.95rem;
     border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
   }
 
   .tab-button:hover {
@@ -120,6 +175,7 @@
     color: #ff7a00;
     border-color: white;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transform: translateY(0);
   }
 
   html.dark-mode .tab-button.active {
@@ -613,31 +669,175 @@
       flex: 1;
     }
 
-    .settings-tabs {
-      gap: 6px;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      padding: 8px 0;
+    /* Mobile: Full-screen sidebar menu */
+    .settings-wrapper {
+      flex-direction: column;
+      gap: 0;
+      padding: 0;
     }
 
-    .dark-mode-toggle-wrapper {
-      margin-left: 0;
-      order: 0;
+    .settings-header {
+      display: none;
+    }
+
+    .settings-main {
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .settings-sidebar {
+      min-width: 100%;
       flex-shrink: 0;
+      position: static;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+      padding: 24px 16px;
+      justify-content: center;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    html.dark-mode .settings-sidebar {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+
+    .settings-sidebar.hidden {
+      opacity: 0;
+      visibility: hidden;
+      position: absolute;
+    }
+
+    .settings-tabs {
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      display: flex;
+    }
+
+    .settings-tabs.hidden {
+      display: none;
     }
 
     .tab-button {
-      padding: 10px 14px;
-      font-size: 0.85rem;
-      white-space: nowrap;
+      padding: 16px 20px;
+      font-size: 1rem;
+      white-space: normal;
+      flex: none;
+      width: 100%;
+      gap: 12px;
+      display: flex;
+      align-items: center;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .tab-button:active {
+      transform: scale(0.98);
+    }
+
+    .tab-button i {
+      font-size: 1.2rem;
       flex-shrink: 0;
+    }
+
+    .settings-content-area {
+      flex: 1;
+      min-width: 100%;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: inherit;
+      padding: 16px;
+    }
+
+    .settings-content-area.show {
+      display: block;
+      position: relative;
+      top: auto;
+      left: auto;
+    }
+
+    .back-button-mobile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .back-button-mobile:active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  /* Medium screens - keep sidebar on left */
+  @media (min-width: 768px) {
+    .settings-wrapper {
+      flex-direction: column;
+    }
+
+    .settings-header {
+      width: 100%;
+    }
+
+    .back-button-mobile {
+      display: none;
+    }
+
+    .settings-main {
+      flex-direction: row;
+      width: 100%;
+      gap: 28px;
+    }
+
+    .settings-sidebar {
+      min-width: 180px;
+      position: sticky;
+      top: 100px;
+      height: fit-content;
+      flex-shrink: 0;
+    }
+
+    .settings-tabs {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tab-button {
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      white-space: normal;
+      flex: none;
+      width: 100%;
       min-width: auto;
     }
 
     .tab-button i {
-      display: none;
+      font-size: 1.1rem;
+    }
+
+    .settings-content-area {
+      flex: 1;
+      min-width: 0;
     }
   }
 
@@ -671,28 +871,39 @@
       <p>Manage your account, profile, and security settings</p>
     </div>
 
-    <!-- Tab Buttons -->
-    <div class="settings-tabs">
-      <!-- Dark Mode Toggle -->
-      <div class="dark-mode-toggle-wrapper">
-        <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-          <i class="fas fa-moon"></i>
-        </button>
+    <!-- Main Settings Area -->
+    <div class="settings-main">
+      <!-- Sidebar with Tab Buttons -->
+      <div class="settings-sidebar">
+        <div class="settings-tabs">
+          <button class="tab-button active" onclick="switchTab('profile', event)">
+            <i class="fas fa-user"></i> Profile
+          </button>
+          <button class="tab-button" onclick="switchTab('items', event)">
+            <i class="fas fa-box"></i> Items
+          </button>
+          <button class="tab-button" onclick="switchTab('password', event)">
+            <i class="fas fa-lock"></i> Password
+          </button>
+          <button class="tab-button" onclick="switchTab('delete', event)">
+            <i class="fas fa-trash-alt"></i> Delete Account
+          </button>
+        </div>
+        <!-- Dark Mode Toggle at Bottom -->
+        <div class="dark-mode-toggle-wrapper">
+          <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
       </div>
-      
-      <button class="tab-button active" onclick="switchTab('profile', event)">
-        <i class="fas fa-user"></i> Profile
-      </button>
-      <button class="tab-button" onclick="switchTab('password', event)">
-        <i class="fas fa-lock"></i> Password
-      </button>
-      <button class="tab-button" onclick="switchTab('delete', event)">
-        <i class="fas fa-trash-alt"></i> Delete Account
-      </button>
-    </div>
 
-    <!-- Profile Tab -->
-    <div id="profile" class="tab-content active">
+      <!-- Content Area -->
+      <div class="settings-content-area">
+        <!-- Profile Tab -->
+        <div id="profile" class="tab-content active">
+        <button class="back-button-mobile" onclick="backToMenu(event)">
+          <i class="fas fa-chevron-left"></i> Back to Menu
+        </button>
       <div class="settings-card">
         <form method="POST" enctype="multipart/form-data">
           <input type="hidden" name="form_type" value="profile">
@@ -759,8 +970,27 @@
       </div>
     </div>
 
+    <!-- Items Tab -->
+    <div id="items" class="tab-content">
+      <button class="back-button-mobile" onclick="backToMenu(event)">
+        <i class="fas fa-chevron-left"></i> Back to Menu
+      </button>
+      <div class="settings-card">
+        <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">📦 Your Items</h2>
+        <div style="text-align: center; padding: 40px 20px;">
+          <p style="color: #666; font-size: 1.1rem; margin-bottom: 20px;">Manage all your items for trading or selling</p>
+          <a href="{{ url_for('user.user_items') }}" class="btn btn-primary" style="display: inline-block; padding: 12px 32px; font-size: 1rem;">
+            <i class="fas fa-box"></i> View & Manage Items
+          </a>
+        </div>
+      </div>
+    </div>
+
     <!-- Password Tab -->
     <div id="password" class="tab-content">
+      <button class="back-button-mobile" onclick="backToMenu(event)">
+        <i class="fas fa-chevron-left"></i> Back to Menu
+      </button>
       <div class="settings-card">
         <form method="POST">
           <input type="hidden" name="form_type" value="password">
@@ -801,6 +1031,9 @@
 
     <!-- Delete Account Tab -->
     <div id="delete" class="tab-content">
+      <button class="back-button-mobile" onclick="backToMenu(event)">
+        <i class="fas fa-chevron-left"></i> Back to Menu
+      </button>
       <div class="settings-card">
         <form method="POST">
           <input type="hidden" name="form_type" value="delete">
@@ -857,6 +1090,8 @@
         </form>
       </div>
     </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -864,6 +1099,9 @@
   function switchTab(tabName, event) {
     event.preventDefault();
 
+    // Check if we're on mobile (max-width: 768px)
+    const isMobile = window.innerWidth <= 768;
+    
     // Hide all tabs
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => tab.classList.remove('active'));
@@ -877,6 +1115,43 @@
 
     // Add active class to clicked button
     event.target.closest('.tab-button').classList.add('active');
+
+    // Mobile: Hide sidebar and show content
+    if (isMobile) {
+      const sidebar = document.querySelector('.settings-sidebar');
+      const contentArea = document.querySelector('.settings-content-area');
+      
+      if (sidebar && contentArea) {
+        sidebar.classList.add('hidden');
+        contentArea.classList.add('show');
+      }
+    }
+  }
+
+  function backToMenu(event) {
+    event.preventDefault();
+
+    // Check if we're on mobile (max-width: 768px)
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+      // Hide all tabs
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      // Remove active class from all buttons
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(btn => btn.classList.remove('active'));
+
+      // Show sidebar, hide content
+      const sidebar = document.querySelector('.settings-sidebar');
+      const contentArea = document.querySelector('.settings-content-area');
+      
+      if (sidebar && contentArea) {
+        sidebar.classList.remove('hidden');
+        contentArea.classList.remove('show');
+      }
+    }
   }
 
   // Add focus state to inputs

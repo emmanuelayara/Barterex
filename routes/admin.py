@@ -11,7 +11,7 @@ import io
 import zipfile
 
 from app import db
-from models import Admin, User, Item, Order, OrderItem, PickupStation, Notification, SystemSettings, ActivityLog
+from models import Admin, User, Item, Order, OrderItem, PickupStation, Notification, SystemSettings, ActivityLog, ContactMessage
 from forms import AdminRegisterForm, AdminLoginForm, PickupStationForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from logger_config import setup_logger
@@ -41,10 +41,15 @@ def inject_admin_context():
     try:
         # Get count of pending items
         pending_items_count = Item.query.filter_by(status='pending').count()
-        return dict(pending_items_count=pending_items_count)
+        # Get count of unread messages
+        pending_messages_count = ContactMessage.query.filter_by(is_read=False, status='pending').count()
+        return dict(
+            pending_items_count=pending_items_count,
+            pending_messages_count=pending_messages_count
+        )
     except Exception as e:
         logger.error(f"Error in admin context processor: {str(e)}")
-        return dict(pending_items_count=0)
+        return dict(pending_items_count=0, pending_messages_count=0)
 
 # ==================== ROUTES ====================
 
@@ -372,11 +377,11 @@ def view_user(user_id):
         user = User.query.get_or_404(user_id)
         
         # Item statistics
-        items_uploaded = Item.query.filter_by(user_id=user.id).count()
-        items_approved = Item.query.filter_by(user_id=user.id, is_approved=True).count()
-        items_pending = Item.query.filter_by(user_id=user.id, is_approved=False, status='pending').count()
-        items_rejected = Item.query.filter_by(user_id=user.id, status='rejected').count()
-        items_traded = Item.query.filter_by(user_id=user.id, is_available=False).count()
+        items_uploaded = Item.query.filter_by(uploaded_by_id=user.id).count()
+        items_approved = Item.query.filter_by(uploaded_by_id=user.id, is_approved=True).count()
+        items_pending = Item.query.filter_by(uploaded_by_id=user.id, is_approved=False, status='pending').count()
+        items_rejected = Item.query.filter_by(uploaded_by_id=user.id, status='rejected').count()
+        items_traded = Item.query.filter_by(uploaded_by_id=user.id, is_available=False).count()
         
         # Account age calculation
         account_created = user.created_at
@@ -2211,3 +2216,115 @@ def get_order_details(order_id):
     except Exception as e:
         logger.error(f"Error getting order details: {str(e)}", exc_info=True)
         return {'success': False, 'error': str(e)}, 500
+
+
+# ==================== CONTACT MESSAGES ====================
+
+@admin_bp.route('/messages', methods=['GET'])
+@admin_login_required
+@handle_errors
+def view_messages():
+    """View all contact form messages from users"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        status = request.args.get('status', 'pending')
+        search = request.args.get('search', '').strip()
+        
+        # Build query
+        query = ContactMessage.query
+        
+        # Filter by status
+        if status != 'all':
+            query = query.filter_by(status=status)
+        
+        # Search by name or email
+        if search:
+            if len(search) > 100:
+                search = search[:100]
+            
+            search_term = f"%{search}%"
+            query = query.filter(
+                (ContactMessage.name.ilike(search_term)) |
+                (ContactMessage.email.ilike(search_term))
+            )
+        
+        # Paginate
+        messages = query.order_by(ContactMessage.created_at.desc()).paginate(
+            page=page, per_page=15
+        )
+        
+        # Get statistics
+        total_messages = ContactMessage.query.count()
+        pending_messages = ContactMessage.query.filter_by(status='pending').count()
+        in_progress_messages = ContactMessage.query.filter_by(status='in_progress').count()
+        resolved_messages = ContactMessage.query.filter_by(status='resolved').count()
+        spam_messages = ContactMessage.query.filter_by(status='spam').count()
+        unread_messages = ContactMessage.query.filter_by(is_read=False).count()
+        
+        logger.info(f"Admin viewing contact messages - Page: {page}, Status: {status}, Search: '{search}'")
+        
+        return render_template(
+            'admin/messages.html',
+            messages=messages,
+            total_messages=total_messages,
+            pending_messages=pending_messages,
+            in_progress_messages=in_progress_messages,
+            resolved_messages=resolved_messages,
+            spam_messages=spam_messages,
+            unread_messages=unread_messages,
+            status=status,
+            search=search
+        )
+    except Exception as e:
+        logger.error(f"Error viewing messages: {str(e)}", exc_info=True)
+        flash('Error loading messages.', 'danger')
+        return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/messages/<int:message_id>/mark-read', methods=['POST'])
+@admin_login_required
+@handle_errors
+def mark_message_read(message_id):
+    """Mark a message as read"""
+    try:
+        message = ContactMessage.query.get_or_404(message_id)
+        message.is_read = True
+        db.session.commit()
+        
+        logger.info(f"Message {message_id} marked as read by admin")
+        flash('Message marked as read.', 'success')
+        
+        return redirect(request.referrer or url_for('admin.view_messages'))
+    except Exception as e:
+        logger.error(f"Error marking message as read: {str(e)}", exc_info=True)
+        flash('Error updating message.', 'danger')
+        return redirect(request.referrer or url_for('admin.view_messages'))
+
+
+@admin_bp.route('/messages/<int:message_id>/status', methods=['POST'])
+@admin_login_required
+@handle_errors
+def update_message_status(message_id):
+    """Update message status (pending, in_progress, resolved, spam)"""
+    try:
+        message = ContactMessage.query.get_or_404(message_id)
+        new_status = request.form.get('status', 'pending')
+        
+        # Validate status
+        valid_statuses = ['pending', 'in_progress', 'resolved', 'spam']
+        if new_status not in valid_statuses:
+            flash('Invalid status.', 'danger')
+            return redirect(request.referrer or url_for('admin.view_messages'))
+        
+        message.status = new_status
+        db.session.commit()
+        
+        logger.info(f"Message {message_id} status updated to {new_status} by admin")
+        flash(f'Message status updated to {new_status}.', 'success')
+        
+        return redirect(request.referrer or url_for('admin.view_messages'))
+    except Exception as e:
+        logger.error(f"Error updating message status: {str(e)}", exc_info=True)
+        flash('Error updating message status.', 'danger')
+        return redirect(request.referrer or url_for('admin.view_messages'))
+

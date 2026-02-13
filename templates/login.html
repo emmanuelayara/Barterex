@@ -805,9 +805,9 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">{{ form.username.label }}</label>
-                        {{ form.username(class="form-input", placeholder="Enter your username", id="username") }}
-                        <div class="form-hint" id="usernameHint">Min. 3 characters, alphanumeric only</div>
+                        <label class="form-label">{{ form.credential.label }}</label>
+                        {{ form.credential(class="form-input", placeholder="Enter your email or username", id="credential") }}
+                        <div class="form-hint" id="credentialHint">You can use your email address or username</div>
                         <div class="error-message"></div>
                     </div>
 
@@ -966,17 +966,15 @@
             let errorMessage = '';
 
             if (!value) {
-                errorMessage = field.name === 'username' ? 'Username is required' : 'Password is required';
+                errorMessage = field.name === 'credential' ? 'Email or username is required' : 'Password is required';
                 isValid = false;
-            } else if (field.name === 'username') {
+            } else if (field.name === 'credential') {
+                // Credential can be either email or username, so minimal validation
                 if (value.length < 3) {
-                    errorMessage = 'Username must be at least 3 characters';
-                    isValid = false;
-                } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-                    errorMessage = 'Username can only contain letters, numbers, and underscores';
+                    errorMessage = 'Email or username must be at least 3 characters';
                     isValid = false;
                 } else {
-                    errorMessage = '✓ Username looks good!';
+                    errorMessage = '✓ Ready to login!';
                 }
             } else if (field.name === 'password') {
                 if (value.length < 6) {

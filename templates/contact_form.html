@@ -1,0 +1,576 @@
+{% extends 'base.html' %}
+{% block title %}Contact Us - Send Message{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+        --secondary-gradient: linear-gradient(135deg, #ff7a00 0%, #ffb366 100%);
+        --accent-gradient: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+        --orange-gradient: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --text-primary: #1a1a1a;
+        --text-secondary: #6b7280;
+        --surface: #ffffff;
+        --surface-hover: #f8fafc;
+        --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.1);
+        --shadow-hover: 0 16px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    html.dark-mode {
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --surface: #1e293b;
+        --surface-hover: #334155;
+        --glass-bg: rgba(30, 41, 59, 0.1);
+        --glass-border: rgba(71, 85, 105, 0.2);
+    }
+
+    /* Page background */
+    .contact-form-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+        padding: 25px 15px;
+        position: relative;
+    }
+
+    html.dark-mode .contact-form-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+
+    .contact-form-page::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(255, 122, 0, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(5, 78, 151, 0.15) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Main container */
+    .contact-form-container {
+        max-width: 650px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Header section */
+    .contact-form-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 30px 20px;
+        background: var(--surface);
+        border-radius: 20px;
+        box-shadow: var(--shadow-soft);
+        position: relative;
+        overflow: hidden;
+        animation: slideInDown 0.6s ease-out;
+    }
+
+    html.dark-mode .contact-form-header {
+        background: #1e293b;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .contact-form-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--orange-gradient);
+    }
+
+    .contact-form-header h1 {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .contact-form-icon {
+        width: 45px;
+        height: 45px;
+        background: var(--accent-gradient);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: white;
+        box-shadow: 0 6px 25px rgba(5, 78, 151, 0.3);
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-8px);
+        }
+    }
+
+    .contact-form-subtitle {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* Form container */
+    .form-wrapper {
+        background: var(--surface);
+        border-radius: 20px;
+        padding: 30px 20px;
+        box-shadow: var(--shadow-soft);
+        position: relative;
+        overflow: hidden;
+        animation: slideInUp 0.6s ease-out 0.1s both;
+    }
+
+    html.dark-mode .form-wrapper {
+        background: #1e293b;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Form group styling */
+    .form-group {
+        margin-bottom: 22px;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .form-group label span {
+        color: #ff6b6b;
+        margin-left: 4px;
+    }
+
+    /* Input styling */
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+        border: 2px solid var(--gray-200);
+        border-radius: 10px;
+        background: var(--surface-hover);
+        color: var(--text-primary);
+        font-family: inherit;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-soft);
+    }
+
+    html.dark-mode .form-control {
+        background: #0f172a;
+        border-color: rgba(71, 85, 105, 0.4);
+        color: #f1f5f9;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #ff7a00;
+        box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    html.dark-mode .form-control:focus {
+        border-color: #ff7a00;
+        box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.2);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-secondary);
+    }
+
+    /* Textarea styling */
+    textarea.form-control {
+        resize: vertical;
+        min-height: 150px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Submit button */
+    .submit-button {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: white;
+        background: var(--orange-gradient);
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 25px rgba(255, 122, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .submit-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(255, 122, 0, 0.4);
+    }
+
+    .submit-button:active {
+        transform: translateY(-1px);
+    }
+
+    .submit-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .submit-button:hover::before {
+        left: 100%;
+    }
+
+    /* Back link */
+    .back-link {
+        display: inline-block;
+        margin-bottom: 25px;
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        animation: slideInLeft 0.6s ease-out;
+    }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .back-link:hover {
+        transform: translateX(-5px);
+        color: #ff7a00;
+    }
+
+    .back-link i {
+        margin-right: 8px;
+    }
+
+    /* Character counter for textarea */
+    .char-count {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 6px;
+        text-align: right;
+    }
+
+    /* Info box */
+    .info-box {
+        background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+        border: 1px solid #ff7a00;
+        border-radius: 12px;
+        padding: 15px 15px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    html.dark-mode .info-box {
+        background: linear-gradient(135deg, #3f3f3f 0%, #4a4a4a 100%);
+        border-color: #ff9500;
+        color: #f1f5f9;
+    }
+
+    .info-box-icon {
+        width: 32px;
+        height: 32px;
+        background: #ff7a00;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .info-box-text {
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    html.dark-mode .info-box-text {
+        color: #f1f5f9;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 640px) {
+        .contact-form-container {
+            padding: 0 10px;
+        }
+
+        .contact-form-header {
+            padding: 20px 15px;
+            margin-bottom: 20px;
+        }
+
+        .contact-form-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .form-wrapper {
+            padding: 20px 15px;
+        }
+
+        .form-control {
+            padding: 11px 12px;
+            font-size: 16px; /* Prevents zoom on input focus on mobile */
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+        }
+
+        .submit-button {
+            padding: 13px 18px;
+            font-size: 0.95rem;
+        }
+    }
+
+    /* Alerts */
+    .alert {
+        padding: 15px 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 0.95rem;
+        border-left: 4px solid;
+    }
+
+    .alert-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border-color: #dc2626;
+    }
+
+    html.dark-mode .alert-danger {
+        background-color: #7f1d1d;
+        color: #fca5a5;
+        border-color: #dc2626;
+    }
+
+    .alert-success {
+        background-color: #dcfce7;
+        color: #166534;
+        border-color: #22c55e;
+    }
+
+    html.dark-mode .alert-success {
+        background-color: #166534;
+        color: #dcfce7;
+        border-color: #22c55e;
+    }
+</style>
+
+<div class="contact-form-page">
+    <!-- Back Link -->
+    <a href="{{ url_for('contact.contact_form') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i>Back to Contact
+    </a>
+
+    <div class="contact-form-container">
+        <!-- Header -->
+        <div class="contact-form-header">
+            <h1>
+                <div class="contact-form-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                Send us a Message
+            </h1>
+            <p class="contact-form-subtitle">We'd love to hear from you. Fill out the form below and we'll get back to you as soon as possible.</p>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-wrapper">
+            <!-- Display Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category in ['danger', 'success'] else 'info' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Info Box -->
+            <div class="info-box">
+                <div class="info-box-icon">
+                    <i class="fas fa-info"></i>
+                </div>
+                <div class="info-box-text">
+                    <strong>Response Time:</strong> We typically respond within 24-48 business hours.
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <form method="POST" action="{{ url_for('contact.contact_form') }}" novalidate>
+                <!-- Name Field -->
+                <div class="form-group">
+                    <label for="name">
+                        Your Name
+                        <span>*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name" 
+                        class="form-control" 
+                        placeholder="e.g., John Doe"
+                        minlength="2"
+                        maxlength="120"
+                        required
+                        autocomplete="name"
+                    >
+                </div>
+
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="email">
+                        Your Email Address
+                        <span>*</span>
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-control" 
+                        placeholder="e.g., john@example.com"
+                        maxlength="120"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <!-- Message Field -->
+                <div class="form-group">
+                    <label for="message">
+                        Your Message
+                        <span>*</span>
+                    </label>
+                    <textarea 
+                        id="message" 
+                        name="message" 
+                        class="form-control" 
+                        placeholder="Tell us how we can help you... (min 10 characters)"
+                        minlength="10"
+                        maxlength="5000"
+                        required
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="char-count">0</span> / 5000
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-button">
+                    <i class="fas fa-paper-plane"></i> Send Message
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Character counter for textarea
+    const messageField = document.getElementById('message');
+    const charCount = document.getElementById('char-count');
+    
+    if (messageField && charCount) {
+        messageField.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+    }
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const message = document.getElementById('message').value.trim();
+
+        if (!name || name.length < 2) {
+            e.preventDefault();
+            alert('Please enter your name (at least 2 characters).');
+            return;
+        }
+
+        if (!email || !email.includes('@')) {
+            e.preventDefault();
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        if (!message || message.length < 10) {
+            e.preventDefault();
+            alert('Please enter a message (at least 10 characters).');
+            return;
+        }
+    });
+</script>
+
+{% endblock %}

@@ -362,13 +362,31 @@
 
   .notification-message {
     color: #2d3748;
-    font-size: 0.85rem;
-    line-height: 1.4;
+    font-size: 0.9rem;
+    line-height: 1.5;
     margin-bottom: 4px;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .notification-message br {
+    display: block;
+    content: "";
+    margin: 6px 0;
+  }
+
+  .notification-message strong {
+    font-weight: 600;
+    color: #1a202c;
   }
 
   html.dark-mode .notification-message {
     color: #f1f5f9;
+  }
+
+  html.dark-mode .notification-message strong {
+    color: #e2e8f0;
   }
 
   .notification-time {
@@ -655,7 +673,7 @@
               <div class="notification-header">
                 <div>
                   <div class="notification-type">📢 System Alert</div>
-                  <div class="notification-message">{{ note.message }}</div>
+                  <div class="notification-message">{{ note.message | safe }}</div>
                 </div>
               </div>
               <div class="notification-time">{{ note.timestamp.strftime('%b %d, %I:%M %p') }}</div>

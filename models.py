@@ -9,7 +9,7 @@ from sqlalchemy.orm import validates
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    username = db.Column(db.String(64), nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     phone_number = db.Column(db.String(15), nullable=True)
     profile_picture = db.Column(db.String(200), nullable=True)  # URL to the profile picture
@@ -31,6 +31,10 @@ class User(db.Model, UserMixin):
     email_verification_token = db.Column(db.String(255), nullable=True, unique=True)
     email_verification_sent_at = db.Column(db.DateTime, nullable=True)
     email_verification_expires_at = db.Column(db.DateTime, nullable=True)
+    
+    # Profile completion tracking (for referral bonus awarding)
+    profile_completed = db.Column(db.Boolean, default=False, index=True)  # True when all required profile fields are filled
+    profile_completed_at = db.Column(db.DateTime, nullable=True)  # When profile was completed
     
     # Gamification - Level, Tier, Referrals
     level = db.Column(db.Integer, default=1, index=True)  # User level based on trades
@@ -76,7 +80,7 @@ class User(db.Model, UserMixin):
     })
 
     # Relationships
-    items = db.relationship('Item', back_populates='user', lazy=True)
+    items = db.relationship('Item', back_populates='user', lazy=True, foreign_keys='[Item.user_id]')
     transactions = db.relationship('CreditTransaction', back_populates='user', lazy=True)
     notifications = db.relationship('Notification', back_populates='user', lazy=True)
     orders = db.relationship('Order', back_populates='user', lazy=True)
@@ -282,7 +286,8 @@ class Item(db.Model):
     status = db.Column(db.String(50), default='pending') 
     rejection_reason = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_user'), nullable=False)
-    user = db.relationship('User', back_populates='items')
+    user = db.relationship('User', back_populates='items', foreign_keys='[Item.user_id]')
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_uploader'), nullable=True)
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
     credited = db.Column(db.Boolean, default=False)
@@ -571,7 +576,8 @@ class Referral(db.Model):
     referral_code_used = db.Column(db.String(20), nullable=False)  # The code that was used
     
     # Bonus tracking
-    signup_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on signup
+    signup_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 after referred user completes profile
+    signup_bonus_earned_at = db.Column(db.DateTime, nullable=True)  # When bonus was awarded
     item_upload_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on approved item upload
     purchase_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on friend's purchase
     
@@ -788,3 +794,37 @@ class WishlistMatch(db.Model):
     
     def __repr__(self):
         return f'<WishlistMatch wishlist_id={self.wishlist_id}, item_id={self.item_id}>'
+
+
+# ==================== CONTACT MESSAGE DATABASE MODEL ====================
+class ContactMessage(db.Model):
+    """User contact form messages for admin dashboard"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False, index=True)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    message = db.Column(db.Text, nullable=False)
+    
+    # User relationship (optional - can be null if submitted anonymously)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
+    user = db.relationship('User', backref='contact_messages')
+    
+    # Admin handling
+    is_read = db.Column(db.Boolean, default=False, index=True)
+    response = db.Column(db.Text, nullable=True)
+    response_sent_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), default='pending', index=True)  # pending, in_progress, resolved, spam
+    
+    # Tracking
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    ip_address = db.Column(db.String(45), nullable=True)  # Support IPv6
+    user_agent = db.Column(db.String(500), nullable=True)
+    
+    # Database indexes for frequently queried fields
+    __table_args__ = (
+        db.Index('idx_contact_message_status', 'status'),
+        db.Index('idx_contact_message_created_at', 'created_at'),
+        db.Index('idx_contact_message_user_id', 'user_id'),
+    )
+    
+    def __repr__(self):
+        return f'<ContactMessage id={self.id}, name={self.name}, status={self.status}, created_at={self.created_at}>'

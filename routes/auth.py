@@ -112,29 +112,19 @@ def register():
                         referrer_id=referrer.id,
                         referred_user_id=user.id,
                         referral_code_used=form.referral_code.data,
-                        signup_bonus_earned=True  # Award bonus on signup
+                        signup_bonus_earned=False  # Will be earned after referred user completes profile
                     )
                     db.session.add(referral)
                     
-                    # Award 100 naira to referrer on signup
-                    referrer.credits += 100
+                    # Update referrer's referral count
                     referrer.referral_count += 1
-                    referrer.referral_bonus_earned += 100
                     
-                    # Log the transaction
-                    transaction = CreditTransaction(
-                        user_id=referrer.id,
-                        amount=100,
-                        transaction_type='referral_signup_bonus'
-                    )
-                    db.session.add(transaction)
-                    
-                    # Create notification for referrer
+                    # Create notification for referrer that someone signed up with their code
                     notification = Notification(
                         user_id=referrer.id,
-                        message=f'🎉 {user.username} signed up using your referral code! You earned ₦100',
+                        message=f'👤 {user.username} signed up using your referral code! They need to complete their profile to earn the ₦100 bonus.',
                         notification_type='referral',
-                        category='reward'
+                        category='info'
                     )
                     db.session.add(notification)
                     
@@ -286,29 +276,46 @@ def login():
         next_page = None
     
     if form.validate_on_submit():
-        username = form.username.data
+        credential = form.credential.data
         password = form.password.data
         
         try:
             from app import db
-            user = User.query.filter_by(username=username).first()
+            
+            # Determine if credential is email or username
+            # Check if it's an email format
+            user = None
+            if '@' in credential:
+                # Try as email first
+                user = User.query.filter_by(email=credential).first()
+            else:
+                # Try as username
+                user = User.query.filter_by(username=credential).first()
+            
+            # If not found and it looks ambiguous, try the other method
+            if not user and '@' not in credential:
+                # Try email as fallback
+                user = User.query.filter_by(email=credential).first()
+            elif not user and '@' in credential:
+                # Try username as fallback
+                user = User.query.filter_by(username=credential).first()
 
             # Check if account is locked due to failed attempts
             if user and user.account_locked_until and datetime.utcnow() < user.account_locked_until:
                 remaining_time = (user.account_locked_until - datetime.utcnow()).total_seconds() / 60
-                logger.warning(f"Locked account login attempt: {username}")
+                logger.warning(f"Locked account login attempt: {credential}")
                 flash(f'Account temporarily locked due to failed login attempts. Try again in {int(remaining_time)} minutes.', 'danger')
                 return redirect(url_for('auth.login', next=next_page))
 
             if user and user.is_banned:
-                logger.warning(f"Banned user attempted login: {username}")
+                logger.warning(f"Banned user attempted login: {credential}")
                 # ✅ FIX: Log them in so they can submit unban appeals
                 if user and check_password_hash(user.password_hash, password):
                     user.failed_login_attempts = 0
                     user.account_locked_until = None
                     db.session.commit()
                     login_user(user, remember=False)
-                    logger.info(f"Banned user session created for appeal submission: {username}")
+                    logger.info(f"Banned user session created for appeal submission: {user.username}")
                 return render_template(
                     "banned.html",
                     reason=user.ban_reason,
@@ -323,7 +330,7 @@ def login():
             if user and check_password_hash(user.password_hash, password):
                 # ✅ Check if email is verified BEFORE allowing login
                 if not user.email_verified:
-                    logger.info(f"Unverified email login attempt: {username}")
+                    logger.info(f"Unverified email login attempt: {user.username}")
                     flash('❌ Please verify your email address before logging in. Check your inbox for the verification link.', 'warning')
                     return render_template('login.html', form=form, show_resend=True, email=user.email)
                 
@@ -337,7 +344,7 @@ def login():
                 remember_me = form.remember_me.data if hasattr(form, 'remember_me') else False
                 login_user(user, remember=remember_me)
                 
-                logger.info(f"User logged in: {username} (Remember Me: {remember_me})")
+                logger.info(f"User logged in: {user.username} (Remember Me: {remember_me})")
 
                 if user.first_login:
                     flash(
@@ -365,14 +372,14 @@ def login():
                     if user.failed_login_attempts >= 5:
                         user.account_locked_until = datetime.utcnow() + timedelta(minutes=15)
                         db.session.commit()
-                        logger.warning(f"Account locked: {username} after 5 failed login attempts")
+                        logger.warning(f"Account locked: {user.username} after 5 failed login attempts")
                         flash('Account locked due to too many failed login attempts. Try again in 15 minutes.', 'danger')
                         return redirect(url_for('auth.login', next=next_page))
                     
                     db.session.commit()
 
-                logger.warning(f"Failed login attempt for username: {username} (attempt {user.failed_login_attempts if user else 'unknown'})")
-                flash('Invalid username or password.', 'danger')
+                logger.warning(f"Failed login attempt for credential: {credential} (attempt {user.failed_login_attempts if user else 'unknown'})")
+                flash('Invalid email/username or password.', 'danger')
         
         except Exception as e:
             logger.error(f"Login error: {str(e)}", exc_info=True)

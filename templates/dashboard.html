@@ -2167,10 +2167,6 @@
         <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
       </div>
       <div style="display: flex; gap: 12px; align-items: center;">
-        <a href="{{ url_for('wishlist.manage_wishlists') }}" class="settings-btn-dashboard">
-          <i class="fas fa-heart"></i>
-          <span>My Wishlists</span>
-        </a>
         <a href="{{ url_for('user.settings') }}" class="settings-btn-dashboard">
           <i class="fas fa-user-cog"></i>
           <span>Manage Account</span>

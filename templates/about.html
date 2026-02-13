@@ -200,6 +200,11 @@
             transition: all 0.3s ease;
         }
 
+        html.dark-mode .goal-item {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-color: rgba(75, 85, 105, 0.3);
+        }
+
         .goal-item:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 40px rgba(255, 122, 0, 0.2);
@@ -226,9 +231,17 @@
             font-weight: 600;
         }
 
+        html.dark-mode .goal-item h3 {
+            color: #f1f5f9;
+        }
+
         .goal-item p {
             color: #666;
             font-size: 1rem;
+        }
+
+        html.dark-mode .goal-item p {
+            color: #cbd5e1;
         }
 
         /* Process Steps */

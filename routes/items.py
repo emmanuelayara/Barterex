@@ -161,6 +161,7 @@ def upload_item():
                 condition=form.condition.data,
                 category=form.category.data,
                 user_id=current_user.id,
+                uploaded_by_id=current_user.id,
                 location=current_user.state,
                 is_available=False,
                 is_approved=False,
@@ -744,22 +745,13 @@ def finalize_purchase():
             
             # Build items list for notification
             items_list = "<br>".join([
-                f"• {item.name} - ₦{item.value:,.0f} Credits"
+                f"• [{item.item_number}] {item.name} - ₦{item.value:,.0f} Credits"
                 for item in purchased_items
             ])
             
-            notification_message = f"""
-            ✓ Order Confirmed!<br><br>
-            Order #: {order_number}<br>
-            Items: {len(purchased_items)}<br>
-            Total Cost: ₦{total_cost:,.0f} Credits<br><br>
-            <strong>Items Ordered:</strong><br>
-            {items_list}<br><br>
-            <strong>Delivery Method:</strong> {delivery_method.title()}<br>
-            {delivery_info}<br><br>
-            <strong>Estimated Delivery:</strong> 7 business days<br><br>
-            Your purchase has been processed successfully. You will receive updates about your order shortly.
-            """
+            # Compact single-line notification message with item numbers
+            items_summary = ", ".join([f"[{item.item_number}] {item.name}" for item in purchased_items])
+            notification_message = f"✓ Order Confirmed! Order #{order_number} for {len(purchased_items)} item(s): {items_summary}. Total: ₦{total_cost:,.0f} Credits. Delivery: {delivery_method.title()}. Est. delivery: 7 business days."
             
             # Create notification in database
             notification = Notification(user_id=current_user.id, message=notification_message)
@@ -808,7 +800,7 @@ def finalize_purchase():
                         
                         <div class="items-section">
                             <h3 style="color: #333; border-bottom: 2px solid #ff7a00; padding-bottom: 10px;">Items Ordered ({len(purchased_items)})</h3>
-                            {''.join([f'<div class="item">{item.name}<br><span style="color: #ff7a00; font-weight: bold;">₦{item.value:,.0f} Credits</span></div>' for item in purchased_items])}
+                            {''.join([f'<div class="item"><strong>[{item.item_number}] {item.name}</strong><br><span style="color: #ff7a00; font-weight: bold;">₦{item.value:,.0f} Credits</span></div>' for item in purchased_items])}
                         </div>
                         
                         <div class="summary">

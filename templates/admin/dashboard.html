@@ -699,6 +699,12 @@
       <span class="d-inline d-sm-none">Appeals</span>
       <span class="count-badge {% if pending_appeals > 0 %}pulse-badge{% endif %}">{{ pending_appeals }}</span>
     </a>
+    <a href="{{ url_for('admin.view_messages') }}" class="btn btn-outline-light">
+      <i class="bi bi-envelope"></i>
+      <span class="d-none d-sm-inline">Messages</span>
+      <span class="d-inline d-sm-none">Msgs</span>
+      <span class="count-badge {% if pending_messages_count > 0 %}pulse-badge{% endif %}">{{ pending_messages_count }}</span>
+    </a>
     <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light">
       <i class="bi bi-box-arrow-right"></i>
       <span class="d-none d-sm-inline">Logout</span>

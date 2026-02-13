@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+{% block title %}Message Received - Barterex{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --accent-gradient: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
+        --text-primary: #1a1a1a;
+        --text-secondary: #6b7280;
+        --surface: #ffffff;
+        --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    html.dark-mode {
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --surface: #1e293b;
+    }
+
+    /* Page background */
+    .success-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        padding: 25px 15px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    html.dark-mode .success-page {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+
+    .success-page::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(17, 153, 142, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(56, 239, 125, 0.15) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Main container */
+    .success-container {
+        max-width: 600px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+        width: 100%;
+    }
+
+    /* Success card */
+    .success-card {
+        background: var(--surface);
+        border-radius: 20px;
+        padding: 40px 30px;
+        box-shadow: var(--shadow-soft);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    html.dark-mode .success-card {
+        background: #1e293b;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .success-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--success-gradient);
+    }
+
+    /* Success icon animation */
+    .success-icon-wrapper {
+        margin-bottom: 30px;
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--success-gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(56, 239, 125, 0.3);
+        margin: 0 auto;
+        animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+        0% {
+            transform: scale(0);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .checkmark {
+        animation: checkmark 0.6s ease-out 0.2s both;
+    }
+
+    @keyframes checkmark {
+        0% {
+            stroke-dashoffset: 50px;
+        }
+        100% {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    /* Title and description */
+    .success-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        background: var(--success-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .success-description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    /* Message details */
+    .message-details {
+        background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%);
+        border: 1px solid #a7f3d0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: left;
+    }
+
+    html.dark-mode .message-details {
+        background: linear-gradient(135deg, #134e4a 0%, #065f46 100%);
+        border-color: #047857;
+    }
+
+    .detail-item {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .detail-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #065f46;
+        min-width: 100px;
+    }
+
+    html.dark-mode .detail-label {
+        color: #86efac;
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        word-break: break-word;
+    }
+
+    html.dark-mode .detail-value {
+        color: #f1f5f9;
+    }
+
+    .detail-icon {
+        color: #10b981;
+        font-size: 1.1rem;
+        margin-top: 2px;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        flex-direction: column;
+    }
+
+    @media (min-width: 480px) {
+        .action-buttons {
+            flex-direction: row;
+        }
+
+        .action-buttons button {
+            flex: 1;
+        }
+    }
+
+    .btn {
+        padding: 12px 24px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+
+    .btn-primary {
+        background: var(--success-gradient);
+        color: white;
+        box-shadow: 0 6px 25px rgba(56, 239, 125, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(56, 239, 125, 0.4);
+    }
+
+    .btn-secondary {
+        background: var(--accent-gradient);
+        color: white;
+        box-shadow: 0 6px 25px rgba(255, 122, 0, 0.3);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(255, 122, 0, 0.4);
+    }
+
+    /* Info section */
+    .info-section {
+        background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+        border: 1px solid #fbbf24;
+        border-radius: 12px;
+        padding: 18px 15px;
+        margin-top: 25px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    html.dark-mode .info-section {
+        background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+        border-color: #d97706;
+    }
+
+    .info-icon {
+        width: 32px;
+        height: 32px;
+        background: #f59e0b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .info-text {
+        font-size: 0.9rem;
+        color: #7c2d12;
+    }
+
+    html.dark-mode .info-text {
+        color: #fde68a;
+    }
+
+    .info-text strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 640px) {
+        .success-card {
+            padding: 30px 20px;
+        }
+
+        .success-icon {
+            width: 70px;
+            height: 70px;
+            font-size: 2rem;
+        }
+
+        .success-title {
+            font-size: 1.5rem;
+        }
+
+        .success-description {
+            font-size: 0.95rem;
+        }
+
+        .message-details {
+            padding: 15px;
+        }
+
+        .detail-item {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .detail-label {
+            min-width: auto;
+        }
+
+        .btn {
+            padding: 11px 20px;
+            font-size: 0.95rem;
+        }
+    }
+
+    /* Pulse animation */
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 10px 40px rgba(56, 239, 125, 0.3);
+        }
+        50% {
+            box-shadow: 0 10px 60px rgba(56, 239, 125, 0.5);
+        }
+    }
+
+    .success-icon {
+        animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), pulse 2s ease-in-out 1s infinite;
+    }
+</style>
+
+<div class="success-page">
+    <div class="success-container">
+        <div class="success-card">
+            <!-- Success Icon -->
+            <div class="success-icon-wrapper">
+                <div class="success-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+
+            <!-- Title and Description -->
+            <h1 class="success-title">Message Received!</h1>
+            <p class="success-description">
+                Thank you for reaching out to Barterex. We've received your message and will get back to you as soon as possible.
+            </p>
+
+            <!-- Message Details -->
+            <div class="message-details">
+                <div class="detail-item">
+                    <div class="detail-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Name</div>
+                        <div class="detail-value">{{ message.name }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">{{ message.email }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Message ID</div>
+                        <div class="detail-value">#{{ message.id }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="detail-label">Submitted</div>
+                        <div class="detail-value">{{ message.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="info-section">
+                <div class="info-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="info-text">
+                    <strong>Response Time:</strong>
+                    We typically respond to all inquiries within 24-48 business hours. You'll receive an email confirmation as soon as we reply.
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="{{ url_for('marketplace.home') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Marketplace
+                </a>
+                <a href="{{ url_for('contact.contact_form') }}" class="btn btn-secondary">
+                    <i class="fas fa-envelope"></i> Send Another Message
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -49,7 +49,7 @@ def dashboard() -> Union[str, Response]:
             db.session.commit()
         
         credits = current_user.credits
-        item_count = Item.query.filter_by(user_id=current_user.id).count()
+        item_count = Item.query.filter_by(uploaded_by_id=current_user.id).count()
         pending_trades = Trade.query.filter(
             db.or_(Trade.sender_id == current_user.id, Trade.receiver_id == current_user.id),
             Trade.status == 'pending'
@@ -142,7 +142,7 @@ def user_items() -> Union[str, Response]:
     try:
         page = request.args.get('page', 1, type=int)
         # Get items uploaded by the user, excluding items that were purchased (in OrderItem)
-        items = Item.query.filter_by(user_id=current_user.id).filter(
+        items = Item.query.filter_by(uploaded_by_id=current_user.id).filter(
             ~Item.id.in_(db.session.query(OrderItem.item_id))
         ).order_by(Item.id.desc()).paginate(page=page, per_page=10)
         logger.info(f"User items page accessed - User: {current_user.username}, Items: {items.total}")
@@ -384,7 +384,34 @@ def profile_settings() -> Union[str, Response]:
             else:
                 current_user.profile_picture = None
             
-            db.session.commit()
+            # ✅ NEW: Check if profile is now complete and award referral bonus if applicable
+            from referral_utils import is_profile_complete, check_and_award_pending_bonuses
+            
+            profile_was_incomplete = not current_user.profile_completed
+            is_complete = is_profile_complete(current_user)
+            
+            if is_complete and profile_was_incomplete:
+                # Profile just became complete - update flag and try to award bonus
+                current_user.profile_completed = True
+                current_user.profile_completed_at = datetime.utcnow()
+                db.session.commit()
+                
+                # Award pending referral bonus
+                bonus_result = check_and_award_pending_bonuses(current_user)
+                
+                if bonus_result['success']:
+                    flash(f"✅ {bonus_result['message']}", 'success')
+                    logger.info(f"User {current_user.username} completed profile and referral bonus awarded")
+                else:
+                    # Profile is complete but no pending bonus (user didn't sign up with referral code)
+                    logger.info(f"User {current_user.username} completed profile (no pending referral bonus)")
+            elif is_complete:
+                # Profile was already complete
+                db.session.commit()
+            else:
+                # Profile is still incomplete
+                db.session.commit()
+            
             logger.info(f"Profile updated successfully - User: {current_user.username}, Email: {current_user.email}")
             flash('Profile updated successfully', 'success')
             return redirect(url_for('user.dashboard'))

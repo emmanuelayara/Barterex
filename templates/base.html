@@ -1098,6 +1098,26 @@
             color: var(--gray-600);
             font-size: 0.9rem;
         }
+
+        /* Auto-fade out animation for alerts */
+        @keyframes fadeOutAlert {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        .alert.auto-fade {
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .alert.auto-fade.fade-out {
+            animation: fadeOutAlert 0.5s ease-out forwards;
+        }
     </style>
 </head>
 <body>
@@ -1162,9 +1182,9 @@
     {% if messages %}
         <div class="flash-messages mb-4">
             {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show auto-fade" role="alert" data-auto-close="true">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" onclick="this.parentElement.style.display='none'">&times;</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" onclick="clearAlertTimeout(this.parentElement); this.parentElement.style.display='none'">&times;</button>
                 </div>
             {% endfor %}
         </div>
@@ -1193,9 +1213,9 @@
 <nav class="bottom-nav">
     <div class="bottom-nav-container">
         {% if current_user.is_authenticated %}
-            <a href="{{ url_for('user.user_items') }}" class="bottom-nav-item {% if request.endpoint == 'user.user_items' %}active{% endif %}">
-                <i class="fas fa-box"></i>
-                <span>Items</span>
+            <a href="{{ url_for('wishlist.manage_wishlists') }}" class="bottom-nav-item {% if request.endpoint == 'wishlist.manage_wishlists' %}active{% endif %}">
+                <i class="fas fa-heart"></i>
+                <span>Wishlist</span>
             </a>
             <a href="{{ url_for('user.my_trades') }}" class="bottom-nav-item {% if request.endpoint == 'user.my_trades' %}active{% endif %}">
                 <i class="fas fa-sync-alt"></i>
@@ -2098,6 +2118,74 @@ if (document.readyState === 'loading') {
     });
 } else {
     window.darkModeManager = new DarkModeManager();
+}
+
+// ========== AUTO-FADE ALERTS ==========
+// Map to store alert timeout IDs
+const alertTimeouts = new Map();
+
+function clearAlertTimeout(alertElement) {
+    const alertId = alertElement.id || Math.random().toString(36).substr(2, 9);
+    if (alertTimeouts.has(alertId)) {
+        clearTimeout(alertTimeouts.get(alertId));
+        alertTimeouts.delete(alertId);
+    }
+}
+
+function setupAutoFadeAlerts() {
+    const alerts = document.querySelectorAll('.alert.auto-fade');
+    
+    alerts.forEach((alert, index) => {
+        // Assign unique ID if not present
+        if (!alert.id) {
+            alert.id = `alert-${Date.now()}-${index}`;
+        }
+        
+        const alertId = alert.id;
+        
+        // Add mouse enter/leave listeners to pause/resume fade
+        alert.addEventListener('mouseenter', function() {
+            if (alertTimeouts.has(alertId)) {
+                clearTimeout(alertTimeouts.get(alertId));
+                alertTimeouts.delete(alertId);
+            }
+        });
+        
+        alert.addEventListener('mouseleave', function() {
+            // Resume fade after 3 seconds from mouse leave
+            const newTimeout = setTimeout(() => {
+                fadeOutAlert(alert);
+            }, 3000);
+            alertTimeouts.set(alertId, newTimeout);
+        });
+        
+        // Set initial fade timeout (3 seconds)
+        const timeout = setTimeout(() => {
+            fadeOutAlert(alert);
+        }, 3000);
+        
+        alertTimeouts.set(alertId, timeout);
+    });
+}
+
+function fadeOutAlert(alert) {
+    if (alert && alert.parentElement) {
+        alert.classList.add('fade-out');
+        
+        // Remove after animation completes (500ms to match CSS)
+        setTimeout(() => {
+            if (alert.parentElement) {
+                alert.remove();
+            }
+        }, 500);
+    }
+}
+
+// Initialize auto-fade when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAutoFadeAlerts);
+} else {
+    setupAutoFadeAlerts();
 }</script>
 
 </body>

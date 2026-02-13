@@ -51,10 +51,6 @@ class RegisterForm(FlaskForm):
     def validate_email(self, email):
         if User.query.filter_by(email=email.data).first():
             raise ValidationError('Email already registered.')
-
-    def validate_username(self, username):
-        if User.query.filter_by(username=username.data).first():
-            raise ValidationError('Username already taken.')
     
     def validate_referral_code(self, referral_code):
         if referral_code.data:  # Only validate if provided
@@ -65,7 +61,7 @@ class RegisterForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
+    credential = StringField('Email or Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember me for 30 days')
     submit = SubmitField('Login')
