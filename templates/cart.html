@@ -1119,7 +1119,8 @@
                         {% for cart_item in cart_items %}
                         <div class="cart-item">
                             {% if cart_item.item.image_url %}
-                                <img src="{{ cart_item.item.image_url | image_url }}" alt="{{ cart_item.item.name }}" class="item-image">
+                                {% set img_src = cart_item.item.image_url or (cart_item.item.images[0].image_url if cart_item.item.images else None) %}
+                                <img src="{{ img_src | image_url }}" alt="{{ cart_item.item.name }}" class="item-image" onerror="this.src='/static/placeholder.png'">
                             {% else %}
                                 <div class="item-image">📦</div>
                             {% endif %}

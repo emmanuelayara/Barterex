@@ -1130,7 +1130,8 @@
     {% for item in trending_items[:3] %}
     <div class="trending-card">
       {% if item.image_url %}
-      <img src="{{ item.image_url | image_url }}" alt="{{ item.name }}">
+      {% set home_img = item.image_url or (item.images[0].image_url if item.images else None) %}
+      <img src="{{ home_img | image_url }}" alt="{{ item.name }}" onerror="this.src='/static/placeholder.png'">
       {% endif %}
       <div class="trending-card-content">
         <h3>{{ item.name }}</h3>

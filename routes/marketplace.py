@@ -77,7 +77,7 @@ def marketplace() -> Union[str, Response]:
 
         filters.append(Item.value.isnot(None))
 
-        items = Item.query.filter(and_(*filters)).order_by(Item.id.desc()).all()
+        items = Item.query.filter(and_(*filters)).options(joinedload(Item.images)).order_by(Item.id.desc()).all()
         
         # Build breadcrumbs
         breadcrumbs = ['Marketplace']

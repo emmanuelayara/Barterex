@@ -420,7 +420,7 @@
               <!-- Image Container -->
               <div class="favorite-image-container">
                 {% if item.images and item.images|length > 0 %}
-                  <img src="{{ item.images[0].image_url }}" alt="{{ item.name }}" class="favorite-image">
+                  <img src="{{ item.images[0].image_url | image_url }}" alt="{{ item.name }}" class="favorite-image" onerror="this.src='/static/placeholder.png'">
                 {% else %}
                   <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary-light) 0%, rgba(255, 255, 255, 0.5) 100%); color: var(--text-secondary); font-size: 3rem;">
                     📦
@@ -481,7 +481,7 @@
               <!-- Image Container with Sold Badge -->
               <div class="favorite-image-container" style="position: relative;">
                 {% if item.images and item.images|length > 0 %}
-                  <img src="{{ item.images[0].image_url }}" alt="{{ item.name }}" class="favorite-image" style="filter: grayscale(50%); opacity: 0.8;">
+                  <img src="{{ item.images[0].image_url | image_url }}" alt="{{ item.name }}" class="favorite-image" style="filter: grayscale(50%); opacity: 0.8;" onerror="this.src='/static/placeholder.png'">
                 {% else %}
                   <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary-light) 0%, rgba(255, 255, 255, 0.5) 100%); color: var(--text-secondary); font-size: 3rem;">
                     📦

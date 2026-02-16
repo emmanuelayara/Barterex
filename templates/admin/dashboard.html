@@ -118,6 +118,44 @@
     50% { transform: scale(1.05); }
   }
 
+  /* Modal Image Rotating Animation */
+  @keyframes modalImageRotateIn {
+    0% {
+      transform: rotateY(90deg) scale(0.7);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: rotateY(0deg) scale(1);
+      opacity: 1;
+    }
+  }
+
+  #modalItemImage.image-rotate {
+    animation: modalImageRotateIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Modal Image Rotating Animation */
+  @keyframes modalImageRotateIn {
+    0% {
+      transform: rotateY(90deg) scale(0.7);
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: rotateY(0deg) scale(1);
+      opacity: 1;
+    }
+  }
+
+  #modalItemImage.image-rotate {
+    animation: modalImageRotateIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
   /* Pending button pulse animation */
   .animate-pending {
     animation: button-pulse 2s infinite;
@@ -755,11 +793,12 @@
               {% endif %}
               
               {% if item_images|length > 0 %}
-              <img src="{{ item_images[0] }}" alt="{{ item.name }}" 
+              <img src="{{ item_images[0] | image_url }}" alt="{{ item.name }}" 
                    class="dashboard-item-image" 
                    data-item-images='{{ item_images|tojson|safe }}'
                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;"
-                   title="Click to view all images">
+                   title="Click to view all images"
+                   onerror="this.src='/static/placeholder.png'">
               {% else %}
               <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
                 <i class="bi bi-image"></i>
@@ -926,18 +965,20 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <!-- Item Preview -->
+        <!-- Item Preview with Large Image -->
         <div class="mb-4 p-3 rounded" style="background: #f8f9fa;">
-          <div class="d-flex gap-3">
-            <div style="position: relative; flex-shrink: 0;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="position: relative; display: inline-block; transform-style: preserve-3d;">
               <img id="modalItemImage" src="" alt="Item image" 
-                   style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;">
+                   style="width: 180px; height: 180px; object-fit: cover; border-radius: 12px; border: 2px solid #dee2e6; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none;">
               <button type="button" class="btn btn-sm btn-light" id="expandImageBtn" 
                       style="position: absolute; bottom: 5px; right: 5px; padding: 3px 6px; border-radius: 4px;" 
                       title="Click to view full image">
                 <i class="bi bi-expand"></i>
               </button>
             </div>
+          </div>
+          <div class="d-flex gap-3">
             <div class="flex-grow-1">
               <h6 class="mb-2">Item Details</h6>
               <p class="mb-1"><strong>Name:</strong> <span id="modalItemName"></span></p>
@@ -1111,6 +1152,16 @@
     let isLightboxOpen = false;
     let currentImageMetadata = [];
 
+    // ✅ Helper function to format image URLs (mirrors Jinja2 image_url filter)
+    function formatImageUrl(url) {
+      if (!url) return '/static/placeholder.png';
+      if (typeof url !== 'string') return '/static/placeholder.png';
+      if (url.includes('/static/')) return url.replace(/\/+/g, '/');
+      // Remove leading/trailing slashes and prepend /static/uploads/
+      url = url.replace(/^\/+|\/+$/g, '');
+      return `/static/uploads/${url}`;
+    }
+
     // Helper function to format file size
     function formatFileSize(bytes) {
       if (!bytes) return '-';
@@ -1218,8 +1269,15 @@
 
         const imageElement = document.getElementById('modalItemImage');
         if (lightboxImages && lightboxImages.length > 0) {
-          imageElement.src = lightboxImages[0];
+          const imageUrl = formatImageUrl(lightboxImages[0]);
+          console.log('Approve - Setting image URL:', imageUrl, 'from raw:', lightboxImages[0]);
+          imageElement.src = imageUrl;
           imageElement.style.display = 'block';
+          // Trigger rotation animation
+          imageElement.classList.remove('image-rotate');
+          setTimeout(() => {
+            imageElement.classList.add('image-rotate');
+          }, 10);
           // Display metadata for the first image
           if (currentImageMetadata.length > 0) {
             displayImageMetadata(currentImageMetadata[0]);
@@ -1283,8 +1341,15 @@
 
         const imageElement = document.getElementById('modalItemImage');
         if (lightboxImages && lightboxImages.length > 0) {
-          imageElement.src = lightboxImages[0];
+          const imageUrl = formatImageUrl(lightboxImages[0]);
+          console.log('Reject - Setting image URL:', imageUrl, 'from raw:', lightboxImages[0]);
+          imageElement.src = imageUrl;
           imageElement.style.display = 'block';
+          // Trigger rotation animation
+          imageElement.classList.remove('image-rotate');
+          setTimeout(() => {
+            imageElement.classList.add('image-rotate');
+          }, 10);
           // Display metadata for the first image
           if (currentImageMetadata.length > 0) {
             displayImageMetadata(currentImageMetadata[0]);
@@ -1317,7 +1382,7 @@
       if (lightboxImages.length === 0) return;
       
       const imageElement = document.getElementById('lightboxImage');
-      imageElement.src = lightboxImages[currentImageIndex];
+      imageElement.src = formatImageUrl(lightboxImages[currentImageIndex]);
       
       // Update counter
       document.getElementById('imageCounter').textContent = `${currentImageIndex + 1} of ${lightboxImages.length}`;

@@ -559,11 +559,13 @@
   .marketplace-item {
     background: var(--surface);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
     transition: all 0.3s ease;
     box-shadow: var(--shadow-soft);
     border: 3px solid var(--primary-color);
     position: relative;
+    cursor: pointer;
+    perspective: 1000px;
     /* REMOVED: opacity and transform that were hiding items */
   }
 
@@ -574,15 +576,16 @@
   }
 
   .marketplace-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px var(--primary-medium);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px var(--primary-medium);
     border-color: var(--primary-color);
   }
 
   .item-image-container {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     height: 120px;
+    border-radius: 12px;
   }
 
   .marketplace-grid.compact .item-image-container {
@@ -593,11 +596,18 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    display: block;
+    border-radius: 12px;
   }
 
-  .marketplace-item:hover img {
-    transform: scale(1.03);
+  /* Fade animation for carousel */
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  .item-carousel-img {
+    animation: fadeIn 0.4s ease-in-out;
   }
 
   .item-badge {
@@ -613,6 +623,19 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
     box-shadow: 0 2px 8px var(--primary-medium);
+  }
+
+  .image-counter {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    backdrop-filter: blur(8px);
   }
 
   .item-content {
@@ -1657,12 +1680,28 @@
 
     <div class="marketplace-grid" id="itemsGrid">
       {% for item in items %}
-        <div class="marketplace-item">
+        <!-- Build image array using namespace to support list mutation -->
+        {% set ns = namespace(images=[]) %}
+        {% if item.image_url %}
+          {% set _ = ns.images.append(item.image_url) %}
+        {% endif %}
+        {% if item.images %}
+          {% for img in item.images %}
+            {% if img.image_url %}
+              {% set _ = ns.images.append(img.image_url) %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        <!-- Final image URLs for carousel -->
+        <div class="marketplace-item" data-item-url="{{ url_for('marketplace.view_item', item_id=item.id) }}" data-images='{{ ns.images | tojson }}'>
           <div class="item-image-container">
-            {% if item.image_url %}
-              <img src="{{ item.image_url | image_url }}" alt="{{ item.name }}" loading="lazy" />
+            {% if ns.images %}
+              <img class="item-carousel-img" src="{{ ns.images[0] | image_url }}" alt="{{ item.name }}" loading="lazy" onerror="this.src='/static/placeholder.png'" />
             {% else %}
               <div style="height: 100%; background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%); display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-size: 2rem;">📷</div>
+            {% endif %}
+            {% if ns.images|length > 1 %}
+              <div class="image-counter">{{ ns.images|length }} images</div>
             {% endif %}
             <div class="item-badge">{{ item.condition }}</div>
           </div>
@@ -2079,6 +2118,124 @@
       showToast('Clearing filters...', 'info');
     }
   });
+
+  // Handle marketplace item card clicks - make entire card clickable
+  document.querySelectorAll('.marketplace-item').forEach(card => {
+    card.addEventListener('click', function(e) {
+      // Don't navigate if clicking on the action buttons area
+      if (e.target.closest('.item-actions')) {
+        return;
+      }
+      // Navigate to item details page
+      const url = this.getAttribute('data-item-url');
+      if (url) {
+        window.location.href = url;
+      }
+    });
+  });
+
+  // Setup image carousel - cycle through uploaded images
+  const setupImageCarousel = () => {
+    console.log('=== setupImageCarousel called ===');
+    const items = document.querySelectorAll('.marketplace-item');
+    console.log('Found marketplace items:', items.length);
+    
+    items.forEach((card, index) => {
+      const imagesData = card.getAttribute('data-images');
+      console.log(`Item ${index} - data-images:`, imagesData);
+      
+      if (!imagesData) {
+        console.log(`Item ${index} - Skipping, no images data`);
+        return;
+      }
+      
+      try {
+        const images = JSON.parse(imagesData);
+        console.log(`Item ${index} - Parsed images:`, images);
+        
+        if (images.length <= 1) {
+          console.log(`Item ${index} - Skipping, only ${images.length} image(s)`);
+          return;
+        }
+        
+        const img = card.querySelector('.item-carousel-img');
+        console.log(`Item ${index} - Found img element:`, !!img);
+        
+        if (!img) return;
+        
+        let currentIndex = 0;
+        let cycleInterval = null;
+        
+        const cycleImages = () => {
+          currentIndex = (currentIndex + 1) % images.length;
+          // Apply image_url filter equivalent - prepend /static/uploads/ if needed
+          let imgUrl = images[currentIndex];
+          if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
+            imgUrl = '/static/uploads/' + imgUrl;
+          }
+          img.src = imgUrl;
+          console.log('Cycling to image', currentIndex, ':', imgUrl);
+        };
+        
+        // Start cycling when card comes into view
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              console.log('Card visible, starting carousel');
+              if (!cycleInterval) {
+                cycleInterval = setInterval(cycleImages, 2000); // Change image every 2 seconds
+              }
+            } else {
+              // Stop cycling when card leaves view
+              if (cycleInterval) {
+                clearInterval(cycleInterval);
+                cycleInterval = null;
+              }
+            }
+          });
+        }, { threshold: 0.1 });
+        
+        observer.observe(card);
+        
+        // Also cycle on hover
+        card.addEventListener('mouseenter', () => {
+          console.log('Hover in, faster cycling');
+          if (cycleInterval) clearInterval(cycleInterval);
+          cycleInterval = setInterval(cycleImages, 1500); // Faster on hover
+        });
+        
+        card.addEventListener('mouseleave', () => {
+          console.log('Hover out, resetting');
+          if (cycleInterval) clearInterval(cycleInterval);
+          currentIndex = 0;
+          let imgUrl = images[0];
+          if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
+            imgUrl = '/static/uploads/' + imgUrl;
+          }
+          img.src = imgUrl;
+        });
+      } catch (e) {
+        console.error('Error parsing images data:', e);
+      }
+    });
+  };
+
+  // Initialize image carousel when page loads
+  document.addEventListener('DOMContentLoaded', () => {
+    setupImageCarousel();
+  });
+  
+  // Also run immediately in case DOM is already loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupImageCarousel);
+  } else {
+    setupImageCarousel();
+  }
+
+  // Reinitialize carousel after any dynamic content loads
+  if (window.setupImageCarousel === undefined) {
+    window.setupImageCarousel = setupImageCarousel;
+  }
 
   // Add loading feedback to View Details buttons
   document.querySelectorAll('.btn-primary').forEach(btn => {

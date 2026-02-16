@@ -811,7 +811,9 @@ def edit_user(user_id):
 @handle_errors
 def approve_items():
     try:
-        items = Item.query.filter_by(status='pending').all()
+        # ✅ Use joinedload to eagerly load the images relationship to avoid N+1 queries
+        # and ensure images are available in templates
+        items = Item.query.filter_by(status='pending').options(joinedload(Item.images)).all()
         pending_count = Item.query.filter_by(status='pending').count()
         logger.info(f"Item approvals page accessed - Pending items: {len(items)}, Count query: {pending_count}")
         
@@ -840,6 +842,7 @@ def approve_item(item_id):
     from trading_points import award_points_for_upload, create_level_up_notification
     from referral_rewards import award_referral_bonus
     from audit_logger import log_item_approval
+    from routes.auth import send_email_async
     
     try:
         item = Item.query.get_or_404(item_id)
@@ -926,6 +929,31 @@ def approve_item(item_id):
             logger.warning(f"Error processing wishlist matches for item {item_id}: {str(e)}", exc_info=True)
             # Don't fail item approval if wishlist processing has issues
         
+        # ✅ Send approval email to notify user their item was approved
+        try:
+            from flask import current_app
+            approval_url = url_for('marketplace.marketplace', _external=True)
+            
+            # Render email template with proper app context
+            html_body = render_template(
+                'emails/item_approved.html',
+                username=item.user.username,
+                item_name=item.name,
+                item_value=value,
+                approval_url=approval_url,
+                item_number=item.item_number
+            )
+            
+            send_email_async(
+                subject=f"✅ Your Item '{item.name}' Has Been Approved!",
+                recipients=[item.user.email],
+                html_body=html_body
+            )
+            logger.info(f"Approval email sent - Item ID: {item_id}, Email: {item.user.email}")
+        except Exception as e:
+            logger.error(f"Error sending approval email: {str(e)}", exc_info=True)
+            # Don't fail the approval if email fails - user can still see notification in dashboard
+        
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
         
     except ValidationError as e:
@@ -943,6 +971,7 @@ def approve_item(item_id):
 def reject_item(item_id):
     try:
         from audit_logger import log_item_rejection
+        from routes.auth import send_email_async
         
         item = Item.query.get_or_404(item_id)
         reason = request.form.get("rejection_reason", "").strip()
@@ -965,72 +994,29 @@ def reject_item(item_id):
         try:
             from flask_mail import Message
             from app import mail
+            from flask import current_app
             
             user = item.user
             subject = f"Item '{item.name}' Rejection Notice"
             
-            html_body = f"""
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
-                    .item-details {{ background-color: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #ffc107; }}
-                    .reason {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
-                    .footer {{ color: #6c757d; font-size: 12px; text-align: center; margin-top: 30px; }}
-                    h2 {{ color: #dc3545; }}
-                    .btn {{ display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h2>Item Rejection Notice</h2>
-                        <p>Hello {user.username},</p>
-                        <p>Your item listing has been reviewed and unfortunately was not approved for the marketplace.</p>
-                    </div>
-                    
-                    <div class="item-details">
-                        <h3>Item Details:</h3>
-                        <p><strong>Item:</strong> {item.name}</p>
-                        <p><strong>Item #:</strong> {item.item_number}</p>
-                    </div>
-                    
-                    <div class="reason">
-                        <h3>Rejection Reason:</h3>
-                        <p>{reason}</p>
-                    </div>
-                    
-                    <div style="margin-top: 20px;">
-                        <h3>What You Can Do:</h3>
-                        <ul>
-                            <li>Review the feedback and make necessary improvements to your item listing</li>
-                            <li>Update your item with better images, clearer description, or more accurate information</li>
-                            <li>Resubmit your item for review once improvements are made</li>
-                            <li>Contact our support team if you have questions about this decision</li>
-                        </ul>
-                    </div>
-                    
-                    <p style="margin-top: 30px;">
-                        <a href="{{{{ url_for('items.upload_item', _external=True) }}}}" class="btn">Upload Another Item</a>
-                    </p>
-                    
-                    <div class="footer">
-                        <p>This is an automated message from Barter Express. Please do not reply to this email.</p>
-                        <p>If you believe this is an error, please contact our support team.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
+            # Render email template with proper app context
+            approval_url = url_for('items.upload_item', _external=True)
             
-            msg = Message(
+            html_body = render_template(
+                'emails/item_rejected.html',
+                username=user.username,
+                item_name=item.name,
+                reason=reason,
+                approval_url=approval_url,
+                item_number=item.item_number
+            )
+            
+            # Use send_email_async for consistency
+            send_email_async(
                 subject=subject,
                 recipients=[user.email],
-                html=html_body
+                html_body=html_body
             )
-            mail.send(msg)
             logger.info(f"Rejection email sent to user - User ID: {user.id}, Email: {user.email}, Item ID: {item_id}")
             
         except Exception as e:

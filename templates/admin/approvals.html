@@ -770,9 +770,16 @@
         <div class="col fade-in" style="transition-delay: {{ loop.index0 * 0.03 }}s;">
           <div class="approval-card">
             <!-- Ultra Compact Image -->
-            {% if item.image_url %}
+            <!-- ✅ FIX: Try item.image_url first, fallback to first image in images relationship -->
+            {% set primary_image = item.image_url or (item.images[0].image_url if item.images else None) %}
+            {% if primary_image %}
             <div class="card-image-container">
-              <img src="{{ item.image_url | image_url }}" class="card-image" alt="{{ item.name }}">
+              <img src="{{ primary_image | image_url }}" class="card-image" alt="{{ item.name }}" onerror="this.src='/static/placeholder.png'">
+              <div class="image-overlay">📷</div>
+            </div>
+            {% else %}
+            <div class="card-image-container">
+              <img src="/static/placeholder.png" class="card-image" alt="{{ item.name }}">
               <div class="image-overlay">📷</div>
             </div>
             {% endif %}
