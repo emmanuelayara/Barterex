@@ -27,6 +27,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max size: 50MB (global limit)
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 
+# ✅ Cloudinary Configuration
+app.config['USE_CLOUDINARY'] = os.getenv('USE_CLOUDINARY', 'True').lower() in ['true', '1', 'yes']
+app.config['CLOUDINARY_CLOUD_NAME'] = os.getenv('CLOUDINARY_CLOUD_NAME')
+app.config['CLOUDINARY_API_KEY'] = os.getenv('CLOUDINARY_API_KEY')
+app.config['CLOUDINARY_API_SECRET'] = os.getenv('CLOUDINARY_API_SECRET')
+
 # ✅ File upload security configuration
 app.config['FILE_UPLOAD_MAX_SIZE'] = 10 * 1024 * 1024  # 10MB default per file
 app.config['FILE_UPLOAD_ENABLE_VIRUS_SCAN'] = False  # Set to True if ClamAV is available (apt-get install clamav)
@@ -90,25 +96,49 @@ from routes.wishlist import wishlist_bp
 from routes_account import account_bp
 from notifications import NotificationService
 
+# ✅ Initialize Cloudinary handler at app startup
+if app.config.get('USE_CLOUDINARY'):
+    try:
+        from cloudinary_handler import cloudinary_handler
+        app.logger.info("Cloudinary handler initialized at app startup")
+    except Exception as e:
+        app.logger.warning(f"Failed to initialize Cloudinary handler: {e}")
+
 # ✅ User loader for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ✅ Jinja filter to ensure image URLs are absolute paths
+# ✅ Jinja filter to format image URLs (supports both local and Cloudinary)
 @app.template_filter('image_url')
 def format_image_url(url):
-    """Convert image URLs to absolute paths for proper serving"""
+    """Convert image URLs to absolute paths or Cloudinary URLs"""
     if not url:
         return '/static/placeholder.png'
     
-    # If URL already has /static/ in it, return as-is
+    # If URL is already a full Cloudinary URL, return as-is
+    if 'res.cloudinary.com' in url:
+        return url
+    
+    # Use Cloudinary if configured
+    if app.config.get('USE_CLOUDINARY') and app.config.get('CLOUDINARY_CLOUD_NAME'):
+        try:
+            from cloudinary_handler import cloudinary_handler
+            if cloudinary_handler.is_configured:
+                cloudinary_url = cloudinary_handler.get_optimized_url(
+                    url,  # This should be the public_id
+                    quality='auto',
+                    format='auto'
+                )
+                if cloudinary_url:
+                    return cloudinary_url
+        except Exception as e:
+            app.logger.warning(f"Cloudinary URL generation failed: {e}")
+    
+    # Fallback to local filesystem URLs
     if '/static/' in url:
-        # Clean up any double slashes
         return url.replace('//', '/')
     
-    # Otherwise prepend /static/uploads/
-    # Remove any leading/trailing slashes from the filename
     url = url.strip('/')
     return f'/static/uploads/{url}'
 

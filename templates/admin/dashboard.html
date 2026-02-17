@@ -793,12 +793,17 @@
               {% endif %}
               
               {% if item_images|length > 0 %}
-              <img src="{{ item_images[0] | image_url }}" alt="{{ item.name }}" 
+              {% if item_images[0].startswith('http') or item_images[0].startswith('/') %}
+                {% set img_src = item_images[0] %}
+              {% else %}
+                {% set img_src = '/static/uploads/' + item_images[0] %}
+              {% endif %}
+              <img src="{{ img_src }}" alt="{{ item.name }}" 
                    class="dashboard-item-image" 
                    data-item-images='{{ item_images|tojson|safe }}'
                    style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;"
-                   title="Click to view all images"
-                   onerror="this.src='/static/placeholder.png'">
+                   title="Click to view images"
+                   onerror="this.src='/static/placeholder.png'">>
               {% else %}
               <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
                 <i class="bi bi-image"></i>

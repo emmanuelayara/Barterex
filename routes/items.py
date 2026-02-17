@@ -216,21 +216,89 @@ def upload_item():
                                 upload_error_occurred = True
                                 continue
                             
-                            unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
-                            image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                            file.save(image_path)
+                            # Upload image to Cloudinary or local storage
+                            try:
+                                if app.config.get('USE_CLOUDINARY'):
+                                    from cloudinary_handler import cloudinary_handler
+                                    
+                                    if cloudinary_handler.is_configured:
+                                        # Upload to Cloudinary
+                                        file.seek(0)  # Reset file pointer
+                                        upload_result = cloudinary_handler.upload_image(
+                                            file,
+                                            user_id=current_user.id,
+                                            item_id=new_item.id,
+                                            index=index,
+                                            folder_prefix='barterex'
+                                        )
+                                        
+                                        # Store the Cloudinary public_id as the image_url
+                                        image_url = upload_result['public_id']
+                                        width = upload_result.get('width')
+                                        height = upload_result.get('height')
+                                        file_size = upload_result.get('bytes')
+                                        
+                                        logger.info(f"✅ Image uploaded to Cloudinary - Item: {new_item.id}, Public ID: {image_url}")
+                                    else:
+                                        # Cloudinary not configured, fall back to local
+                                        raise Exception("Cloudinary not configured, falling back to local storage")
+                                else:
+                                    # Use local file storage
+                                    unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
+                                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                                    file.seek(0)  # Reset file pointer
+                                    file.save(image_path)
+                                    
+                                    # Store ONLY the filename, not the full path - the image_url filter will construct the proper URL
+                                    image_url = unique_filename
+                                    width = None
+                                    height = None
+                                    file_size = None
+                                    
+                                    logger.info(f"Image uploaded to local storage - Item: {new_item.id}, File: {unique_filename}")
+                            except Exception as e:
+                                logger.warning(f"Cloudinary upload failed, attempting local fallback: {e}")
+                                
+                                # Fallback to local storage if Cloudinary fails
+                                try:
+                                    unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
+                                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                                    os.makedirs(os.path.dirname(image_path), exist_ok=True)
+                                    file.seek(0)  # Reset file pointer
+                                    file.save(image_path)
+                                    
+                                    image_url = unique_filename
+                                    width = None
+                                    height = None
+                                    file_size = None
+                                    
+                                    logger.info(f"⚠️ Fallback to local storage - Item: {new_item.id}, File: {unique_filename}")
+                                except Exception as fallback_error:
+                                    db.session.rollback()
+                                    logger.error(f"Both Cloudinary and local storage failed: {fallback_error}")
+                                    user_message = get_user_friendly_error_message(str(fallback_error), 'images')
+                                    validation_errors.append(f"• {file.filename}: {user_message}")
+                                    upload_error_occurred = True
+                                    continue
                             
-                            # Store ONLY the filename, not the full path - the image_url filter will construct the proper URL
-                            image_url = unique_filename
-                            
-                            # Analyze image for metadata and quality issues (pass relative path)
-                            analysis = analyze_image_url(image_url)
+                            # Analyze image for metadata and quality issues
+                            analysis = {}
+                            try:
+                                if not width or not height:
+                                    from image_analyzer import analyze_image_url
+                                    analysis = analyze_image_url(image_url)
+                                    width = analysis.get('width')
+                                    height = analysis.get('height')
+                                if not file_size:
+                                    file_size = analysis.get('file_size')
+                            except Exception as e:
+                                logger.warning(f"Image analysis failed: {e}")
                             
                             # Validate image dimensions if available
-                            if analysis.get('width') and analysis.get('height'):
+                            if width and height:
                                 is_valid, error_msg = validate_image_dimensions(
-                                    analysis.get('width'),
-                                    analysis.get('height'),
+                                    width,
+                                    height,
                                     file.filename,
                                     min_width=400,
                                     min_height=300
@@ -244,14 +312,14 @@ def upload_item():
                                 image_url=image_url,
                                 is_primary=(index == 0),
                                 order_index=index,
-                                width=analysis.get('width'),
-                                height=analysis.get('height'),
-                                file_size=analysis.get('file_size'),
+                                width=width,
+                                height=height,
+                                file_size=file_size,
                                 quality_flags=json.dumps(analysis.get('quality_flags', []))
                             )
                             db.session.add(item_image)
                             uploaded_images.append(item_image)
-                            logger.info(f"Image uploaded for item - Item: {new_item.id}, File: {unique_filename}, Size: {analysis.get('file_size')} bytes")
+                            logger.info(f"Image record created - Item: {new_item.id}, Image URL: {image_url}")
                         except Exception as e:
                             db.session.rollback()
                             logger.error(f"Error uploading image: {str(e)}", exc_info=True)

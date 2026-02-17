@@ -6,7 +6,9 @@ Sets up structured logging with file and console handlers.
 import logging
 import logging.handlers
 import os
+import sys
 from datetime import datetime
+from io import TextIOWrapper
 
 # Create logs directory if it doesn't exist
 LOGS_DIR = 'logs'
@@ -40,12 +42,13 @@ def setup_logger(name, level=logging.INFO):
     if logger.handlers:
         return logger
     
-    # File handler - logs to rotating file
+    # File handler - logs to rotating file with UTF-8 encoding
     try:
         file_handler = logging.handlers.RotatingFileHandler(
             LOG_FILE,
             maxBytes=10485760,  # 10MB
-            backupCount=10
+            backupCount=10,
+            encoding='utf-8'
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(LOG_FORMAT)
@@ -53,9 +56,14 @@ def setup_logger(name, level=logging.INFO):
     except Exception as e:
         print(f"Failed to setup file handler: {e}")
     
-    # Console handler - logs to console
+    # Console handler - logs to console with UTF-8 encoding for Windows compatibility
     try:
-        console_handler = logging.StreamHandler()
+        # On Windows, wrap stderr with UTF-8 encoding to handle Unicode characters
+        if sys.platform == 'win32':
+            if not isinstance(sys.stderr, TextIOWrapper) or sys.stderr.encoding.lower() not in ('utf-8', 'utf8'):
+                sys.stderr = TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        
+        console_handler = logging.StreamHandler(sys.stderr)
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(LOG_FORMAT)
         logger.addHandler(console_handler)

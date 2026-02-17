@@ -15,7 +15,7 @@ def analyze_image_url(image_url):
     Analyze an image from a URL or file path and extract metadata
     
     Args:
-        image_url: Full URL to the image OR local file path
+        image_url: Full URL to the image OR local file path OR just filename
         
     Returns:
         dict with keys:
@@ -34,43 +34,9 @@ def analyze_image_url(image_url):
     }
     
     try:
-        # Check if it's a local file path
-        if image_url.startswith('/') or image_url.startswith('static'):
-            # Local file path - convert to absolute path
-            if image_url.startswith('/'):
-                file_path = image_url.lstrip('/')
-            else:
-                file_path = image_url
-            
-            # Get absolute path from Flask app root
-            import sys
-            if 'app' in sys.modules:
-                from app import app
-                full_path = os.path.join(app.root_path, file_path)
-            else:
-                full_path = os.path.join(os.getcwd(), file_path)
-            
-            # Check if file exists
-            if not os.path.exists(full_path):
-                logger.error(f"Image file not found: {full_path}")
-                result['quality_flags'].append({
-                    'type': 'file_not_found',
-                    'message': 'Image file not found',
-                    'severity': 'error'
-                })
-                result['has_issues'] = True
-                return result
-            
-            # Read local file
-            with open(full_path, 'rb') as f:
-                file_content = f.read()
-            file_size = len(file_content)
-            result['file_size'] = file_size
-            
-            # Open image with PIL
-            img = Image.open(BytesIO(file_content))
-        else:
-            # URL - download it
+        # Check if it's a remote URL
+        if image_url.startswith('http://') or image_url.startswith('https://'):
+            # Remote URL - download it
             response = requests.get(image_url, timeout=10)
             response.raise_for_status()
             
@@ -80,6 +46,50 @@ def analyze_image_url(image_url):
             
             # Open image with PIL
             img = Image.open(BytesIO(response.content))
+        else:
+            # Local file path - could be absolute, relative, or just filename
+            import sys
+            if 'app' in sys.modules:
+                from app import app
+                
+                # Determine the file path
+                if image_url.startswith('/'):
+                    # Absolute path relative to app root
+                    file_path = os.path.join(app.root_path, image_url.lstrip('/'))
+                elif image_url.startswith('static'):
+                    # Static folder
+                    file_path = os.path.join(app.root_path, image_url)
+                else:
+                    # Just a filename - construct path using upload folder
+                    upload_folder = app.config.get('UPLOAD_FOLDER', 'static/uploads')
+                    file_path = os.path.join(app.root_path, upload_folder, image_url)
+            else:
+                # Fallback if app not available
+                upload_folder = 'static/uploads'
+                file_path = os.path.join(os.getcwd(), upload_folder, image_url)
+            
+            # Normalize path
+            file_path = os.path.normpath(file_path)
+            
+            # Check if file exists
+            if not os.path.exists(file_path):
+                logger.error(f"Image file not found: {file_path}")
+                result['quality_flags'].append({
+                    'type': 'file_not_found',
+                    'message': f'Image file not found: {image_url}',
+                    'severity': 'error'
+                })
+                result['has_issues'] = True
+                return result
+            
+            # Read local file
+            with open(file_path, 'rb') as f:
+                file_content = f.read()
+            file_size = len(file_content)
+            result['file_size'] = file_size
+            
+            # Open image with PIL
+            img = Image.open(BytesIO(file_content))
         
         # Get dimensions
         width, height = img.size
