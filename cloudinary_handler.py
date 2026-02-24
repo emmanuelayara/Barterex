@@ -54,28 +54,25 @@ class CloudinaryHandler:
         try:
             # Get filename
             if isinstance(file_obj, str):
-                # If it's a file path string
                 filename = os.path.basename(file_obj)
                 file_to_upload = file_obj
             else:
-                # If it's a file-like object
                 filename = getattr(file_obj, 'filename', f'image_{item_id}_{index}.jpg')
                 file_to_upload = file_obj
             
-            # Create organized folder structure
+            # Create organized folder structure (no nested folder parameter)
             public_id = f"{folder_prefix}/{user_id}/{item_id}/{index}_{secure_filename(filename)}"
             
             # Upload to Cloudinary
             result = cloudinary.uploader.upload(
                 file_to_upload,
                 public_id=public_id,
-                folder=f"{folder_prefix}/{user_id}",
                 resource_type='auto',
                 overwrite=False,
-                quality='auto',  # Auto-optimize quality
-                width=1200,  # Max width
-                crop='limit',  # Don't upscale
-                tags=[str(user_id), str(item_id)],  # Tag for organization
+                quality='auto',
+                width=1200,
+                crop='limit',
+                tags=[str(user_id), str(item_id)],
             )
             
             logger.info(f"✅ Image uploaded to Cloudinary: {result['public_id']}")
@@ -107,7 +104,7 @@ class CloudinaryHandler:
             logger.error(f"❌ Cloudinary delete error: {e}")
             return False
     
-    def get_optimized_url(self, public_id, width=None, height=None, quality='auto', format='auto'):
+    def get_optimized_url(self, public_id, width=None, height=None, quality='auto', format=None):
         """
         Get optimized Cloudinary URL for image
         
@@ -116,7 +113,7 @@ class CloudinaryHandler:
             width: Optional width for resizing
             height: Optional height for resizing
             quality: Quality setting (auto, best, good, eco, low)
-            format: Image format (auto, webp, jpg, png, etc)
+            format: Image format (webp, jpg, png, etc) - None for original
         
         Returns:
             str: Optimized image URL
@@ -125,14 +122,19 @@ class CloudinaryHandler:
             return None
         
         try:
-            url = cloudinary.CloudinaryImage(public_id).build_url(
-                width=width,
-                height=height,
-                crop='limit' if (width or height) else None,
-                quality=quality,
-                format=format,
-                secure=True  # Use HTTPS
-            )
+            url_params = {
+                'width': width,
+                'height': height,
+                'crop': 'limit' if (width or height) else None,
+                'quality': quality,
+                'secure': True  # Use HTTPS
+            }
+            
+            # Only add format if explicitly provided
+            if format and format != 'auto':
+                url_params['format'] = format
+            
+            url = cloudinary.CloudinaryImage(public_id).build_url(**url_params)
             return url
         except Exception as e:
             logger.error(f"❌ Error building Cloudinary URL: {e}")

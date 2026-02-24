@@ -139,8 +139,7 @@ def format_image_url(url):
                 if cloudinary_handler.is_configured:
                     cloudinary_url = cloudinary_handler.get_optimized_url(
                         url,  # This should be the public_id
-                        quality='auto',
-                        format='auto'
+                        quality='auto'
                     )
                     if cloudinary_url:
                         app.logger.info(f"✅ Cloudinary URL generated: {cloudinary_url}")
