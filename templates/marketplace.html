@@ -1964,25 +1964,20 @@
         return url;
       }
       
-      // If Cloudinary is enabled and URL is not a local path, build Cloudinary URL
-      if ({{ 'true' if use_cloudinary else 'false' | lower }}) {
-        const cloudinaryCloudName = '{{ cloudinary_cloud_name }}';
-        // Check if URL looks like a Cloudinary public_id (contains folder structure or barterex/)
-        if (!url.includes('/static/') && url.includes('/')) {
-          return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
-        }
-        // Single filename, might be Cloudinary public_id
-        if (!url.includes('/static/')) {
-          return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
-        }
-      }
-      
-      // Local file: ensure proper format
+      // If local static path, ensure proper format
       if (url.includes('/static/')) {
         return url.replace(/\/+/g, '/');
       }
       
-      // Prepend /static/uploads/ for local storage
+      // Check if it looks like a Cloudinary public_id (contains 'barterex/' folder structure)
+      if (url.includes('barterex/')) {
+        const cloudinaryCloudName = '{{ cloudinary_cloud_name }}';
+        if ({{ 'true' if use_cloudinary else 'false' | lower }} && cloudinaryCloudName) {
+          return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
+        }
+      }
+      
+      // Otherwise treat as local filename
       return `/static/uploads/${url.replace(/^\/+|\/+$/g, '')}`;
     }
 
