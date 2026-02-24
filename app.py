@@ -116,29 +116,41 @@ def format_image_url(url):
     if not url:
         return '/static/placeholder.png'
     
+    url = str(url).strip()
+    
     # If URL is already a full Cloudinary URL, return as-is
     if 'res.cloudinary.com' in url:
         return url
     
+    # If URL already looks like a full local path, return as-is
+    if url.startswith('http://') or url.startswith('https://'):
+        return url
+    
+    if url.startswith('/static/'):
+        return url.replace('//', '/')
+    
     # Use Cloudinary if configured
     if app.config.get('USE_CLOUDINARY') and app.config.get('CLOUDINARY_CLOUD_NAME'):
         try:
-            from cloudinary_handler import cloudinary_handler
-            if cloudinary_handler.is_configured:
-                cloudinary_url = cloudinary_handler.get_optimized_url(
-                    url,  # This should be the public_id
-                    quality='auto',
-                    format='auto'
-                )
-                if cloudinary_url:
-                    return cloudinary_url
+            # Detect if URL looks like a Cloudinary public_id
+            # (contains 'barterex' folder structure or multiple path separators)
+            if 'barterex/' in url or url.count('/') > 0:
+                from cloudinary_handler import cloudinary_handler
+                if cloudinary_handler.is_configured:
+                    cloudinary_url = cloudinary_handler.get_optimized_url(
+                        url,  # This should be the public_id
+                        quality='auto',
+                        format='auto'
+                    )
+                    if cloudinary_url:
+                        app.logger.info(f"✅ Cloudinary URL generated: {cloudinary_url}")
+                        return cloudinary_url
+                    else:
+                        app.logger.warning(f"⚠️ Failed to generate Cloudinary URL for: {url}")
         except Exception as e:
             app.logger.warning(f"Cloudinary URL generation failed: {e}")
     
     # Fallback to local filesystem URLs
-    if '/static/' in url:
-        return url.replace('//', '/')
-    
     url = url.strip('/')
     return f'/static/uploads/{url}'
 
