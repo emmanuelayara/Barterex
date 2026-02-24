@@ -39,7 +39,7 @@ class CloudinaryHandler:
         Upload image to Cloudinary
         
         Args:
-            file_obj: Flask FileStorage object
+            file_obj: Flask FileStorage object or file path string
             user_id: User ID for organizing uploads
             item_id: Item ID this image belongs to
             index: Image index (for ordering)
@@ -52,12 +52,22 @@ class CloudinaryHandler:
             raise Exception("Cloudinary is not configured")
         
         try:
+            # Get filename
+            if isinstance(file_obj, str):
+                # If it's a file path string
+                filename = os.path.basename(file_obj)
+                file_to_upload = file_obj
+            else:
+                # If it's a file-like object
+                filename = getattr(file_obj, 'filename', f'image_{item_id}_{index}.jpg')
+                file_to_upload = file_obj
+            
             # Create organized folder structure
-            public_id = f"{folder_prefix}/{user_id}/{item_id}/{index}_{secure_filename(file_obj.filename)}"
+            public_id = f"{folder_prefix}/{user_id}/{item_id}/{index}_{secure_filename(filename)}"
             
             # Upload to Cloudinary
             result = cloudinary.uploader.upload(
-                file_obj,
+                file_to_upload,
                 public_id=public_id,
                 folder=f"{folder_prefix}/{user_id}",
                 resource_type='auto',

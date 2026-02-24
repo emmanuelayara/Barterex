@@ -1,11 +1,12 @@
 from app import app, db
-from models import ItemImage, Item
+from models import ItemImage
 
 with app.app_context():
-    items = Item.query.limit(3).all()
-    for item in items:
-        print(f'\nItem: {item.name} (ID: {item.id})')
-        print(f'  Primary image_url: {item.image_url}')
-        if item.images:
-            for i, img in enumerate(item.images[:2]):
-                print(f'  Image {i}: {img.image_url}')
+    # Check first 5 images
+    images = ItemImage.query.limit(5).all()
+    print(f"\n📊 CHECKING {len(images)} IMAGES:\n")
+    for i, img in enumerate(images, 1):
+        is_cloudinary = 'barterex/' in img.image_url
+        status = "✅ CLOUDINARY" if is_cloudinary else "❌ LOCAL"
+        print(f"{i}. {status}: {img.image_url}")
+    print()
