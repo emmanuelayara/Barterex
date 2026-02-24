@@ -793,11 +793,7 @@
               {% endif %}
               
               {% if item_images|length > 0 %}
-              {% if item_images[0].startswith('http') or item_images[0].startswith('/') %}
-                {% set img_src = item_images[0] %}
-              {% else %}
-                {% set img_src = '/static/uploads/' + item_images[0] %}
-              {% endif %}
+              {% set img_src = item_images[0] | image_url %}
               <img src="{{ img_src }}" alt="{{ item.name }}" 
                    class="dashboard-item-image" 
                    data-item-images='{{ item_images|tojson|safe }}'
@@ -1161,8 +1157,37 @@
     function formatImageUrl(url) {
       if (!url) return '/static/placeholder.png';
       if (typeof url !== 'string') return '/static/placeholder.png';
-      if (url.includes('/static/')) return url.replace(/\/+/g, '/');
-      // Remove leading/trailing slashes and prepend /static/uploads/
+      
+      // If already a full URL, return as-is
+      if (url.includes('http://') || url.includes('https://')) {
+        return url;
+      }
+      
+      // If already a Cloudinary URL, return as-is
+      if (url.includes('res.cloudinary.com')) {
+        return url;
+      }
+      
+      // If Cloudinary is enabled and URL is not a local path, build Cloudinary URL
+      if ({{ 'true' if use_cloudinary else 'false' | lower }}) {
+        const cloudinaryCloudName = '{{ cloudinary_cloud_name }}';
+        // Check if URL looks like a Cloudinary public_id (contains folder structure or barterex/)
+        if (!url.includes('/static/') && (url.includes('/') || url.includes('barterex'))) {
+          return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
+        }
+      }
+      
+      // Local file handling
+      if (url.includes('/static/')) {
+        return url.replace(/\/+/g, '/');
+      }
+      
+      // Check if it looks like a local filename or a path without /static/
+      if (!url.includes('barterex') && !url.includes('/')) {
+        return `/static/uploads/${url}`;
+      }
+      
+      // For local paths without /static/
       url = url.replace(/^\/+|\/+$/g, '');
       return `/static/uploads/${url}`;
     }

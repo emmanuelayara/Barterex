@@ -1,8 +1,11 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, send_file
 from flask_login import login_required, current_user
 from models import db, Wishlist, WishlistMatch, Item
 from datetime import datetime
 import logging
+import csv
+import io
+from sqlalchemy import or_, and_
 
 wishlist_bp = Blueprint('wishlist', __name__, url_prefix='/wishlist')
 logger = logging.getLogger(__name__)
@@ -70,17 +73,60 @@ def add_to_wishlist():
 @wishlist_bp.route('/view', methods=['GET'])
 @login_required
 def view_wishlist():
-    """Get user's wishlist with pagination"""
+    """Get user's wishlist with pagination, search, sort, and filter"""
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
+        search = request.args.get('search', '').strip()
+        sort_by = request.args.get('sort_by', 'created_at')  # created_at, name, status, matches
+        sort_order = request.args.get('sort_order', 'desc')  # asc, desc
+        status_filter = request.args.get('status', 'all')  # all, active, paused
+        search_type_filter = request.args.get('search_type', 'all')  # all, item, category
         
-        pagination = Wishlist.query.filter_by(
-            user_id=current_user.id
-        ).paginate(page=page, per_page=per_page)
+        # Build base query
+        query = Wishlist.query.filter_by(user_id=current_user.id)
+        
+        # Apply search filter
+        if search:
+            query = query.filter(
+                or_(
+                    Wishlist.item_name.ilike(f'%{search}%'),
+                    Wishlist.category.ilike(f'%{search}%')
+                )
+            )
+        
+        # Apply status filter
+        if status_filter == 'active':
+            query = query.filter_by(is_active=True)
+        elif status_filter == 'paused':
+            query = query.filter_by(is_active=False)
+        
+        # Apply search type filter
+        if search_type_filter in ['item', 'category']:
+            query = query.filter_by(search_type=search_type_filter)
+        
+        # Apply sorting
+        if sort_by == 'name':
+            sort_column = db.func.coalesce(Wishlist.item_name, Wishlist.category)
+        elif sort_by == 'status':
+            sort_column = Wishlist.is_active
+        elif sort_by == 'matches':
+            # Sort by number of matches (complex, done in Python)
+            sort_column = None
+        else:  # created_at (default)
+            sort_column = Wishlist.created_at
+        
+        # Apply sort column if exists
+        if sort_column is not None:
+            query = query.order_by(sort_column.desc() if sort_order == 'desc' else sort_column.asc())
+        else:
+            query = query.order_by(Wishlist.created_at.desc())
+        
+        pagination = query.paginate(page=page, per_page=per_page)
         
         wishlists = []
         for wishlist_item in pagination.items:
+            match_count = len(wishlist_item.matched_items) if wishlist_item.matched_items else 0
             wishlists.append({
                 'id': wishlist_item.id,
                 'item_name': wishlist_item.item_name,
@@ -92,8 +138,12 @@ def view_wishlist():
                 'created_at': wishlist_item.created_at.isoformat() if wishlist_item.created_at else None,
                 'last_notified_at': wishlist_item.last_notified_at.isoformat() if wishlist_item.last_notified_at else None,
                 'notification_count': wishlist_item.notification_count,
-                'match_count': len(wishlist_item.matched_items) if wishlist_item.matched_items else 0
+                'match_count': match_count
             })
+        
+        # Sort by matches if needed
+        if sort_by == 'matches':
+            wishlists.sort(key=lambda x: x['match_count'], reverse=(sort_order == 'desc'))
         
         return jsonify({
             'success': True,
@@ -290,3 +340,212 @@ def get_matches(wishlist_id):
     except Exception as e:
         logger.error(f'Error fetching matches: {str(e)}')
         return jsonify({'error': 'Failed to fetch matches'}), 500
+
+
+@wishlist_bp.route('/bulk-pause', methods=['POST'])
+@login_required
+def bulk_pause():
+    """Pause all active wishlists"""
+    try:
+        data = request.get_json() or {}
+        wishlist_ids = data.get('wishlist_ids')  # Optional: specific IDs, otherwise all
+        
+        if wishlist_ids:
+            # Pause specific wishlists
+            Wishlist.query.filter(
+                Wishlist.user_id == current_user.id,
+                Wishlist.id.in_(wishlist_ids),
+                Wishlist.is_active == True
+            ).update({'is_active': False}, synchronize_session=False)
+            count = len(wishlist_ids)
+        else:
+            # Pause all active wishlists
+            count = Wishlist.query.filter_by(
+                user_id=current_user.id,
+                is_active=True
+            ).update({'is_active': False}, synchronize_session=False)
+        
+        db.session.commit()
+        logger.info(f'User {current_user.id} paused {count} wishlist items')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Paused {count} wishlist{"s" if count != 1 else ""}',
+            'count': count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f'Error bulk pausing wishlists: {str(e)}')
+        return jsonify({'error': 'Failed to pause wishlists'}), 500
+
+
+@wishlist_bp.route('/bulk-resume', methods=['POST'])
+@login_required
+def bulk_resume():
+    """Resume all paused wishlists"""
+    try:
+        data = request.get_json() or {}
+        wishlist_ids = data.get('wishlist_ids')  # Optional: specific IDs, otherwise all
+        
+        if wishlist_ids:
+            # Resume specific wishlists
+            Wishlist.query.filter(
+                Wishlist.user_id == current_user.id,
+                Wishlist.id.in_(wishlist_ids),
+                Wishlist.is_active == False
+            ).update({'is_active': True}, synchronize_session=False)
+            count = len(wishlist_ids)
+        else:
+            # Resume all paused wishlists
+            count = Wishlist.query.filter_by(
+                user_id=current_user.id,
+                is_active=False
+            ).update({'is_active': True}, synchronize_session=False)
+        
+        db.session.commit()
+        logger.info(f'User {current_user.id} resumed {count} wishlist items')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Resumed {count} wishlist{"s" if count != 1 else ""}',
+            'count': count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f'Error bulk resuming wishlists: {str(e)}')
+        return jsonify({'error': 'Failed to resume wishlists'}), 500
+
+
+@wishlist_bp.route('/bulk-delete', methods=['POST'])
+@login_required
+def bulk_delete():
+    """Delete multiple wishlists"""
+    try:
+        data = request.get_json()
+        wishlist_ids = data.get('wishlist_ids', [])
+        
+        if not wishlist_ids:
+            return jsonify({'error': 'No wishlists specified'}), 400
+        
+        # Get wishlists to delete
+        wishlists_to_delete = Wishlist.query.filter(
+            Wishlist.user_id == current_user.id,
+            Wishlist.id.in_(wishlist_ids)
+        ).all()
+        
+        if not wishlists_to_delete:
+            return jsonify({'error': 'No wishlists found'}), 404
+        
+        count = len(wishlists_to_delete)
+        
+        # Delete associated matches first
+        for wb in wishlists_to_delete:
+            WishlistMatch.query.filter_by(wishlist_id=wb.id).delete()
+        
+        # Delete wishlists
+        for wb in wishlists_to_delete:
+            db.session.delete(wb)
+        
+        db.session.commit()
+        logger.info(f'User {current_user.id} deleted {count} wishlist items')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {count} wishlist{"s" if count != 1 else ""}',
+            'count': count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f'Error bulk deleting wishlists: {str(e)}')
+        return jsonify({'error': 'Failed to delete wishlists'}), 500
+
+
+@wishlist_bp.route('/export/csv', methods=['GET'])
+@login_required
+def export_csv():
+    """Export wishlists to CSV file"""
+    try:
+        # Get all wishlists for the user (with optional filters)
+        search = request.args.get('search', '').strip()
+        status_filter = request.args.get('status', 'all')
+        search_type_filter = request.args.get('search_type', 'all')
+        
+        query = Wishlist.query.filter_by(user_id=current_user.id)
+        
+        # Apply filters
+        if search:
+            query = query.filter(
+                or_(
+                    Wishlist.item_name.ilike(f'%{search}%'),
+                    Wishlist.category.ilike(f'%{search}%')
+                )
+            )
+        
+        if status_filter == 'active':
+            query = query.filter_by(is_active=True)
+        elif status_filter == 'paused':
+            query = query.filter_by(is_active=False)
+        
+        if search_type_filter in ['item', 'category']:
+            query = query.filter_by(search_type=search_type_filter)
+        
+        wishlists = query.all()
+        
+        if not wishlists:
+            return jsonify({'error': 'No wishlists to export'}), 404
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow([
+            'Item/Category Name',
+            'Search Type',
+            'Status',
+            'Email Notifications',
+            'In-App Notifications',
+            'Matches Found',
+            'Notifications Sent',
+            'Created Date',
+            'Last Notified Date'
+        ])
+        
+        # Write data rows
+        for wishlist_item in wishlists:
+            match_count = len(wishlist_item.matched_items) if wishlist_item.matched_items else 0
+            writer.writerow([
+                wishlist_item.item_name or wishlist_item.category,
+                wishlist_item.search_type,
+                'Active' if wishlist_item.is_active else 'Paused',
+                'Yes' if wishlist_item.notify_via_email else 'No',
+                'Yes' if wishlist_item.notify_via_app else 'No',
+                match_count,
+                wishlist_item.notification_count or 0,
+                wishlist_item.created_at.strftime('%Y-%m-%d %H:%M:%S') if wishlist_item.created_at else '',
+                wishlist_item.last_notified_at.strftime('%Y-%m-%d %H:%M:%S') if wishlist_item.last_notified_at else 'Never'
+            ])
+        
+        # Prepare response
+        output.seek(0)
+        bytes_output = io.BytesIO()
+        bytes_output.write(output.getvalue().encode('utf-8'))
+        bytes_output.seek(0)
+        
+        filename = f'wishlists_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv'
+        
+        logger.info(f'User {current_user.id} exported {len(wishlists)} wishlists to CSV')
+        
+        return send_file(
+            bytes_output,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        logger.error(f'Error exporting wishlist to CSV: {str(e)}')
+        return jsonify({'error': 'Failed to export wishlists'}), 500

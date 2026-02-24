@@ -1953,9 +1953,36 @@
 
     function formatImageUrl(url) {
       if (!url) return '/static/placeholder.png';
+      
+      // If already a full URL, return as-is
+      if (url.includes('http://') || url.includes('https://')) {
+        return url;
+      }
+      
+      // If already a Cloudinary URL, return as-is
+      if (url.includes('res.cloudinary.com')) {
+        return url;
+      }
+      
+      // If Cloudinary is enabled and URL is not a local path, build Cloudinary URL
+      if ({{ 'true' if use_cloudinary else 'false' | lower }}) {
+        const cloudinaryCloudName = '{{ cloudinary_cloud_name }}';
+        // Check if URL looks like a Cloudinary public_id (contains folder structure or barterex/)
+        if (!url.includes('/static/') && url.includes('/')) {
+          return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
+        }
+        // Single filename, might be Cloudinary public_id
+        if (!url.includes('/static/')) {
+          return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
+        }
+      }
+      
+      // Local file: ensure proper format
       if (url.includes('/static/')) {
         return url.replace(/\/+/g, '/');
       }
+      
+      // Prepend /static/uploads/ for local storage
       return `/static/uploads/${url.replace(/^\/+|\/+$/g, '')}`;
     }
 
@@ -2168,11 +2195,8 @@
         
         const cycleImages = () => {
           currentIndex = (currentIndex + 1) % images.length;
-          // Apply image_url filter equivalent - prepend /static/uploads/ if needed
-          let imgUrl = images[currentIndex];
-          if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
-            imgUrl = '/static/uploads/' + imgUrl;
-          }
+          // Use formatImageUrl function to handle both local and Cloudinary URLs
+          let imgUrl = formatImageUrl(images[currentIndex]);
           img.src = imgUrl;
           console.log('Cycling to image', currentIndex, ':', imgUrl);
         };
@@ -2208,10 +2232,7 @@
           console.log('Hover out, resetting');
           if (cycleInterval) clearInterval(cycleInterval);
           currentIndex = 0;
-          let imgUrl = images[0];
-          if (!imgUrl.startsWith('http') && !imgUrl.startsWith('/')) {
-            imgUrl = '/static/uploads/' + imgUrl;
-          }
+          let imgUrl = formatImageUrl(images[0]);
           img.src = imgUrl;
         });
       } catch (e) {

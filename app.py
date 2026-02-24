@@ -181,12 +181,18 @@ def check_maintenance_mode():
         if 'marketplace' in current_route and not settings.allow_browsing:
             return render_template('marketplace_disabled.html'), 503
 
-# ✅ Context processor for cart info and CSRF token
+# ✅ Context processor for cart info, CSRF token, and Cloudinary config
 @app.context_processor
 def inject_cart_info():
     from flask_login import current_user
     from flask_wtf.csrf import generate_csrf
     from models import Favorite
+    
+    context = {
+        'csrf_token': generate_csrf,
+        'use_cloudinary': app.config.get('USE_CLOUDINARY', False),
+        'cloudinary_cloud_name': app.config.get('CLOUDINARY_CLOUD_NAME', ''),
+    }
     
     if current_user.is_authenticated:
         cart = Cart.query.filter_by(user_id=current_user.id).first()
@@ -198,12 +204,17 @@ def inject_cart_info():
         # Get favorites count
         favorites_count = Favorite.query.filter_by(user_id=current_user.id).count()
         
-        return {
+        context.update({
             'cart_count': cart_count,
             'favorites_count': favorites_count,
-            'csrf_token': generate_csrf
-        }
-    return {'cart_count': 0, 'favorites_count': 0, 'csrf_token': generate_csrf}
+        })
+    else:
+        context.update({
+            'cart_count': 0,
+            'favorites_count': 0,
+        })
+    
+    return context
 
 # ✅ Register blueprints
 app.register_blueprint(auth_bp)
