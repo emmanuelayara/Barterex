@@ -189,7 +189,7 @@ def inject_cart_info():
     from models import Favorite
     
     context = {
-        'csrf_token': generate_csrf,
+        'csrf_token': generate_csrf(),
         'use_cloudinary': app.config.get('USE_CLOUDINARY', False),
         'cloudinary_cloud_name': app.config.get('CLOUDINARY_CLOUD_NAME', ''),
     }
