@@ -243,6 +243,22 @@
     flex-direction: column;
   }
 
+  @media (max-width: 768px) {
+    .stat-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: start;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stat-card {
+      grid-template-columns: auto auto;
+      gap: 6px;
+    }
+  }
+
   html.dark-mode .stat-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     border-color: rgba(255, 122, 0, 0.3);
@@ -273,10 +289,43 @@
     align-items: center;
     justify-content: center;
     font-size: 16px;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #ff7a00, #ff7a00);
-    color: white;
-    box-shadow: 0 3px 10px rgba(255, 122, 0, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    .stat-card .stat-icon {
+      grid-column: 1;
+      grid-row: 1;
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stat-card .stat-icon {
+      grid-column: 1;
+      grid-row: 1;
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stat-card .stat-title {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .stat-card .stat-value {
+      grid-column: 1 / -1;
+      grid-row: 3;
+    }
+
+    .stat-card .stat-description {
+      grid-column: 1 / -1;
+      grid-row: 4;
+    }
   }
 
   .stat-title {
@@ -360,41 +409,42 @@
 
   @media (max-width: 768px) {
     .fund-account-btn {
-      align-self: stretch;
-      justify-content: center;
-      padding: 10px 8px;
-      font-size: 0.75rem;
-      margin-bottom: 8px;
-    }
-
-    .fund-account-btn i {
-      font-size: 0.9rem;
-    }
-
-    .fund-account-btn span {
-      display: inline;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .fund-account-btn {
-      padding: 8px 6px;
+      grid-column: 3;
+      grid-row: 1;
+      align-self: center;
+      justify-self: end;
+      padding: 6px 8px;
       font-size: 0.65rem;
-      margin-bottom: 6px;
-      gap: 4px;
+      margin-bottom: 0;
+      gap: 3px;
     }
 
     .fund-account-btn i {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
     }
 
     .fund-account-btn span {
       display: none;
     }
+  }
 
-    .fund-account-btn::before {
-      content: 'Fund';
-      font-size: 0.65rem;
+  @media (max-width: 480px) {
+    .fund-account-btn {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: start;
+      align-self: center;
+      padding: 4px 6px;
+      font-size: 0.55rem;
+      gap: 2px;
+    }
+
+    .fund-account-btn i {
+      font-size: 0.6rem;
+    }
+
+    .fund-account-btn span {
+      display: none;
     }
   }
 
