@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Payment Successful - Credits Added{% endblock %}
+
+{% block content %}
+<style>
+  .success-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    padding: 20px;
+  }
+
+  .success-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .success-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: successBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  @keyframes successBounce {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .success-title {
+    font-size: 1.8rem;
+    color: #1a202c;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .success-message {
+    color: #718096;
+    margin-bottom: 30px;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .credits-box {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+
+  .credits-label {
+    color: #718096;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+
+  .credits-amount {
+    font-size: 2.2rem;
+    color: #10b981;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .credits-added {
+    color: #059669;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .new-balance {
+    color: #718096;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+
+  .balance-amount {
+    font-size: 1.5rem;
+    color: #1a202c;
+    font-weight: 700;
+  }
+
+  .reference-box {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 30px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #718096;
+    word-break: break-all;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+  }
+
+  .btn-secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1a202c;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .footer-text {
+    margin-top: 20px;
+    color: #a0aec0;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 480px) {
+    .success-card {
+      padding: 30px 20px;
+    }
+
+    .success-title {
+      font-size: 1.5rem;
+    }
+
+    .success-icon {
+      font-size: 60px;
+    }
+  }
+</style>
+
+<div class="success-container">
+  <div class="success-card">
+    <div class="success-icon">✓</div>
+    
+    <h1 class="success-title">Payment Successful!</h1>
+    <p class="success-message">Your payment has been processed and your credits have been added to your account.</p>
+    
+    <div class="credits-box">
+      <div class="credits-label">Credits Added</div>
+      <div class="credits-amount">+{{ credits_added|int }} Credits</div>
+      <div class="credits-added">🎉 Instant Delivery</div>
+      
+      <div class="new-balance" style="margin-top: 16px;">New Balance</div>
+      <div class="balance-amount">{{ "{:,.0f}".format(new_balance) }} Credits</div>
+    </div>
+
+    <div class="reference-box">
+      <strong>Reference:</strong> {{ reference }}
+    </div>
+
+    <div class="action-buttons">
+      <a href="{{ url_for('marketplace.home') }}" class="btn btn-primary">
+        <i class="fas fa-shopping-bag"></i>
+        Start Shopping
+      </a>
+      <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-home"></i>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <div class="footer-text">
+      Your transaction receipt has been sent to your email.
+    </div>
+  </div>
+</div>
+{% endblock %}

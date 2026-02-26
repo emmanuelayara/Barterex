@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Purchase Confirmation - Barterex</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Helvetica', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .email-container {
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+        .header {
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9c34 100%);
+            padding: 50px 30px;
+            text-align: center;
+            color: white;
+        }
+        .header-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .header-checkmark {
+            font-size: 60px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: block;
+            color: #ffffff;
+        }
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .highlight-name {
+            color: #ff7a00;
+            font-weight: 700;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            color: #ff7a00;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #ffe4cc;
+        }
+        .detail-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #ff7a00;
+        }
+        .detail-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .detail-value {
+            color: #1a202c;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: right;
+        }
+        .balance-box {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-bottom: 8px;
+        }
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 15px 0;
+            letter-spacing: -1px;
+        }
+        .balance-subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .breakdown {
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #e0f2ff;
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-size: 15px;
+            border-bottom: 1px solid #e0f2ff;
+        }
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+        .breakdown-label {
+            color: #333;
+            font-weight: 500;
+        }
+        .breakdown-value {
+            color: #1a202c;
+            font-weight: 700;
+        }
+        .breakdown-item.total {
+            background: #ffffff;
+            margin: 0 -20px -20px -20px;
+            padding: 15px 20px;
+            border-top: 2px solid #e0f2ff;
+            font-weight: 700;
+        }
+        .breakdown-item.total .breakdown-value {
+            color: #10b981;
+        }
+        .action-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .action-button {
+            display: inline-block;
+            padding: 14px 35px;
+            margin: 0 8px 10px 8px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ff7a00 0%, #ff9c34 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 122, 0, 0.4);
+        }
+        .btn-secondary {
+            background: white;
+            color: #ff7a00;
+            border: 2px solid #ff7a00;
+        }
+        .btn-secondary:hover {
+            background: #fff8f3;
+        }
+        .info-box {
+            background: #fffbf0;
+            border-left: 4px solid #ff7a00;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+        .info-box strong {
+            color: #ff7a00;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .info-item {
+            color: #555;
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .info-item:before {
+            content: "→";
+            color: #ff7a00;
+            font-weight: 700;
+            margin-right: 10px;
+            margin-left: -20px;
+        }
+        .reference-box {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .reference-label {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .reference-value {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+            word-break: break-all;
+            font-weight: 600;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            border-top: 1px solid #eee;
+            line-height: 1.8;
+        }
+        .footer-text {
+            margin: 6px 0;
+        }
+        .divider {
+            height: 1px;
+            background: #eee;
+            margin: 25px 0;
+        }
+        @media (max-width: 600px) {
+            .email-container {
+                border-radius: 0;
+            }
+            .header {
+                padding: 40px 20px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .header-icon {
+                font-size: 48px;
+            }
+            .content {
+                padding: 25px 20px;
+            }
+            .detail-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .detail-value {
+                text-align: left;
+            }
+            .balance-amount {
+                font-size: 36px;
+            }
+            .action-button {
+                display: block;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="email-container">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-checkmark">✓</div>
+                <h1>Credits Purchased!</h1>
+                <p class="header-subtitle">Your account has been credited successfully</p>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Greeting -->
+                <div class="greeting">
+                    Hi <span class="highlight-name">{{ user_name }}</span>,<br>
+                    Thank you for purchasing credits! Your transaction has been processed successfully and your credits are now available. Ready to start trading?
+                </div>
+
+                <!-- Transaction Section -->
+                <div class="section">
+                    <div class="section-title">Transaction Details</div>
+                    
+                    <div class="detail-card">
+                        <span class="detail-label">Transaction Reference</span>
+                        <span class="detail-value">{{ reference }}</span>
+                    </div>
+
+                    <div class="detail-card">
+                        <span class="detail-label">Amount Paid</span>
+                        <span class="detail-value">N{{ "{:,.2f}".format(amount) }}</span>
+                    </div>
+
+                    <div class="detail-card">
+                        <span class="detail-label">Credits Purchased</span>
+                        <span class="detail-value">{{ "{:,.0f}".format(credits_purchased) }} Credits</span>
+                    </div>
+
+                    <div class="detail-card">
+                        <span class="detail-label">Conversion Rate</span>
+                        <span class="detail-value">1 Naira = 1 Credit</span>
+                    </div>
+
+                    <div class="detail-card">
+                        <span class="detail-label">Transaction Date</span>
+                        <span class="detail-value">{{ transaction_date }}</span>
+                    </div>
+                </div>
+
+                <!-- Current Balance -->
+                <div class="balance-box">
+                    <div class="balance-label">Your Current Credit Balance</div>
+                    <div class="balance-amount">{{ "{:,.0f}".format(new_balance) }}</div>
+                    <div class="balance-subtitle">Available Barter Credits</div>
+                </div>
+
+                <!-- Balance Breakdown -->
+                <div class="section">
+                    <div class="section-title">Balance Summary</div>
+                    
+                    <div class="breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Previous Balance</span>
+                            <span class="breakdown-value">{{ "{:,.0f}".format(previous_balance) }}</span>
+                        </div>
+
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Credits Added Today</span>
+                            <span class="breakdown-value" style="color: #10b981;">+ {{ "{:,.0f}".format(credits_purchased) }}</span>
+                        </div>
+
+                        <div class="breakdown-item total">
+                            <span class="breakdown-label">New Balance</span>
+                            <span class="breakdown-value">{{ "{:,.0f}".format(new_balance) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-section">
+                    <a href="{{ marketplace_url }}" class="action-button btn-primary">Start Shopping Now</a>
+                    <a href="{{ dashboard_url }}" class="action-button btn-secondary">View Dashboard</a>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box">
+                    <strong>What's Next?</strong>
+                    <div class="info-item">Browse our marketplace to find items you want to purchase</div>
+                    <div class="info-item">Use your new credits to make trades with other users</div>
+                    <div class="info-item">Check your dashboard anytime to manage your purchases</div>
+                </div>
+
+                <!-- Reference Section -->
+                <div class="reference-box">
+                    <div class="reference-label">Keep this reference for your records</div>
+                    <div class="reference-value">{{ reference }}</div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <div class="footer-text">Thank you for using Barterex!</div>
+                <div class="footer-text">This is an automated message. Please do not reply to this email.</div>
+                <div class="footer-text">Copyright (c) {{ current_year }} Barterex. All rights reserved.</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

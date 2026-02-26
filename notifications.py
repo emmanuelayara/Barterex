@@ -26,7 +26,8 @@ NOTIFICATION_TYPES = {
     'listing': 'Listing Activity',
     'trade': 'Trade Request',
     'system': 'System Alert',
-    'recommendation': 'Recommendation'
+    'recommendation': 'Recommendation',
+    'credit_purchase': 'Credit Purchase'
 }
 
 # Notification categories
@@ -483,3 +484,97 @@ def get_unread_count(user_id):
 def get_notifications(user_id, limit=20):
     """Get user notifications"""
     return NotificationService.get_user_notifications(user_id, limit)
+
+
+def notify_credit_purchase(user_id, amount_naira, credits_purchased, previous_balance, new_balance, reference):
+    """
+    Notify user about credit purchase
+    
+    Args:
+        user_id: User ID
+        amount_naira: Amount paid in Naira
+        credits_purchased: Number of credits purchased
+        previous_balance: Previous credit balance
+        new_balance: New credit balance
+        reference: Payment reference
+    """
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            logger.error(f"User {user_id} not found for credit purchase notification")
+            return None
+        
+        # Create in-app notification
+        message = f"🎉 You successfully purchased {credits_purchased} credits for ₦{amount_naira:,.0f}! Your balance is now {new_balance:,.0f} credits."
+        
+        notification = NotificationService.create_notification(
+            user_id=user_id,
+            message=message,
+            notification_type='credit_purchase',
+            category='status_update',
+            action_url='/dashboard',
+            data={
+                'amount': amount_naira,
+                'credits': credits_purchased,
+                'previous_balance': previous_balance,
+                'new_balance': new_balance,
+                'reference': reference
+            },
+            priority='high',
+            send_email=False  # We'll send email separately with template
+        )
+        
+        # Send email notification
+        try:
+            from datetime import datetime
+            from flask import current_app
+            
+            email_data = {
+                'user_name': user.username,
+                'amount': amount_naira,
+                'credits_purchased': credits_purchased,
+                'previous_balance': previous_balance,
+                'new_balance': new_balance,
+                'reference': reference,
+                'transaction_date': datetime.utcnow().strftime('%B %d, %Y at %I:%M %p'),
+                'marketplace_url': f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/marketplace",
+                'dashboard_url': f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/dashboard",
+                'help_url': f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/help",
+                'current_year': datetime.now().year
+            }
+            
+            # Render email template
+            email_html = render_template_string(
+                open('templates/emails/credit_purchase.html').read(),
+                **email_data
+            )
+            
+            # Send email via Flask-Mail (if configured)
+            from flask_mail import Mail, Message
+            
+            mail = Mail(current_app)
+            msg = Message(
+                subject=f'Credit Purchase Confirmation - {credits_purchased} Credits Added',
+                recipients=[user.email],
+                html=email_html
+            )
+            
+            try:
+                mail.send(msg)
+                if notification:
+                    notification.is_email_sent = True
+                    db.session.commit()
+                logger.info(f"Credit purchase email sent to {user.email}")
+            except Exception as email_err:
+                logger.warning(f"Failed to send credit purchase email to {user.email}: {str(email_err)}")
+                # Don't fail the notification if email fails
+        
+        except Exception as email_template_err:
+            logger.warning(f"Error preparing credit purchase email: {str(email_template_err)}")
+            # Don't fail the notification if email template fails
+        
+        return notification
+        
+    except Exception as e:
+        logger.error(f"Error creating credit purchase notification: {str(e)}")
+        return None

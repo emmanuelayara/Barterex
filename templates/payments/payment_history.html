@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% block title %}Payment History{% endblock %}
+
+{% block content %}
+<style>
+  .history-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .history-header {
+    margin-bottom: 30px;
+  }
+
+  .history-header h1 {
+    font-size: 2rem;
+    color: #1a202c;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .history-header p {
+    color: #718096;
+    font-size: 1rem;
+  }
+
+  .history-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f5f9 100%);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+  }
+
+  th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    color: #4a5568;
+  }
+
+  tbody tr:hover {
+    background: rgba(255, 122, 0, 0.02);
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-completed {
+    background: rgba(16, 185, 129, 0.2);
+    color: #059669;
+  }
+
+  .status-pending {
+    background: rgba(249, 115, 22, 0.2);
+    color: #92400e;
+  }
+
+  .status-failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: #991b1b;
+  }
+
+  .amount-cell {
+    font-weight: 600;
+    color: #ff7a00;
+  }
+
+  .credits-cell {
+    font-weight: 600;
+    color: #1a202c;
+  }
+
+  .date-cell {
+    color: #718096;
+    font-size: 0.9rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #a0aec0;
+  }
+
+  .empty-state-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+
+  .empty-state h3 {
+    color: #718096;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+  }
+
+  .empty-state p {
+    color: #a0aec0;
+    margin-bottom: 20px;
+  }
+
+  .btn-fund {
+    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-fund:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 122, 0, 0.3);
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #ff7a00;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+  }
+
+  .back-btn:hover {
+    gap: 10px;
+  }
+
+  @media (max-width: 768px) {
+    .history-container {
+      padding: 20px;
+    }
+
+    .history-table {
+      overflow-x: auto;
+    }
+
+    th, td {
+      padding: 12px;
+      font-size: 0.8rem;
+    }
+
+    .history-header h1 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<div class="history-container">
+  <a href="{{ url_for('user.dashboard') }}" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+    Back to Dashboard
+  </a>
+
+  <div class="history-header">
+    <h1>💳 Payment History</h1>
+    <p>View all your credit purchase transactions</p>
+  </div>
+
+  {% if payments %}
+    <div class="history-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Credits</th>
+            <th>Status</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payment in payments %}
+          <tr>
+            <td class="date-cell">
+              {% if payment.created_at %}
+                {{ payment.created_at[:10] }}
+                <br>
+                <small>{{ payment.created_at[11:16] }}</small>
+              {% endif %}
+            </td>
+            <td class="amount-cell">
+              ₦{{ "{:,.2f}".format(payment.amount) }}
+            </td>
+            <td class="credits-cell">
+              {{ payment.credits|int }} Credits
+            </td>
+            <td>
+              <span class="status-badge status-{{ payment.status.lower() }}">
+                {{ payment.status }}
+              </span>
+            </td>
+            <td>
+              <code style="background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
+                {{ payment.reference[:8] }}...
+              </code>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="history-table">
+      <div class="empty-state">
+        <div class="empty-state-icon">💰</div>
+        <h3>No Payments Yet</h3>
+        <p>You haven't purchased any credits yet. Start funding your account to buy items!</p>
+        <a href="{{ url_for('payments.fund_account') }}" class="btn-fund">
+          <i class="fas fa-plus-circle"></i>
+          Fund Your Account
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

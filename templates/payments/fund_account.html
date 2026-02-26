@@ -1,0 +1,467 @@
+{% extends 'base.html' %}
+{% block title %}Fund Account - Buy Credits{% endblock %}
+
+{% block content %}
+<style>
+  .fund-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    padding: 40px 20px;
+  }
+
+  .fund-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .fund-header {
+    text-align: center;
+    color: white;
+    margin-bottom: 40px;
+  }
+
+  .fund-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .fund-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 5px;
+  }
+
+  .conversion-info {
+    font-size: 1rem;
+    opacity: 0.85;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+  }
+
+  .form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    margin-bottom: 30px;
+  }
+
+  .form-group {
+    margin-bottom: 24px;
+  }
+
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+
+  .input-group {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 122, 0, 0.05);
+    border: 2px solid rgba(255, 122, 0, 0.2);
+    border-radius: 12px;
+    padding: 8px 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .input-group:focus-within {
+    border-color: #ff7a00;
+    background: rgba(255, 122, 0, 0.1);
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+  }
+
+  .currency-symbol {
+    font-size: 1.3rem;
+    color: #ff7a00;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  .amount-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a202c;
+    outline: none;
+  }
+
+  .amount-input::placeholder {
+    color: rgba(26, 32, 44, 0.3);
+  }
+
+  .input-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: #718096;
+  }
+
+  .input-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .credits-display {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .credits-display-label {
+    color: #718096;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+
+  .credits-display-value {
+    font-size: 2.2rem;
+    color: #10b981;
+    font-weight: 700;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 122, 0, 0.4);
+    background: linear-gradient(135deg, #ff8f1f, #ffa040);
+  }
+
+  .submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .info-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+  }
+
+  .info-section h3 {
+    color: #1a202c;
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .info-section ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .info-section li {
+    padding: 10px 0;
+    color: #4a5568;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .info-section li:last-child {
+    border-bottom: none;
+  }
+
+  .info-section li:before {
+    content: '→';
+    color: #ff7a00;
+    font-weight: 700;
+    font-size: 1.2rem;
+    min-width: 20px;
+  }
+
+  .error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .error-message.show {
+    display: block;
+  }
+
+  .loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 12px;
+    display: none;
+  }
+
+  .loading.active {
+    display: flex;
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 480px) {
+    .fund-wrapper {
+      max-width: 100%;
+    }
+
+    .form-card {
+      padding: 24px;
+    }
+
+    .fund-header h1 {
+      font-size: 1.8rem;
+    }
+
+    .amount-input {
+      font-size: 1.2rem;
+    }
+  }
+</style>
+
+<div class="fund-container">
+  <div class="fund-wrapper">
+    <!-- Header -->
+    <div class="fund-header">
+      <h1>💳 Fund Your Account</h1>
+      <p>Buy credits to purchase items</p>
+      <div class="conversion-info">
+        💡 1 Naira = 1 Credit | Pay exactly what you want to trade!
+      </div>
+    </div>
+
+    <!-- Payment Form Card -->
+    <div class="form-card">
+      <div class="error-message" id="error-message"></div>
+
+      <form id="payment-form" onsubmit="handleSubmit(event)">
+        <!-- Amount Input -->
+        <div class="form-group">
+          <label class="form-label">How much do you want to fund?</label>
+          <div class="input-group">
+            <span class="currency-symbol">₦</span>
+            <input
+              type="number"
+              id="amount-input"
+              class="amount-input"
+              placeholder="Enter amount"
+              min="{{ min_amount }}"
+              max="{{ max_amount }}"
+              step="10"
+              required
+              oninput="updateCreditsDisplay()"
+            >
+          </div>
+          <div class="input-info">
+            <div class="input-info-item">
+              <span>Min: ₦{{ "{:,}".format(min_amount) }}</span>
+            </div>
+            <div class="input-info-item">
+              <span>Max: ₦{{ "{:,}".format(max_amount) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Credits Display -->
+        <div class="credits-display">
+          <div class="credits-display-label">You will receive</div>
+          <div class="credits-display-value" id="credits-value">0 Credits</div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="submit-btn" id="submit-btn">
+          <i class="fas fa-check-circle"></i>
+          Proceed to Payment
+        </button>
+      </form>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+      <h3>🔒 How It Works</h3>
+      <ul>
+        <li>Enter the amount you want to fund</li>
+        <li>See exactly how many credits you'll get (1:1 ratio)</li>
+        <li>Click "Proceed to Payment"</li>
+        <li>Complete payment securely with Moniepoint</li>
+        <li>Credits added instantly to your account</li>
+        <li>Use credits to purchase items immediately</li>
+      </ul>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="info-section">
+      <h3>❓ Frequently Asked Questions</h3>
+      <ul>
+        <li><strong>Why 1 Naira = 1 Credit?</strong> We believe in fair value - pay exactly what you trade!</li>
+        <li><strong>Are my payments secure?</strong> Yes, we use Moniepoint for secure payment processing.</li>
+        <li><strong>Can I get a refund?</strong> Refunds follow Moniepoint's policy. Contact support if needed.</li>
+        <li><strong>Do credits expire?</strong> No, your credits never expire and stay in your account.</li>
+        <li><strong>What's the minimum?</strong> Minimum is ₦{{ "{:,}".format(min_amount) }} to start trading.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="loading" id="loading-spinner">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<script>
+  const MIN_AMOUNT = {{ min_amount }};
+  const MAX_AMOUNT = {{ max_amount }};
+  const CONVERSION_RATE = 1.0;
+
+  function updateCreditsDisplay() {
+    const amount = parseFloat(document.getElementById('amount-input').value) || 0;
+    const credits = Math.floor(amount * CONVERSION_RATE);
+    document.getElementById('credits-value').textContent = credits.toLocaleString() + ' Credits';
+  }
+
+  function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+  }
+
+  function hideError() {
+    document.getElementById('error-message').classList.remove('show');
+  }
+
+  function showSuccess(message) {
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.textContent = message;
+    errorDiv.style.color = '#10b981'; // Green color for success
+    errorDiv.classList.add('show');
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    hideError();
+
+    const amount = parseFloat(document.getElementById('amount-input').value);
+
+    // Validate amount
+    if (!amount || amount < MIN_AMOUNT) {
+      showError(`Minimum amount is ₦${MIN_AMOUNT.toLocaleString()}`);
+      return;
+    }
+
+    if (amount > MAX_AMOUNT) {
+      showError(`Maximum amount is ₦${MAX_AMOUNT.toLocaleString()}`);
+      return;
+    }
+
+    const loading = document.getElementById('loading-spinner');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    loading.classList.add('active');
+    submitBtn.disabled = true;
+
+    try {
+      // Create abort controller with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch('{{ url_for("payments.fund_account") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value || ''
+        },
+        body: JSON.stringify({
+          amount: amount
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeout);
+
+      const data = await response.json();
+
+      if (data.success && data.payment_link) {
+        // Check if this is a test mode payment (reference starts with TEST_)
+        if (data.test_mode && data.reference && data.reference.startsWith('TEST_')) {
+          // In test mode, show a brief status message then redirect to verification
+          showSuccess(`Test Payment Initiated: ₦${amount.toLocaleString()}\nRedirecting to verification...`);
+          
+          // Wait a moment then redirect to verification page
+          setTimeout(() => {
+            window.location.href = `{{ url_for("payments.verify_payment", reference="") }}${data.reference}?test=true`;
+          }, 1500);
+        } else {
+          // Redirect to real Moniepoint payment page
+          window.location.href = data.payment_link;
+        }
+      } else {
+        showError(data.error || 'Failed to initiate payment');
+        submitBtn.disabled = false;
+        loading.classList.remove('active');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      
+      if (error.name === 'AbortError') {
+        showError('Request timeout. Please check your connection and try again.');
+      } else {
+        showError('An error occurred: ' + (error.message || 'Please try again.'));
+      }
+      
+      submitBtn.disabled = false;
+      loading.classList.remove('active');
+    }
+  }
+
+  // Update credits display on page load
+  document.addEventListener('DOMContentLoaded', updateCreditsDisplay);
+</script>
+{% endblock %}

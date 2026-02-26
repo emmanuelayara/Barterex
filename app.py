@@ -94,6 +94,7 @@ from routes.favorites import favorites_bp
 from routes.notifications_api import notifications_bp
 from routes.wishlist import wishlist_bp
 from routes_account import account_bp
+from routes.payments import payment_bp
 from notifications import NotificationService
 
 # ✅ Initialize Cloudinary handler at app startup
@@ -238,6 +239,7 @@ app.register_blueprint(notifications_bp)
 app.register_blueprint(wishlist_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(contact_bp)
+app.register_blueprint(payment_bp)
 
 # ✅ Error Handlers
 from logger_config import setup_logger

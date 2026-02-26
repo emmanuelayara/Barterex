@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}Payment Failed{% endblock %}
+
+{% block content %}
+<style>
+  .error-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    padding: 20px;
+  }
+
+  .error-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .error-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: errorShake 0.5s cubic-bezier(0.36, 0, 0.66, -0.56);
+  }
+
+  @keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+  }
+
+  .error-title {
+    font-size: 1.8rem;
+    color: #1a202c;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .error-message {
+    color: #718096;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .error-details {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 30px;
+    color: #991b1b;
+    font-size: 0.9rem;
+    text-align: left;
+    word-wrap: break-word;
+  }
+
+  .error-details-label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+  }
+
+  .btn-secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1a202c;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .footer-text {
+    margin-top: 20px;
+    color: #a0aec0;
+    font-size: 0.85rem;
+  }
+
+  .support-link {
+    color: #ef4444;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .support-link:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 480px) {
+    .error-card {
+      padding: 30px 20px;
+    }
+
+    .error-title {
+      font-size: 1.5rem;
+    }
+
+    .error-icon {
+      font-size: 60px;
+    }
+  }
+</style>
+
+<div class="error-container">
+  <div class="error-card">
+    <div class="error-icon">✗</div>
+    
+    <h1 class="error-title">Payment Failed</h1>
+    <p class="error-message">We were unable to process your payment. Your account has not been charged.</p>
+    
+    {% if error %}
+    <div class="error-details">
+      <span class="error-details-label">Error Details:</span>
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="action-buttons">
+      <a href="{{ url_for('payments.fund_account') }}" class="btn btn-primary">
+        <i class="fas fa-repeat"></i>
+        Try Again
+      </a>
+      <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-home"></i>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <div class="footer-text">
+      If the problem persists, please <a href="{{ url_for('contact.contact_form') }}" class="support-link">contact support</a>.
+    </div>
+  </div>
+</div>
+{% endblock %}

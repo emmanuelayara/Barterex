@@ -21,13 +21,6 @@ Updated code to properly detect and handle Cloudinary URLs:
 ### Step 2: Add Environment Variables
 Click **Environment** tab and add these 4 variables:
 
-```
-USE_CLOUDINARY=True
-CLOUDINARY_CLOUD_NAME=dkwqxjdix
-CLOUDINARY_API_KEY=713381811848975
-CLOUDINARY_API_SECRET=ZjSKXAw-rCUx7zRFxKB6w9AgzAU
-```
-
 ⚠️ **These are already in your .env file** - just add them to Render!
 
 ### Step 3: Deploy

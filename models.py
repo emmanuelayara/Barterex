@@ -828,3 +828,55 @@ class ContactMessage(db.Model):
     
     def __repr__(self):
         return f'<ContactMessage id={self.id}, name={self.name}, status={self.status}, created_at={self.created_at}>'
+
+
+# Payment Processing Model for Moniepoint Integration
+class Payment(db.Model):
+    """
+    Tracks all payment transactions for credit purchases.
+    Used for users to buy credits with cash via Moniepoint.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    
+    # Moniepoint transaction reference
+    moniepoint_reference = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    
+    # Payment details
+    amount_naira = db.Column(db.Float, nullable=False)  # Amount in NGN
+    credits_purchased = db.Column(db.Integer, nullable=False)  # Number of credits
+    
+    # Payment status: 'pending', 'completed', 'failed', 'cancelled'
+    status = db.Column(db.String(50), default='pending', nullable=False, index=True)
+    
+    # Payment method
+    payment_method = db.Column(db.String(100), nullable=True)  # e.g., 'card', 'bank_transfer', 'ussd'
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    paid_at = db.Column(db.DateTime, nullable=True)  # When payment was actually completed
+    expires_at = db.Column(db.DateTime, nullable=True)  # For payment link expiry
+    
+    # Additional fields
+    currency = db.Column(db.String(3), default='NGN')
+    customer_email = db.Column(db.String(120), nullable=True)
+    customer_phone = db.Column(db.String(15), nullable=True)
+    payment_metadata = db.Column(db.JSON, nullable=True)  # Additional data from Moniepoint
+    error_message = db.Column(db.Text, nullable=True)  # If payment failed
+    
+    # Relationship
+    user = db.relationship('User', backref=db.backref('payments', lazy=True))
+    
+    def __repr__(self):
+        return f'<Payment id={self.id}, user_id={self.user_id}, amount={self.amount_naira}, status={self.status}>'
+    
+    def is_completed(self):
+        return self.status == 'completed'
+    
+    def is_pending(self):
+        return self.status == 'pending'
+    
+    def is_expired(self):
+        if self.expires_at and datetime.utcnow() > self.expires_at:
+            return True
+        return False
