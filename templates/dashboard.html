@@ -239,6 +239,8 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   html.dark-mode .stat-card {
@@ -342,6 +344,61 @@
 
   .fund-account-btn i {
     font-size: 0.85rem;
+  }
+
+  /* Responsive Fund Account Button */
+  @media (max-width: 1024px) {
+    .fund-account-btn {
+      padding: 7px 10px;
+      font-size: 0.7rem;
+      bottom: 10px;
+      right: 10px;
+    }
+
+    .fund-account-btn i {
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .fund-account-btn {
+      position: static;
+      width: 100%;
+      justify-content: center;
+      padding: 10px 8px;
+      font-size: 0.75rem;
+      margin-top: 12px;
+    }
+
+    .fund-account-btn i {
+      font-size: 0.9rem;
+    }
+
+    .fund-account-btn span {
+      display: inline;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .fund-account-btn {
+      padding: 8px 6px;
+      font-size: 0.65rem;
+      margin-top: 10px;
+      gap: 4px;
+    }
+
+    .fund-account-btn i {
+      font-size: 0.75rem;
+    }
+
+    .fund-account-btn span {
+      display: none;
+    }
+
+    .fund-account-btn::before {
+      content: 'Fund';
+      font-size: 0.65rem;
+    }
   }
 
   /* ==================== NEW ANIMATED WIDGETS ==================== */
