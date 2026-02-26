@@ -317,9 +317,8 @@
 
   /* Fund Account Button */
   .fund-account-btn {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
+    align-self: flex-end;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -351,8 +350,7 @@
     .fund-account-btn {
       padding: 7px 10px;
       font-size: 0.7rem;
-      bottom: 10px;
-      right: 10px;
+      margin-bottom: 10px;
     }
 
     .fund-account-btn i {
@@ -362,12 +360,11 @@
 
   @media (max-width: 768px) {
     .fund-account-btn {
-      position: static;
-      width: 100%;
+      align-self: stretch;
       justify-content: center;
       padding: 10px 8px;
       font-size: 0.75rem;
-      margin-top: 12px;
+      margin-bottom: 8px;
     }
 
     .fund-account-btn i {
@@ -383,7 +380,7 @@
     .fund-account-btn {
       padding: 8px 6px;
       font-size: 0.65rem;
-      margin-top: 10px;
+      margin-bottom: 6px;
       gap: 4px;
     }
 
@@ -2265,15 +2262,15 @@
     <!-- Stats Grid -->
     <div class="stats-grid">
       <div class="stat-card" style="position: relative;">
-        <div class="stat-icon">💰</div>
-        <div class="stat-title">Credit Balance</div>
-        <div class="stat-value">₦{{ "{:,.2f}".format(current_user.credits) }}</div> 
-        <div class="stat-description">Available for transactions</div>
         <!-- Fund Account Button -->
         <a href="{{ url_for('payments.fund_account') }}" class="fund-account-btn" title="Buy credits with cash">
           <i class="fas fa-plus-circle"></i>
           <span>Fund Account</span>
         </a>
+        <div class="stat-icon">💰</div>
+        <div class="stat-title">Credit Balance</div>
+        <div class="stat-value">₦{{ "{:,.2f}".format(current_user.credits) }}</div> 
+        <div class="stat-description">Available for transactions</div>
       </div>
 
       <div class="stat-card">
