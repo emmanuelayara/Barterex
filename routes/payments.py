@@ -1,11 +1,11 @@
 """
 Payment Routes - Handles all payment-related endpoints
-Includes Moniepoint integration for credit purchases
+Includes Monnify integration for credit purchases
 """
 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
-from payment_service import MoniePointPaymentService
+from payment_service import MonnifyPaymentService
 from models import Payment, db
 import json
 
@@ -19,8 +19,8 @@ def fund_account():
     Users can enter any amount and get that exact amount in credits
     """
     if request.method == 'GET':
-        min_amount = MoniePointPaymentService.MIN_AMOUNT
-        max_amount = MoniePointPaymentService.MAX_AMOUNT
+        min_amount = MonnifyPaymentService.MIN_AMOUNT
+        max_amount = MonnifyPaymentService.MAX_AMOUNT
         return render_template(
             'payments/fund_account.html',
             min_amount=min_amount,
@@ -44,13 +44,13 @@ def fund_account():
             return jsonify({'success': False, 'error': 'Invalid amount format'}), 400
         
         # Validate amount
-        if amount < MoniePointPaymentService.MIN_AMOUNT:
-            return jsonify({'success': False, 'error': f'Minimum amount is ₦{MoniePointPaymentService.MIN_AMOUNT}'}), 400
-        if amount > MoniePointPaymentService.MAX_AMOUNT:
-            return jsonify({'success': False, 'error': f'Maximum amount is ₦{MoniePointPaymentService.MAX_AMOUNT}'}), 400
+        if amount < MonnifyPaymentService.MIN_AMOUNT:
+            return jsonify({'success': False, 'error': f'Minimum amount is ₦{MonnifyPaymentService.MIN_AMOUNT}'}), 400
+        if amount > MonnifyPaymentService.MAX_AMOUNT:
+            return jsonify({'success': False, 'error': f'Maximum amount is ₦{MonnifyPaymentService.MAX_AMOUNT}'}), 400
         
-        # Initiate payment with Moniepoint
-        result = MoniePointPaymentService.initiate_payment(
+        # Initiate payment with Monnify
+        result = MonnifyPaymentService.initiate_payment(
             current_user.id,
             amount
         )
@@ -80,7 +80,7 @@ def fund_account():
 @login_required
 def verify_payment(reference):
     """
-    Verify payment status with Moniepoint / Test Mode
+    Verify payment status with Monnify / Test Mode
     Called after user completes payment or in test mode
     """
     try:
@@ -90,7 +90,7 @@ def verify_payment(reference):
         if is_test and reference.startswith('TEST_'):
             print(f'Verifying TEST payment: {reference}')
         
-        result = MoniePointPaymentService.verify_payment(reference)
+        result = MonnifyPaymentService.verify_payment(reference)
         
         if result['success']:
             return render_template(
@@ -129,7 +129,7 @@ def payment_status(payment_id):
     if payment.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
     
-    status = MoniePointPaymentService.get_payment_status(payment_id)
+    status = MonnifyPaymentService.get_payment_status(payment_id)
     return jsonify(status)
 
 
@@ -139,22 +139,22 @@ def payment_history():
     """
     Get user's payment history
     """
-    history = MoniePointPaymentService.get_user_payment_history(current_user.id)
+    history = MonnifyPaymentService.get_user_payment_history(current_user.id)
     return render_template('payments/payment_history.html', payments=history)
 
 
 @payment_bp.route('/webhook', methods=['POST'])
 def webhook():
     """
-    Webhook endpoint for Moniepoint callbacks
+    Webhook endpoint for Monnify callbacks
     Handles payment verification when user completes payment
     """
     try:
         # Verify webhook signature
-        signature = request.headers.get('X-Moniepoint-Signature')
+        signature = request.headers.get('X-Monnify-Signature')
         payload = request.get_data(as_text=True)
         
-        if not MoniePointPaymentService.verify_webhook_signature(signature, payload):
+        if not MonnifyPaymentService.verify_webhook_signature(signature, payload):
             return jsonify({'error': 'Invalid signature'}), 401
         
         data = request.get_json()
@@ -164,7 +164,7 @@ def webhook():
         if event == 'charge.success':
             reference = data.get('data', {}).get('reference')
             if reference:
-                result = MoniePointPaymentService.verify_payment(reference)
+                result = MonnifyPaymentService.verify_payment(reference)
                 return jsonify({'success': True, 'result': result})
         
         return jsonify({'success': True})
@@ -181,9 +181,9 @@ def get_packages():
     Returns min/max amounts instead of fixed packages
     """
     config = {
-        'conversion_rate': MoniePointPaymentService.CONVERSION_RATE,
-        'min_amount': MoniePointPaymentService.MIN_AMOUNT,
-        'max_amount': MoniePointPaymentService.MAX_AMOUNT,
+        'conversion_rate': MonnifyPaymentService.CONVERSION_RATE,
+        'min_amount': MonnifyPaymentService.MIN_AMOUNT,
+        'max_amount': MonnifyPaymentService.MAX_AMOUNT,
         'message': 'Enter any amount - 1 Naira = 1 Credit'
     }
     return jsonify(config)

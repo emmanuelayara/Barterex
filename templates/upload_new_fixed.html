@@ -1,0 +1,693 @@
+{% extends 'base.html' %}
+{% block title %}Upload Item{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    --orange-gradient: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --surface: #ffffff;
+    --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  html.dark-mode {
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --surface: #1e293b;
+  }
+
+  .upload-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    padding: 25px 15px;
+    position: relative;
+  }
+
+  html.dark-mode .upload-page {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .upload-container {
+    max-width: 650px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .upload-header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding: 25px 20px;
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  html.dark-mode .upload-header {
+    background: #1e293b;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .upload-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .guidelines-section {
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    border: 2px solid #ff7a00;
+    border-radius: 16px;
+    padding: 20px 15px;
+    margin-bottom: 25px;
+  }
+
+  html.dark-mode .guidelines-section {
+    background: linear-gradient(135deg, #3f3f3f 0%, #4a4a4a 100%);
+    border-color: #ff9500;
+    color: #f1f5f9;
+  }
+
+  .guidelines-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ea580c;
+    margin: 0 0 16px 0;
+  }
+
+  html.dark-mode .guidelines-title {
+    color: #ff9500;
+  }
+
+  .guidelines-list {
+    margin: 0;
+    padding-left: 20px;
+    list-style: disc;
+  }
+
+  .guidelines-list li {
+    margin-bottom: 10px;
+    color: #9a3412;
+  }
+
+  html.dark-mode .guidelines-list li {
+    color: #ffa726;
+  }
+
+  .form-container {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 25px 20px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  html.dark-mode .form-container {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e5e7eb;
+    color: var(--text-primary);
+    background-color: var(--surface);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+  }
+
+  html.dark-mode .form-input,
+  html.dark-mode .form-textarea,
+  html.dark-mode .form-select {
+    border-color: #475569;
+    background-color: #334155;
+    color: #f1f5f9;
+  }
+
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: #ff7a00;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
+  }
+
+  .form-textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  /* File upload area */
+  .file-upload-area {
+    border: 3px dashed #d1d5db;
+    border-radius: 16px;
+    padding: 30px 15px;
+    text-align: center;
+    background: #f9fafb;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  html.dark-mode .file-upload-area {
+    border-color: #475569;
+    background: #334155;
+    color: #f1f5f9;
+  }
+
+  .file-upload-area:hover {
+    border-color: #ff7a00;
+    background: #fff7ed;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(255, 122, 0, 0.2);
+  }
+
+  .file-upload-area.dragover {
+    border-color: #ff7a00;
+    background: var(--orange-gradient);
+    color: white;
+    transform: scale(1.02);
+    box-shadow: 0 20px 50px rgba(255, 122, 0, 0.3);
+  }
+
+  .file-upload-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--orange-gradient);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 30px rgba(255, 122, 0, 0.3);
+  }
+
+  .file-upload-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .file-upload-subtext {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+  }
+
+  .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  /* Image previews */
+  .images-preview-container {
+    margin-top: 16px;
+    display: none;
+  }
+
+  .images-preview-container.show {
+    display: block;
+  }
+
+  .images-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .image-preview-item {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+
+  html.dark-mode .image-preview-item {
+    background: #334155;
+    border-color: rgba(75, 85, 105, 0.3);
+  }
+
+  .image-preview-item:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(255, 122, 0, 0.2);
+  }
+
+  .image-preview-item.primary {
+    border-color: #10b981;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
+  }
+
+  .preview-image {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+  }
+
+  .image-preview-controls {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 3px;
+  }
+
+  .remove-image, .set-primary {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.3s ease;
+  }
+
+  .remove-image:hover {
+    background: #ef4444;
+    transform: scale(1.1);
+  }
+
+  .set-primary:hover {
+    background: #10b981;
+    transform: scale(1.1);
+  }
+
+  .primary-badge {
+    position: absolute;
+    bottom: 3px;
+    left: 3px;
+    background: #10b981;
+    color: white;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 600;
+  }
+
+  .upload-counter {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  /* Submit button */
+  .submit-container {
+    text-align: center;
+    margin-top: 25px;
+  }
+
+  .submit-btn {
+    background: var(--orange-gradient);
+    color: white;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 30px rgba(255, 122, 0, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+    justify-content: center;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 50px rgba(255, 122, 0, 0.5);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .submit-btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 768px) {
+    .upload-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .form-container {
+      padding: 20px 16px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      min-width: auto;
+    }
+
+    .images-preview-grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+
+    .preview-image {
+      height: 85px;
+    }
+  }
+</style>
+
+<div class="upload-page">
+  <div class="upload-container">
+
+    <!-- Header -->
+    <div class="upload-header">
+      <h1>📤 Upload Your Item</h1>
+      <p style="margin: 0; color: var(--text-secondary);">Share what you have and discover what you need</p>
+    </div>
+
+    <!-- Guidelines -->
+    <div class="guidelines-section">
+      <h3 class="guidelines-title">⚠️ Important Guidelines Before Uploading</h3>
+      <ul class="guidelines-list">
+        <li>The item must not be older than <strong>5 years</strong> from purchase date</li>
+        <li>The item should be in <strong>good and functional condition</strong></li>
+        <li>During appraisal, you'll need to present a <strong>receipt</strong> as proof of ownership</li>
+        <li>Upload <strong>multiple high-quality images</strong> from different angles (max 6 images)</li>
+      </ul>
+    </div>
+
+    <!-- Form -->
+    <div class="form-container">
+      <form method="POST" enctype="multipart/form-data" id="uploadForm" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+          <label class="form-label">🏷️ {{ form.name.label.text }}</label>
+          {{ form.name(class="form-input", placeholder="Enter a descriptive name for your item", required=True) }}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📝 {{ form.description.label.text }}</label>
+          {{ form.description(class="form-textarea", rows="4", placeholder="Describe your item in detail...", required=True) }}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">⭐ {{ form.condition.label.text }}</label>
+          {{ form.condition(class="form-select", required=True) }}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📂 {{ form.category.label.text }}</label>
+          {{ form.category(class="form-select", required=True) }}
+        </div>
+
+        <!-- File Upload -->
+        <div class="form-group">
+          <label class="form-label">📸 Upload Images (Max 6)</label>
+          <div style="position: relative;">
+            <div class="file-upload-area" id="fileUploadArea">
+              <div class="file-upload-icon">📷</div>
+              <div class="file-upload-text">Drag & drop multiple images here</div>
+              <div class="file-upload-subtext">or click to browse files (JPG, PNG, WEBP) - Max 6 images</div>
+              <input type="file" class="file-input" id="imageInput" name="images" accept="image/*" multiple>
+            </div>
+          </div>
+          
+          <!-- Image Preview Container -->
+          <div class="images-preview-container" id="imagesPreviewContainer">
+            <div class="upload-counter">
+              <span id="imageCount">0</span> / 6 images selected
+            </div>
+            <div class="images-preview-grid" id="imagesPreviewGrid"></div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-container">
+          {{ form.submit(class="submit-btn", id="submitBtn") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedFiles = [];
+  let primaryImageIndex = 0;
+
+  const fileUploadArea = document.getElementById('fileUploadArea');
+  const fileInput = document.getElementById('imageInput');
+  const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
+  const imagesPreviewGrid = document.getElementById('imagesPreviewGrid');
+  const imageCountDisplay = document.getElementById('imageCount');
+  const uploadForm = document.getElementById('uploadForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  // Click to select files
+  fileUploadArea.addEventListener('click', (e) => {
+    if (e.target.closest('.file-upload-area')) {
+      fileInput.click();
+    }
+  });
+
+  // File input change
+  fileInput.addEventListener('change', (e) => {
+    console.log('File input changed. Files:', e.target.files.length);
+    const files = Array.from(e.target.files);
+    handleFileSelection(files);
+  });
+
+  // Drag and drop
+  fileUploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileUploadArea.classList.add('dragover');
+  });
+
+  fileUploadArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileUploadArea.classList.remove('dragover');
+  });
+
+  fileUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileUploadArea.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files);
+    console.log('Files dropped:', files.length);
+    handleFileSelection(files);
+  });
+
+  function handleFileSelection(files) {
+    console.log('=== handleFileSelection called ===');
+    console.log('Files provided:', files.length);
+    
+    // Filter image files
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    console.log('Image files:', imageFiles.length);
+    
+    // Check limit
+    const remainingSlots = 6 - selectedFiles.length;
+    const filesToAdd = imageFiles.slice(0, remainingSlots);
+    
+    if (imageFiles.length > remainingSlots && remainingSlots > 0) {
+      alert(`You can only upload ${remainingSlots} more image(s). Maximum 6 allowed.`);
+    }
+    
+    // Add to selectedFiles
+    filesToAdd.forEach(file => {
+      selectedFiles.push(file);
+      console.log('Added file:', file.name, 'Size:', file.size);
+    });
+    
+    console.log('Total selected files:', selectedFiles.length);
+    
+    // Update display
+    updatePreviews();
+  }
+
+  function updatePreviews() {
+    console.log('=== updatePreviews called ===');
+    console.log('Selected files:', selectedFiles.length);
+    
+    // Clear grid
+    imagesPreviewGrid.innerHTML = '';
+    
+    if (selectedFiles.length === 0) {
+      imagesPreviewContainer.classList.remove('show');
+      fileUploadArea.style.display = 'block';
+      console.log('Hidden preview container, showing upload area');
+      return;
+    }
+    
+    imagesPreviewContainer.classList.add('show');
+    fileUploadArea.style.display = 'none';
+    console.log('Showing preview container, hidden upload area');
+    
+    // Create previews
+    selectedFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const previewItem = document.createElement('div');
+        previewItem.className = `image-preview-item ${index === primaryImageIndex ? 'primary' : ''}`;
+        
+        const html = `
+          <img src="${e.target.result}" alt="Preview ${index + 1}" class="preview-image">
+          <div class="image-preview-controls">
+            <button type="button" class="set-primary" onclick="setPrimary(${index})" title="Set as primary">⭐</button>
+            <button type="button" class="remove-image" onclick="removeImage(${index})" title="Remove">✕</button>
+          </div>
+          ${index === primaryImageIndex ? '<div class="primary-badge">Primary</div>' : ''}
+        `;
+        previewItem.innerHTML = html;
+        imagesPreviewGrid.appendChild(previewItem);
+      };
+      
+      reader.readAsDataURL(file);
+    });
+    
+    imageCountDisplay.textContent = selectedFiles.length;
+  }
+
+  window.removeImage = function(index) {
+    console.log('Removing image at index:', index);
+    selectedFiles.splice(index, 1);
+    
+    if (index <= primaryImageIndex && primaryImageIndex > 0) {
+      primaryImageIndex--;
+    }
+    
+    updatePreviews();
+  };
+
+  window.setPrimary = function(index) {
+    console.log('Setting primary image to index:', index);
+    primaryImageIndex = index;
+    updatePreviews();
+  };
+
+  // Form submission using FormData
+  uploadForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    console.log('=== Form submission ===');
+    console.log('Selected files for upload:', selectedFiles.length);
+    
+    // Validate
+    if (selectedFiles.length === 0) {
+      alert('Please select at least one image');
+      return;
+    }
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Uploading...';
+    
+    try {
+      // Create FormData
+      const formData = new FormData();
+      
+      // Add form fields
+      formData.append('name', document.querySelector('input[name="name"]').value);
+      formData.append('description', document.querySelector('textarea[name="description"]').value);
+      formData.append('condition', document.querySelector('select[name="condition"]').value);
+      formData.append('category', document.querySelector('select[name="category"]').value);
+      
+      // Add CSRF token
+      const csrfToken = document.querySelector('input[name="csrf_token"]');
+      if (csrfToken) {
+        formData.append('csrf_token', csrfToken.value);
+      }
+      
+      // Add files - THIS IS THE KEY FIX
+      console.log('Adding files to FormData:');
+      selectedFiles.forEach((file, index) => {
+        console.log(`File ${index}:`, file.name, 'Size:', file.size, 'Type:', file.type);
+        formData.append('images', file);
+      });
+      
+      // Add primary index
+      formData.append('primary_image_index', primaryImageIndex);
+      
+      console.log('FormData created. Sending to server...');
+      
+      // Submit via fetch
+      const response = await fetch(uploadForm.action, {
+        method: 'POST',
+        body: formData
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (response.ok) {
+        alert('Item uploaded successfully!');
+        window.location.href = '/marketplace';
+      } else {
+        const text = await response.text();
+        console.error('Server response:', text);
+        alert('Error uploading item. Please try again.');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Error uploading item: ' + error.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      submitBtn.textContent = originalText;
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,5 +1,5 @@
 """
-Moniepoint Payment Service
+Monnify Payment Service
 Handles all payment processing, verification, and credit allocation
 """
 
@@ -8,6 +8,7 @@ import requests
 import json
 import hashlib
 import hmac
+import base64
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from models import Payment, User, CreditTransaction
@@ -15,14 +16,14 @@ from app import db
 
 load_dotenv()
 
-class MoniePointPaymentService:
+class MonnifyPaymentService:
     """
-    Service class for handling Moniepoint payment operations
+    Service class for handling Monnify payment operations
     """
     
-    BASE_URL = os.getenv('MONIEPOINT_API_URL', 'https://api.moniepoint.com')
-    API_KEY = os.getenv('MONIEPOINT_API_KEY')
-    PUBLIC_KEY = os.getenv('MONIEPOINT_PUBLIC_KEY')
+    BASE_URL = os.getenv('MONNIFY_API_URL', 'https://api.monnify.com')
+    API_KEY = os.getenv('MONNIFY_API_KEY')
+    SECRET_KEY = os.getenv('MONNIFY_SECRET_KEY', os.getenv('MONNIFY_PUBLIC_KEY'))
     CALLBACK_URL = os.getenv('PAYMENT_CALLBACK_URL')
     
     # Enable test mode for development (no real API calls)
@@ -36,16 +37,36 @@ class MoniePointPaymentService:
     MAX_AMOUNT = 1000000  # Maximum ₦1,000,000
     
     @staticmethod
+    def get_auth_header():
+        """
+        Generate Basic Auth header for Monnify API
+        
+        Returns:
+            dict: Authorization header
+        """
+        if not MonnifyPaymentService.API_KEY or not MonnifyPaymentService.SECRET_KEY:
+            raise ValueError("Monnify API_KEY and SECRET_KEY must be configured in .env")
+        
+        credentials = f"{MonnifyPaymentService.API_KEY}:{MonnifyPaymentService.SECRET_KEY}"
+        encoded = base64.b64encode(credentials.encode()).decode()
+        
+        return {
+            'Authorization': f'Basic {encoded}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    
+    @staticmethod
     def initiate_payment(user_id, amount_naira):
         """
-        Initiate a payment request with Moniepoint
+        Initiate a payment request with Monnify
         
         Args:
             user_id: ID of the user
             amount_naira: Amount in Nigerian Naira
             
         Returns:
-            dict: Moniepoint response with payment link or error
+            dict: Monnify response with payment link or error
         """
         try:
             user = User.query.get(user_id)
@@ -54,13 +75,13 @@ class MoniePointPaymentService:
             
             # Validate amount
             amount_naira = float(amount_naira)
-            if amount_naira < MoniePointPaymentService.MIN_AMOUNT:
-                return {'success': False, 'error': f'Minimum amount is ₦{MoniePointPaymentService.MIN_AMOUNT}'}
-            if amount_naira > MoniePointPaymentService.MAX_AMOUNT:
-                return {'success': False, 'error': f'Maximum amount is ₦{MoniePointPaymentService.MAX_AMOUNT}'}
+            if amount_naira < MonnifyPaymentService.MIN_AMOUNT:
+                return {'success': False, 'error': f'Minimum amount is ₦{MonnifyPaymentService.MIN_AMOUNT}'}
+            if amount_naira > MonnifyPaymentService.MAX_AMOUNT:
+                return {'success': False, 'error': f'Maximum amount is ₦{MonnifyPaymentService.MAX_AMOUNT}'}
             
             # Calculate credits (1 naira = 1 credit)
-            credits = int(amount_naira * MoniePointPaymentService.CONVERSION_RATE)
+            credits = int(amount_naira * MonnifyPaymentService.CONVERSION_RATE)
             
             # Create payment record
             payment = Payment(
@@ -74,10 +95,10 @@ class MoniePointPaymentService:
             )
             
             # TEST MODE: Return mock payment link for development
-            if MoniePointPaymentService.TEST_MODE:
+            if MonnifyPaymentService.TEST_MODE:
                 import uuid
                 mock_reference = f'TEST_{uuid.uuid4().hex[:12].upper()}'
-                payment.moniepoint_reference = mock_reference
+                payment.monnify_reference = mock_reference
                 payment.status = 'test_pending'
                 payment.payment_metadata = {'mode': 'test', 'test_note': 'This is a test payment'}
                 
@@ -97,34 +118,27 @@ class MoniePointPaymentService:
                     'test_mode': True
                 }
             
-            # PRODUCTION MODE: Make real API call to Moniepoint
-            # Prepare Moniepoint request
+            # PRODUCTION MODE: Make real API call to Monnify
+            # Prepare Monnify request
+            import uuid
+            transaction_ref = str(uuid.uuid4())
+            
             payload = {
-                'amount': int(amount_naira * 100),  # Convert to kobo (Moniepoint uses smallest unit)
+                'amount': int(amount_naira),  # Monnify expects amount in Naira
                 'currency': 'NGN',
-                'customer': {
-                    'email': user.email,
-                    'name': user.username,
-                    'phone': user.phone_number or '',
-                },
-                'description': f'Purchase {credits} credits on Barterex',
-                'metadata': {
-                    'user_id': user_id,
-                    'credits': credits,
-                    'payment_type': 'credit_purchase',
-                },
-                'callback_url': MoniePointPaymentService.CALLBACK_URL
+                'customerName': user.username,
+                'customerEmail': user.email,
+                'paymentReference': transaction_ref,
+                'paymentDescription': f'Purchase {credits} credits on Barterex',
+                'incomeSplitConfig': [],
+                'redirectUrl': MonnifyPaymentService.CALLBACK_URL
             }
             
-            headers = {
-                'Authorization': f'Bearer {MoniePointPaymentService.API_KEY}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+            headers = MonnifyPaymentService.get_auth_header()
             
-            # Initialize payment with Moniepoint
+            # Initialize payment with Monnify
             response = requests.post(
-                f'{MoniePointPaymentService.BASE_URL}/api/transactions/init',
+                f'{MonnifyPaymentService.BASE_URL}/api/v1/merchant/transactions/init',
                 json=payload,
                 headers=headers,
                 timeout=30
@@ -133,24 +147,32 @@ class MoniePointPaymentService:
             if response.status_code in [200, 201]:
                 data = response.json()
                 
-                # Store Moniepoint reference
-                payment.moniepoint_reference = data.get('transaction_reference') or data.get('reference')
-                payment.payment_metadata = {'moniepoint_response': data}
-                
-                db.session.add(payment)
-                db.session.commit()
-                
-                return {
-                    'success': True,
-                    'payment_link': data.get('authorization_url') or data.get('payment_link'),
-                    'reference': payment.moniepoint_reference,
-                    'payment_id': payment.id
-                }
+                if data.get('requestSuccessful'):
+                    response_data = data.get('responseBody', {})
+                    
+                    # Store Monnify reference
+                    payment.monnify_reference = response_data.get('transactionReference') or transaction_ref
+                    payment.payment_metadata = {'monnify_response': response_data}
+                    
+                    db.session.add(payment)
+                    db.session.commit()
+                    
+                    return {
+                        'success': True,
+                        'payment_link': response_data.get('checkoutUrl'),
+                        'reference': payment.monnify_reference,
+                        'payment_id': payment.id
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'error': data.get('responseMessage', 'Payment initialization failed')
+                    }
             else:
                 error_data = response.json() if response.text else {}
                 return {
                     'success': False,
-                    'error': error_data.get('message', 'Payment initialization failed'),
+                    'error': error_data.get('responseMessage', 'Payment initialization failed'),
                     'status_code': response.status_code
                 }
                 
@@ -159,16 +181,14 @@ class MoniePointPaymentService:
         except Exception as e:
             print(f'Payment service error: {str(e)}')
             return {'success': False, 'error': f'Server error: {str(e)}'}
-        except Exception as e:
-            return {'success': False, 'error': f'An error occurred: {str(e)}'}
     
     @staticmethod
     def verify_payment(reference):
         """
-        Verify a payment with Moniepoint
+        Verify a payment with Monnify
         
         Args:
-            reference: Moniepoint transaction reference
+            reference: Monnify transaction reference
             
         Returns:
             dict: Payment verification result
@@ -176,14 +196,14 @@ class MoniePointPaymentService:
         try:
             # Update payment in database
             payment = Payment.query.filter_by(
-                moniepoint_reference=reference
+                monnify_reference=reference
             ).first()
             
             if not payment:
                 return {'success': False, 'error': 'Payment record not found'}
             
             # TEST MODE: Auto-complete test payments
-            if MoniePointPaymentService.TEST_MODE and reference.startswith('TEST_'):
+            if MonnifyPaymentService.TEST_MODE and reference.startswith('TEST_'):
                 if payment.status == 'test_pending':
                     payment.status = 'completed'
                     payment.paid_at = datetime.utcnow()
@@ -237,15 +257,12 @@ class MoniePointPaymentService:
                         'error': f'Test payment has already been processed (status: {payment.status})'
                     }
             
-            # PRODUCTION MODE: Verify with Moniepoint API
-            headers = {
-                'Authorization': f'Bearer {MoniePointPaymentService.API_KEY}',
-                'Accept': 'application/json'
-            }
+            # PRODUCTION MODE: Verify with Monnify API
+            headers = MonnifyPaymentService.get_auth_header()
             
-            # Check payment status with Moniepoint
+            # Check payment status with Monnify
             response = requests.get(
-                f'{MoniePointPaymentService.BASE_URL}/api/transactions/{reference}',
+                f'{MonnifyPaymentService.BASE_URL}/api/v1/merchant/transactions/query?transactionReference={reference}',
                 headers=headers,
                 timeout=30
             )
@@ -253,60 +270,69 @@ class MoniePointPaymentService:
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check if payment was successful
-                if data.get('status') == 'success' or data.get('status') == 'completed':
-                    payment.status = 'completed'
-                    payment.paid_at = datetime.utcnow()
-                    payment.payment_method = data.get('payment_method', 'card')
+                if data.get('requestSuccessful'):
+                    response_data = data.get('responseBody', {})
+                    status = response_data.get('paymentStatus')
                     
-                    # Credit user's account
-                    user = User.query.get(payment.user_id)
-                    old_balance = user.credits
-                    user.credits += payment.credits_purchased
-                    
-                    # Create transaction record
-                    transaction = CreditTransaction(
-                        user_id=payment.user_id,
-                        amount=payment.credits_purchased,
-                        transaction_type='credit_purchase',
-                        reason='moniepoint_payment',
-                        description=f'Purchased {payment.credits_purchased} credits for ₦{payment.amount_naira:,.0f}',
-                        balance_before=old_balance,
-                        balance_after=user.credits
-                    )
-                    
-                    db.session.add(transaction)
-                    db.session.commit()
-                    
-                    # Send in-app and email notifications
-                    try:
-                        from notifications import notify_credit_purchase
-                        notify_credit_purchase(
+                    # Check if payment was successful
+                    if status in ['PAID', 'SUCCESSFUL', 'COMPLETED']:
+                        payment.status = 'completed'
+                        payment.paid_at = datetime.utcnow()
+                        payment.payment_method = response_data.get('paymentMethod', 'card')
+                        
+                        # Credit user's account
+                        user = User.query.get(payment.user_id)
+                        old_balance = user.credits
+                        user.credits += payment.credits_purchased
+                        
+                        # Create transaction record
+                        transaction = CreditTransaction(
                             user_id=payment.user_id,
-                            amount_naira=payment.amount_naira,
-                            credits_purchased=payment.credits_purchased,
-                            previous_balance=old_balance,
-                            new_balance=user.credits,
-                            reference=reference
+                            amount=payment.credits_purchased,
+                            transaction_type='credit_purchase',
+                            reason='monnify_payment',
+                            description=f'Purchased {payment.credits_purchased} credits for ₦{payment.amount_naira:,.0f}',
+                            balance_before=old_balance,
+                            balance_after=user.credits
                         )
-                    except Exception as notif_err:
-                        print(f'[WARNING] Failed to send payment notification: {str(notif_err)}')
-                    
-                    return {
-                        'success': True,
-                        'message': 'Payment verified and credits added',
-                        'credits_added': payment.credits_purchased,
-                        'new_balance': user.credits
-                    }
+                        
+                        db.session.add(transaction)
+                        db.session.commit()
+                        
+                        # Send in-app and email notifications
+                        try:
+                            from notifications import notify_credit_purchase
+                            notify_credit_purchase(
+                                user_id=payment.user_id,
+                                amount_naira=payment.amount_naira,
+                                credits_purchased=payment.credits_purchased,
+                                previous_balance=old_balance,
+                                new_balance=user.credits,
+                                reference=reference
+                            )
+                        except Exception as notif_err:
+                            print(f'[WARNING] Failed to send payment notification: {str(notif_err)}')
+                        
+                        return {
+                            'success': True,
+                            'message': 'Payment verified and credits added',
+                            'credits_added': payment.credits_purchased,
+                            'new_balance': user.credits
+                        }
+                    else:
+                        payment.status = 'failed'
+                        payment.error_message = f'Payment status: {status}'
+                        db.session.commit()
+                        
+                        return {
+                            'success': False,
+                            'error': f'Payment was not successful. Status: {status}',
+                            'status': status
+                        }
                 else:
-                    payment.status = 'failed'
-                    payment.error_message = data.get('message', 'Payment failed')
-                    db.session.commit()
-                    
                     return {
                         'success': False,
-                        'error': data.get('message', 'Payment was not successful'),
-                        'status': data.get('status')
+                        'error': data.get('responseMessage', 'Failed to verify payment')
                     }
             else:
                 return {
@@ -323,7 +349,8 @@ class MoniePointPaymentService:
     @staticmethod
     def verify_webhook_signature(signature, payload_string):
         """
-        Verify webhook signature from Moniepoint
+        Verify webhook signature from Monnify
+        Monnify uses HMAC-SHA512 for signature verification
         
         Args:
             signature: Signature header from webhook
@@ -333,11 +360,12 @@ class MoniePointPaymentService:
             bool: True if signature is valid, False otherwise
         """
         try:
-            secret_bytes = MoniePointPaymentService.API_KEY.encode('utf-8')
+            # Monnify uses the API key as the secret
+            secret_bytes = MonnifyPaymentService.API_KEY.encode('utf-8')
             expected_signature = hmac.new(
                 secret_bytes,
                 payload_string.encode('utf-8'),
-                hashlib.sha256
+                hashlib.sha512
             ).hexdigest()
             
             return hmac.compare_digest(signature, expected_signature)
@@ -367,7 +395,7 @@ class MoniePointPaymentService:
             'status': payment.status,
             'created_at': payment.created_at.isoformat(),
             'paid_at': payment.paid_at.isoformat() if payment.paid_at else None,
-            'reference': payment.moniepoint_reference
+            'reference': payment.monnify_reference
         }
     
     @staticmethod
@@ -395,7 +423,7 @@ class MoniePointPaymentService:
                 'credits': p.credits_purchased,
                 'status': p.status,
                 'created_at': p.created_at.isoformat(),
-                'reference': p.moniepoint_reference
+                'reference': p.monnify_reference
             }
             for p in payments
         ]
@@ -406,4 +434,4 @@ class MoniePointPaymentService:
         Calculate credits based on amount
         1 Naira = 1 Credit
         """
-        return int(float(amount_naira) * MoniePointPaymentService.CONVERSION_RATE)
+        return int(float(amount_naira) * MonnifyPaymentService.CONVERSION_RATE)
