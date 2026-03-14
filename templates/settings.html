@@ -106,9 +106,9 @@
   .dark-mode-toggle-wrapper {
     display: flex;
     justify-content: center;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
   
   .dark-mode-toggle {
@@ -255,6 +255,55 @@
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
+  }
+
+  #profile .settings-card {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  #profile form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #profile .form-group {
+    width: 100%;
+    text-align: center;
+  }
+
+  #profile .form-row {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #profile .form-label {
+    display: block;
+    margin: 0 auto 8px;
+  }
+
+  #profile .form-control {
+    width: 100%;
+  }
+
+  #profile .profile-picture-preview {
+    justify-content: center;
+    margin: 0 0 20px 0;
+  }
+
+  #profile .file-input-wrapper {
+    width: 100%;
+  }
+
+  #profile .form-buttons {
+    width: 100%;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  #profile .form-buttons .btn {
+    min-width: 200px;
   }
   
   html.dark-mode .settings-card {
@@ -747,6 +796,16 @@
       padding: 16px 12px;
     }
 
+    #profile .settings-card {
+      max-width: 100%;
+      margin: 0;
+    }
+
+    #profile .form-buttons .btn {
+      width: 100%;
+      min-width: auto;
+    }
+
     .form-row {
       grid-template-columns: 1fr;
       gap: 16px;
@@ -781,11 +840,11 @@
     .settings-sidebar {
       position: fixed;
       left: -250px;
-      top: 0;
+      top: 80px;
       min-width: 200px;
       max-width: 200px;
       width: 200px;
-      height: 100vh;
+      height: calc(100vh - 160px);
       background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
       padding: 20px 12px;
       flex-shrink: 0;
@@ -889,8 +948,9 @@
     }
 
     .dark-mode-toggle-wrapper {
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .dark-mode-toggle {
@@ -1287,6 +1347,13 @@
     <div class="settings-main">
       <!-- Sidebar with Tab Buttons -->
       <div class="settings-sidebar">
+        <!-- Dark Mode Toggle at Top -->
+        <div class="dark-mode-toggle-wrapper">
+          <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+
         <div class="settings-tabs">
           <button class="tab-button active" onclick="switchTab('profile', event)">
             <i class="fas fa-user"></i> Profile
@@ -1328,13 +1395,6 @@
           <a href="{{ url_for('marketplace.privacy') }}" class="footer-link-mobile">
             <i class="fas fa-lock"></i> Privacy
           </a>
-        </div>
-
-        <!-- Dark Mode Toggle at Bottom -->
-        <div class="dark-mode-toggle-wrapper">
-          <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-            <i class="fas fa-moon"></i>
-          </button>
         </div>
       </div>
 
