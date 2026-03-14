@@ -113,7 +113,7 @@ def load_user(user_id):
 # ✅ Jinja filter to format image URLs (supports both local and Cloudinary)
 @app.template_filter('image_url')
 def format_image_url(url):
-    """Convert image URLs to absolute paths or Cloudinary URLs"""
+    """Convert image URLs to absolute paths - use local storage on localhost, Cloudinary on production"""
     if not url:
         return '/static/placeholder.png'
     
@@ -123,36 +123,46 @@ def format_image_url(url):
     if 'res.cloudinary.com' in url:
         return url
     
-    # If URL already looks like a full local path, return as-is
+    # If URL already looks like a full HTTP/HTTPS URL, return as-is
     if url.startswith('http://') or url.startswith('https://'):
         return url
     
     if url.startswith('/static/'):
         return url.replace('//', '/')
     
-    # Use Cloudinary if configured
-    if app.config.get('USE_CLOUDINARY') and app.config.get('CLOUDINARY_CLOUD_NAME'):
-        try:
-            # Detect if URL looks like a Cloudinary public_id
-            # (contains 'barterex' folder structure or multiple path separators)
-            if 'barterex/' in url or url.count('/') > 0:
-                from cloudinary_handler import cloudinary_handler
-                if cloudinary_handler.is_configured:
-                    cloudinary_url = cloudinary_handler.get_optimized_url(
-                        url,  # This should be the public_id
-                        quality='auto'
-                    )
-                    if cloudinary_url:
-                        app.logger.info(f"✅ Cloudinary URL generated: {cloudinary_url}")
-                        return cloudinary_url
-                    else:
-                        app.logger.warning(f"⚠️ Failed to generate Cloudinary URL for: {url}")
-        except Exception as e:
-            app.logger.warning(f"Cloudinary URL generation failed: {e}")
+    # FOR LOCALHOST: Always serve from local storage/database
+    # Skip Cloudinary and use local uploads folder
     
-    # Fallback to local filesystem URLs
-    url = url.strip('/')
-    return f'/static/uploads/{url}'
+    # Handle paths with Cloudinary folder structure (barterex/user/item/index_filename)
+    # Extract just the filename from the path
+    if '/' in url:
+        # Get the last component (filename) from path like "barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG"
+        filename = url.split('/')[-1]
+    else:
+        filename = url
+    
+    filename = filename.strip('/')
+    
+    # The database may store filenames like "0_1_0_1771234294_Barter_logo.PNG"
+    # But actual files are stored as "1_0_1771234294_Barter_logo.PNG"
+    # (missing the first underscore-separated component)
+    # Try to fix this by checking if the file exists; if not, try removing first component
+    import os
+    from flask import current_app
+    
+    upload_dir = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
+    file_path = os.path.join(upload_dir, filename)
+    
+    if not os.path.exists(file_path) and '_' in filename:
+        # Try removing the first component (e.g., "0_1_0_..." -> "1_0_...")
+        parts = filename.split('_', 1)
+        if len(parts) > 1:
+            alt_filename = parts[1]
+            alt_path = os.path.join(upload_dir, alt_filename)
+            if os.path.exists(alt_path):
+                filename = alt_filename
+    
+    return f'/static/uploads/{filename}'
 
 # ✅ Maintenance Mode Handler
 @app.before_request

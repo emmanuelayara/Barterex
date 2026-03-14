@@ -1,0 +1,37 @@
+Checking database at: C:\Users\ayara\Documents\Python\Barterex\instance\barter.db
+File exists: True
+
+Tables in database:
+  - alembic_version
+  - user
+  - admin
+  - pickup_station
+  - activity_log
+  - user_gamification
+  - user_security
+  - user_preferences
+  - security_settings
+  - item
+  - order
+  - notification
+  - cart
+  - referral
+  - audit_log
+  - system_settings
+  - wishlist
+  - contact_message
+  - item_image
+  - trade
+  - order_item
+  - credit_transaction
+  - cart_item
+  - favorite
+  - wishlist_match
+  - payment
+
+ItemImage records (first 5):
+  ID: 1, Item: 1, URL: barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG
+  ID: 2, Item: 1, URL: barterex/1/1/1/1_1_1_1771234294_Capture_for_barter.PNG
+  ID: 3, Item: 1, URL: barterex/1/1/1/2_1_2_1771234294_Capture_snip.PNG
+  ID: 4, Item: 2, URL: barterex/1/1/2/0_2_0_1771236969_Capture_for_barter.PNG
+  ID: 5, Item: 2, URL: barterex/1/1/2/1_2_1_1771236969_Capture_snip.PNG

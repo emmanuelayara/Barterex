@@ -126,7 +126,7 @@ def view_item(item_id: int) -> Union[str, Response]:
             
             item_images = [TempImage(item.image_url)]
 
-        related_items = Item.query.options(joinedload(Item.user)).filter(
+        related_items = Item.query.options(joinedload(Item.user), joinedload(Item.images)).filter(
             Item.category == item.category,
             Item.id != item.id,
             Item.is_available == True

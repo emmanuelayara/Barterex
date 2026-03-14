@@ -1,11 +1,11 @@
 """
 Payment Routes - Handles all payment-related endpoints
-Includes Monnify integration for credit purchases
+Includes Paystack integration for credit purchases
 """
 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
-from payment_service import MonnifyPaymentService
+from paystack_payment_service import PaystackPaymentService
 from models import Payment, db
 import json
 
@@ -19,8 +19,8 @@ def fund_account():
     Users can enter any amount and get that exact amount in credits
     """
     if request.method == 'GET':
-        min_amount = MonnifyPaymentService.MIN_AMOUNT
-        max_amount = MonnifyPaymentService.MAX_AMOUNT
+        min_amount = PaystackPaymentService.MIN_AMOUNT
+        max_amount = PaystackPaymentService.MAX_AMOUNT
         return render_template(
             'payments/fund_account.html',
             min_amount=min_amount,
@@ -44,16 +44,18 @@ def fund_account():
             return jsonify({'success': False, 'error': 'Invalid amount format'}), 400
         
         # Validate amount
-        if amount < MonnifyPaymentService.MIN_AMOUNT:
-            return jsonify({'success': False, 'error': f'Minimum amount is ₦{MonnifyPaymentService.MIN_AMOUNT}'}), 400
-        if amount > MonnifyPaymentService.MAX_AMOUNT:
-            return jsonify({'success': False, 'error': f'Maximum amount is ₦{MonnifyPaymentService.MAX_AMOUNT}'}), 400
+        if amount < PaystackPaymentService.MIN_AMOUNT:
+            return jsonify({'success': False, 'error': f'Minimum amount is ₦{PaystackPaymentService.MIN_AMOUNT}'}), 400
+        if amount > PaystackPaymentService.MAX_AMOUNT:
+            return jsonify({'success': False, 'error': f'Maximum amount is ₦{PaystackPaymentService.MAX_AMOUNT}'}), 400
         
-        # Initiate payment with Monnify
-        result = MonnifyPaymentService.initiate_payment(
+        # Initiate payment with Paystack
+        result = PaystackPaymentService.initiate_payment(
             current_user.id,
             amount
         )
+        
+        print(f'[PAYMENT ROUTE] Payment result: {result}')
         
         if result['success']:
             return jsonify({
@@ -63,9 +65,11 @@ def fund_account():
                 'payment_id': result['payment_id']
             }), 200
         else:
+            error_msg = result.get('error', 'Payment initialization failed')
+            print(f'[PAYMENT ROUTE] Payment failed: {error_msg}')
             return jsonify({
                 'success': False,
-                'error': result.get('error', 'Payment initialization failed')
+                'error': error_msg
             }), 400
             
     except Exception as e:
@@ -80,7 +84,7 @@ def fund_account():
 @login_required
 def verify_payment(reference):
     """
-    Verify payment status with Monnify / Test Mode
+    Verify payment status with Paystack / Test Mode
     Called after user completes payment or in test mode
     """
     try:
@@ -90,7 +94,7 @@ def verify_payment(reference):
         if is_test and reference.startswith('TEST_'):
             print(f'Verifying TEST payment: {reference}')
         
-        result = MonnifyPaymentService.verify_payment(reference)
+        result = PaystackPaymentService.verify_payment(reference)
         
         if result['success']:
             return render_template(
@@ -129,7 +133,7 @@ def payment_status(payment_id):
     if payment.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
     
-    status = MonnifyPaymentService.get_payment_status(payment_id)
+    status = PaystackPaymentService.get_payment_status(payment_id)
     return jsonify(status)
 
 
@@ -139,39 +143,77 @@ def payment_history():
     """
     Get user's payment history
     """
-    history = MonnifyPaymentService.get_user_payment_history(current_user.id)
+    history = PaystackPaymentService.get_user_payment_history(current_user.id)
     return render_template('payments/payment_history.html', payments=history)
 
 
-@payment_bp.route('/webhook', methods=['POST'])
+@payment_bp.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     """
-    Webhook endpoint for Monnify callbacks
-    Handles payment verification when user completes payment
+    Webhook endpoint for Paystack
+    Handles both:
+    - GET: Callback redirect from user's browser after payment
+    - POST: Server-to-server webhook notification from Paystack
     """
     try:
-        # Verify webhook signature
-        signature = request.headers.get('X-Monnify-Signature')
-        payload = request.get_data(as_text=True)
+        # Handle GET request (callback from user's browser after payment)
+        if request.method == 'GET':
+            # Paystack sends reference as both 'reference' and 'trxref'
+            reference = request.args.get('reference') or request.args.get('trxref')
+            
+            if not reference:
+                return render_template(
+                    'payments/payment_error.html',
+                    error='No payment reference provided'
+                ), 400
+            
+            # Verify the payment
+            result = PaystackPaymentService.verify_payment(reference)
+            
+            if result['success']:
+                return render_template(
+                    'payments/payment_success.html',
+                    credits_added=result['credits_added'],
+                    new_balance=result['new_balance'],
+                    reference=reference
+                )
+            else:
+                return render_template(
+                    'payments/payment_failed.html',
+                    error=result['error'],
+                    reference=reference
+                )
         
-        if not MonnifyPaymentService.verify_webhook_signature(signature, payload):
-            return jsonify({'error': 'Invalid signature'}), 401
-        
-        data = request.get_json()
-        event = data.get('event')
-        
-        # Handle successful payment
-        if event == 'charge.success':
-            reference = data.get('data', {}).get('reference')
-            if reference:
-                result = MonnifyPaymentService.verify_payment(reference)
-                return jsonify({'success': True, 'result': result})
-        
-        return jsonify({'success': True})
+        # Handle POST request (webhook from Paystack servers)
+        elif request.method == 'POST':
+            # Verify webhook signature
+            signature = request.headers.get('x-paystack-signature')
+            payload = request.get_data(as_text=True)
+            
+            if not PaystackPaymentService.verify_webhook_signature(signature, payload):
+                return jsonify({'error': 'Invalid signature'}), 401
+            
+            data = request.get_json()
+            event = data.get('event')
+            
+            # Handle successful payment
+            if event == 'charge.success':
+                reference = data.get('data', {}).get('reference')
+                if reference:
+                    result = PaystackPaymentService.verify_payment(reference)
+                    return jsonify({'success': True, 'result': result})
+            
+            return jsonify({'success': True})
         
     except Exception as e:
         print(f'Webhook error: {str(e)}')
-        return jsonify({'error': str(e)}), 500
+        if request.method == 'GET':
+            return render_template(
+                'payments/payment_error.html',
+                error=str(e)
+            ), 500
+        else:
+            return jsonify({'error': str(e)}), 500
 
 
 @payment_bp.route('/api/packages', methods=['GET'])
@@ -181,9 +223,9 @@ def get_packages():
     Returns min/max amounts instead of fixed packages
     """
     config = {
-        'conversion_rate': MonnifyPaymentService.CONVERSION_RATE,
-        'min_amount': MonnifyPaymentService.MIN_AMOUNT,
-        'max_amount': MonnifyPaymentService.MAX_AMOUNT,
+        'conversion_rate': PaystackPaymentService.CONVERSION_RATE,
+        'min_amount': PaystackPaymentService.MIN_AMOUNT,
+        'max_amount': PaystackPaymentService.MAX_AMOUNT,
         'message': 'Enter any amount - 1 Naira = 1 Credit'
     }
     return jsonify(config)

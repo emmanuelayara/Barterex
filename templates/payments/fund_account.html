@@ -6,7 +6,7 @@
   .fund-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
-    padding: 40px 20px;
+    padding: 20px 15px;
   }
 
   .fund-wrapper {
@@ -17,26 +17,26 @@
   .fund-header {
     text-align: center;
     color: white;
-    margin-bottom: 40px;
+    margin-bottom: 24px;
   }
 
   .fund-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 1.8rem;
+    margin-bottom: 6px;
     font-weight: 700;
   }
 
   .fund-header p {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     opacity: 0.9;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
   }
 
   .conversion-info {
-    font-size: 1rem;
+    font-size: 0.9rem;
     opacity: 0.85;
     background: rgba(255, 255, 255, 0.1);
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-radius: 8px;
     backdrop-filter: blur(10px);
   }
@@ -44,9 +44,9 @@
   .form-card {
     background: white;
     border-radius: 16px;
-    padding: 40px;
+    padding: 24px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-    margin-bottom: 30px;
+    margin-bottom: 20px;
   }
 
   .form-group {
@@ -78,7 +78,7 @@
   }
 
   .currency-symbol {
-    font-size: 1.3rem;
+    font-size: 1rem;
     color: #ff7a00;
     font-weight: 700;
     margin-right: 8px;
@@ -88,14 +88,41 @@
     flex: 1;
     border: none;
     background: transparent;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    color: #1a202c;
+    color: #1a202c !important;
     outline: none;
+    caret-color: #ff7a00;
   }
 
   .amount-input::placeholder {
     color: rgba(26, 32, 44, 0.3);
+  }
+
+  /* Handle browser autofill - ensure text is visible */
+  .amount-input:-webkit-autofill,
+  .amount-input:-webkit-autofill:hover,
+  .amount-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+    -webkit-text-fill-color: #1a202c !important;
+  }
+
+  /* Dark mode - explicit styling */
+  html.dark-mode .amount-input {
+    color: #0f172a !important;
+    background-color: #e2e8f0 !important;
+    caret-color: #1a202c;
+  }
+
+  html.dark-mode .amount-input::placeholder {
+    color: rgba(15, 23, 42, 0.4);
+  }
+
+  html.dark-mode .amount-input:-webkit-autofill,
+  html.dark-mode .amount-input:-webkit-autofill:hover,
+  html.dark-mode .amount-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px #e2e8f0 inset !important;
+    -webkit-text-fill-color: #0f172a !important;
   }
 
   .input-info {
@@ -116,30 +143,30 @@
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
     border: 2px solid rgba(16, 185, 129, 0.3);
     border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 24px;
+    padding: 16px;
+    margin-bottom: 20px;
   }
 
   .credits-display-label {
     color: #718096;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
   }
 
   .credits-display-value {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     color: #10b981;
     font-weight: 700;
   }
 
   .submit-btn {
     width: 100%;
-    padding: 16px;
+    padding: 12px;
     background: linear-gradient(135deg, #ff7a00, #ff8f1f);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -164,15 +191,55 @@
   .info-section {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 16px;
-    padding: 30px;
+    padding: 20px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+  }
+
+  .info-section.collapsible .info-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    margin-bottom: 0;
+  }
+
+  .info-section.collapsible .info-header:hover {
+    opacity: 0.8;
+  }
+
+  .info-section.collapsible .toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+    color: #ff7a00;
+  }
+
+  .info-section.collapsible.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+  }
+
+  .info-section.collapsible .info-content {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+  }
+
+  .info-section.collapsible.collapsed .info-content {
+    max-height: 0;
+    opacity: 0;
   }
 
   .info-section h3 {
     color: #1a202c;
-    margin-bottom: 16px;
-    font-size: 1.2rem;
+    margin: 0;
+    font-size: 1rem;
     font-weight: 700;
   }
 
@@ -183,12 +250,13 @@
   }
 
   .info-section li {
-    padding: 10px 0;
+    padding: 8px 0;
     color: #4a5568;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     display: flex;
     align-items: center;
     gap: 12px;
+    font-size: 0.9rem;
   }
 
   .info-section li:last-child {
@@ -199,7 +267,7 @@
     content: '→';
     color: #ff7a00;
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: 1rem;
     min-width: 20px;
   }
 
@@ -248,21 +316,157 @@
     to { transform: rotate(360deg); }
   }
 
+  /* ==================== DARK MODE SUPPORT ==================== */
+  html.dark-mode .fund-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  html.dark-mode .conversion-info {
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+  }
+
+  html.dark-mode .form-card {
+    background: #1e293b;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+  }
+
+  html.dark-mode .form-label {
+    color: #e2e8f0;
+  }
+
+  html.dark-mode .input-group {
+    background: rgba(100, 116, 139, 0.2);
+    border: 2px solid rgba(100, 116, 139, 0.3);
+  }
+
+  html.dark-mode .input-group:focus-within {
+    border-color: #ff9e64;
+    background: rgba(255, 158, 100, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 158, 100, 0.1);
+  }
+
+  html.dark-mode .currency-symbol {
+    color: #ffb86c;
+  }
+
+  html.dark-mode .input-info {
+    color: #94a3b8;
+  }
+
+  html.dark-mode .credits-display {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+    border: 2px solid rgba(16, 185, 129, 0.4);
+  }
+
+  html.dark-mode .credits-display-label {
+    color: #94a3b8;
+  }
+
+  html.dark-mode .credits-display-value {
+    color: #6ee7b7;
+  }
+
+  html.dark-mode .info-section {
+    background: rgba(30, 41, 59, 0.8);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+  }
+
+  html.dark-mode .info-section h3 {
+    color: #f1f5f9;
+  }
+
+  html.dark-mode .info-section li {
+    color: #cbd5e1;
+    border-bottom-color: rgba(148, 163, 184, 0.1);
+  }
+
+  html.dark-mode .info-section.collapsible .info-header:hover {
+    opacity: 0.9;
+  }
+
+  html.dark-mode .info-section.collapsible .toggle-icon {
+    color: #ff9e64;
+  }
+
+  html.dark-mode .error-message {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+
   @media (max-width: 480px) {
     .fund-wrapper {
       max-width: 100%;
     }
 
-    .form-card {
-      padding: 24px;
+    .fund-container {
+      padding: 16px 12px;
     }
 
     .fund-header h1 {
-      font-size: 1.8rem;
+      font-size: 1.4rem;
+    }
+
+    .fund-header p {
+      font-size: 0.85rem;
+    }
+
+    .conversion-info {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+    }
+
+    .form-card {
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-size: 0.8rem;
     }
 
     .amount-input {
-      font-size: 1.2rem;
+      font-size: 1rem;
+    }
+
+    .currency-symbol {
+      font-size: 0.9rem;
+    }
+
+    .submit-btn {
+      padding: 10px;
+      font-size: 0.85rem;
+    }
+
+    .info-section {
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .info-section h3 {
+      font-size: 0.9rem;
+    }
+
+    .info-section li {
+      padding: 6px 0;
+      font-size: 0.8rem;
+    }
+
+    .credits-display {
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .credits-display-label {
+      font-size: 0.7rem;
+    }
+
+    .credits-display-value {
+      font-size: 1.5rem;
     }
   }
 </style>
@@ -325,28 +529,38 @@
     </div>
 
     <!-- Info Section -->
-    <div class="info-section">
-      <h3>🔒 How It Works</h3>
-      <ul>
-        <li>Enter the amount you want to fund</li>
-        <li>See exactly how many credits you'll get (1:1 ratio)</li>
-        <li>Click "Proceed to Payment"</li>
-        <li>Complete payment securely with Moniepoint</li>
-        <li>Credits added instantly to your account</li>
-        <li>Use credits to purchase items immediately</li>
-      </ul>
+    <div class="info-section collapsible collapsed" id="how-it-works">
+      <div class="info-header" onclick="toggleCollapse(this)">
+        <h3>🔒 How It Works</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="info-content">
+        <ul>
+          <li>Enter the amount you want to fund</li>
+          <li>See exactly how many credits you'll get (1:1 ratio)</li>
+          <li>Click "Proceed to Payment"</li>
+          <li>Complete payment securely with Paystack</li>
+          <li>Credits added instantly to your account</li>
+          <li>Use credits to purchase items immediately</li>
+        </ul>
+      </div>
     </div>
 
     <!-- FAQ Section -->
-    <div class="info-section">
-      <h3>❓ Frequently Asked Questions</h3>
-      <ul>
-        <li><strong>Why 1 Naira = 1 Credit?</strong> We believe in fair value - pay exactly what you trade!</li>
-        <li><strong>Are my payments secure?</strong> Yes, we use Moniepoint for secure payment processing.</li>
-        <li><strong>Can I get a refund?</strong> Refunds follow Moniepoint's policy. Contact support if needed.</li>
-        <li><strong>Do credits expire?</strong> No, your credits never expire and stay in your account.</li>
-        <li><strong>What's the minimum?</strong> Minimum is ₦{{ "{:,}".format(min_amount) }} to start trading.</li>
-      </ul>
+    <div class="info-section collapsible collapsed" id="faq">
+      <div class="info-header" onclick="toggleCollapse(this)">
+        <h3>❓ Frequently Asked Questions</h3>
+        <span class="toggle-icon">▼</span>
+      </div>
+      <div class="info-content">
+        <ul>
+          <li><strong>Why 1 Naira = 1 Credit?</strong> We believe in fair value - pay exactly what you trade!</li>
+          <li><strong>Are my payments secure?</strong> Yes, we use Paystack for secure payment processing.</li>
+          <li><strong>Can I get a refund?</strong> Refunds follow Paystack's policy. Contact support if needed.</li>
+          <li><strong>Do credits expire?</strong> No, your credits never expire and stay in your account.</li>
+          <li><strong>What's the minimum?</strong> Minimum is ₦{{ "{:,}".format(min_amount) }} to start trading.</li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -382,6 +596,11 @@
     errorDiv.textContent = message;
     errorDiv.style.color = '#10b981'; // Green color for success
     errorDiv.classList.add('show');
+  }
+
+  function toggleCollapse(header) {
+    const section = header.closest('.info-section');
+    section.classList.toggle('collapsed');
   }
 
   async function handleSubmit(event) {
@@ -439,7 +658,7 @@
             window.location.href = `{{ url_for("payments.verify_payment", reference="") }}${data.reference}?test=true`;
           }, 1500);
         } else {
-          // Redirect to real Moniepoint payment page
+          // Redirect to real Paystack payment page
           window.location.href = data.payment_link;
         }
       } else {

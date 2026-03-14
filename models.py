@@ -830,17 +830,18 @@ class ContactMessage(db.Model):
         return f'<ContactMessage id={self.id}, name={self.name}, status={self.status}, created_at={self.created_at}>'
 
 
-# Payment Processing Model for Monnify Integration
+# Payment Processing Model for Payment Gateway Integration
 class Payment(db.Model):
     """
     Tracks all payment transactions for credit purchases.
-    Used for users to buy credits with cash via Monnify.
+    Supports multiple payment gateways: Monnify and Paystack.
     """
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     
-    # Monnify transaction reference
-    monnify_reference = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    # Payment gateway transaction references
+    monnify_reference = db.Column(db.String(255), unique=True, nullable=True, index=True)  # Legacy Monnify
+    paystack_reference = db.Column(db.String(255), unique=True, nullable=True, index=True)  # Paystack
     
     # Payment details
     amount_naira = db.Column(db.Float, nullable=False)  # Amount in NGN

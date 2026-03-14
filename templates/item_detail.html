@@ -5,226 +5,95 @@
 <style>
   * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
 
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* ===== PAGE CONTAINER ===== */
   .page-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    padding: 20px 15px;
+    background: #FF7A00;
+    padding: 15px;
+  }
+
+  html.dark-mode .page-container {
+    background: linear-gradient(135deg, #0a0e27 0%, #16213e 100%);
   }
 
   .main-content {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
   }
 
-  .breadcrumb {
-    margin-bottom: 20px;
-  }
-
-  .breadcrumb-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 10px 16px;
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
-  }
-
-  .breadcrumb-link {
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: all 0.3s ease;
-  }
-
-  .breadcrumb-link:hover {
-    color: white;
-  }
-
-  .breadcrumb-separator {
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .breadcrumb-current {
-    color: white;
-    font-weight: 500;
-  }
-
+  /* ===== ITEM CONTAINER (MAIN BOX) ===== */
   .item-container {
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(15px);
-    border-radius: 20px;
-    padding: 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    margin-bottom: 25px;
-    width: 100%;
-    max-width: 100%;
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
   }
 
   html.dark-mode .item-container {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-color: rgba(75, 85, 105, 0.3);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #1a1f3a 0%, #16213e 100%);
+    border: 1px solid rgba(255, 122, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
+  @media (min-width: 1024px) {
+    .item-container {
+      padding: 24px;
+    }
+  }
+
+  /* ===== ITEM LAYOUT (2-COLUMN GRID) ===== */
   .item-layout {
     display: grid;
     grid-template-columns: 1fr;
-    min-height: auto;
+    gap: 16px;
   }
 
-  /* Slideshow Section */
+  /* THIS IS THE KEY: Proper 2-column layout on desktop */
+  @media (min-width: 1024px) {
+    .item-layout {
+      grid-template-columns: 1.2fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+  }
+
+  /* ===== SLIDESHOW SECTION (IMAGE) ===== */
   .slideshow-section {
     position: relative;
-    background: #f8fafc;
+    background: #f5f5f5;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 280px;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    min-height: 400px;
   }
 
   html.dark-mode .slideshow-section {
-    background: #0f172a;
+    background: #0f1729;
+    border: 1px solid rgba(255, 122, 0, 0.15);
   }
 
-  /* Dark Mode - Page Container and Navigation */
-  html.dark-mode .page-container {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  }
-
-  html.dark-mode .breadcrumb-nav {
-    background: rgba(30, 41, 59, 0.5);
-    border: 1px solid rgba(75, 85, 105, 0.3);
-  }
-
-  html.dark-mode .breadcrumb-link {
-    color: rgba(203, 213, 225, 0.7);
-  }
-
-  html.dark-mode .breadcrumb-link:hover {
-    color: #f1f5f9;
-  }
-
-  html.dark-mode .breadcrumb-separator {
-    color: rgba(100, 116, 139, 0.5);
-  }
-
-  html.dark-mode .breadcrumb-current {
-    color: #f1f5f9;
-  }
-
-  /* Dark Mode - Navigation Arrows */
-  html.dark-mode .slideshow-nav {
-    background: rgba(100, 116, 139, 0.5);
-  }
-
-  html.dark-mode .slideshow-nav:hover {
-    background: rgba(255, 149, 0, 0.8);
-  }
-
-  html.dark-mode .slideshow-nav:disabled {
-    opacity: 0.2;
-  }
-
-  /* Dark Mode - Image Counter */
-  html.dark-mode .image-counter {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(100, 116, 139, 0.3);
-  }
-
-  /* Dark Mode - Thumbnail Navigation */
-  html.dark-mode .thumbnail-nav {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(75, 85, 105, 0.3);
-  }
-
-  html.dark-mode .thumbnail-nav::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.5);
-  }
-
-  html.dark-mode .thumbnail.active {
-    border-color: #ff9500;
-    box-shadow: 0 0 8px rgba(255, 149, 0, 0.4);
-  }
-
-  html.dark-mode .thumbnail:hover {
-    border-color: rgba(203, 213, 225, 0.5);
-  }
-
-  html.dark-mode .thumbnail-placeholder {
-    background: rgba(15, 23, 42, 0.6);
-    color: rgba(148, 163, 184, 0.7);
-  }
-
-  /* Dark Mode - Info Section */
-  html.dark-mode .info-section {
-    background: transparent;
-  }
-
-  html.dark-mode .item-header {
-    background: transparent;
-  }
-
-  html.dark-mode .item-meta {
-    background: transparent;
-  }
-
-  html.dark-mode .meta-tag {
-    background: rgba(255, 149, 0, 0.1);
-    color: #ff9500;
-    border-color: rgba(255, 149, 0, 0.3);
-  }
-
-  /* Dark Mode - Trade Button */
-  html.dark-mode .trade-button {
-    background: linear-gradient(135deg, #ff9500, #ff7a00);
-    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.2);
-  }
-
-  html.dark-mode .trade-button:hover {
-    box-shadow: 0 8px 25px rgba(255, 149, 0, 0.4);
-  }
-
-  html.dark-mode .trade-button:active {
-    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.2);
-  }
-
-  /* Dark Mode - Related Elements */
-  html.dark-mode .related-price {
-    color: #ff9500;
-  }
-
-  html.dark-mode .empty-related {
-    color: #ff9500;
-  }
-
-  html.dark-mode .empty-related-icon {
-    opacity: 0.4;
-  }
-
-  html.dark-mode .empty-related-text {
-    color: #cbd5e1;
-  }
-
-  /* Dark Mode - Slide Placeholder */
-  html.dark-mode .slide-placeholder {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    color: rgba(148, 163, 184, 0.7);
+  @media (min-width: 1024px) {
+    .slideshow-section {
+      min-height: 420px;
+    }
   }
 
   .slideshow-container {
     position: relative;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .slideshow-wrapper {
@@ -238,27 +107,23 @@
     display: flex;
     width: 100%;
     height: 100%;
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 0.5s ease;
   }
 
   .slide {
-    min-width: 100%;
+    flex: 0 0 100%;
+    width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
+    background: #f5f5f5;
   }
 
   .slide img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .slide img:hover {
-    transform: scale(1.02);
   }
 
   .slide-placeholder {
@@ -267,17 +132,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
-    color: #94a3b8;
-    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    font-size: 4rem;
+    color: #ddd;
+    background: #f5f5f5;
   }
 
-  /* Navigation Arrows */
+  html.dark-mode .slide-placeholder {
+    background: #0f1729;
+    color: #555;
+  }
+
+  /* Navigation */
   .slideshow-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.4);
     color: white;
     border: none;
     border-radius: 50%;
@@ -289,88 +159,69 @@
     cursor: pointer;
     font-size: 1.2rem;
     transition: all 0.3s ease;
-    z-index: 10;
+    z-index: 5;
   }
 
   .slideshow-nav:hover {
     background: rgba(255, 122, 0, 0.8);
-    transform: translateY(-50%) scale(1.05);
   }
 
   .slideshow-nav.prev {
-    left: 15px;
+    left: 10px;
   }
 
   .slideshow-nav.next {
-    right: 15px;
+    right: 10px;
   }
 
-  .slideshow-nav:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    transform: translateY(-50%) scale(0.9);
-  }
-
-  /* Image Counter */
+  /* Image counter */
   .image-counter {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(0, 0, 0, 0.7);
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
     color: white;
-    padding: 6px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    backdrop-filter: blur(10px);
-    z-index: 10;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    z-index: 4;
   }
 
-  /* Thumbnail Navigation */
+  html.dark-mode .image-counter {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  /* Thumbnails */
   .thumbnail-nav {
     position: absolute;
-    bottom: 15px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 6px;
-    z-index: 10;
-    max-width: 90%;
-    overflow-x: auto;
-    padding: 6px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
+    gap: 8px;
+    z-index: 3;
   }
 
-  .thumbnail-nav::-webkit-scrollbar {
-    height: 3px;
-  }
-
-  .thumbnail-nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 2px;
+  @media (max-width: 768px) {
+    .thumbnail-nav {
+      bottom: 50px;
+    }
   }
 
   .thumbnail {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 6px;
     overflow: hidden;
     cursor: pointer;
     border: 2px solid transparent;
     transition: all 0.3s ease;
-    flex-shrink: 0;
+    background: #f5f5f5;
   }
 
-  .thumbnail.active {
-    border-color: #ff7a00;
-    transform: scale(1.1);
-  }
-
-  .thumbnail:hover {
-    border-color: rgba(255, 255, 255, 0.8);
-    transform: scale(1.05);
+  html.dark-mode .thumbnail {
+    background: #16213e;
   }
 
   .thumbnail img {
@@ -382,710 +233,373 @@
   .thumbnail-placeholder {
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.5rem;
+    color: #ddd;
+    background: #f5f5f5;
   }
 
-  /* Info Section */
+  html.dark-mode .thumbnail-placeholder {
+    color: #555;
+    background: #16213e;
+  }
+
+  .thumbnail.active {
+    border-color: #FF7A00;
+  }
+
+  .thumbnail:hover {
+    border-color: #FF7A00;
+  }
+
+  /* ===== INFO SECTION (RIGHT SIDEBAR) ===== */
   .info-section {
-    padding: 25px 20px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    gap: 18px;
     width: 100%;
-    min-width: 0;
-    gap: 16px;
-    overflow: visible;
   }
 
+  @media (min-width: 1024px) {
+    .info-section {
+      gap: 20px;
+    }
+  }
+
+  /* Item header */
   .item-header {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  html.dark-mode .item-header {
+    border-bottom-color: rgba(255, 122, 0, 0.2);
   }
 
   .item-title {
-    font-size: 1.75rem;
+    font-size: 1.6rem;
     font-weight: 700;
-    color: #1a202c;
-    margin-bottom: 12px;
+    color: #1a1a1a;
     line-height: 1.3;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
   }
 
   html.dark-mode .item-title {
-    color: #f1f5f9;
+    color: #ffffff;
+  }
+
+  @media (min-width: 1024px) {
+    .item-title {
+      font-size: 1.8rem;
+    }
   }
 
   .item-meta {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 16px;
+    flex-wrap: wrap;
   }
 
   .meta-tag {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(255, 122, 0, 0.1);
-    color: #ff7a00;
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-size: 0.8rem;
+    background: #FFE8CC;
+    color: #FF7A00;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
     font-weight: 500;
-    border: 1px solid rgba(255, 122, 0, 0.2);
     white-space: nowrap;
-    flex-shrink: 0;
   }
 
+  html.dark-mode .meta-tag {
+    background: rgba(255, 122, 0, 0.2);
+    color: #FFB366;
+  }
+
+  .location-info {
+    color: #666;
+    font-size: 0.95rem;
+    margin-top: 4px;
+  }
+
+  html.dark-mode .location-info {
+    color: #b0b0b0;
+  }
+
+  /* Price section */
   .price-section {
-    margin: 20px 0;
-    padding: 20px;
-    background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(5, 78, 151, 0.1));
-    border-radius: 14px;
-    border: 1px solid rgba(255, 122, 0, 0.2);
+    background: #FFF5E8;
+    padding: 16px;
+    border-radius: 10px;
+    border-left: 4px solid #FF7A00;
   }
 
   html.dark-mode .price-section {
-    background: linear-gradient(135deg, rgba(255, 149, 0, 0.1), rgba(29, 78, 137, 0.1));
-    border-color: rgba(255, 149, 0, 0.3);
+    background: rgba(255, 122, 0, 0.1);
+    border-left-color: #FF9933;
   }
 
   .price-label {
     font-size: 0.85rem;
-    color: #4a5568;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     margin-bottom: 6px;
-    font-weight: 500;
+    font-weight: 600;
   }
 
   html.dark-mode .price-label {
-    color: #cbd5e1;
+    color: #b0b0b0;
   }
 
   .price-value {
-    font-size: 2rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #ff7a00, #ff7a00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #FF7A00;
   }
 
-  .location-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #4a5568;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
+  html.dark-mode .price-value {
+    color: #FFB366;
   }
 
-  html.dark-mode .location-info {
-    color: #cbd5e1;
-  }
-
+  /* Description section */
   .description-section {
-    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .description-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    color: #1a1a1a;
   }
 
   html.dark-mode .description-title {
-    color: #f1f5f9;
+    color: #ffffff;
   }
 
   .description-text {
-    color: #4a5568;
+    color: #666;
     line-height: 1.6;
     font-size: 0.95rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
     word-break: break-word;
-    white-space: normal;
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 8px;
   }
 
   html.dark-mode .description-text {
-    color: #cbd5e1;
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 8px;
+    color: #b0b0b0;
   }
 
+  /* Action section */
   .action-section {
-    margin-top: 24px;
-    padding: 20px;
-    border-top: 2px solid rgba(226, 232, 240, 0.8);
-    border-bottom: 2px solid rgba(226, 232, 240, 0.8);
-    background: rgba(255, 250, 245, 0.5);
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    width: 100%;
-    border-radius: 12px;
-    justify-content: flex-start;
-    min-height: 75px;
-    overflow: visible;
-    flex-wrap: wrap;
-  }
-
-  html.dark-mode .action-section {
-    background: rgba(30, 41, 59, 0.5);
-    border-color: rgba(100, 116, 139, 0.3);
+    padding-top: 12px;
   }
 
   .action-section form {
-    flex: 1;
-    display: flex;
-    min-width: 0;
     width: 100%;
   }
 
   .trade-button {
     width: 100%;
-    min-width: 100%;
-    padding: 16px 24px;
-    background: linear-gradient(135deg, #ff7a00, #ff8c00);
+    padding: 14px 24px;
+    background: #FF7A00;
     color: white;
     border: none;
-    border-radius: 12px;
-    font-size: 1.05rem;
-    font-weight: 700;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
-  }
-
-  .trade-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-  }
-
-  .trade-button:hover::before {
-    left: 100%;
+    transition: all 0.3s ease;
   }
 
   .trade-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(255, 122, 0, 0.5);
+    background: #E56A00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
+  }
+
+  html.dark-mode .trade-button:hover {
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.5);
   }
 
   .trade-button:active {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+    transform: translateY(0);
   }
 
-  /* Mobile Responsive for action section */
-  @media (max-width: 640px) {
-    .action-section {
-      flex-direction: column;
-      gap: 16px;
-      align-items: stretch;
-      padding: 18px;
-      margin-top: 20px;
-      margin-bottom: 20px;
-      justify-content: flex-start;
-      flex-wrap: nowrap;
-    }
-
-    .action-section form {
-      flex: 1;
-      min-width: 0;
-      max-width: 100%;
-      width: 100%;
-    }
-
-    .trade-button {
-      width: 100%;
-      padding: 14px 20px;
-      font-size: 1rem;
-      font-weight: 700;
-      min-height: 50px;
-    }
-  }
-
-  @media (min-width: 641px) and (max-width: 1024px) {
-    .action-section {
-      gap: 16px;
-      padding: 20px;
-      margin-top: 24px;
-      margin-bottom: 20px;
-      justify-content: flex-start;
-      align-items: center;
-    }
-
-    .action-section form {
-      flex: 1;
-    }
-
-    .trade-button {
-      padding: 14px 20px;
-      font-size: 1rem;
-      white-space: nowrap;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .action-section {
-      gap: 16px;
-      padding: 20px;
-      margin-top: 24px;
-      justify-content: flex-start;
-      align-items: center;
-      flex-wrap: nowrap;
-    }
-
-    .action-section form {
-      flex: 1;
-    }
-
-    .trade-button {
-      padding: 16px 24px;
-      font-size: 1.05rem;
-      white-space: nowrap;
-    }
-  }
-
+  /* ===== RELATED ITEMS SECTION ===== */
   .related-section {
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(15px);
+    background: white;
     border-radius: 20px;
-    padding: 25px 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    padding: 40px 20px;
+    margin-bottom: 40px;
   }
 
   html.dark-mode .related-section {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-color: rgba(75, 85, 105, 0.3);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #1a1f3a 0%, #16213e 100%);
+    border: 1px solid rgba(255, 122, 0, 0.2);
+  }
+
+  @media (min-width: 1024px) {
+    .related-section {
+      padding: 40px;
+    }
   }
 
   .related-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 25px;
-    color: #1a202c;
-  }
-
-  html.dark-mode .related-header {
-    color: #f1f5f9;
+    gap: 12px;
+    margin-bottom: 30px;
   }
 
   .related-icon {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, #ff7a00, #ff7a00);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
+    font-size: 1.8rem;
   }
 
   .related-title {
     font-size: 1.3rem;
-    font-weight: 600;
-    margin: 0;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  html.dark-mode .related-title {
+    color: #ffffff;
   }
 
   .related-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .related-grid::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .related-grid::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+  }
+
+  html.dark-mode .related-grid::-webkit-scrollbar-track {
+    background: #16213e;
+  }
+
+  .related-grid::-webkit-scrollbar-thumb {
+    background: #FF7A00;
+    border-radius: 10px;
+  }
+
+  html.dark-mode .related-grid::-webkit-scrollbar-thumb {
+    background: #FFB366;
+  }
+
+  .related-grid::-webkit-scrollbar-thumb:hover {
+    background: #E56A00;
+  }
+
+  html.dark-mode .related-grid::-webkit-scrollbar-thumb:hover {
+    background: #FFD699;
   }
 
   .related-item {
-    background: white;
-    border-radius: 14px;
+    flex: 0 0 200px;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s ease;
+    cursor: pointer;
   }
 
   html.dark-mode .related-item {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-color: rgba(75, 85, 105, 0.3);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 122, 0, 0.2);
+    background: #16213e;
   }
 
   .related-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    border-color: rgba(255, 122, 0, 0.3);
+    border-color: #FF7A00;
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.15);
+  }
+
+  html.dark-mode .related-item:hover {
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
   }
 
   .related-item a {
     text-decoration: none;
     color: inherit;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 
   .related-image {
     width: 100%;
-    height: 140px;
+    height: 160px;
     object-fit: cover;
-    background: linear-gradient(45deg, #f1f5f9, #e2e8f0);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #94a3b8;
-    font-size: 1.8rem;
+    background: #f5f5f5;
+    display: block;
+  }
+
+  html.dark-mode .related-image {
+    background: #0f1729;
   }
 
   .related-content {
-    padding: 16px;
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .related-name {
+    font-size: 0.95rem;
     font-weight: 600;
-    color: #1a202c;
-    margin-bottom: 6px;
-    font-size: 1rem;
+    color: #1a1a1a;
     line-height: 1.3;
   }
 
   html.dark-mode .related-name {
-    color: #f1f5f9;
+    color: #ffffff;
   }
 
   .related-price {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: #ff7a00;
-    font-weight: 600;
+    color: #FF7A00;
+    font-weight: 700;
     font-size: 0.9rem;
+  }
+
+  html.dark-mode .related-price {
+    color: #FFB366;
   }
 
   .empty-related {
     text-align: center;
-    padding: 30px 15px;
-    color: #ff7a00;
+    padding: 40px 20px;
+    color: #999;
+  }
+
+  html.dark-mode .empty-related {
+    color: #888;
   }
 
   .empty-related-icon {
-    font-size: 2.5rem;
+    font-size: 3rem;
     margin-bottom: 12px;
-    opacity: 0.5;
   }
 
   .empty-related-text {
     font-size: 1rem;
-    font-weight: 500;
   }
 
-  /* Mobile Specific Optimizations */
-  @media (max-width: 768px) {
-    .page-container {
-      padding: 15px 10px;
-    }
-
-    .slideshow-section {
-      min-height: 200px;
-    }
-
-    .item-title {
-      font-size: 1.5rem;
-    }
-
-    .price-value {
-      font-size: 1.75rem;
-    }
-
-    .info-section {
-      padding: 20px 16px;
-    }
-
-    .related-section {
-      padding: 20px 16px;
-    }
-
-    .slideshow-nav {
-      width: 35px;
-      height: 35px;
-      font-size: 1rem;
-    }
-
-    .slideshow-nav.prev {
-      left: 10px;
-    }
-
-    .slideshow-nav.next {
-      right: 10px;
-    }
-
-    .thumbnail {
-      width: 35px;
-      height: 35px;
-    }
-
-    .thumbnail-nav {
-      bottom: 10px;
-      max-width: 95%;
-    }
-
-    .meta-tag {
-      padding: 4px 10px;
-      font-size: 0.75rem;
-    }
-
-    .related-title {
-      font-size: 1.2rem;
-    }
-
-    /* Mobile Related Items - Horizontal Scroll */
-    .related-grid {
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      padding-bottom: 10px;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .related-grid::-webkit-scrollbar {
-      height: 4px;
-    }
-
-    .related-grid::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 2px;
-    }
-
-    .related-grid::-webkit-scrollbar-thumb {
-      background: rgba(255, 122, 0, 0.5);
-      border-radius: 2px;
-    }
-
-    .related-grid::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 122, 0, 0.8);
-    }
-
-    .related-item {
-      min-width: 160px;
-      max-width: 160px;
-      flex-shrink: 0;
-      scroll-snap-align: start;
-    }
-
-    .related-image {
-      height: 100px;
-      font-size: 1.4rem;
-    }
-
-    .related-content {
-      padding: 12px;
-    }
-
-    .related-name {
-      font-size: 0.85rem;
-      line-height: 1.2;
-      margin-bottom: 4px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .related-price {
-      font-size: 0.8rem;
-    }
-
-    /* Add scroll indicator for mobile */
-    .related-section::after {
-      content: '';
-      display: block;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.3), transparent);
-      margin-top: 10px;
-      border-radius: 1px;
-    }
-
-    /* Disable hover effects on mobile */
-    .related-item:hover {
-      transform: none;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-      border-color: rgba(226, 232, 240, 0.8);
-    }
-  }
-
-  @media (max-width: 480px) {
-    .page-container {
-      padding: 10px 8px;
-    }
-
-    .slideshow-section {
-      min-height: 160px;
-    }
-
-    .item-title {
-      font-size: 1.35rem;
-    }
-
-    .info-section {
-      padding: 18px 14px;
-    }
-
-    .item-meta {
-      gap: 6px;
-    }
-
-    .meta-tag {
-      padding: 3px 8px;
-      font-size: 0.7rem;
-    }
-
-    .price-value {
-      font-size: 1.6rem;
-    }
-
-    .trade-button {
-      padding: 12px 18px;
-      font-size: 0.95rem;
-    }
-
-    .thumbnail-nav {
-      bottom: 8px;
-      max-width: 98%;
-    }
-
-    .thumbnail {
-      width: 32px;
-      height: 32px;
-    }
-
-    .related-section {
-      padding: 18px 14px;
-    }
-
-    .related-item {
-      min-width: 140px;
-      max-width: 140px;
-    }
-
-    .related-image {
-      height: 90px;
-      font-size: 1.2rem;
-    }
-
-    .related-content {
-      padding: 10px;
-    }
-
-    .related-name {
-      font-size: 0.8rem;
-    }
-
-    .related-price {
-      font-size: 0.75rem;
-    }
-
-    .slideshow-nav {
-      width: 32px;
-      height: 32px;
-      font-size: 0.9rem;
-    }
-
-    .image-counter {
-      font-size: 0.75rem;
-      padding: 5px 8px;
-    }
-
-    .related-title {
-      font-size: 1.1rem;
-    }
-  }
-
-  /* Desktop view improvements */
-  @media (min-width: 1024px) {
-    .item-layout {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .slideshow-section {
-      min-height: 500px;
-    }
-
-    .info-section {
-      padding: 35px 30px;
-    }
-
-    .related-grid {
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 18px;
-    }
-
-    .item-title {
-      font-size: 2rem;
-    }
-
-    .price-value {
-      font-size: 2.25rem;
-    }
-
-    .related-section {
-      padding: 30px;
-    }
-
-    .related-item:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      border-color: rgba(255, 122, 0, 0.3);
-    }
-  }
-
-  /* Loading animation */
-  @keyframes shimmer {
-    0% { background-position: -468px 0; }
-    100% { background-position: 468px 0; }
-  }
-
-  .loading-shimmer {
-    animation: shimmer 1.2s ease-in-out infinite;
-    background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
-    background-size: 800px 104px;
-  }
-
-  /* Fullscreen modal */
+  /* ===== FULLSCREEN MODAL ===== */
   .fullscreen-modal {
     display: none;
     position: fixed;
@@ -1095,13 +609,16 @@
     height: 100%;
     background: rgba(0, 0, 0, 0.95);
     z-index: 1000;
-    backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+  }
+
+  html.dark-mode .fullscreen-modal {
+    background: rgba(0, 0, 0, 0.98);
   }
 
   .fullscreen-modal.active {
     display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .fullscreen-content {
@@ -1114,24 +631,24 @@
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .fullscreen-close {
     position: absolute;
-    top: -45px;
+    top: -50px;
     right: 0;
     background: rgba(255, 122, 0, 0.8);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 35px;
-    height: 35px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     transition: all 0.3s ease;
   }
 
@@ -1140,30 +657,59 @@
     transform: scale(1.1);
   }
 
-  /* Touch improvements */
+  /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
-    .trade-button:hover {
-      transform: none;
-      box-shadow: none;
+    .slideshow-nav {
+      width: 36px;
+      height: 36px;
+      font-size: 1rem;
     }
 
-    .slide img:hover {
-      transform: none;
+    .item-title {
+      font-size: 1.5rem;
     }
 
-    .slideshow-nav:hover {
-      background: rgba(255, 122, 0, 0.8);
-      transform: translateY(-50%);
+    .price-value {
+      font-size: 1.8rem;
+    }
+
+    .description-text {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-container {
+      padding: 10px;
+    }
+
+    .item-container {
+      padding: 15px;
+      border-radius: 16px;
+    }
+
+    .item-title {
+      font-size: 1.3rem;
+    }
+
+    .price-value {
+      font-size: 1.6rem;
+    }
+
+    .trade-button {
+      padding: 12px 20px;
+      font-size: 0.95rem;
     }
   }
 </style>
 
 <div class="page-container">
   <div class="main-content">
+
     <!-- Item Details Container -->
     <div class="item-container">
       <div class="item-layout">
-        <!-- Slideshow Section -->
+        <!-- LEFT: Slideshow Section -->
         <div class="slideshow-section">
           <div class="slideshow-container">
             {% if item_images and item_images|length > 0 %}
@@ -1172,7 +718,7 @@
                   {% for image in item_images %}
                     <div class="slide">
                       {% if image.image_url %}
-                        <img src="{{ image.image_url | image_url }}" alt="{{ item.name }} - Image {{ loop.index }}" onclick="openFullscreen('{{ image.image_url | image_url }}')">
+                        <img src="{{ image.image_url | image_url }}" alt="{{ item.name }} - Image {{ loop.index }}" onclick="openFullscreen('{{ image.image_url | image_url }}')" style="cursor: pointer;">
                       {% else %}
                         <div class="slide-placeholder">📦</div>
                       {% endif %}
@@ -1180,23 +726,23 @@
                   {% endfor %}
                 </div>
               </div>
-              
-              <!-- Navigation arrows (only show if more than 1 image) -->
+
+              <!-- Navigation arrows -->
               {% if item_images|length > 1 %}
-                <button class="slideshow-nav prev" id="prevBtn" onclick="previousSlide()">‹</button>
-                <button class="slideshow-nav next" id="nextBtn" onclick="nextSlide()">›</button>
+                <button class="slideshow-nav prev" onclick="previousSlide()">‹</button>
+                <button class="slideshow-nav next" onclick="nextSlide()">›</button>
               {% endif %}
-              
+
               <!-- Image counter -->
               <div class="image-counter">
                 <span id="currentSlide">1</span> / {{ item_images|length }}
               </div>
-              
-              <!-- Thumbnail navigation (only show if more than 1 image) -->
+
+              <!-- Thumbnails -->
               {% if item_images|length > 1 %}
                 <div class="thumbnail-nav">
                   {% for image in item_images %}
-                    <div class="thumbnail {% if loop.first %}active{% endif %}" onclick="goToSlide({{ loop.index0 }})">
+                    <div class="thumbnail {% if loop.first %}active{% endif %}" onclick="goToSlide({{ loop.index0 }})" title="Image {{ loop.index }}">
                       {% if image.image_url %}
                         <img src="{{ image.image_url | image_url }}" alt="Thumbnail {{ loop.index }}">
                       {% else %}
@@ -1206,87 +752,74 @@
                   {% endfor %}
                 </div>
               {% endif %}
-              
+
             {% else %}
-              <!-- Fallback for no images -->
               <div class="slide-placeholder">📦</div>
-              <div class="image-counter">📷 No Images</div>
+              <div class="image-counter">No Images</div>
             {% endif %}
           </div>
         </div>
 
-        <!-- Info Section -->
+        <!-- RIGHT: Info Section -->
         <div class="info-section">
+          <!-- Header: Title & Meta -->
           <div class="item-header">
             <h1 class="item-title">{{ item.name }}</h1>
-            
+
             <div class="item-meta">
-              <div class="meta-tag">
-                🏷️ {{ item.category }}
-              </div>
-              <div class="meta-tag">
-                ⚡ {{ item.condition }}
-              </div>
+              <div class="meta-tag">🏷️ {{ item.category }}</div>
+              <div class="meta-tag">⚡ {{ item.condition }}</div>
               {% if item_images and item_images|length > 1 %}
-                <div class="meta-tag">
-                  📸 {{ item_images|length }} Photos
-                </div>
+                <div class="meta-tag">📸 {{ item_images|length }} Photos</div>
               {% endif %}
             </div>
 
-            <div class="location-info">
-              📍 Available in {{ item.location }}
-            </div>
+            <div class="location-info">📍 Available in {{ item.location }}</div>
           </div>
 
+          <!-- Price -->
           <div class="price-section">
             <div class="price-label">Credit Value</div>
-            <div class="price-value">
-              💰 ₦{{ "{:,.2f}".format(item.value) }}
-            </div>
+            <div class="price-value">💰 ₦{{ "{:,.2f}".format(item.value) }}</div>
           </div>
 
+          <!-- Description -->
           <div class="description-section">
-            <h3 class="description-title">
-              📝 Description
-            </h3>
+            <h3 class="description-title">📝 Description</h3>
             <p class="description-text">{{ item.description }}</p>
           </div>
 
+          <!-- Button -->
           <div class="action-section">
-            <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}" style="flex: 1;">
+            <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="trade-button">
-                🛒 Add to Cart
-              </button>
+              <button type="submit" class="trade-button">🛒 Add to Cart</button>
             </form>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Related Items Section -->
+    <!-- Related Items -->
     <div class="related-section">
       <div class="related-header">
         <div class="related-icon">🔗</div>
         <h2 class="related-title">Related Items in "{{ item.category }}"</h2>
       </div>
 
-      {% if related_items %}
-        <div class="related-grid">
+      {% if related_items and related_items|length > 0 %}
+        <div class="related-grid" id="relatedCarousel">
           {% for related in related_items %}
             <div class="related-item">
               <a href="{{ url_for('marketplace.view_item', item_id=related.id) }}">
-                {% if related.image_url %}
-                  <img src="{{ related.image_url | image_url }}" alt="{{ related.name }}" class="related-image">
+                {% if related.images and related.images|length > 0 %}
+                  <img src="{{ related.images[0].image_url | image_url }}" alt="{{ related.name }}" class="related-image" loading="lazy">
                 {% else %}
-                  <div class="related-image">📦</div>
+                  <div class="related-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); font-size: 2.5rem;">📦</div>
                 {% endif %}
                 <div class="related-content">
                   <h4 class="related-name">{{ related.name }}</h4>
-                  <div class="related-price">
-                    💰 ₦{{ "{:,.2f}".format(related.value) }} credits
-                  </div>
+                  <div class="related-price">₦{{ "{:,.2f}".format(related.value) }}</div>
                 </div>
               </a>
             </div>
@@ -1311,273 +844,79 @@
 </div>
 
 <script>
-  let currentSlideIndex = 0;
-  const totalSlides = {{ item_images|length if item_images else 0 }};
+let currentSlide = 0;
+let slides = [];
+let thumbnails = [];
 
-  // Slideshow functionality
-  function updateSlideshow() {
-    if (totalSlides <= 1) return;
-    
-    const track = document.getElementById('slideshowTrack');
-    const currentSlideCounter = document.getElementById('currentSlide');
-    const thumbnails = document.querySelectorAll('.thumbnail');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    
-    if (track) {
-      track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
-    }
-    
-    if (currentSlideCounter) {
-      currentSlideCounter.textContent = currentSlideIndex + 1;
-    }
-    
-    // Update thumbnail active state
-    thumbnails.forEach((thumb, index) => {
-      if (index === currentSlideIndex) {
-        thumb.classList.add('active');
-      } else {
-        thumb.classList.remove('active');
-      }
-    });
-    
-    // Update navigation button states
-    if (prevBtn) {
-      prevBtn.disabled = currentSlideIndex === 0;
-    }
-    if (nextBtn) {
-      nextBtn.disabled = currentSlideIndex === totalSlides - 1;
-    }
-  }
-
-  function nextSlide() {
-    if (currentSlideIndex < totalSlides - 1) {
-      currentSlideIndex++;
-      updateSlideshow();
-    }
-  }
-
-  function previousSlide() {
-    if (currentSlideIndex > 0) {
-      currentSlideIndex--;
-      updateSlideshow();
-    }
-  }
-
-  function goToSlide(index) {
-    currentSlideIndex = index;
+function initSlideshow() {
+  const track = document.getElementById('slideshowTrack');
+  if(track) {
+    slides = Array.from(track.querySelectorAll('.slide'));
+    thumbnails = Array.from(document.querySelectorAll('.thumbnail'));
     updateSlideshow();
   }
+}
 
-  // Keyboard navigation
-  document.addEventListener('keydown', function(e) {
-    if (totalSlides <= 1) return;
-    
-    switch(e.key) {
-      case 'ArrowLeft':
-        previousSlide();
-        break;
-      case 'ArrowRight':
-        nextSlide();
-        break;
-    }
+function updateSlideshow() {
+  if(slides.length === 0) return;
+
+  const track = document.getElementById('slideshowTrack');
+  if(track) {
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+  }
+
+  document.getElementById('currentSlide').textContent = currentSlide + 1;
+
+  thumbnails.forEach((thumb, idx) => {
+    thumb.classList.toggle('active', idx === currentSlide);
   });
+}
 
-  // Touch/Swipe support for mobile
-  let startX = 0;
-  let startY = 0;
-  let isDragging = false;
-
-  const slideshowSection = document.querySelector('.slideshow-section');
-  
-  if (slideshowSection && totalSlides > 1) {
-    slideshowSection.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isDragging = true;
-    }, { passive: true });
-
-    slideshowSection.addEventListener('touchmove', function(e) {
-      if (!isDragging) return;
-      e.preventDefault();
-    }, { passive: false });
-
-    slideshowSection.addEventListener('touchend', function(e) {
-      if (!isDragging) return;
-      isDragging = false;
-      
-      const endX = e.changedTouches[0].clientX;
-      const endY = e.changedTouches[0].clientY;
-      const diffX = startX - endX;
-      const diffY = startY - endY;
-      
-      // Only trigger swipe if horizontal movement is greater than vertical
-      if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (Math.abs(diffX) > 50) { // Minimum swipe distance
-          if (diffX > 0) {
-            nextSlide(); // Swipe left = next slide
-          } else {
-            previousSlide(); // Swipe right = previous slide
-          }
-        }
-      }
-    }, { passive: true });
-  }
-
-  // Fullscreen functionality
-  function openFullscreen(imageSrc) {
-    const modal = document.getElementById('fullscreenModal');
-    const image = document.getElementById('fullscreenImage');
-    
-    if (modal && image) {
-      image.src = imageSrc;
-      modal.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-  }
-
-  function closeFullscreen() {
-    const modal = document.getElementById('fullscreenModal');
-    
-    if (modal) {
-      modal.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  }
-
-  // Close fullscreen with Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeFullscreen();
-    }
-  });
-
-  // Auto-slideshow (optional - uncomment to enable)
-  let autoSlideInterval;
-  
-  function startAutoSlide() {
-    if (totalSlides <= 1) return;
-    
-    autoSlideInterval = setInterval(() => {
-      if (currentSlideIndex < totalSlides - 1) {
-        nextSlide();
-      } else {
-        currentSlideIndex = 0;
-        updateSlideshow();
-      }
-    }, 4000); // Change slide every 4 seconds
-  }
-  
-  function stopAutoSlide() {
-    if (autoSlideInterval) {
-      clearInterval(autoSlideInterval);
-    }
-  }
-  
-  // Start auto-slideshow on page load
-  document.addEventListener('DOMContentLoaded', startAutoSlide);
-  
-  // Pause auto-slideshow on hover
-  if (slideshowSection) {
-    slideshowSection.addEventListener('mouseenter', stopAutoSlide);
-    slideshowSection.addEventListener('mouseleave', startAutoSlide);
-  }
-
-  // Initialize slideshow
-  document.addEventListener('DOMContentLoaded', function() {
+function nextSlide() {
+  if(slides.length > 0) {
+    currentSlide = (currentSlide + 1) % slides.length;
     updateSlideshow();
-    
-    // Add smooth loading effect for images
-    const images = document.querySelectorAll('img[src]');
-    
-    images.forEach(img => {
-      if (!img.complete) {
-        img.classList.add('loading-shimmer');
-        
-        img.addEventListener('load', function() {
-          this.classList.remove('loading-shimmer');
-        });
-        
-        img.addEventListener('error', function() {
-          this.classList.remove('loading-shimmer');
-          // Replace with placeholder
-          const placeholder = document.createElement('div');
-          placeholder.className = 'slide-placeholder';
-          placeholder.innerHTML = '📦';
-          this.parentNode.replaceChild(placeholder, this);
-        });
-      }
-    });
-  });
+  }
+}
 
-  // Add click animation to trade button
-  document.querySelector('.trade-button')?.addEventListener('click', function(e) {
-    // Create ripple effect
-    const ripple = document.createElement('span');
-    const rect = this.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = e.clientX - rect.left - size / 2;
-    const y = e.clientY - rect.top - size / 2;
-    
-    ripple.style.cssText = `
-      position: absolute;
-      width: ${size}px;
-      height: ${size}px;
-      left: ${x}px;
-      top: ${y}px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: scale(0);
-      animation: ripple 0.6s linear;
-      pointer-events: none;
-    `;
-    
-    this.appendChild(ripple);
-    
-    setTimeout(() => ripple.remove(), 600);
-  });
+function previousSlide() {
+  if(slides.length > 0) {
+    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+    updateSlideshow();
+  }
+}
 
-  // Add CSS for ripple animation
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes ripple {
-      to {
-        transform: scale(2);
-        opacity: 0;
-      }
-    }
-  `;
-  document.head.appendChild(style);
+function goToSlide(index) {
+  currentSlide = Math.min(Math.max(index, 0), slides.length - 1);
+  updateSlideshow();
+}
 
-  // Add smooth scroll behavior to related items on mobile
-  document.addEventListener('DOMContentLoaded', function() {
-    const relatedGrid = document.querySelector('.related-grid');
-    
-    if (relatedGrid && window.innerWidth <= 768) {
-      // Add touch scrolling enhancement
-      let isScrolling = false;
-      let scrollTimeout;
+function openFullscreen(imageSrc) {
+  const modal = document.getElementById('fullscreenModal');
+  const img = document.getElementById('fullscreenImage');
+  img.src = imageSrc;
+  modal.classList.add('active');
+}
 
-      relatedGrid.addEventListener('scroll', function() {
-        isScrolling = true;
-        
-        // Clear timeout if it exists
-        clearTimeout(scrollTimeout);
-        
-        // Set a timeout to run after scrolling ends
-        scrollTimeout = setTimeout(function() {
-          isScrolling = false;
-        }, 150);
-      });
+function closeFullscreen() {
+  const modal = document.getElementById('fullscreenModal');
+  modal.classList.remove('active');
+}
 
-      // Add scroll snap enhancement for better UX
-      relatedGrid.style.scrollBehavior = 'smooth';
-    }
-  });
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  const modal = document.getElementById('fullscreenModal');
+  if(modal.classList.contains('active')) {
+    if(e.key === 'Escape') closeFullscreen();
+    return;
+  }
+
+  if(e.key === 'ArrowRight') nextSlide();
+  if(e.key === 'ArrowLeft') previousSlide();
+});
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initSlideshow);
 </script>
-{% endblock %}<style>
-  .page-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px 15px;
-  }
+
+{% endblock %}

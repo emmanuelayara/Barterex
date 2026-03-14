@@ -1,0 +1,1734 @@
+{% extends "base.html" %}
+{% block title %}Item Details{% endblock %}
+
+{% block content %}
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ===== PAGE CONTAINER ===== */
+  .page-container {
+    min-height: 100vh;
+    background: #FF7A00;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 15px;
+  }
+
+  .main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ===== ITEM CONTAINER (MAIN BOX) ===== */
+  .item-container {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (min-width: 1024px) {
+    .item-container {
+      padding: 40px;
+    }
+  }
+
+  /* ===== ITEM LAYOUT (2-COLUMN GRID) ===== */
+  .item-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .item-layout {
+      grid-template-columns: 1.2fr 1fr;
+      gap: 40px;
+    }
+  }
+
+  /* ===== IMAGE SECTION ===== */
+  .slideshow-section {
+    position: relative;
+    background: #f8f8f8;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 320px;
+    width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .slideshow-section {
+      min-height: 600px;
+    }
+  }
+
+  .main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    margin-bottom: 32px;
+  }
+
+  .breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    width: fit-content;
+  }
+
+  html.dark-mode .breadcrumb-nav {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 122, 0, 0.2);
+  }
+
+  .breadcrumb-link {
+    color: #475569;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  html.dark-mode .breadcrumb-link {
+    color: #cbd5e1;
+  }
+
+  .breadcrumb-link:hover {
+    color: #ff7a00;
+  }
+
+  .breadcrumb-separator {
+    color: #cbd5e1;
+    font-weight: 300;
+  }
+
+  .breadcrumb-current {
+    color: #1e293b;
+    font-weight: 600;
+  }
+
+  html.dark-mode .breadcrumb-current {
+    color: #f1f5f9;
+  }
+
+  .item-container {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    border: none;
+    box-shadow: none;
+    overflow: hidden;
+    margin-bottom: 40px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .item-container {
+      border-radius: 20px;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      padding: 40px;
+    }
+  }
+
+  html.dark-mode .item-container {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: rgba(75, 85, 105, 0.3);
+    box-shadow: none;
+  }
+
+  .item-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    width: 100%;
+  }
+
+  @media (min-width: 1024px) {
+    .item-layout {
+      grid-template-columns: 1.2fr 1fr;
+      gap: 40px;
+      width: 100%;
+    }
+  }
+
+  /* Slideshow Section */
+  .slideshow-section {
+    position: relative;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    min-height: 320px;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  }
+
+  @media (min-width: 1024px) {
+    .slideshow-section {
+      min-height: 600px;
+      border-radius: 12px;
+      margin: 0;
+      border: 1px solid rgba(226, 232, 240, 0.6);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+    }
+  }
+
+  html.dark-mode .slideshow-section {
+    background: #0f172a;
+  }
+
+  /* Dark Mode - Page Container and Navigation */
+  html.dark-mode .page-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  html.dark-mode .breadcrumb-nav {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(75, 85, 105, 0.3);
+  }
+
+  html.dark-mode .breadcrumb-link {
+    color: rgba(203, 213, 225, 0.7);
+  }
+
+  html.dark-mode .breadcrumb-link:hover {
+    color: #f1f5f9;
+  }
+
+  html.dark-mode .breadcrumb-separator {
+    color: rgba(100, 116, 139, 0.5);
+  }
+
+  html.dark-mode .breadcrumb-current {
+    color: #f1f5f9;
+  }
+
+  /* Dark Mode - Navigation Arrows */
+  html.dark-mode .slideshow-nav {
+    background: rgba(100, 116, 139, 0.5);
+  }
+
+  html.dark-mode .slideshow-nav:hover {
+    background: rgba(255, 149, 0, 0.8);
+  }
+
+  html.dark-mode .slideshow-nav:disabled {
+    opacity: 0.2;
+  }
+
+  /* Dark Mode - Image Counter */
+  html.dark-mode .image-counter {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+  }
+
+  /* Dark Mode - Thumbnail Navigation */
+  html.dark-mode .thumbnail-nav {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(75, 85, 105, 0.3);
+  }
+
+  html.dark-mode .thumbnail-nav::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.5);
+  }
+
+  html.dark-mode .thumbnail.active {
+    border-color: #ff9500;
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.4);
+  }
+
+  html.dark-mode .thumbnail:hover {
+    border-color: rgba(203, 213, 225, 0.5);
+  }
+
+  html.dark-mode .thumbnail-placeholder {
+    background: rgba(15, 23, 42, 0.6);
+    color: rgba(148, 163, 184, 0.7);
+  }
+
+  /* Dark Mode - Info Section */
+  html.dark-mode .info-section {
+    background: transparent;
+  }
+
+  html.dark-mode .item-header {
+    background: transparent;
+  }
+
+  html.dark-mode .item-meta {
+    background: transparent;
+  }
+
+  html.dark-mode .meta-tag {
+    background: rgba(255, 149, 0, 0.1);
+    color: #ff9500;
+    border-color: rgba(255, 149, 0, 0.3);
+  }
+
+  /* Dark Mode - Trade Button */
+  html.dark-mode .trade-button {
+    background: linear-gradient(135deg, #ff9500, #ff7a00);
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.2);
+  }
+
+  html.dark-mode .trade-button:hover {
+    box-shadow: 0 8px 25px rgba(255, 149, 0, 0.4);
+  }
+
+  html.dark-mode .trade-button:active {
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.2);
+  }
+
+  /* Dark Mode - Related Elements */
+  html.dark-mode .related-price {
+    color: #ff9500;
+  }
+
+  html.dark-mode .empty-related {
+    color: #ff9500;
+  }
+
+  html.dark-mode .empty-related-icon {
+    opacity: 0.4;
+  }
+
+  html.dark-mode .empty-related-text {
+    color: #cbd5e1;
+  }
+
+  /* Dark Mode - Slide Placeholder */
+  html.dark-mode .slide-placeholder {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: rgba(148, 163, 184, 0.7);
+  }
+
+  .slideshow-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slideshow-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .slideshow-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .slide.active {
+    opacity: 1;
+  }
+
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .slide img:hover {
+    transform: scale(1.02);
+  }
+
+  .slide-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #94a3b8;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  }
+
+  /* Navigation Arrows */
+  .slideshow-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  .slideshow-nav:hover {
+    background: rgba(255, 122, 0, 0.8);
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .slideshow-nav.prev {
+    left: 15px;
+  }
+
+  .slideshow-nav.next {
+    right: 15px;
+  }
+
+  .slideshow-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(0.9);
+  }
+
+  /* Image Counter */
+  .image-counter {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    letter-spacing: 0.5px;
+  }
+
+  /* Thumbnail Navigation */
+  .thumbnail-nav {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+    max-width: calc(100% - 40px);
+    overflow-x: auto;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+  }
+
+  .thumbnail-nav::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .thumbnail-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+  }
+
+  .thumbnail-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .thumbnail {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .thumbnail.active {
+    border-color: #ff7a00;
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.4);
+  }
+
+  .thumbnail:hover {
+    border-color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+  }
+
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Info Section */
+  .info-section {
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+    gap: 24px;
+    overflow: visible;
+  }
+
+  @media (min-width: 1024px) {
+    .info-section {
+      padding: 0;
+      gap: 28px;
+      justify-content: flex-start;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .item-header {
+    margin-bottom: 0;
+  }
+
+  .item-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1a202c;
+    margin-bottom: 16px;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  @media (max-width: 999px) {
+    .item-title {
+      font-size: 1.6rem;
+    }
+  }
+
+  html.dark-mode .item-title {
+    color: #f1f5f9;
+  }
+
+  .item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .meta-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 122, 0, 0.12);
+    color: #d97706;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 122, 0, 0.25);
+    transition: all 0.3s ease;
+  }
+
+  .meta-tag:hover {
+    background: rgba(255, 122, 0, 0.2);
+    border-color: rgba(255, 122, 0, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .location-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  html.dark-mode .location-info {
+    color: #94a3b8;
+  }
+
+  .price-section {
+    margin: 0;
+    padding: 20px 0;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    border-bottom: 2px solid rgba(226, 232, 240, 0.6);
+  }
+
+  html.dark-mode .price-section {
+    background: transparent;
+    border-color: rgba(75, 85, 105, 0.2);
+    box-shadow: none;
+  }
+
+  .price-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  html.dark-mode .price-label {
+    color: #94a3b8;
+  }
+
+  .price-value {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: #ff7a00;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 1023px) {
+    .price-value {
+      font-size: 2.2rem;
+    }
+  }
+
+  html.dark-mode .price-value {
+    color: #ffb84d;
+  }
+
+  .description-section {
+    margin: 0;
+    padding: 24px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  html.dark-mode .description-section {
+    background: rgba(15, 23, 42, 0.4);
+    border-color: rgba(100, 116, 139, 0.2);
+  }
+
+  .description-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  html.dark-mode .description-title {
+    color: #e2e8f0;
+  }
+
+  .description-text {
+    color: #475569;
+    line-height: 1.7;
+    font-size: 0.9rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  html.dark-mode .description-text {
+    color: #cbd5e1;
+  }
+
+  .action-section {
+    margin: 0;
+    padding: 24px 0;
+    border: none;
+    background: transparent;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    width: 100%;
+    border-radius: 0;
+    justify-content: flex-start;
+    min-height: auto;
+    overflow: visible;
+    flex-wrap: wrap;
+    border-top: 2px solid rgba(226, 232, 240, 0.6);
+  }
+
+  @media (min-width: 1024px) {
+    .action-section {
+      flex-wrap: nowrap;
+      margin-top: 0;
+    }
+  }
+
+  .action-section form {
+    flex: 1;
+    display: flex;
+    min-width: 150px;
+    width: 100%;
+  }
+
+  .trade-button {
+    width: 100%;
+    min-width: auto;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(255, 122, 0, 0.2);
+    letter-spacing: 0.3px;
+  }
+
+  .trade-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .trade-button:hover::before {
+    left: 100%;
+  }
+
+  .trade-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 122, 0, 0.35);
+  }
+
+  .trade-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255, 122, 0, 0.2);
+  }
+
+  .trade-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (min-width: 1024px) {
+    .trade-button {
+      width: auto;
+      min-width: 240px;
+      padding: 16px 44px;
+      font-size: 1.05rem;
+    }
+  }
+  }
+
+  .related-section {
+    background: white;
+    border-radius: 8px;
+    padding: 40px 25px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-top: 60px;
+  }
+
+  html.dark-mode .related-section {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: rgba(75, 85, 105, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+
+  .related-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+    color: #1a202c;
+  }
+
+  html.dark-mode .related-header {
+    color: #f1f5f9;
+  }
+
+  .related-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ff7a00, #ff9500);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .related-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  @media (min-width: 768px) {
+    .related-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .related-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+  }
+
+  .related-item {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  html.dark-mode .related-item {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+    border-color: rgba(75, 85, 105, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .related-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(255, 122, 0, 0.15);
+    border-color: rgba(255, 122, 0, 0.3);
+  }
+
+  .related-item a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .related-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    background: linear-gradient(45deg, #f1f5f9, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 2rem;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .related-item:hover .related-image {
+    transform: scale(1.05);
+  }
+
+  .related-content {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .related-name {
+    font-weight: 600;
+    color: #1a202c;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  html.dark-mode .related-name {
+    color: #e2e8f0;
+  }
+
+  .related-price {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ff7a00;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+
+  html.dark-mode .related-price {
+    color: #ffb84d;
+  }
+
+  .empty-related {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+  }
+
+  .empty-related-icon {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    opacity: 0.3;
+  }
+
+  .empty-related-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* Mobile Specific Optimizations */
+  @media (max-width: 768px) {
+    .page-container {
+      padding: 15px 10px;
+    }
+
+    .slideshow-section {
+      min-height: 200px;
+    }
+
+    .item-title {
+      font-size: 1.5rem;
+    }
+
+    .price-value {
+      font-size: 1.75rem;
+    }
+
+    .info-section {
+      padding: 20px 16px;
+    }
+
+    .related-section {
+      padding: 20px 16px;
+    }
+
+    .slideshow-nav {
+      width: 35px;
+      height: 35px;
+      font-size: 1rem;
+    }
+
+    .slideshow-nav.prev {
+      left: 10px;
+    }
+
+    .slideshow-nav.next {
+      right: 10px;
+    }
+
+    .thumbnail {
+      width: 35px;
+      height: 35px;
+    }
+
+    .thumbnail-nav {
+      bottom: 10px;
+      max-width: 95%;
+    }
+
+    .meta-tag {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+    }
+
+    .related-title {
+      font-size: 1.2rem;
+    }
+
+    /* Mobile Related Items - Horizontal Scroll */
+    .related-grid {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .related-grid::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .related-grid::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+    }
+
+    .related-grid::-webkit-scrollbar-thumb {
+      background: rgba(255, 122, 0, 0.5);
+      border-radius: 2px;
+    }
+
+    .related-grid::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 122, 0, 0.8);
+    }
+
+    .related-item {
+      min-width: 160px;
+      max-width: 160px;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    }
+
+    .related-image {
+      height: 100px;
+      font-size: 1.4rem;
+    }
+
+    .related-content {
+      padding: 12px;
+    }
+
+    .related-name {
+      font-size: 0.85rem;
+      line-height: 1.2;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .related-price {
+      font-size: 0.8rem;
+    }
+
+    /* Add scroll indicator for mobile */
+    .related-section::after {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.3), transparent);
+      margin-top: 10px;
+      border-radius: 1px;
+    }
+
+    /* Disable hover effects on mobile */
+    .related-item:hover {
+      transform: none;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+      border-color: rgba(226, 232, 240, 0.8);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-container {
+      padding: 10px 8px;
+    }
+
+    .slideshow-section {
+      min-height: 160px;
+    }
+
+    .item-title {
+      font-size: 1.35rem;
+    }
+
+    .info-section {
+      padding: 18px 14px;
+    }
+
+    .item-meta {
+      gap: 6px;
+    }
+
+    .meta-tag {
+      padding: 3px 8px;
+      font-size: 0.7rem;
+    }
+
+    .price-value {
+      font-size: 1.6rem;
+    }
+
+    .trade-button {
+      padding: 12px 18px;
+      font-size: 0.95rem;
+    }
+
+    .thumbnail-nav {
+      bottom: 8px;
+      max-width: 98%;
+    }
+
+    .thumbnail {
+      width: 32px;
+      height: 32px;
+    }
+
+    .related-section {
+      padding: 18px 14px;
+    }
+
+    .related-item {
+      min-width: 140px;
+      max-width: 140px;
+    }
+
+    .related-image {
+      height: 90px;
+      font-size: 1.2rem;
+    }
+
+    .related-content {
+      padding: 10px;
+    }
+
+    .related-name {
+      font-size: 0.8rem;
+    }
+
+    .related-price {
+      font-size: 0.75rem;
+    }
+
+    .slideshow-nav {
+      width: 32px;
+      height: 32px;
+      font-size: 0.9rem;
+    }
+
+    .image-counter {
+      font-size: 0.75rem;
+      padding: 5px 8px;
+    }
+
+    .related-title {
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Desktop view improvements */
+  @media (min-width: 1024px) {
+    .item-layout {
+      grid-template-columns: 1.2fr 1fr;
+      gap: 40px;
+    }
+
+    .slideshow-section {
+      min-height: 600px;
+      border-radius: 12px;
+    }
+
+    .info-section {
+      padding: 0;
+    }
+
+    .related-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .item-title {
+      font-size: 1.9rem;
+    }
+
+    .price-value {
+      font-size: 2.6rem;
+    }
+
+    .related-section {
+      padding: 40px 25px;
+    }
+
+    .related-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(255, 122, 0, 0.15);
+      border-color: rgba(255, 122, 0, 0.3);
+    }
+  }
+
+  /* Loading animation */
+  @keyframes shimmer {
+    0% { background-position: -468px 0; }
+    100% { background-position: 468px 0; }
+  }
+
+  .loading-shimmer {
+    animation: shimmer 1.2s ease-in-out infinite;
+    background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+    background-size: 800px 104px;
+  }
+
+  /* Fullscreen modal */
+  .fullscreen-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+  }
+
+  .fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fullscreen-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+
+  .fullscreen-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+  }
+
+  .fullscreen-close {
+    position: absolute;
+    top: -45px;
+    right: 0;
+    background: rgba(255, 122, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.3rem;
+    transition: all 0.3s ease;
+  }
+
+  .fullscreen-close:hover {
+    background: rgba(255, 122, 0, 1);
+    transform: scale(1.1);
+  }
+
+  /* Touch improvements */
+  @media (max-width: 768px) {
+    .trade-button:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .slide img:hover {
+      transform: none;
+    }
+
+    .slideshow-nav:hover {
+      background: rgba(255, 122, 0, 0.8);
+      transform: translateY(-50%);
+    }
+  }
+</style>
+
+<div class="page-container">
+  <div class="main-content">
+    <!-- Item Details Container -->
+    <div class="item-container">
+      <div class="item-layout">
+        <!-- Slideshow Section -->
+        <div class="slideshow-section">
+          <div class="slideshow-container">
+            {% if item_images and item_images|length > 0 %}
+              <div class="slideshow-wrapper">
+                <div class="slideshow-track" id="slideshowTrack">
+                  {% for image in item_images %}
+                    <div class="slide">
+                      {% if image.image_url %}
+                        <img src="{{ image.image_url | image_url }}" alt="{{ item.name }} - Image {{ loop.index }}" onclick="openFullscreen('{{ image.image_url | image_url }}')" onerror="this.parentElement.innerHTML='<div class=\"slide-placeholder\">📦</div>'">
+                      {% else %}
+                        <div class="slide-placeholder">📦</div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+              
+              <!-- Navigation arrows (only show if more than 1 image) -->
+              {% if item_images|length > 1 %}
+                <button class="slideshow-nav prev" id="prevBtn" onclick="previousSlide()">‹</button>
+                <button class="slideshow-nav next" id="nextBtn" onclick="nextSlide()">›</button>
+              {% endif %}
+              
+              <!-- Image counter -->
+              <div class="image-counter">
+                <span id="currentSlide">1</span> / {{ item_images|length }}
+              </div>
+              
+              <!-- Thumbnail navigation (only show if more than 1 image) -->
+              {% if item_images|length > 1 %}
+                <div class="thumbnail-nav">
+                  {% for image in item_images %}
+                    <div class="thumbnail {% if loop.first %}active{% endif %}" onclick="goToSlide({{ loop.index0 }})">
+                      {% if image.image_url %}
+                        <img src="{{ image.image_url | image_url }}" alt="Thumbnail {{ loop.index }}" onerror="this.parentElement.innerHTML='<div class=\"thumbnail-placeholder\">📦</div>'">
+                      {% else %}
+                        <div class="thumbnail-placeholder">📦</div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              
+            {% else %}
+              <!-- Fallback for no images -->
+              <div class="slide-placeholder">📦</div>
+              <div class="image-counter">📷 No Images</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+          <div class="item-header">
+            <h1 class="item-title">{{ item.name }}</h1>
+            
+            <div class="item-meta">
+              <div class="meta-tag">
+                🏷️ {{ item.category }}
+              </div>
+              <div class="meta-tag">
+                ⚡ {{ item.condition }}
+              </div>
+              {% if item_images and item_images|length > 1 %}
+                <div class="meta-tag">
+                  📸 {{ item_images|length }} Photos
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="location-info">
+              📍 Available in {{ item.location }}
+            </div>
+          </div>
+
+          <div class="price-section">
+            <div class="price-label">Credit Value</div>
+            <div class="price-value">
+              💰 ₦{{ "{:,.2f}".format(item.value) }}
+            </div>
+          </div>
+
+          <div class="description-section">
+            <h3 class="description-title">
+              📝 Description
+            </h3>
+            <p class="description-text">{{ item.description }}</p>
+          </div>
+
+          <div class="action-section">
+            <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}" style="flex: 1;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="trade-button">
+                🛒 Add to Cart
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Items Section -->
+    <div class="related-section">
+      <div class="related-header">
+        <div class="related-icon">🔗</div>
+        <h2 class="related-title">Related Items in "{{ item.category }}"</h2>
+      </div>
+
+      {% if related_items %}
+        <div class="related-grid">
+          {% for related in related_items %}
+            <div class="related-item">
+              <a href="{{ url_for('marketplace.view_item', item_id=related.id) }}">
+                {% if related.image_url %}
+                  <img src="{{ related.image_url | image_url }}" alt="{{ related.name }}" class="related-image" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'related-image', textContent: '📦'}))">
+                {% else %}
+                  <div class="related-image">📦</div>
+                {% endif %}
+                <div class="related-content">
+                  <h4 class="related-name">{{ related.name }}</h4>
+                  <div class="related-price">
+                    💰 ₦{{ "{:,.2f}".format(related.value) }} credits
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-related">
+          <div class="empty-related-icon">🔍</div>
+          <div class="empty-related-text">No related items found in this category</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Fullscreen Modal -->
+<div class="fullscreen-modal" id="fullscreenModal" onclick="closeFullscreen()">
+  <div class="fullscreen-content" onclick="event.stopPropagation()">
+    <button class="fullscreen-close" onclick="closeFullscreen()">×</button>
+    <img class="fullscreen-image" id="fullscreenImage" src="" alt="Fullscreen view">
+  </div>
+</div>
+
+<script>
+  let currentSlideIndex = 0;
+  const totalSlides = {{ item_images|length if item_images else 0 }};
+
+  // Slideshow functionality - use opacity instead of transform
+  function updateSlideshow() {
+    if (totalSlides <= 1) return;
+    
+    // Update slide visibility using active class
+    const slides = document.querySelectorAll('.slide');
+    slides.forEach((slide, index) => {
+      if (index === currentSlideIndex) {
+        slide.classList.add('active');
+      } else {
+        slide.classList.remove('active');
+      }
+    });
+    
+    const currentSlideCounter = document.getElementById('currentSlide');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (currentSlideCounter) {
+      currentSlideCounter.textContent = currentSlideIndex + 1;
+    }
+    
+    // Update thumbnail active state
+    thumbnails.forEach((thumb, index) => {
+      if (index === currentSlideIndex) {
+        thumb.classList.add('active');
+      } else {
+        thumb.classList.remove('active');
+      }
+    });
+    
+    // Update navigation button states
+    if (prevBtn) {
+      prevBtn.disabled = currentSlideIndex === 0;
+    }
+    if (nextBtn) {
+      nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+    }
+  }
+
+  function nextSlide() {
+    if (currentSlideIndex < totalSlides - 1) {
+      currentSlideIndex++;
+      updateSlideshow();
+    }
+  }
+
+  function previousSlide() {
+    if (currentSlideIndex > 0) {
+      currentSlideIndex--;
+      updateSlideshow();
+    }
+  }
+
+  function goToSlide(index) {
+    currentSlideIndex = index;
+    updateSlideshow();
+  }
+
+  // Initialize carousel on page load
+  if (totalSlides > 1) {
+    updateSlideshow(); // Mark first slide as active
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (totalSlides <= 1) return;
+    
+    switch(e.key) {
+      case 'ArrowLeft':
+        previousSlide();
+        break;
+      case 'ArrowRight':
+        nextSlide();
+        break;
+    }
+  });
+
+  // Touch/Swipe support for mobile
+  let startX = 0;
+  let startY = 0;
+  let isDragging = false;
+
+  const slideshowSection = document.querySelector('.slideshow-section');
+  
+  if (slideshowSection && totalSlides > 1) {
+    slideshowSection.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isDragging = true;
+    }, { passive: true });
+
+    slideshowSection.addEventListener('touchmove', function(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+    }, { passive: false });
+
+    slideshowSection.addEventListener('touchend', function(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      // Only trigger swipe if horizontal movement is greater than vertical
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (Math.abs(diffX) > 50) { // Minimum swipe distance
+          if (diffX > 0) {
+            nextSlide(); // Swipe left = next slide
+          } else {
+            previousSlide(); // Swipe right = previous slide
+          }
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Fullscreen functionality
+  function openFullscreen(imageSrc) {
+    const modal = document.getElementById('fullscreenModal');
+    const image = document.getElementById('fullscreenImage');
+    
+    if (modal && image) {
+      image.src = imageSrc;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeFullscreen() {
+    const modal = document.getElementById('fullscreenModal');
+    
+    if (modal) {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Close fullscreen with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeFullscreen();
+    }
+  });
+
+  // Auto-slideshow (optional - uncomment to enable)
+  let autoSlideInterval;
+  
+  function startAutoSlide() {
+    if (totalSlides <= 1) return;
+    
+    autoSlideInterval = setInterval(() => {
+      if (currentSlideIndex < totalSlides - 1) {
+        nextSlide();
+      } else {
+        currentSlideIndex = 0;
+        updateSlideshow();
+      }
+    }, 4000); // Change slide every 4 seconds
+  }
+  
+  function stopAutoSlide() {
+    if (autoSlideInterval) {
+      clearInterval(autoSlideInterval);
+    }
+  }
+  
+  // Start auto-slideshow on page load
+  document.addEventListener('DOMContentLoaded', startAutoSlide);
+  
+  // Pause auto-slideshow on hover
+  if (slideshowSection) {
+    slideshowSection.addEventListener('mouseenter', stopAutoSlide);
+    slideshowSection.addEventListener('mouseleave', startAutoSlide);
+  }
+
+  // Initialize slideshow
+  document.addEventListener('DOMContentLoaded', function() {
+    updateSlideshow();
+    
+    // Add smooth loading effect for images
+    const images = document.querySelectorAll('img[src]');
+    
+    images.forEach(img => {
+      if (!img.complete) {
+        img.classList.add('loading-shimmer');
+        
+        img.addEventListener('load', function() {
+          this.classList.remove('loading-shimmer');
+        });
+        
+        img.addEventListener('error', function() {
+          this.classList.remove('loading-shimmer');
+          // Replace with placeholder
+          const placeholder = document.createElement('div');
+          placeholder.className = 'slide-placeholder';
+          placeholder.innerHTML = '📦';
+          this.parentNode.replaceChild(placeholder, this);
+        });
+      }
+    });
+  });
+
+  // Add click animation to trade button
+  document.querySelector('.trade-button')?.addEventListener('click', function(e) {
+    // Create ripple effect
+    const ripple = document.createElement('span');
+    const rect = this.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    ripple.style.cssText = `
+      position: absolute;
+      width: ${size}px;
+      height: ${size}px;
+      left: ${x}px;
+      top: ${y}px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: scale(0);
+      animation: ripple 0.6s linear;
+      pointer-events: none;
+    `;
+    
+    this.appendChild(ripple);
+    
+    setTimeout(() => ripple.remove(), 600);
+  });
+
+  // Add CSS for ripple animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes ripple {
+      to {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Add smooth scroll behavior to related items on mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    const relatedGrid = document.querySelector('.related-grid');
+    
+    if (relatedGrid && window.innerWidth <= 768) {
+      // Add touch scrolling enhancement
+      let isScrolling = false;
+      let scrollTimeout;
+
+      relatedGrid.addEventListener('scroll', function() {
+        isScrolling = true;
+        
+        // Clear timeout if it exists
+        clearTimeout(scrollTimeout);
+        
+        // Set a timeout to run after scrolling ends
+        scrollTimeout = setTimeout(function() {
+          isScrolling = false;
+        }, 150);
+      });
+
+      // Add scroll snap enhancement for better UX
+      relatedGrid.style.scrollBehavior = 'smooth';
+    }
+  });
+</script>
+{% endblock %}<style>
+  .page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 15px;
+  }
