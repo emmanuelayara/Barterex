@@ -1681,27 +1681,29 @@
     <div class="marketplace-grid" id="itemsGrid">
       {% for item in items %}
         <!-- Build image array using namespace to support list mutation -->
-        {% set ns = namespace(images=[]) %}
+        {% set ns = namespace(images=[], filtered_images=[]) %}
         {% if item.image_url %}
           {% set _ = ns.images.append(item.image_url) %}
+          {% set _ = ns.filtered_images.append(item.image_url | image_url) %}
         {% endif %}
         {% if item.images %}
           {% for img in item.images %}
             {% if img.image_url %}
               {% set _ = ns.images.append(img.image_url) %}
+              {% set _ = ns.filtered_images.append(img.image_url | image_url) %}
             {% endif %}
           {% endfor %}
         {% endif %}
         <!-- Final image URLs for carousel -->
-        <div class="marketplace-item" data-item-url="{{ url_for('marketplace.view_item', item_id=item.id) }}" data-images='{{ ns.images | tojson }}'>
+        <div class="marketplace-item" data-item-url="{{ url_for('marketplace.view_item', item_id=item.id) }}" data-images='{{ ns.filtered_images | tojson }}'>
           <div class="item-image-container">
             {% if ns.images %}
               <img class="item-carousel-img" src="{{ ns.images[0] | image_url }}" alt="{{ item.name }}" loading="lazy" onerror="this.src='/static/placeholder.png'" />
             {% else %}
               <div style="height: 100%; background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%); display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-size: 2rem;">📷</div>
             {% endif %}
-            {% if ns.images|length > 1 %}
-              <div class="image-counter">{{ ns.images|length }} images</div>
+            {% if ns.filtered_images|length > 1 %}
+              <div class="image-counter">{{ ns.filtered_images|length }} images</div>
             {% endif %}
             <div class="item-badge">{{ item.condition }}</div>
           </div>
@@ -2164,7 +2166,7 @@
     
     items.forEach((card, index) => {
       const imagesData = card.getAttribute('data-images');
-      console.log(`Item ${index} - data-images:`, imagesData);
+      console.log(`Item ${index} - data-images attribute:`, imagesData);
       
       if (!imagesData) {
         console.log(`Item ${index} - Skipping, no images data`);
@@ -2173,7 +2175,7 @@
       
       try {
         const images = JSON.parse(imagesData);
-        console.log(`Item ${index} - Parsed images:`, images);
+        console.log(`Item ${index} - Parsed ${images.length} images:`, images);
         
         if (images.length <= 1) {
           console.log(`Item ${index} - Skipping, only ${images.length} image(s)`);
@@ -2190,10 +2192,9 @@
         
         const cycleImages = () => {
           currentIndex = (currentIndex + 1) % images.length;
-          // Use formatImageUrl function to handle both local and Cloudinary URLs
-          let imgUrl = formatImageUrl(images[currentIndex]);
-          img.src = imgUrl;
-          console.log('Cycling to image', currentIndex, ':', imgUrl);
+          // URLs are already filtered on the server, use directly
+          img.src = images[currentIndex];
+          console.log('Cycling to image', currentIndex, ':', images[currentIndex]);
         };
         
         // Start cycling when card comes into view
@@ -2202,7 +2203,7 @@
             if (entry.isIntersecting) {
               console.log('Card visible, starting carousel');
               if (!cycleInterval) {
-                cycleInterval = setInterval(cycleImages, 2000); // Change image every 2 seconds
+                cycleInterval = setInterval(cycleImages, 3000); // Change image every 3 seconds
               }
             } else {
               // Stop cycling when card leaves view
@@ -2227,8 +2228,7 @@
           console.log('Hover out, resetting');
           if (cycleInterval) clearInterval(cycleInterval);
           currentIndex = 0;
-          let imgUrl = formatImageUrl(images[0]);
-          img.src = imgUrl;
+          img.src = images[0];
         });
       } catch (e) {
         console.error('Error parsing images data:', e);

@@ -205,7 +205,7 @@ def admin_dashboard():
                 flash("Invalid search characters detected.", "warning")
                 search = ""  # Clear search to prevent exploitation
 
-        query = Item.query.options(joinedload(Item.user))
+        query = Item.query.options(joinedload(Item.user), joinedload(Item.images))
 
         if status != 'all':
             query = query.filter(Item.status == status)

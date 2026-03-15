@@ -113,56 +113,61 @@ def load_user(user_id):
 # ✅ Jinja filter to format image URLs (supports both local and Cloudinary)
 @app.template_filter('image_url')
 def format_image_url(url):
-    """Convert image URLs to absolute paths - use local storage on localhost, Cloudinary on production"""
+    """Convert image URLs to absolute paths - serves from local storage on localhost"""
+    from flask import current_app
+    import os
+    
     if not url:
         return '/static/placeholder.png'
     
     url = str(url).strip()
+    logger.debug(f"🔍 Processing image URL: {url}")
     
     # If URL is already a full Cloudinary URL, return as-is
     if 'res.cloudinary.com' in url:
+        logger.debug(f"✅ Full Cloudinary URL detected: {url}")
         return url
     
     # If URL already looks like a full HTTP/HTTPS URL, return as-is
     if url.startswith('http://') or url.startswith('https://'):
+        logger.debug(f"✅ Full HTTP URL detected: {url}")
         return url
     
     if url.startswith('/static/'):
         return url.replace('//', '/')
     
-    # FOR LOCALHOST: Always serve from local storage/database
-    # Skip Cloudinary and use local uploads folder
+    upload_dir = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
     
-    # Handle paths with Cloudinary folder structure (barterex/user/item/index_filename)
-    # Extract just the filename from the path
-    if '/' in url:
-        # Get the last component (filename) from path like "barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG"
-        filename = url.split('/')[-1]
-    else:
-        filename = url
-    
+    # Extract filename from any path format
+    # Could be "barterex/1/1/0_filename.jpg" or just "filename.jpg"
+    filename = url.split('/')[-1] if '/' in url else url
     filename = filename.strip('/')
     
-    # The database may store filenames like "0_1_0_1771234294_Barter_logo.PNG"
-    # But actual files are stored as "1_0_1771234294_Barter_logo.PNG"
-    # (missing the first underscore-separated component)
-    # Try to fix this by checking if the file exists; if not, try removing first component
-    import os
-    from flask import current_app
+    logger.debug(f"📄 Extracted filename: {filename}")
     
-    upload_dir = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
+    # Try exact match first
     file_path = os.path.join(upload_dir, filename)
+    if os.path.exists(file_path):
+        logger.debug(f"✅ File found at: {file_path}")
+        return f'/static/uploads/{filename}'
     
-    if not os.path.exists(file_path) and '_' in filename:
-        # Try removing the first component (e.g., "0_1_0_..." -> "1_0_...")
+    logger.debug(f"❌ File not found at: {file_path}")
+    
+    # Try removing the first underscore-separated component
+    # (e.g., "0_1_0_..." -> "1_0_...")
+    if '_' in filename:
         parts = filename.split('_', 1)
         if len(parts) > 1:
             alt_filename = parts[1]
             alt_path = os.path.join(upload_dir, alt_filename)
             if os.path.exists(alt_path):
-                filename = alt_filename
+                logger.debug(f"✅ File found with alt name: {alt_filename}")
+                return f'/static/uploads/{alt_filename}'
+            logger.debug(f"❌ Alt file not found: {alt_path}")
     
-    return f'/static/uploads/{filename}'
+    # File not found, return placeholder
+    logger.warning(f"⚠️ Image file not found: {filename} (searched in {upload_dir})")
+    return '/static/placeholder.png'
 
 # ✅ Maintenance Mode Handler
 @app.before_request

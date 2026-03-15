@@ -785,25 +785,29 @@
         <div class="d-flex justify-content-between align-items-start">
           <div class="item-content flex-grow-1">
             <div class="d-flex align-items-start gap-3 mb-2">
-              {% set item_images = [] %}
+              <!-- Build images array using namespace pattern (same as marketplace) -->
+              {% set ns = namespace(images=[]) %}
+              {% if item.image_url %}
+                {% set _ = ns.images.append(item.image_url) %}
+              {% endif %}
               {% if item.images and item.images|length > 0 %}
-                {% set item_images = item.images|map(attribute='image_url')|list %}
-              {% elif item.image_url %}
-                {% set item_images = [item.image_url] %}
+                {% for img in item.images %}
+                  {% set _ = ns.images.append(img.image_url) %}
+                {% endfor %}
               {% endif %}
               
-              {% if item_images|length > 0 %}
-              {% set img_src = item_images[0] | image_url %}
-              <img src="{{ img_src }}" alt="{{ item.name }}" 
-                   class="dashboard-item-image" 
-                   data-item-images='{{ item_images|tojson|safe }}'
-                   style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;"
-                   title="Click to view images"
-                   onerror="this.src='/static/placeholder.png'">
+              {% if ns.images|length > 0 %}
+                {% set img_src = ns.images[0] | image_url %}
+                <img src="{{ img_src }}" alt="{{ item.name }}" 
+                     class="dashboard-item-image" 
+                     data-item-images='{{ ns.images|tojson|safe }}'
+                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;"
+                     title="Click to view images"
+                     onerror="this.src='/static/placeholder.png'">
               {% else %}
-              <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
-                <i class="bi bi-image"></i>
-              </div>
+                <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
+                  <i class="bi bi-image"></i>
+                </div>
               {% endif %}
               
               <div class="flex-grow-1">
