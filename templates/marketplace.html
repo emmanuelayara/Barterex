@@ -640,10 +640,16 @@
 
   .item-content {
     padding: 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
   .marketplace-grid.compact .item-content {
     padding: 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
   .item-title {
@@ -1713,13 +1719,7 @@
             <div class="item-location" style="color: #054e97; font-size: 0.65rem;">
               <span>Available in <strong>{{ item.location }}</strong></span>
             </div>
-            <div class="item-value">₦{{ "{:,.2f}".format(item.value) if item.value else 'Price not set' }}</div>
-            
-            <div class="item-actions">
-              <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}" class="btn-primary">
-                👁️ View Details
-              </a>
-            </div> 
+            <div class="item-value" style="margin-top: auto; padding-top: 8px;">₦{{ "{:,.2f}".format(item.value) if item.value else 'Price not set' }}</div>
           </div>
         </div>
       {% else %}
@@ -2146,10 +2146,6 @@
   // Handle marketplace item card clicks - make entire card clickable
   document.querySelectorAll('.marketplace-item').forEach(card => {
     card.addEventListener('click', function(e) {
-      // Don't navigate if clicking on the action buttons area
-      if (e.target.closest('.item-actions')) {
-        return;
-      }
       // Navigate to item details page
       const url = this.getAttribute('data-item-url');
       if (url) {
