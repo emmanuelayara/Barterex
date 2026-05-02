@@ -1284,15 +1284,15 @@
     </div>
 
     <!-- Guidelines -->
-    <div class="guidelines-section fade-in" id="guidelinesSection">
+    <div class="guidelines-section fade-in collapsed" id="guidelinesSection">
       <div class="guidelines-header" id="guidelinesHeader">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div class="warning-icon">⚠️</div>
           <h3 class="guidelines-title">Important Guidelines Before Uploading</h3>
         </div>
-        <button type="button" class="guidelines-toggle-btn" id="guidelinesToggle" title="Toggle guidelines">▼</button>
+        <button type="button" class="guidelines-toggle-btn collapsed" id="guidelinesToggle" title="Toggle guidelines">▼</button>
       </div>
-      <ul class="guidelines-list" id="guidelinesList">
+      <ul class="guidelines-list collapsed" id="guidelinesList">
         <li>
           <div class="guideline-icon">📅</div>
           <div class="guideline-text">
@@ -1672,6 +1672,7 @@
   const guidelinesList = document.getElementById('guidelinesList');
 
   if (guidelinesHeader && guidelinesToggle && guidelinesList) {
+    // Initialize as collapsed (these classes are already set in HTML)
     // Add click event to toggle
     guidelinesHeader.addEventListener('click', function(e) {
       e.preventDefault();
