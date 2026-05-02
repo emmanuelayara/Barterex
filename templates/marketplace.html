@@ -1574,9 +1574,8 @@
           <select name="category" id="category" class="form-select">
             <option value="">All Categories</option>
             {% set categories = [
-              "Electronics", "Fashion / Clothing", "Footwear", "Home & Kitchen", "Beauty & Personal Care",
-              "Sports & Outdoors", "Groceries", "Furniture", "Toys & Games", "Books & Stationery",
-              "Health & Wellness", "Automotive", "Phones & Gadgets"
+              "Phones & Gadgets", "Consumer Electronics", "Fashion Accessories",
+              "Footwear", "Beauty & Personal Care", "Gaming & Accessories"
             ] %}
             {% for cat in categories %}
               <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>

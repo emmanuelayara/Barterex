@@ -1225,6 +1225,50 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* Guidelines Collapsible */
+  .guidelines-header {
+    cursor: pointer;
+    justify-content: space-between;
+  }
+
+  .guidelines-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+    color: white;
+  }
+
+  .guidelines-toggle-btn.collapsed {
+    transform: rotate(-90deg);
+  }
+
+  .guidelines-list {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-bottom 0.3s ease;
+    opacity: 1;
+    margin-bottom: 16px;
+  }
+
+  .guidelines-list.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+
+  .guidelines-section.collapsed {
+    padding-bottom: 15px;
+  }
 </style>
 
 <div class="upload-page">
@@ -1240,12 +1284,15 @@
     </div>
 
     <!-- Guidelines -->
-    <div class="guidelines-section fade-in">
-      <div class="guidelines-header">
-        <div class="warning-icon">⚠️</div>
-        <h3 class="guidelines-title">Important Guidelines Before Uploading</h3>
+    <div class="guidelines-section fade-in" id="guidelinesSection">
+      <div class="guidelines-header" id="guidelinesHeader">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="warning-icon">⚠️</div>
+          <h3 class="guidelines-title">Important Guidelines Before Uploading</h3>
+        </div>
+        <button type="button" class="guidelines-toggle-btn" id="guidelinesToggle" title="Toggle guidelines">▼</button>
       </div>
-      <ul class="guidelines-list">
+      <ul class="guidelines-list" id="guidelinesList">
         <li>
           <div class="guideline-icon">📅</div>
           <div class="guideline-text">
@@ -1617,5 +1664,30 @@
       this.style.borderColor = '#f59e0b';
     }
   });
+
+  // ==================== COLLAPSIBLE GUIDELINES ====================
+  const guidelinesSection = document.getElementById('guidelinesSection');
+  const guidelinesHeader = document.getElementById('guidelinesHeader');
+  const guidelinesToggle = document.getElementById('guidelinesToggle');
+  const guidelinesList = document.getElementById('guidelinesList');
+
+  if (guidelinesHeader && guidelinesToggle && guidelinesList) {
+    // Add click event to toggle
+    guidelinesHeader.addEventListener('click', function(e) {
+      e.preventDefault();
+      guidelinesToggle.classList.toggle('collapsed');
+      guidelinesList.classList.toggle('collapsed');
+      guidelinesSection.classList.toggle('collapsed');
+    });
+
+    // Also allow clicking the button directly
+    guidelinesToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      guidelinesToggle.classList.toggle('collapsed');
+      guidelinesList.classList.toggle('collapsed');
+      guidelinesSection.classList.toggle('collapsed');
+    });
+  }
 </script>
 {% endblock %}

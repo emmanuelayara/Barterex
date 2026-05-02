@@ -130,19 +130,12 @@ class UploadItemForm(FlaskForm):
         DataRequired(message='Please select the condition of your item.')
     ])
     category = SelectField('Category', choices=[
-        ("Electronics", "Electronics"),
-        ("Fashion / Clothing", "Fashion / Clothing"),
+        ("Phones & Gadgets", "Phones & Gadgets"),
+        ("Consumer Electronics", "Consumer Electronics"),
+        ("Fashion Accessories", "Fashion Accessories"),
         ("Footwear", "Footwear"),
-        ("Home & Kitchen", "Home & Kitchen"),
         ("Beauty & Personal Care", "Beauty & Personal Care"),
-        ("Sports & Outdoors", "Sports & Outdoors"),
-        ("Groceries", "Groceries"),
-        ("Furniture", "Furniture"),
-        ("Toys & Games", "Toys & Games"),
-        ("Books & Stationery", "Books & Stationery"),
-        ("Health & Wellness", "Health & Wellness"),
-        ("Automotive", "Automotive"), 
-        ("Phones & Gadgets", "Phones & Gadgets")
+        ("Gaming & Accessories", "Gaming & Accessories")
     ], validators=[
         DataRequired(message='Please select a category for your item.')
     ])

@@ -222,11 +222,8 @@ def validate_category(category):
         tuple: (is_valid: bool, error_message: str or None)
     """
     valid_categories = [
-        "Electronics", "Fashion / Clothing", "Footwear",
-        "Home & Kitchen", "Beauty & Personal Care",
-        "Sports & Outdoors", "Groceries", "Furniture",
-        "Toys & Games", "Books & Stationery",
-        "Health & Wellness", "Automotive", "Phones & Gadgets"
+        "Phones & Gadgets", "Consumer Electronics", "Fashion Accessories",
+        "Footwear", "Beauty & Personal Care", "Gaming & Accessories"
     ]
     
     if not category:

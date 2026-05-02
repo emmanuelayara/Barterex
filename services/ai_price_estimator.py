@@ -30,19 +30,12 @@ class AIItemValuator:
     
     # Category-specific average prices (updated quarterly with web scraping)
     CATEGORY_BASE_PRICES = {
-        'Electronics': 250,
-        'Fashion / Clothing': 45,
-        'Footwear': 60,
-        'Home & Kitchen': 75,
-        'Beauty & Personal Care': 35,
-        'Sports & Outdoors': 80,
-        'Groceries': 25,
-        'Furniture': 150,
-        'Toys & Games': 40,
-        'Books & Stationery': 25,
-        'Health & Wellness': 55,
-        'Automotive': 200,
         'Phones & Gadgets': 300,
+        'Consumer Electronics': 250,
+        'Fashion Accessories': 50,
+        'Footwear': 80,
+        'Beauty & Personal Care': 40,
+        'Gaming & Accessories': 120,
     }
     
     # Condition multipliers (affect final price)

@@ -15,19 +15,12 @@ logger = setup_logger(__name__)
 # ==================== CONSTANTS ====================
 
 CATEGORIES = [
-    "Electronics",
-    "Fashion / Clothing",
+    "Phones & Gadgets",
+    "Consumer Electronics",
+    "Fashion Accessories",
     "Footwear",
-    "Home & Kitchen",
     "Beauty & Personal Care",
-    "Sports & Outdoors",
-    "Groceries",
-    "Furniture",
-    "Toys & Games",
-    "Books & Stationery",
-    "Health & Wellness",
-    "Automotive",
-    "Phones & Gadgets"
+    "Gaming & Accessories"
 ]
 
 CONDITIONS = ["Brand New", "Fairly Used"]
