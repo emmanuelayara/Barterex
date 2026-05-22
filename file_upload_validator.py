@@ -198,11 +198,13 @@ def validate_file_extension(filename, allowed_extensions={'png', 'jpg', 'jpeg', 
         logger.warning(f"File rejected: suspicious extension format '{ext}'")
         return False, "Invalid extension format", None
     
-    # Reject double extensions (e.g., .jpg.exe)
+    # Reject ACTUAL double extensions (e.g., .jpg.exe) - check if part before extension is a known dangerous extension
     if '.' in parts[0]:
-        # Check if base name has multiple dots (potential double extension)
-        base_parts = parts[0].split('.')
-        if len(base_parts) > 2:
+        # Get the extension that would be right before our actual extension
+        potential_hidden_ext = parts[0].rsplit('.', 1)[-1].lower()
+        # List of known dangerous extensions that shouldn't appear before image/doc extensions
+        dangerous_extensions = ['exe', 'bat', 'cmd', 'com', 'scr', 'vbs', 'js', 'jar', 'pif', 'msi', 'dll']
+        if potential_hidden_ext in dangerous_extensions:
             logger.warning(f"File rejected: suspicious double extension pattern in '{filename}'")
             return False, "Double extensions are not allowed (e.g., .jpg.exe)", None
     
