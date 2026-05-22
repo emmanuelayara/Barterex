@@ -64,6 +64,32 @@ def log_audit_action(action_type, target_type, target_id=None, target_name=None,
         db.session.rollback()
 
 
+def log_item_deletion(item_id, item_name):
+    """
+    Log when an admin deletes an item from marketplace.
+    
+    Args:
+        item_id: The ID of the deleted item
+        item_name: The name of the deleted item
+    """
+    try:
+        from flask_login import current_user
+        action_log = AuditLog(
+            admin_id=current_user.id if current_user.is_authenticated else None,
+            action_type='delete_item',
+            target_type='item',
+            target_id=item_id,
+            target_name=item_name,
+            description=f"Deleted item '{item_name}' (ID: {item_id}) from marketplace",
+            ip_address=request.remote_addr if request else 'Unknown'
+        )
+        db.session.add(action_log)
+        db.session.commit()
+        logger.info(f"Item deletion logged - Item ID: {item_id}, Admin: {current_user.username if current_user.is_authenticated else 'Unknown'}")
+    except Exception as e:
+        logger.error(f"Error logging item deletion: {str(e)}", exc_info=True)
+
+
 def log_item_approval(item_id, item_name, value, user_id=None, user_name=None):
     """Log item approval with optional user details"""
     description = f'Item "{item_name}" approved with value {value} credits'

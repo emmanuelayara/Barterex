@@ -1041,6 +1041,51 @@ def reject_item(item_id):
     return redirect(url_for('admin.admin_dashboard'))
 
 
+@admin_bp.route('/delete-item/<int:item_id>', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("delete_item")
+def delete_item(item_id):
+    """
+    Delete an approved item from the marketplace.
+    Makes the item unavailable so it won't display to users.
+    """
+    try:
+        item = Item.query.get_or_404(item_id)
+        
+        # Check if item is approved before deleting
+        if item.status != 'approved':
+            raise ValidationError(f"Only approved items can be deleted. This item is {item.status}.", field="status")
+        
+        item_name = item.name
+        item_id_num = item.id
+        
+        # Mark item as unavailable instead of deleting from DB (preserve records)
+        item.is_available = False
+        item.status = 'deleted'
+        item.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        logger.info(f"Item deleted from marketplace - Item ID: {item_id_num}, Name: {item_name}")
+        
+        # Log activity
+        from audit_logger import log_item_deletion
+        try:
+            log_item_deletion(item_id_num, item_name)
+        except Exception as e:
+            logger.warning(f"Could not log item deletion: {str(e)}")
+        
+        flash(f"Item '{item_name}' has been removed from the marketplace.", "success")
+        
+    except ValidationError as e:
+        logger.warning(f"Validation error deleting item: {str(e)}")
+        flash(str(e.message), 'danger')
+        raise  # Re-raise so decorator knows to rollback
+
+    return redirect(url_for('admin.admin_dashboard', status='approved'))
+
+
 @admin_bp.route('/update-status', methods=['POST'])
 @admin_login_required
 @handle_errors
