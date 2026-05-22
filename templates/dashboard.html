@@ -2381,11 +2381,11 @@
             {{ current_user.city or '' }}{% if current_user.city and current_user.state %}, {% endif %}{{ current_user.state or '' }}
             <br>
           {% else %}
-            <span style="color: #ff7a00; font-weight: 600;"> 👉 No address set </span>
+            <span style="color: #ff7a00; font-weight: 600;">No address set </span>
             <br>
             <small style="display: block; margin-top: 6px; font-size: 0.75rem; opacity: 0.85;">
               <a href="{{ url_for('user.settings') }}">
-              Complete your profile to begin trading.
+              👉 Complete your profile to begin trading.
               </a>
             </small>
           {% endif %}
