@@ -1044,24 +1044,29 @@
       {% if sent_trades %}
         <div class="trades-grid">
           {% for trade in sent_trades %}
-            {% if trade.item %}
             <div class="trade-card">
-              {% if trade.item.images %}
-                {% set primary_image = trade.item.images|selectattr('is_primary', 'equalto', True)|first %}
-                {% set display_image = primary_image or trade.item.images|first %}
-                <img src="{{ display_image.image_url | image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
-              {% elif trade.item.image_url %}
-                <img src="{{ trade.item.image_url | image_url }}" alt="{{ trade.item.name }}" class="trade-card-image">
+              {% if trade.images %}
+                {% set primary_image = trade.images|selectattr('is_primary', 'equalto', True)|first %}
+                {% set display_image = primary_image or trade.images|first %}
+                <img src="{{ display_image.image_url | image_url }}" alt="{{ trade.name }}" class="trade-card-image">
+              {% elif trade.image_url %}
+                <img src="{{ trade.image_url | image_url }}" alt="{{ trade.name }}" class="trade-card-image">
               {% else %}
                 <div class="trade-card-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #ff7a00, #ff9933); color: white; font-size: 3rem;">📦</div>
               {% endif %}
               <div class="trade-card-content">
-                <h3 class="trade-card-title">{{ trade.item.name }}</h3>
-                <div class="trade-card-value">₦{{ "{:,.2f}".format(trade.item.value) }}</div>
-                <div class="trade-card-date">{{ trade.timestamp.strftime('%b %d, %Y') }}</div>
+                <h3 class="trade-card-title">{{ trade.name }}</h3>
+                {% if trade.status == 'pending' %}
+                  <div class="trade-card-value" style="color: #ffc107; font-weight: 600;">⏳ Pending Approval</div>
+                {% elif trade.status == 'approved' %}
+                  <div class="trade-card-value">{% if trade.value %}₦{{ "{:,.2f}".format(trade.value) }}{% endif %}</div>
+                  <div style="color: #28a745; font-size: 0.85rem; font-weight: 600; margin-top: 4px;">✓ Approved</div>
+                {% else %}
+                  <div class="trade-card-value">{% if trade.value %}₦{{ "{:,.2f}".format(trade.value) }}{% else %}—{% endif %}</div>
+                {% endif %}
+                <div class="trade-card-date">Uploaded</div>
               </div>
             </div>
-            {% endif %}
           {% endfor %}
         </div>
 
@@ -1089,8 +1094,8 @@
       {% else %}
         <div class="empty-state">
           <div class="empty-icon">📤</div>
-          <h3 class="empty-title">No Items Shared</h3>
-          <p class="empty-description">You haven't shared any items in trades yet. List your items to start trading!</p>
+          <h3 class="empty-title">No Items Uploaded</h3>
+          <p class="empty-description">You haven't uploaded any items yet. List your items to start trading!</p>
           <a href="{{ url_for('user.add_item') }}" class="btn-explore">
             ➕ List an Item
           </a>
@@ -1121,7 +1126,7 @@
               {% endif %}
               <div class="trade-card-content">
                 <h3 class="trade-card-title">{{ trade.item.name }}</h3>
-                <div class="trade-card-value">₦{{ "{:,.2f}".format(trade.item.value) }}</div>
+                <div class="trade-card-value">{% if trade.item.value %}₦{{ "{:,.2f}".format(trade.item.value) }}{% else %}—{% endif %}</div>
                 <div class="trade-card-date">{{ trade.timestamp.strftime('%b %d, %Y') }}</div>
               </div>
             </div>

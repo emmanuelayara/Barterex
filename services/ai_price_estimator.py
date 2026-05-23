@@ -36,6 +36,7 @@ class AIItemValuator:
         'Footwear': 80,
         'Beauty & Personal Care': 40,
         'Gaming & Accessories': 120,
+        'Kitchen Wares & Appliances': 150,
     }
     
     # Condition multipliers (affect final price)

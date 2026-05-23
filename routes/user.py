@@ -223,11 +223,13 @@ def edit_item(item_id: int) -> Union[str, Response]:
 def my_trades():
     try:
         page = request.args.get('page', 1, type=int)
-        sent_trades = Trade.query.filter_by(sender_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=9)
+        # Get items the user has uploaded
+        uploaded_items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=9)
+        # Get trades the user has received (items from other users)
         received_trades = Trade.query.filter_by(receiver_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=9)
         
-        logger.info(f"Trades page accessed - User: {current_user.username}, Sent: {sent_trades.total}, Received: {received_trades.total}")
-        return render_template('my_trades.html', sent_trades=sent_trades, received_trades=received_trades)
+        logger.info(f"Trades page accessed - User: {current_user.username}, Uploaded: {uploaded_items.total}, Received Trades: {received_trades.total}")
+        return render_template('my_trades.html', sent_trades=uploaded_items, received_trades=received_trades)
     except Exception as e:
         logger.error(f"Error loading trades for user {current_user.username}: {str(e)}", exc_info=True)
         flash('An error occurred while loading your trades.', 'danger')

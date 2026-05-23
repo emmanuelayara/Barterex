@@ -223,7 +223,8 @@ def validate_category(category):
     """
     valid_categories = [
         "Phones & Gadgets", "Consumer Electronics", "Fashion Accessories",
-        "Footwear", "Beauty & Personal Care", "Gaming & Accessories"
+        "Footwear", "Beauty & Personal Care", "Gaming & Accessories",
+        "Kitchen Wares & Appliances"
     ]
     
     if not category:

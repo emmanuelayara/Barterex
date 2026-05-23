@@ -20,7 +20,8 @@ CATEGORIES = [
     "Fashion Accessories",
     "Footwear",
     "Beauty & Personal Care",
-    "Gaming & Accessories"
+    "Gaming & Accessories",
+    "Kitchen Wares & Appliances"
 ]
 
 CONDITIONS = ["Brand New", "Fairly Used"]

@@ -1069,10 +1069,11 @@ def delete_item(item_id):
         
         logger.info(f"Item deleted from marketplace - Item ID: {item_id_num}, Name: {item_name}")
         
-        # Log activity
+        # Log activity - pass the admin_id from session
         from audit_logger import log_item_deletion
+        admin_id_from_session = session.get('admin_id')
         try:
-            log_item_deletion(item_id_num, item_name)
+            log_item_deletion(item_id_num, item_name, admin_id=admin_id_from_session)
         except Exception as e:
             logger.warning(f"Could not log item deletion: {str(e)}")
         
@@ -1083,7 +1084,8 @@ def delete_item(item_id):
         flash(str(e.message), 'danger')
         raise  # Re-raise so decorator knows to rollback
 
-    return redirect(url_for('admin.admin_dashboard', status='approved'))
+    # Redirect back to where the user came from (admin dashboard), or default to dashboard
+    return redirect(request.referrer or url_for('admin.admin_dashboard'))
 
 
 @admin_bp.route('/update-status', methods=['POST'])

@@ -64,18 +64,26 @@ def log_audit_action(action_type, target_type, target_id=None, target_name=None,
         db.session.rollback()
 
 
-def log_item_deletion(item_id, item_name):
+def log_item_deletion(item_id, item_name, admin_id=None):
     """
     Log when an admin deletes an item from marketplace.
     
     Args:
         item_id: The ID of the deleted item
         item_name: The name of the deleted item
+        admin_id: The ID of the admin performing the deletion (uses session if not provided)
     """
     try:
-        from flask_login import current_user
+        # Get admin_id from parameter or session
+        if not admin_id:
+            admin_id = session.get('admin_id')
+        
+        if not admin_id:
+            logger.error(f"Cannot log item deletion - no admin_id available")
+            return
+            
         action_log = AuditLog(
-            admin_id=current_user.id if current_user.is_authenticated else None,
+            admin_id=admin_id,
             action_type='delete_item',
             target_type='item',
             target_id=item_id,
@@ -85,7 +93,7 @@ def log_item_deletion(item_id, item_name):
         )
         db.session.add(action_log)
         db.session.commit()
-        logger.info(f"Item deletion logged - Item ID: {item_id}, Admin: {current_user.username if current_user.is_authenticated else 'Unknown'}")
+        logger.info(f"Item deletion logged - Item ID: {item_id}, Admin ID: {admin_id}")
     except Exception as e:
         logger.error(f"Error logging item deletion: {str(e)}", exc_info=True)
 

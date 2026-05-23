@@ -135,7 +135,8 @@ class UploadItemForm(FlaskForm):
         ("Fashion Accessories", "Fashion Accessories"),
         ("Footwear", "Footwear"),
         ("Beauty & Personal Care", "Beauty & Personal Care"),
-        ("Gaming & Accessories", "Gaming & Accessories")
+        ("Gaming & Accessories", "Gaming & Accessories"),
+        ("Kitchen Wares & Appliances", "Kitchen Wares & Appliances")
     ], validators=[
         DataRequired(message='Please select a category for your item.')
     ])
