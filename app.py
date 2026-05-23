@@ -27,12 +27,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max size: 50MB (global limit)
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 
-# ✅ Cloudinary Configuration
-app.config['USE_CLOUDINARY'] = os.getenv('USE_CLOUDINARY', 'True').lower() in ['true', '1', 'yes']
-app.config['CLOUDINARY_CLOUD_NAME'] = os.getenv('CLOUDINARY_CLOUD_NAME')
-app.config['CLOUDINARY_API_KEY'] = os.getenv('CLOUDINARY_API_KEY')
-app.config['CLOUDINARY_API_SECRET'] = os.getenv('CLOUDINARY_API_SECRET')
-
 # ✅ File upload security configuration
 app.config['FILE_UPLOAD_MAX_SIZE'] = 10 * 1024 * 1024  # 10MB default per file
 app.config['FILE_UPLOAD_ENABLE_VIRUS_SCAN'] = False  # Set to True if ClamAV is available (apt-get install clamav)
@@ -97,20 +91,12 @@ from routes_account import account_bp
 from routes.payments import payment_bp
 from notifications import NotificationService
 
-# ✅ Initialize Cloudinary handler at app startup
-if app.config.get('USE_CLOUDINARY'):
-    try:
-        from cloudinary_handler import cloudinary_handler
-        app.logger.info("Cloudinary handler initialized at app startup")
-    except Exception as e:
-        app.logger.warning(f"Failed to initialize Cloudinary handler: {e}")
-
 # ✅ User loader for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ✅ Jinja filter to format image URLs (supports both local and Cloudinary)
+# ✅ Jinja filter to format image URLs
 @app.template_filter('image_url')
 def format_image_url(url):
     """Convert image URLs to absolute paths - serves from local storage on localhost"""
@@ -122,12 +108,7 @@ def format_image_url(url):
     
     url = str(url).strip()
     logger.debug(f"🔍 Processing image URL: {url}")
-    
-    # If URL is already a full Cloudinary URL, return as-is
-    if 'res.cloudinary.com' in url:
-        logger.debug(f"✅ Full Cloudinary URL detected: {url}")
-        return url
-    
+
     # If URL already looks like a full HTTP/HTTPS URL, return as-is
     if url.startswith('http://') or url.startswith('https://'):
         logger.debug(f"✅ Full HTTP URL detected: {url}")
@@ -208,7 +189,7 @@ def check_maintenance_mode():
         if 'marketplace' in current_route and not settings.allow_browsing:
             return render_template('marketplace_disabled.html'), 503
 
-# ✅ Context processor for cart info, CSRF token, and Cloudinary config
+# ✅ Context processor for cart info and CSRF token
 @app.context_processor
 def inject_cart_info():
     from flask_login import current_user
@@ -217,8 +198,6 @@ def inject_cart_info():
     
     context = {
         'csrf_token': generate_csrf,
-        'use_cloudinary': app.config.get('USE_CLOUDINARY', False),
-        'cloudinary_cloud_name': app.config.get('CLOUDINARY_CLOUD_NAME', ''),
     }
     
     if current_user.is_authenticated:

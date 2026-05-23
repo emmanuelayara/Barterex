@@ -216,71 +216,29 @@ def upload_item():
                                 upload_error_occurred = True
                                 continue
                             
-                            # Upload image to Cloudinary or local storage
+                            # Upload image to local storage
                             try:
-                                if app.config.get('USE_CLOUDINARY'):
-                                    from cloudinary_handler import cloudinary_handler
-                                    
-                                    if cloudinary_handler.is_configured:
-                                        # Upload to Cloudinary
-                                        file.seek(0)  # Reset file pointer
-                                        upload_result = cloudinary_handler.upload_image(
-                                            file,
-                                            user_id=current_user.id,
-                                            item_id=new_item.id,
-                                            index=index,
-                                            folder_prefix='barterex'
-                                        )
-                                        
-                                        # Store the Cloudinary public_id as the image_url
-                                        image_url = upload_result['public_id']
-                                        width = upload_result.get('width')
-                                        height = upload_result.get('height')
-                                        file_size = upload_result.get('bytes')
-                                        
-                                        logger.info(f"✅ Image uploaded to Cloudinary - Item: {new_item.id}, Public ID: {image_url}")
-                                    else:
-                                        # Cloudinary not configured, fall back to local
-                                        raise Exception("Cloudinary not configured, falling back to local storage")
-                                else:
-                                    # Use local file storage
-                                    unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
-                                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                                    file.seek(0)  # Reset file pointer
-                                    file.save(image_path)
-                                    
-                                    # Store ONLY the filename, not the full path - the image_url filter will construct the proper URL
-                                    image_url = unique_filename
-                                    width = None
-                                    height = None
-                                    file_size = None
-                                    
-                                    logger.info(f"Image uploaded to local storage - Item: {new_item.id}, File: {unique_filename}")
+                                unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
+                                image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                                os.makedirs(os.path.dirname(image_path), exist_ok=True)
+                                file.seek(0)  # Reset file pointer
+                                file.save(image_path)
+
+                                # Store ONLY the filename, not the full path - the image_url filter will construct the proper URL
+                                image_url = unique_filename
+                                width = None
+                                height = None
+                                file_size = None
+
+                                logger.info(f"Image uploaded to local storage - Item: {new_item.id}, File: {unique_filename}")
                             except Exception as e:
-                                logger.warning(f"Cloudinary upload failed, attempting local fallback: {e}")
-                                
-                                # Fallback to local storage if Cloudinary fails
-                                try:
-                                    unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
-                                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                                    os.makedirs(os.path.dirname(image_path), exist_ok=True)
-                                    file.seek(0)  # Reset file pointer
-                                    file.save(image_path)
-                                    
-                                    image_url = unique_filename
-                                    width = None
-                                    height = None
-                                    file_size = None
-                                    
-                                    logger.info(f"⚠️ Fallback to local storage - Item: {new_item.id}, File: {unique_filename}")
-                                except Exception as fallback_error:
-                                    db.session.rollback()
-                                    logger.error(f"Both Cloudinary and local storage failed: {fallback_error}")
-                                    user_message = get_user_friendly_error_message(str(fallback_error), 'images')
-                                    validation_errors.append(f"• {file.filename}: {user_message}")
-                                    upload_error_occurred = True
-                                    continue
-                            
+                                db.session.rollback()
+                                logger.error(f"Local storage failed: {e}")
+                                user_message = get_user_friendly_error_message(str(e), 'images')
+                                validation_errors.append(f"• {file.filename}: {user_message}")
+                                upload_error_occurred = True
+                                continue
+
                             # Analyze image for metadata and quality issues
                             analysis = {}
                             try:
