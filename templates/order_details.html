@@ -560,31 +560,479 @@
     font-size: 1.1rem;
   }
 
-  @media (max-width: 768px) {
+  /* Enhanced Mobile Responsiveness */
+  @media (max-width: 1024px) {
     .order-details-container {
-      margin: 20px;
-      padding: 10px;
-    }
-
-    .order-header {
-      padding: 20px;
-    }
-
-    .order-number {
-      font-size: 1.5rem;
+      margin: 20px auto;
+      padding: 15px;
+      max-width: 95%;
     }
 
     .info-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  @media (max-width: 768px) {
+    .order-details-container {
+      margin: 15px;
+      padding: 12px;
+      max-width: calc(100% - 30px);
+    }
+
+    .order-header {
+      padding: 20px 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+    }
+
+    .order-number {
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+    }
+
+    .order-status {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      margin-top: 8px;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-card {
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .info-card h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .info-row {
+      padding: 8px 0;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .info-label {
+      flex: 1 0 100%;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      flex: 1 0 100%;
+      text-align: left;
+      padding-left: 0;
+    }
+
+    .items-section {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .items-section h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .items-table {
+      font-size: 0.85rem;
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      border: none;
+    }
+
+    .items-table thead {
+      display: none;
+    }
+
+    .items-table tbody {
+      display: block;
+      width: 100%;
+    }
+
+    .items-table tr {
+      display: block;
+      margin-bottom: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      background: white;
+    }
+
+    html.dark-mode .items-table tr {
+      background: #0f172a;
+      border-color: #475569;
+    }
+
+    .items-table td {
+      display: block;
+      padding: 8px 0;
+      border: none;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    html.dark-mode .items-table td {
+      border-bottom-color: #475569;
+    }
+
+    .items-table td:before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: var(--primary-color);
+      display: inline-block;
+      width: 100px;
+      margin-right: 10px;
+    }
+
+    html.dark-mode .items-table td:before {
+      color: #64b5f6;
+    }
+
+    .items-table td:last-child {
+      border-bottom: none;
+    }
+
+    .items-table tr:nth-child(even) {
+      background: white;
+    }
+
+    html.dark-mode .items-table tr:nth-child(even) {
+      background: #0f172a;
+    }
+
+    .items-table tr:hover {
+      background: white;
+    }
+
+    html.dark-mode .items-table tr:hover {
+      background: #0f172a;
+    }
+
+    .credits-summary {
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+
+    .credits-summary h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .credits-row {
+      padding: 6px 0;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .credits-row span {
+      flex: 1 0 auto;
+    }
+
+    .credits-row strong {
+      flex: 1 0 auto;
+      text-align: right;
+    }
+
+    .credits-total {
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      padding-top: 8px;
+      margin-top: 8px;
+      font-size: 1rem;
+    }
+
+    .explanation-box {
+      padding: 12px;
+      margin: 12px 0;
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
 
     .action-buttons {
       flex-direction: column;
+      gap: 8px;
+      margin-top: 15px;
     }
 
-    .btn-primary, .btn-secondary {
+    .btn-primary, .btn-secondary, .btn-danger {
       width: 100%;
+      padding: 12px 16px;
       justify-content: center;
+      font-size: 0.95rem;
+      border-radius: 8px;
+    }
+
+    .modal-content {
+      width: 95%;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .modal-header {
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+    }
+
+    .modal-body {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+
+    .modal-footer {
+      gap: 8px;
+      padding-top: 10px;
+    }
+
+    .modal-footer .btn-secondary,
+    .modal-footer .btn-danger {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .cancel-reason {
+      margin: 12px 0;
+    }
+
+    .cancel-reason label {
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    .cancel-reason textarea {
+      padding: 8px;
+      font-size: 0.85rem;
+      min-height: 60px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .order-details-container {
+      margin: 10px;
+      padding: 10px;
+      max-width: calc(100% - 20px);
+    }
+
+    .order-header {
+      padding: 15px 12px;
+      margin-bottom: 15px;
+    }
+
+    .order-number {
+      font-size: 1.1rem;
+    }
+
+    .order-status {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+    }
+
+    .info-card {
+      padding: 12px;
+    }
+
+    .info-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      gap: 6px;
+    }
+
+    .info-row {
+      padding: 6px 0;
+      font-size: 0.85rem;
+    }
+
+    .info-label {
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+
+    .items-section {
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+
+    .items-section h3 {
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+    }
+
+    .items-table {
+      font-size: 0.8rem;
+    }
+
+    .items-table tr {
+      margin-bottom: 12px;
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .items-table td {
+      padding: 6px 0;
+    }
+
+    .items-table td:before {
+      width: 80px;
+      margin-right: 8px;
+      font-size: 0.75rem;
+    }
+
+    .credits-summary {
+      padding: 12px;
+    }
+
+    .credits-summary h3 {
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+    }
+
+    .credits-row {
+      padding: 5px 0;
+      font-size: 0.85rem;
+    }
+
+    .credits-total {
+      padding-top: 6px;
+      margin-top: 6px;
+      font-size: 0.95rem;
+    }
+
+    .explanation-box {
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 0.8rem;
+      border-left-width: 3px;
+    }
+
+    .explanation-box p {
+      margin: 5px 0;
+    }
+
+    .action-buttons {
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .btn-primary, .btn-secondary, .btn-danger {
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      gap: 6px;
+    }
+
+    .modal {
+      padding: 10px;
+    }
+
+    .modal-content {
+      width: 95%;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .modal-header {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .modal-body {
+      font-size: 0.85rem;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .modal-footer {
+      gap: 6px;
+      flex-direction: column;
+    }
+
+    .modal-footer .btn-secondary,
+    .modal-footer .btn-danger {
+      width: 100%;
+      padding: 10px;
+      font-size: 0.85rem;
+    }
+
+    .cancel-reason {
+      margin: 10px 0;
+    }
+
+    .cancel-reason label {
+      margin-bottom: 5px;
+      font-size: 0.85rem;
+    }
+
+    .cancel-reason textarea {
+      padding: 8px;
+      font-size: 0.8rem;
+      min-height: 50px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .order-header {
+      padding: 12px 10px;
+      margin-bottom: 12px;
+    }
+
+    .order-number {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .info-card {
+      padding: 10px;
+    }
+
+    .info-card h3 {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .info-row {
+      padding: 5px 0;
+      font-size: 0.8rem;
+    }
+
+    .items-table tr {
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+
+    .items-table td {
+      padding: 5px 0;
+    }
+
+    .btn-primary, .btn-secondary, .btn-danger {
+      padding: 9px 10px;
+      font-size: 0.85rem;
+    }
+
+    .modal-content {
+      padding: 12px;
+    }
+
+    .modal-header {
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .modal-footer .btn-secondary,
+    .modal-footer .btn-danger {
+      padding: 8px;
+      font-size: 0.8rem;
     }
   }
 </style>
@@ -677,11 +1125,11 @@
       <tbody>
         {% for item in transaction_exp['items'] %}
         <tr>
-          <td>{{ item['item_number'] }}</td>
-          <td>{{ item['name'] }}</td>
-          <td>{{ item['condition'] }}</td>
-          <td>{{ item['location'] }}</td>
-          <td>{{ item['value'] }}</td>
+          <td data-label="Item #">{{ item['item_number'] }}</td>
+          <td data-label="Item Name">{{ item['name'] }}</td>
+          <td data-label="Condition">{{ item['condition'] }}</td>
+          <td data-label="Location">{{ item['location'] }}</td>
+          <td data-label="Value">{{ item['value'] }}</td>
         </tr>
         {% endfor %}
       </tbody>
