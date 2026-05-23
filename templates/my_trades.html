@@ -1024,6 +1024,82 @@
       font-size: 0.8rem;
     }
   }
+
+  @media (max-width: 768px) {
+    .trades-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+
+    .trade-card {
+      padding: 10px;
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .trade-card-image {
+      height: 110px;
+      border-radius: 10px;
+    }
+
+    .trade-card-content {
+      padding: 8px 2px 0;
+      gap: 4px;
+    }
+
+    .trade-card-title {
+      font-size: 0.8rem;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .trade-card-value {
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+    }
+
+    .trade-card-date {
+      font-size: 0.65rem;
+      margin-top: 0;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .trades-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .trade-card {
+      padding: 8px;
+      border-radius: 12px;
+    }
+
+    .trade-card-image {
+      height: 96px;
+      border-radius: 8px;
+    }
+
+    .trade-card-content {
+      padding: 6px 2px 0;
+    }
+
+    .trade-card-title {
+      font-size: 0.75rem;
+      line-height: 1.15;
+      margin-bottom: 3px;
+    }
+
+    .trade-card-value {
+      font-size: 0.75rem;
+    }
+
+    .trade-card-date {
+      font-size: 0.62rem;
+    }
+  }
 </style>
 
 

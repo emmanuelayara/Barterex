@@ -224,9 +224,9 @@ def my_trades():
     try:
         page = request.args.get('page', 1, type=int)
         # Get items the user has uploaded
-        uploaded_items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=9)
+        uploaded_items = Item.query.filter_by(user_id=current_user.id).order_by(Item.id.desc()).paginate(page=page, per_page=6)
         # Get trades the user has received (items from other users)
-        received_trades = Trade.query.filter_by(receiver_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=9)
+        received_trades = Trade.query.filter_by(receiver_id=current_user.id).order_by(Trade.timestamp.desc()).paginate(page=page, per_page=6)
         
         logger.info(f"Trades page accessed - User: {current_user.username}, Uploaded: {uploaded_items.total}, Received Trades: {received_trades.total}")
         return render_template('my_trades.html', sent_trades=uploaded_items, received_trades=received_trades)
