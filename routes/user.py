@@ -83,13 +83,13 @@ def dashboard() -> Union[str, Response]:
         # Orders placed (purchasing goal)
         orders_placed = Order.query.filter_by(user_id=current_user.id).count()
         
-        # Get similar items (recommendations) - get 2 most recent items from other users that are approved and available
+        # Get similar items (recommendations) - get 4 most recent items from other users that are approved and available
         # Using eager loading to prevent N+1 queries
         similar_items = Item.query.options(joinedload(Item.user)).filter(
             Item.user_id != current_user.id,
             Item.is_approved == True,
             Item.is_available == True
-        ).order_by(Item.id.desc()).limit(2).all()
+        ).order_by(Item.id.desc()).limit(4).all()
         
         # Calculate progress percentages for widgets
         upload_progress = min(item_count * 10, 100)
