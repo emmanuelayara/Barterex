@@ -301,7 +301,26 @@ class Item(db.Model):
     )
     
     images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
-    
+
+    # ── AI Valuation fields (populated by the BarterXpress Valuator
+    # microservice — see valuator_client.py) ──────────────────────────
+    ai_estimated_value = db.Column(db.Float, nullable=True)
+    ai_confidence = db.Column(db.String(20), nullable=True)          # high/medium/low/very_low
+    ai_condition_score = db.Column(db.Float, nullable=True)          # 0-100
+    ai_market_listings = db.Column(db.Integer, nullable=True)        # comparables found
+    ai_value_range_low = db.Column(db.Float, nullable=True)
+    ai_value_range_high = db.Column(db.Float, nullable=True)
+    ai_risk_score = db.Column(db.Float, nullable=True)               # 0-100 fraud risk
+    ai_risk_level = db.Column(db.String(20), nullable=True)          # LOW/MEDIUM/HIGH
+    ai_risk_flags = db.Column(db.Text, nullable=True)                # JSON list
+    ai_sources_used = db.Column(db.Text, nullable=True)              # JSON list
+    provisional_credit_value = db.Column(db.Float, nullable=True)
+    final_credit_value = db.Column(db.Float, nullable=True)
+    verification_status = db.Column(db.String(30), default='pending_valuation')
+    verification_notes = db.Column(db.Text, nullable=True)
+    ai_analysis = db.Column(db.Text, nullable=True)                  # full raw API response (JSON)
+    ai_valuated_at = db.Column(db.DateTime, nullable=True)
+
     # Valid condition values for items
     VALID_CONDITIONS = {'Brand New', 'Like New', 'Lightly Used', 'Fairly Used', 'Used', 'For Parts'}
     
