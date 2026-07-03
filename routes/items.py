@@ -3,6 +3,7 @@ from flask_login import login_required, current_user, logout_user
 from flask_wtf.csrf import generate_csrf
 import os
 import time
+import base64
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 
@@ -19,6 +20,12 @@ from trading_points import award_points_for_purchase, create_level_up_notificati
 from upload_validation_helper import (
     validate_upload_request, validate_image_type, validate_image_size, 
     validate_image_dimensions, get_user_friendly_error_message
+)
+from valuator_client import (
+    valuate_item as call_valuator_api,
+    map_condition_to_valuator,
+    account_days_old as compute_account_days_old,
+    extract_item_ai_fields,
 )
 
 # Import limiter - handle gracefully if not available
@@ -91,6 +98,68 @@ def create_notification(user_id, message):
             recipients=[user.email],
             html_body=html
         )
+
+def run_ai_valuation(new_item, uploaded_images, user):
+    """
+    Calls the BarterXpress Valuator microservice (full pipeline: market
+    valuation + credit calculation + fraud scoring) for a freshly
+    uploaded item, and writes the results onto the Item's ai_* /
+    verification_* / *_credit_value columns.
+
+    This NEVER raises — if the valuator is unreachable, slow, or
+    returns an error, the item is simply left in 'pending_valuation'
+    so an admin can value it manually, exactly as before this
+    integration existed.
+    """
+    try:
+        # Encode up to 3 images as base64 for the valuator's image
+        # analysis step (Google Vision) — capped to keep the request
+        # payload and response time reasonable.
+        image_payload = []
+        for img in uploaded_images[:3]:
+            try:
+                image_path = os.path.join(app.config['UPLOAD_FOLDER'], img.image_url)
+                with open(image_path, 'rb') as f:
+                    image_payload.append(base64.b64encode(f.read()).decode('utf-8'))
+            except Exception as e:
+                logger.warning(f"AI valuation: could not read image {img.image_url} for item {new_item.id}: {e}")
+
+        ai_response = call_valuator_api(
+            title=new_item.name,
+            description=new_item.description or '',
+            condition=map_condition_to_valuator(new_item.condition),
+            sale_type='new' if new_item.condition == 'Brand New' else 'second_hand',
+            age_years=0,
+            submitted_price=0,
+            image_count=len(uploaded_images),
+            images=image_payload,
+            account_days_old=compute_account_days_old(getattr(user, 'created_at', None)),
+            category=new_item.category,
+            country='NG',
+        )
+
+        ai_fields = extract_item_ai_fields(ai_response)
+        for field_name, field_value in ai_fields.items():
+            setattr(new_item, field_name, field_value)
+        new_item.ai_valuated_at = datetime.utcnow()
+
+        if ai_response.get('success'):
+            logger.info(
+                f"AI valuation complete - Item: {new_item.id}, "
+                f"Fair value: ₦{ai_response.get('fair_value')}, "
+                f"Risk: {ai_response.get('risk_assessment', {}).get('level')}, "
+                f"Confidence: {ai_response.get('confidence_score')}"
+            )
+        else:
+            logger.warning(
+                f"AI valuation unavailable for item {new_item.id}: "
+                f"{ai_response.get('error')}"
+            )
+    except Exception as e:
+        # Absolute safety net — an item upload must never fail just
+        # because the AI valuator had a problem.
+        logger.error(f"AI valuation step failed for item {new_item.id}: {e}", exc_info=True)
+        new_item.verification_status = 'pending_valuation'
 
 # ==================== ROUTES ====================
 
@@ -309,7 +378,13 @@ def upload_item():
             
             if uploaded_images:
                 new_item.image_url = uploaded_images[0].image_url
-            
+
+            # === AI Valuation (BarterXpress Valuator microservice) ===
+            # Runs market valuation + credit calc + fraud scoring so the
+            # admin approval queue shows a suggested value instead of a
+            # blank box. Degrades gracefully if the service is down.
+            run_ai_valuation(new_item, uploaded_images, current_user)
+
             try:
                 db.session.commit()
                 logger.info(f"Item submitted for approval - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")

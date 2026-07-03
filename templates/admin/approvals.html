@@ -805,6 +805,36 @@
                 <span class="condition-badge">⭐ {{ item.condition }}</span>
               </div>
 
+              <!-- AI Valuation Suggestion -->
+              {% if item.ai_estimated_value %}
+              <div class="ai-suggestion" style="background: rgba(56,239,125,0.08); border: 1px solid rgba(56,239,125,0.3); border-radius: 6px; padding: 6px 8px; font-size: 0.68rem; line-height: 1.4;">
+                <div style="font-weight:700; color:#0f9d58;">
+                  🤖 AI suggests: ₦{{ '%.0f'|format(item.ai_estimated_value) }}
+                  {% if item.ai_value_range_low and item.ai_value_range_high %}
+                    <span style="color:#6b7280; font-weight:400;">(₦{{ '%.0f'|format(item.ai_value_range_low) }}–₦{{ '%.0f'|format(item.ai_value_range_high) }})</span>
+                  {% endif %}
+                </div>
+                <div style="color:#6b7280;">
+                  Confidence: {{ item.ai_confidence or 'n/a' }}
+                  {% if item.ai_market_listings %} · {{ item.ai_market_listings }} comparables{% endif %}
+                </div>
+                {% if item.ai_risk_level %}
+                <div style="margin-top:2px;">
+                  <span style="padding:1px 5px; border-radius:4px; font-weight:700;
+                    {% if item.ai_risk_level == 'HIGH' %}background:#ffebee; color:#c62828;
+                    {% elif item.ai_risk_level == 'MEDIUM' %}background:#fff8e1; color:#f9a825;
+                    {% else %}background:#e8f5e9; color:#2e7d32;{% endif %}">
+                    ⚠️ Risk: {{ item.ai_risk_level }}
+                  </span>
+                </div>
+                {% endif %}
+              </div>
+              {% elif item.verification_status == 'pending_valuation' %}
+              <div class="ai-suggestion" style="background: rgba(107,114,128,0.08); border-radius: 6px; padding: 5px 8px; font-size: 0.65rem; color:#6b7280; text-align:center;">
+                🤖 AI valuation unavailable — value manually
+              </div>
+              {% endif %}
+
               <!-- Compact Form -->
               <div class="appraisal-section">
                 <form method="POST" action="{{ url_for('admin.approve_item', item_id=item.id) }}" class="approval-form">
@@ -820,6 +850,7 @@
                     id="value_{{ item.id }}"
                     class="value-input" 
                     placeholder="Value"
+                    {% if item.ai_estimated_value %}value="{{ '%.0f'|format(item.ai_estimated_value) }}"{% endif %}
                     min="0.1"
                     required
                   >
