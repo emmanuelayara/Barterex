@@ -30,3 +30,4 @@ flask-limiter==4.1.0
 Pillow==11.3.0
 reportlab==4.0.9
 requests==2.31.0
+rich
