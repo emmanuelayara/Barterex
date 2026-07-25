@@ -130,24 +130,26 @@
             border-radius: 10px;
             transition: all 0.3s ease;
             text-decoration: none;
-            color: var(--white);
+            color: var(--primary-blue);
             font-weight: 700;
             font-size: 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--white);
+            border: 1px solid var(--white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
             flex-shrink: 0;
         }
 
         .barterex-navbar .logo-link:hover {
-            background: var(--primary-orange);
+            background: var(--white);
+            border-color: var(--primary-orange);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
-            color: var(--white);
+            color: var(--primary-blue);
             text-decoration: none;
         }
 
         .barterex-navbar .logo-img {
-            height: 24px;
+            height: 30px;
             width: auto;
             filter: brightness(1.1);
             transition: all 0.3s ease;
@@ -1128,7 +1130,6 @@
         <div class="nav-header">
             <a href="{{ url_for('marketplace.home') }}" class="logo-link">
                 <img src="/static/logo.png" alt="Barterex Logo" class="logo-img">
-                <span class="logo-text">Barter Express</span>
             </a>
             
             <ul class="nav-links">
