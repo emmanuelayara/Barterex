@@ -219,7 +219,8 @@ def upload_item():
                             # Upload image to local storage
                             try:
                                 unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
-                                image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                                upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+                                image_path = os.path.join(upload_root, unique_filename)
                                 os.makedirs(os.path.dirname(image_path), exist_ok=True)
                                 file.seek(0)  # Reset file pointer
                                 file.save(image_path)

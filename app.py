@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -96,6 +96,13 @@ from notifications import NotificationService
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
+def get_upload_root_path():
+    """Return the absolute filesystem path for the local upload directory."""
+    upload_folder = app.config.get('UPLOAD_FOLDER', 'static/uploads')
+    return os.path.normpath(os.path.join(app.root_path, upload_folder.lstrip('/')))
+
+
 # ✅ Jinja filter to format image URLs
 @app.template_filter('image_url')
 def format_image_url(url):
@@ -117,7 +124,7 @@ def format_image_url(url):
     if url.startswith('/static/'):
         return url.replace('//', '/')
     
-    upload_dir = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
+    upload_dir = get_upload_root_path()
     
     # Extract filename from any path format
     # Could be "barterex/1/1/0_filename.jpg" or just "filename.jpg"
@@ -149,6 +156,107 @@ def format_image_url(url):
     # File not found, return placeholder
     logger.warning(f"⚠️ Image file not found: {filename} (searched in {upload_dir})")
     return '/static/placeholder.png'
+
+
+@app.route('/debug/image-status')
+@login_required
+def debug_image_status():
+    """Return a small diagnostic summary of the live upload folder and stored image URLs."""
+    if not getattr(current_user, 'is_admin', False):
+        return jsonify({'error': 'admin_only'}), 403
+
+    limit = request.args.get('limit', default='20')
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = 20
+    limit = max(1, min(limit, 50))
+
+    upload_root = get_upload_root_path()
+    upload_exists = os.path.isdir(upload_root)
+    upload_files = []
+    if upload_exists:
+        upload_files = sorted([
+            name
+            for name in os.listdir(upload_root)
+            if os.path.isfile(os.path.join(upload_root, name))
+        ])[:50]
+
+    from models import Item, ItemImage
+
+    item_rows = []
+    missing = []
+
+    for item in Item.query.order_by(Item.id.desc()).limit(limit).all():
+        primary_url = item.image_url or (item.images[0].image_url if item.images else None)
+        resolved_url = format_image_url(primary_url) if primary_url else '/static/placeholder.png'
+
+        if primary_url:
+            if str(primary_url).startswith(('http://', 'https://')):
+                file_exists = None
+            else:
+                filename = str(primary_url).split('/')[-1] if '/' in str(primary_url) else str(primary_url)
+                file_exists = os.path.exists(os.path.join(upload_root, filename)) if upload_exists else False
+
+            if file_exists is False:
+                missing.append({
+                    'type': 'item_primary_image_missing',
+                    'item_id': item.id,
+                    'item_name': item.name,
+                    'stored_url': primary_url,
+                    'resolved_url': resolved_url,
+                })
+
+        item_rows.append({
+            'item_id': item.id,
+            'item_name': item.name,
+            'primary_url': primary_url,
+            'resolved_url': resolved_url,
+            'file_exists': file_exists if primary_url else None,
+            'item_image_count': len(item.images) if item.images else 0,
+        })
+
+    image_rows = []
+    for image in ItemImage.query.order_by(ItemImage.id.desc()).limit(limit).all():
+        stored_url = image.image_url
+        resolved_url = format_image_url(stored_url)
+
+        if str(stored_url).startswith(('http://', 'https://')):
+            file_exists = None
+        else:
+            filename = str(stored_url).split('/')[-1] if '/' in str(stored_url) else str(stored_url)
+            file_exists = os.path.exists(os.path.join(upload_root, filename)) if upload_exists else False
+
+        if file_exists is False:
+            missing.append({
+                'type': 'itemimage_file_missing',
+                'item_image_id': image.id,
+                'item_id': image.item_id,
+                'stored_url': stored_url,
+                'resolved_url': resolved_url,
+            })
+
+        image_rows.append({
+            'item_image_id': image.id,
+            'item_id': image.item_id,
+            'stored_url': stored_url,
+            'resolved_url': resolved_url,
+            'file_exists': file_exists,
+        })
+
+    return jsonify({
+        'upload_root': upload_root,
+        'upload_exists': upload_exists,
+        'upload_file_count': len(upload_files),
+        'upload_file_sample': upload_files,
+        'items_checked': len(item_rows),
+        'item_images_checked': len(image_rows),
+        'item_rows': item_rows,
+        'item_image_rows': image_rows,
+        'missing_files': missing[:25],
+        'issue_count': len(missing),
+    })
+
 
 # ✅ Maintenance Mode Handler
 @app.before_request

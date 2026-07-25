@@ -197,7 +197,9 @@ def edit_item(item_id: int) -> Union[str, Response]:
                                 os.remove(old_path)
 
                         unique_filename = generate_safe_filename(file, current_user.id)
-                        new_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                        upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+                        new_path = os.path.join(upload_root, unique_filename)
+                        os.makedirs(os.path.dirname(new_path), exist_ok=True)
                         file.save(new_path)
                         item.image_url = unique_filename
                         logger.info(f"Item image updated - Item: {item_id}, File: {unique_filename}")
@@ -376,7 +378,9 @@ def profile_settings() -> Union[str, Response]:
                         )
                         
                         unique_filename = generate_safe_filename(file, current_user.id)
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                        upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+                        file_path = os.path.join(upload_root, unique_filename)
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
                         file.save(file_path)
                         current_user.profile_picture = unique_filename
                         logger.info(f"Profile picture updated - User: {current_user.username}, File: {unique_filename}")
@@ -680,7 +684,9 @@ def settings():
                                 enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
                             )
                             unique_filename = generate_safe_filename(file, current_user.id)
-                            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                            upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+                            file_path = os.path.join(upload_root, unique_filename)
+                            os.makedirs(os.path.dirname(file_path), exist_ok=True)
                             file.save(file_path)
                             current_user.profile_picture = unique_filename
                             logger.info(f"Profile picture updated - User: {current_user.username}, File: {unique_filename}")

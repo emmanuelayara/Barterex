@@ -1988,32 +1988,33 @@
 
     function formatImageUrl(url) {
       if (!url) return '/static/placeholder.png';
-      
+      if (typeof url !== 'string') return '/static/placeholder.png';
+
+      url = url.trim();
+      if (!url) return '/static/placeholder.png';
+
       // If already a full URL, return as-is
       if (url.includes('http://') || url.includes('https://')) {
         return url;
       }
-      
+
       // If already a Cloudinary URL, return as-is
       if (url.includes('res.cloudinary.com')) {
         return url;
       }
-      
+
       // If local static path, ensure proper format
       if (url.includes('/static/')) {
         return url.replace(/\/+/g, '/');
       }
-      
-      // Check if it looks like a Cloudinary public_id (contains 'barterex/' folder structure)
-      if (url.includes('barterex/')) {
-        const cloudinaryCloudName = '{{ cloudinary_cloud_name }}';
-        if ({{ 'true' if use_cloudinary else 'false' | lower }} && cloudinaryCloudName) {
-          return `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
-        }
+
+      // Strip any legacy path prefixes and keep only the filename
+      const filename = url.split('/').pop().replace(/^\/+|\/+$/g, '');
+      if (!filename) {
+        return '/static/placeholder.png';
       }
-      
-      // Otherwise treat as local filename
-      return `/static/uploads/${url.replace(/^\/+|\/+$/g, '')}`;
+
+      return `/static/uploads/${filename}`;
     }
 
     let html = '';

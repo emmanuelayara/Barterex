@@ -1169,43 +1169,31 @@
     function formatImageUrl(url) {
       if (!url) return '/static/placeholder.png';
       if (typeof url !== 'string') return '/static/placeholder.png';
-      
+
       url = url.trim();
-      console.log('🔍 formatImageUrl input:', url);
-      
+      if (!url) return '/static/placeholder.png';
+
       // If already a full URL, return as-is
       if (url.includes('http://') || url.includes('https://')) {
-        console.log('✅ Full URL detected:', url);
         return url;
       }
-      
+
       // If already a Cloudinary URL, return as-is
       if (url.includes('res.cloudinary.com')) {
-        console.log('✅ Cloudinary URL detected:', url);
         return url;
       }
-      
+
       // If already a local static path, return as-is
       if (url.includes('/static/')) {
-        console.log('✅ Local static path detected:', url);
         return url.replace(/\/+/g, '/');
       }
-      
-      // Check if it looks like a Cloudinary public_id (contains 'barterex/' folder structure)
-      if (url.includes('barterex/')) {
-        const cloudinaryCloudName = '{{ cloudinary_cloud_name }}';
-        if ({{ 'true' if use_cloudinary else 'false' | lower }} && cloudinaryCloudName) {
-          const cloudinaryUrl = `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/q_auto,f_auto/${url}`;
-          console.log('✅ Generated Cloudinary URL:', cloudinaryUrl);
-          return cloudinaryUrl;
-        }
+
+      const filename = url.split('/').pop().replace(/^\/+|\/+$/g, '');
+      if (!filename) {
+        return '/static/placeholder.png';
       }
-      
-      // Otherwise treat as local filename and prepend /static/uploads/
-      url = url.replace(/^\/+|\/+$/g, '');
-      const localUrl = `/static/uploads/${url}`;
-      console.log('ℹ️ Using local storage URL:', localUrl);
-      return localUrl;
+
+      return `/static/uploads/${filename}`;
     }
 
     // Helper function to format file size
