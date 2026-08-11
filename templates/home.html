@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Barterex - Swap Smarter</title>
+  <title>Barter Express - Swap Smarter</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
   <style>
@@ -115,11 +115,17 @@
     }
 
     .logo img {
-      height: 55px;
-      width: 55px;
-      border-radius: 12px;
-      margin-right: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      height: 80px;
+      width: 150px;
+      max-width: 100%;
+      border-radius: 16px;
+      margin-right: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+      transition: transform 0.3s ease;
+    }
+
+    .logo a:hover img {
+      transform: scale(1.05);
     }
 
     .menu-toggle {
@@ -990,7 +996,7 @@
     <div class="header-content">
       <div class="logo">
         <a href="#">
-          <img src="/static/logo.png" alt="Logo">
+          <img src="/static/Home_logo.png" alt="Logo">
         </a>
       </div>
 
@@ -1075,7 +1081,7 @@
 
     <section class="fade-in">
       <div class="section-header">
-        <h2>Why Choose Barterex?</h2>
+        <h2>Why Choose Barter Express?</h2>
         <p>Experience the future of trading with our innovative platform designed for modern users</p>
       </div>
       <div class="benefits-grid">
@@ -1158,7 +1164,7 @@
       <div class="testimonials-grid">
         <div class="testimonial-card">
           <div class="testimonial-text">
-            "I traded my old tablet and got a smartwatch and couldn't be happier! The process was smooth, secure, and the community is amazing. Barterex has completely changed how I think about getting new items."
+            "I traded my old tablet and got a smartwatch and couldn't be happier! The process was smooth, secure, and the community is amazing. Barter Express has completely changed how I think about getting new items."
           </div>
           <div class="testimonial-author">— Ada from Lagos</div>
         </div>
