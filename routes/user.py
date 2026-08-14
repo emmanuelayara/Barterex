@@ -664,7 +664,51 @@ def settings():
         # Handle form submissions
         if request.method == 'POST':
             form_type = request.form.get('form_type')
-            
+
+            # ========== IDENTITY VERIFICATION UPDATE ==========
+            if form_type == 'identity_verification':
+                nin = (request.form.get('nin') or '').strip()
+                if not nin:
+                    flash('❌ Please enter your National Identity Number (NIN).', 'danger')
+                    return redirect(url_for('user.settings'))
+
+                if len(nin) < 11 or not nin.replace(' ', '').isalnum():
+                    flash('❌ Please enter a valid NIN.', 'danger')
+                    return redirect(url_for('user.settings'))
+
+                gov_id_file = request.files.get('government_id')
+                if not gov_id_file or not gov_id_file.filename:
+                    flash('❌ Please upload a government-issued ID card for verification.', 'danger')
+                    return redirect(url_for('user.settings'))
+
+                try:
+                    validate_upload(
+                        gov_id_file,
+                        max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10 * 1024 * 1024),
+                        allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf'}),
+                        enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+                    )
+
+                    verification_dir = os.path.join(app.root_path, 'static', 'uploads', 'verification')
+                    os.makedirs(verification_dir, exist_ok=True)
+                    safe_name = generate_safe_filename(gov_id_file, current_user.id)
+                    file_path = os.path.join(verification_dir, safe_name)
+                    gov_id_file.save(file_path)
+
+                    current_user.nin = nin
+                    current_user.government_id_document = safe_name
+                    current_user.id_verification_status = 'pending_review'
+                    current_user.id_verified_at = None
+
+                    db.session.commit()
+                    logger.info(f"Identity verification submitted - User: {current_user.username}, NIN: {nin}")
+                    flash('✅ Your verification details have been submitted. Our verification partner is reviewing them.', 'success')
+                    return redirect(url_for('user.settings'))
+                except FileUploadError as e:
+                    logger.warning(f"Government ID upload failed: {str(e)}")
+                    flash(f"Government ID upload failed: {str(e)}", 'danger')
+                    return redirect(url_for('user.settings'))
+
             # ========== PROFILE UPDATE ==========
             if form_type == 'profile':
                 current_user.email = request.form['email']
@@ -672,31 +716,10 @@ def settings():
                 current_user.address = request.form['address']
                 current_user.city = request.form['city']
                 current_user.state = request.form['state']
-                
-                if profile_form.profile_picture.data:
-                    file = profile_form.profile_picture.data
-                    if file.filename:
-                        try:
-                            validate_upload(
-                                file, 
-                                max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
-                                allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}),
-                                enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
-                            )
-                            unique_filename = generate_safe_filename(file, current_user.id)
-                            upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
-                            file_path = os.path.join(upload_root, unique_filename)
-                            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                            file.save(file_path)
-                            current_user.profile_picture = unique_filename
-                            logger.info(f"Profile picture updated - User: {current_user.username}, File: {unique_filename}")
-                        except FileUploadError as e:
-                            logger.warning(f"Profile picture upload failed: {str(e)}")
-                            flash(f"Profile picture upload failed: {str(e)}", 'danger')
-                            return redirect(url_for('user.settings'))
-                else:
-                    current_user.profile_picture = None
-                
+
+                if request.form.get('nin'):
+                    current_user.nin = request.form.get('nin').strip()
+
                 db.session.commit()
                 logger.info(f"Profile updated successfully - User: {current_user.username}, Email: {current_user.email}")
                 flash('✅ Profile updated successfully', 'success')

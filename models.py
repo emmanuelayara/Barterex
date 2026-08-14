@@ -13,6 +13,10 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     phone_number = db.Column(db.String(15), nullable=True)
     profile_picture = db.Column(db.String(200), nullable=True)  # URL to the profile picture
+    nin = db.Column(db.String(20), nullable=True)  # National Identity Number for verification
+    government_id_document = db.Column(db.String(255), nullable=True)  # Uploaded government-issued ID path
+    id_verification_status = db.Column(db.String(30), default='not_submitted', nullable=False)  # not_submitted, pending_review, verified, rejected
+    id_verified_at = db.Column(db.DateTime, nullable=True)
     address = db.Column(db.String(255))
     city = db.Column(db.String(50))
     state = db.Column(db.String(50))

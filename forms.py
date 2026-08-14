@@ -70,10 +70,11 @@ class LoginForm(FlaskForm):
 class ProfileUpdateForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     phone_number = StringField('Phone Number', validators=[Length(min=10, max=15)])
+    nin = StringField('National Identity Number (NIN)', validators=[Optional(), Length(min=11, max=20)])
     address = TextAreaField('Address', validators=[Length(max=200)])
     city = StringField('City', validators=[Length(max=50)])
     state = SelectField('State', choices=[
-        ('', 'Select State'),  # Default empty option
+        ('', 'Select State'),
         ('Abia', 'Abia'),
         ('Adamawa', 'Adamawa'),
         ('Akwa Ibom', 'Akwa Ibom'),
@@ -112,7 +113,6 @@ class ProfileUpdateForm(FlaskForm):
         ('Yobe', 'Yobe'),
         ('Zamfara', 'Zamfara')
     ], validators=[DataRequired()])
-    profile_picture = FileField('Profile Picture', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only!')])
     submit = SubmitField('Update Profile')
     
 
