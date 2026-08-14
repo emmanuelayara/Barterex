@@ -484,6 +484,98 @@
     }
   }
 
+  /* Manage Account: show inside Address card on small screens (icon-only on mobile) */
+  .manage-account-btn {
+    display: none; /* hidden by default on larger screens */
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ff7a00, #ff8c1a);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    /* hide the header settings button and show inline in the stat card */
+    .welcome-section .settings-btn-dashboard {
+      display: none !important;
+    }
+
+    .stat-card .manage-account-btn {
+      display: inline-flex;
+      justify-self: end;
+      align-self: start;
+      grid-column: 3;
+      grid-row: 1;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+    /* show icon-only on small/tablet screens by hiding the label */
+    .stat-card .manage-account-btn span {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stat-card .manage-account-btn {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      margin: 0;
+      border-radius: 8px;
+      gap: 0;
+      font-size: 0;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-card .manage-account-btn span {
+      display: none;
+    }
+
+    .stat-card .manage-account-btn i {
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+  }
+
+  /* Ensure manage-account icon matches the left location icon sizes */
+  .stat-card .manage-account-btn i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    line-height: 1;
+    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
+    border-radius: 8px;
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .stat-card .manage-account-btn i {
+      width: 18px;
+      height: 18px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stat-card .manage-account-btn i {
+      width: 24px;
+      height: 24px;
+      font-size: 12px;
+    }
+  }
+
   /* ==================== NEW ANIMATED WIDGETS ==================== */
 
   .widgets-grid {
@@ -2402,6 +2494,10 @@
       <div class="stat-card">
         <div class="stat-icon">📍</div>
         <div class="stat-title">Address</div>
+          <a href="{{ url_for('user.settings') }}" class="manage-account-btn" title="Manage Account">
+            <i class="fas fa-user-cog"></i>
+            <span>Manage Account</span>
+          </a>
         <div class="stat-value" style="font-size: 0.70rem; line-height: 1.3;">
           {% if current_user.address %}
             {{ current_user.address }}
