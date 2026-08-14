@@ -1133,12 +1133,6 @@
             </a>
             
             <ul class="nav-links">
-                <li class="nav-item">
-                    <a href="{{ url_for('marketplace.marketplace') }}" class="nav-link{% if request.endpoint and (request.endpoint == 'marketplace.marketplace' or request.endpoint.startswith('marketplace.')) %} active{% endif %}" data-tooltip="Marketplace">
-                        <i class="fas fa-store"></i>
-                        <span class="nav-text">Marketplace</span>
-                    </a>
-                </li>
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a href="{{ url_for('items.upload_item') }}" class="nav-link{% if request.endpoint == 'items.upload_item' %} active{% endif %}" data-tooltip="Upload Item">
@@ -1214,15 +1208,14 @@
 <nav class="bottom-nav">
     <div class="bottom-nav-container">
         {% if current_user.is_authenticated %}
+            <a href="{{ url_for('marketplace.marketplace') }}" class="bottom-nav-item {% if request.endpoint == 'marketplace.marketplace' %}active{% endif %}">
+                <i class="fas fa-store"></i>
+                <span>Marketplace</span>
+            </a>
             <a href="{{ url_for('wishlist.manage_wishlists') }}" class="bottom-nav-item {% if request.endpoint == 'wishlist.manage_wishlists' %}active{% endif %}">
                 <i class="fas fa-heart"></i>
                 <span>Wishlist</span>
             </a>
-            <a href="{{ url_for('user.my_trades') }}" class="bottom-nav-item {% if request.endpoint == 'user.my_trades' %}active{% endif %}">
-                <i class="fas fa-sync-alt"></i>
-                <span>Trades</span>
-            </a>
-
             <a href="{{ url_for('user.user_orders') }}" class="bottom-nav-item {% if request.endpoint == 'user.user_orders' %}active{% endif %}">
                 <i class="fas fa-credit-card"></i>
                 <span>Orders</span>
