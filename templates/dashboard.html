@@ -7,90 +7,13 @@
     box-sizing: border-box;
   }
 
-  /* Global font size reduction - 12% smaller */
-  html {
-    font-size: 14px;
-  }
-
-  @media (min-width: 768px) {
-    html {
-      font-size: 15px;
-    }
-  }
-
   .dashboard-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
-  .top-nav {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 0 0 20px 20px;
-  }
 
-  .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 16px;
-  }
-
-  .nav-menu {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    gap: 6px;
-    flex-wrap: wrap;
-    min-height: 56px;
-  }
-
-  .nav-item {
-    margin: 3px 0;
-  }
-
-  .nav-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #4a5568;
-    text-decoration: none;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-weight: 500;
-    font-size: 13px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-  }
-
-  .nav-link:hover {
-    background: rgba(255, 122, 0, 0.1);
-    color: #ff7a00;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(255, 122, 0, 0.15);
-  }
-
-  .nav-link.active {
-    background: linear-gradient(135deg, #ff7a00, #ff7a00);
-    color: white;
-    box-shadow: 0 3px 15px rgba(255, 122, 0, 0.3);
-  }
-
-  .nav-link.active:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(255, 122, 0, 0.4);
-  }
 
   .main-content {
     max-width: 1200px;
@@ -1875,54 +1798,6 @@
 
   /* Mobile Responsive Design - Horizontal Navigation */
   @media (max-width: 768px) {
-    .top-nav {
-      border-radius: 0 0 16px 16px;
-    }
-
-    .nav-container {
-      padding: 0 8px;
-    }
-
-    .nav-menu {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-evenly;
-      align-items: center;
-      gap: 2px;
-      min-height: 48px;
-      padding: 6px 0;
-      flex-wrap: nowrap;
-    }
-
-    .nav-item {
-      flex: 1;
-      margin: 0;
-    }
-
-    .nav-link {
-      padding: 6px 2px;
-      font-size: 10px;
-      gap: 2px;
-      border-radius: 8px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 36px;
-      text-align: center;
-    }
-
-    .nav-link:hover {
-      transform: none;
-      box-shadow: 0 2px 8px rgba(255, 122, 0, 0.15);
-    }
-
-    .nav-link.active:hover {
-      transform: none;
-      box-shadow: 0 2px 15px rgba(255, 122, 0, 0.3);
-    }
-
     .stats-grid {
       gap: 8px;
       margin-bottom: 32px;
@@ -1997,35 +1872,6 @@
   }
 
   @media (max-width: 480px) {
-    .nav-container {
-      padding: 0 6px;
-    }
-
-    .nav-menu {
-      display: flex;
-      flex-direction: row;
-      gap: 1px;
-      padding: 4px 0;
-      justify-content: space-evenly;
-    }
-
-    .nav-item {
-      flex: 1;
-    }
-
-    .nav-link {
-      padding: 4px 1px;
-      font-size: 8px;
-      gap: 1px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 32px;
-      text-align: center;
-      width: 100%;
-    }
-
     .stats-grid {
       gap: 6px;
       margin-bottom: 28px;
@@ -2128,35 +1974,6 @@
   }
 
   @media (max-width: 360px) {
-    .nav-container {
-      padding: 0 4px;
-    }
-
-    .nav-menu {
-      display: flex;
-      flex-direction: row;
-      gap: 1px;
-      justify-content: space-evenly;
-      padding: 4px 0;
-    }
-
-    .nav-item {
-      flex: 1;
-    }
-
-    .nav-link {
-      padding: 3px 1px;
-      font-size: 7px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 30px;
-      text-align: center;
-      width: 100%;
-      line-height: 1.1;
-    }
-
     .stats-grid {
       gap: 4px;
     }
