@@ -59,16 +59,16 @@ def dashboard() -> Union[str, Response]:
             Notification.timestamp.desc()
         ).limit(3).all()
         
-        # Calculate profile completion percentage
+        # Track the current account requirements, including identity verification.
         profile_fields = [
             current_user.email,
             current_user.phone_number,
             current_user.address,
             current_user.city,
             current_user.state,
-            current_user.profile_picture
+            current_user.is_identity_verified()
         ]
-        profile_field_names = ['Email', 'Phone', 'Address', 'City', 'State', 'Profile Picture']
+        profile_field_names = ['Email', 'Phone', 'Address', 'City', 'State', 'Identity Verification']
         profile_completion = int((sum(1 for field in profile_fields if field) / len(profile_fields)) * 100)
         
         # Calculate missing profile fields

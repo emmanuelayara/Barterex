@@ -112,6 +112,16 @@ def upload_item():
             flash(f'Please complete your profile before uploading items. Missing: {", ".join(incomplete_fields)}', 'warning')
             return redirect(url_for('user.settings'))
 
+        if not current_user.is_identity_verified():
+            logger.warning(f"Unverified user attempted to upload item: {current_user.username}, Status: {current_user.id_verification_status}")
+            if current_user.id_verification_status == 'pending_review':
+                flash('Your identity verification is still under review. You can upload items after it is approved.', 'warning')
+            elif current_user.id_verification_status == 'rejected':
+                flash('Your identity verification was not approved. Please review and resubmit your details before uploading items.', 'warning')
+            else:
+                flash('Please verify your identity before uploading items.', 'warning')
+            return redirect(url_for('user.settings'))
+
         form = UploadItemForm()
         
         # Debug: Log what we received

@@ -139,6 +139,10 @@ class User(db.Model, UserMixin):
         ]
         # Check if all required fields are filled (not None and not empty string)
         return all(field for field in required_fields)
+
+    def is_identity_verified(self):
+        """Return whether the user's identity verification was approved."""
+        return self.id_verification_status == 'verified'
     
     def get_incomplete_profile_fields(self):
         """
