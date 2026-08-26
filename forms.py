@@ -129,6 +129,10 @@ class UploadItemForm(FlaskForm):
     condition = SelectField('Condition', choices=[('Brand New', 'Brand New'), ('Fairly Used', 'Fairly Used')], validators=[
         DataRequired(message='Please select the condition of your item.')
     ])
+    usage_duration = StringField('How long have you used it?', validators=[
+        Optional(),
+        Length(max=100, message='Please keep this under 100 characters.')
+    ])
     category = SelectField('Category', choices=[
         ("Phones & Gadgets", "Phones & Gadgets"),
         ("Consumer Electronics", "Consumer Electronics"),
@@ -143,6 +147,10 @@ class UploadItemForm(FlaskForm):
     # Image count validation is handled by the upload route.
     images = MultipleFileField('Upload Images (6-15)')
     submit = SubmitField('Submit Item')
+
+    def validate_usage_duration(self, usage_duration):
+        if self.condition.data == 'Fairly Used' and not (usage_duration.data or '').strip():
+            raise ValidationError('Please let buyers know how long you have used this item.')
 
 
 class OrderForm(FlaskForm):

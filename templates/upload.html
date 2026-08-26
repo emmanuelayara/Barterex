@@ -1352,7 +1352,15 @@
             <span class="label-icon">⭐</span>
             {{ form.condition.label.text }}
           </label>
-          {{ form.condition(class="form-select") }}
+          {{ form.condition(class="form-select", id="condition") }}
+        </div>
+
+        <div class="form-group" id="usageDurationGroup" style="display: none;">
+          <label class="form-label" for="usage_duration">
+            <span class="label-icon">🕒</span>
+            {{ form.usage_duration.label.text }}
+          </label>
+          {{ form.usage_duration(class="form-input", id="usage_duration", placeholder="e.g. 6 months, 2 years") }}
         </div>
 
         <div class="form-group">
@@ -1394,6 +1402,22 @@
 </div>
 
 <script>
+  // Show the "how long used" field only when condition is "Fairly Used"
+  const conditionSelect = document.getElementById('condition');
+  const usageDurationGroup = document.getElementById('usageDurationGroup');
+
+  function toggleUsageDurationField() {
+    if (conditionSelect.value === 'Fairly Used') {
+      usageDurationGroup.style.display = 'block';
+    } else {
+      usageDurationGroup.style.display = 'none';
+      document.getElementById('usage_duration').value = '';
+    }
+  }
+
+  conditionSelect.addEventListener('change', toggleUsageDurationField);
+  toggleUsageDurationField();
+
   let selectedFiles = [];
   let primaryImageIndex = 0;
   const minImages = 6;
@@ -1545,6 +1569,7 @@
     formData.append('name', form.elements['name'].value);
     formData.append('description', form.elements['description'].value);
     formData.append('condition', form.elements['condition'].value);
+    formData.append('usage_duration', form.elements['usage_duration'].value);
     formData.append('category', form.elements['category'].value);
     
     // Debug: Log form fields
@@ -1552,6 +1577,7 @@
       name: form.elements['name'].value,
       description: form.elements['description'].value,
       condition: form.elements['condition'].value,
+      usage_duration: form.elements['usage_duration'].value,
       category: form.elements['category'].value
     });
     

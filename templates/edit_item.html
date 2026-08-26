@@ -26,6 +26,12 @@
             {{ form.condition(class="form-select", id="condition") }}
         </div>
 
+        <!-- Usage Duration (shown only for "Fairly Used" items) -->
+        <div class="mb-3" id="usageDurationGroup" style="display: none;">
+            <label for="usage_duration" class="form-label">How long have you used it?</label>
+            {{ form.usage_duration(class="form-control", id="usage_duration", placeholder="e.g. 6 months, 2 years") }}
+        </div>
+
         <!-- Category -->
         <div class="mb-3">
             <label for="category" class="form-label">Category</label>
@@ -48,4 +54,20 @@
         <button type="submit" class="btn btn-primary">Update Item</button>
     </form>
 </div>
+
+<script>
+    const conditionSelect = document.getElementById('condition');
+    const usageDurationGroup = document.getElementById('usageDurationGroup');
+
+    function toggleUsageDurationField() {
+        if (conditionSelect.value === 'Fairly Used') {
+            usageDurationGroup.style.display = 'block';
+        } else {
+            usageDurationGroup.style.display = 'none';
+        }
+    }
+
+    conditionSelect.addEventListener('change', toggleUsageDurationField);
+    toggleUsageDurationField();
+</script>
 {% endblock %}

@@ -162,6 +162,7 @@ def upload_item():
                 name=form.name.data,
                 description=form.description.data,
                 condition=form.condition.data,
+                usage_duration=form.usage_duration.data.strip() if form.condition.data == 'Fairly Used' and form.usage_duration.data else None,
                 category=form.category.data,
                 user_id=current_user.id,
                 uploaded_by_id=current_user.id,
@@ -335,6 +336,7 @@ def upload_item():
                             'name': 'Item Name',
                             'description': 'Item Description',
                             'condition': 'Item Condition',
+                            'usage_duration': 'Usage Duration',
                             'category': 'Item Category'
                         }
                         field_display = field_names.get(field, field)

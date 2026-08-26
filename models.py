@@ -297,6 +297,7 @@ class Item(db.Model):
     user = db.relationship('User', back_populates='items', foreign_keys='[Item.user_id]')
     uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_uploader'), nullable=True)
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
+    usage_duration = db.Column(db.String(100), nullable=True)  # How long a "Fairly Used" item has been used
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
     credited = db.Column(db.Boolean, default=False)
     location = db.Column(db.String(100))  # New field

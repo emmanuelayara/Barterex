@@ -787,6 +787,9 @@
           <div class="description-section">
             <h3 class="description-title">📝 Description</h3>
             <p class="description-text">{{ item.description }}</p>
+            {% if item.condition == 'Fairly Used' and item.usage_duration %}
+              <p class="description-text">🕒 <strong>Used for:</strong> {{ item.usage_duration }}</p>
+            {% endif %}
           </div>
 
           <!-- Button -->

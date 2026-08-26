@@ -176,6 +176,7 @@ def edit_item(item_id: int) -> Union[str, Response]:
             item.name = form.name.data
             item.description = form.description.data
             item.condition = form.condition.data
+            item.usage_duration = form.usage_duration.data.strip() if form.condition.data == 'Fairly Used' and form.usage_duration.data else None
             item.category = form.category.data
 
             # Handle image if provided
