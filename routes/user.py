@@ -813,7 +813,7 @@ def settings():
                                 <p style="font-size: 14px; color: #64748b;">
                                     We appreciate you being part of the Barterex community. If you have any feedback 
                                     about your experience, feel free to reach out to us at 
-                                    <a href="mailto:info.barterex@gmail.com" style="color: #ff7a00; text-decoration: none;">info.barterex@gmail.com</a>.
+                                    <a href="mailto:barter@barterxpress.com" style="color: #ff7a00; text-decoration: none;">barter@barterxpress.com</a>.
                                 </p>
                                 
                                 <p style="font-size: 14px; color: #64748b;">

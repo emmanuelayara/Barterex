@@ -54,7 +54,7 @@ app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() in ['true
 app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False').lower() in ['true', '1', 'yes']
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-mail_sender_name, mail_sender_email = os.getenv('MAIL_DEFAULT_SENDER', 'Barter Express,info.barterex@gmail.com').split(',')
+mail_sender_name, mail_sender_email = os.getenv('MAIL_DEFAULT_SENDER', 'Barter Express,barter@barterxpress.com').split(',')
 app.config['MAIL_DEFAULT_SENDER'] = (mail_sender_name.strip(), mail_sender_email.strip())
 
 # ✅ Suppress Flask-Mail debug output
