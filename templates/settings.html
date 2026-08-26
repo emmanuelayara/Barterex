@@ -446,6 +446,13 @@
     font-size: 1.3rem;
   }
 
+  .file-input-label.file-attached {
+    border-style: solid;
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.08);
+    color: #16a34a;
+  }
+
   input[type="file"] {
     display: none;
   }
@@ -1644,17 +1651,12 @@
     <!-- Verification Tab -->
     <div id="verification" class="tab-content">
       <div class="settings-card">
-        <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">Identity Verification</h2>
+        <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">Identity Details</h2>
 
-        {% if current_user.id_verification_status == 'verified' %}
+        {% if current_user.id_verification_status == 'submitted' %}
           <div class="verification-locked-box">
-            <div class="verification-status verified">Verified</div>
-            <p class="verification-note">Your government ID and NIN have been verified successfully.</p>
-          </div>
-        {% elif current_user.id_verification_status == 'pending_review' %}
-          <div class="verification-locked-box">
-            <div class="verification-status pending">Pending review</div>
-            <p class="verification-note">Your submitted documents are being reviewed by our verification partner.</p>
+            <div class="verification-status verified">Submitted</div>
+            <p class="verification-note">Your NIN and government ID have been submitted and added to your account records.</p>
           </div>
         {% else %}
           <form method="POST" enctype="multipart/form-data">
@@ -1668,21 +1670,38 @@
             <div class="form-group full">
               <label class="form-label" for="government_id">Government ID Card</label>
               <div class="file-input-wrapper">
-                <label class="file-input-label" for="government_id">
-                  <i class="fas fa-id-card"></i>
-                  <span>Upload government ID card</span>
+                <label class="file-input-label" for="government_id" id="governmentIdLabel">
+                  <i class="fas fa-id-card" id="governmentIdIcon"></i>
+                  <span id="governmentIdLabelText">Upload government ID card</span>
                 </label>
-                <input type="file" id="government_id" name="government_id" accept="image/*,.pdf" required>
+                <input type="file" id="government_id" name="government_id" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" required>
               </div>
-              <small class="field-hint">Accepted: JPG, PNG, PDF • Max size: 10MB</small>
+              <small class="field-hint">Accepted: JPG, JPEG, PNG, PDF • Max size: 10MB</small>
             </div>
 
             <div class="form-buttons" style="margin-top: 8px;">
               <button type="submit" class="btn btn-primary">
-                <i class="fas fa-check-circle"></i> Submit for Verification
+                <i class="fas fa-check-circle"></i> Submit
               </button>
             </div>
           </form>
+          <script>
+            document.getElementById('government_id')?.addEventListener('change', function () {
+              const label = document.getElementById('governmentIdLabel');
+              const icon = document.getElementById('governmentIdIcon');
+              const text = document.getElementById('governmentIdLabelText');
+              const file = this.files && this.files[0];
+              if (file) {
+                label.classList.add('file-attached');
+                icon.className = 'fas fa-check-circle';
+                text.textContent = file.name;
+              } else {
+                label.classList.remove('file-attached');
+                icon.className = 'fas fa-id-card';
+                text.textContent = 'Upload government ID card';
+              }
+            });
+          </script>
         {% endif %}
       </div>
     </div>

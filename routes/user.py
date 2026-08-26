@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, Response
+from flask import Blueprint, render_template, request, flash, redirect, url_for, send_file, Response, jsonify
 from flask_login import login_required, current_user, logout_user
 from sqlalchemy.orm import joinedload
 from typing import Dict, Any, Union, Tuple
@@ -59,16 +59,16 @@ def dashboard() -> Union[str, Response]:
             Notification.timestamp.desc()
         ).limit(3).all()
         
-        # Track the current account requirements, including identity verification.
+        # Track the current account requirements, including identity document submission.
         profile_fields = [
             current_user.email,
             current_user.phone_number,
             current_user.address,
             current_user.city,
             current_user.state,
-            current_user.is_identity_verified()
+            current_user.has_submitted_identity()
         ]
-        profile_field_names = ['Email', 'Phone', 'Address', 'City', 'State', 'Identity Verification']
+        profile_field_names = ['Email', 'Phone', 'Address', 'City', 'State', 'Identity Documents']
         profile_completion = int((sum(1 for field in profile_fields if field) / len(profile_fields)) * 100)
         
         # Calculate missing profile fields
@@ -685,7 +685,7 @@ def settings():
                     validate_upload(
                         gov_id_file,
                         max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10 * 1024 * 1024),
-                        allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf'}),
+                        allowed_extensions={'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf'},
                         enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
                     )
 
@@ -697,12 +697,11 @@ def settings():
 
                     current_user.nin = nin
                     current_user.government_id_document = safe_name
-                    current_user.id_verification_status = 'pending_review'
-                    current_user.id_verified_at = None
+                    current_user.id_verification_status = 'submitted'
 
                     db.session.commit()
-                    logger.info(f"Identity verification submitted - User: {current_user.username}, NIN: {nin}")
-                    flash('✅ Your verification details have been submitted. Our verification partner is reviewing them.', 'success')
+                    logger.info(f"Identity details submitted - User: {current_user.username}, NIN: {nin}")
+                    flash('✅ Your NIN and government ID have been submitted and added to your account.', 'success')
                     return redirect(url_for('user.settings'))
                 except FileUploadError as e:
                     logger.warning(f"Government ID upload failed: {str(e)}")

@@ -140,8 +140,8 @@ class UploadItemForm(FlaskForm):
     ], validators=[
         DataRequired(message='Please select a category for your item.')
     ])
-    # Changed to support multiple files - validation done in route handler
-    images = MultipleFileField('Upload Images (Max 6)')
+    # Image count validation is handled by the upload route.
+    images = MultipleFileField('Upload Images (6-15)')
     submit = SubmitField('Submit Item')
 
 

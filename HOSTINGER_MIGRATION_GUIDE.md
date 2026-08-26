@@ -272,18 +272,7 @@ sudo journalctl -u barterex -f
 sudo tail -f /var/log/nginx/error.log
 ```
 
-## 14. Optional Cloudinary Removal Cleanup
-
-If you are fully committing to VPS local storage:
-
-1. Remove cloudinary from `requirements.txt`.
-2. Delete Cloudinary-only docs if no longer needed:
-   - `CLOUDINARY_QUICK_START.md`
-   - `CLOUDINARY_SETUP_GUIDE.md`
-   - `CLOUDINARY_TECHNICAL_DOCS.md`
-   - `RENDER_CLOUDINARY_SETUP_FINAL.md`
-
-## 15. Rollback Plan
+## 14. Rollback Plan
 
 If deploy fails:
 

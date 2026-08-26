@@ -12,6 +12,9 @@ from logger_config import setup_logger
 
 logger = setup_logger(__name__)
 
+MIN_ITEM_IMAGES = 6
+MAX_ITEM_IMAGES = 15
+
 
 class UploadValidationError(Exception):
     """Custom exception for upload validation with user-friendly messages"""
@@ -92,16 +95,16 @@ def validate_image_count(image_count):
     Returns:
         tuple: (is_valid: bool, error_message: str or None)
     """
-    if image_count == 0:
+    if image_count < MIN_ITEM_IMAGES:
         return False, (
-            "Please upload at least one image. "
+            f"Please upload at least {MIN_ITEM_IMAGES} images. "
             "High-quality images help buyers understand your item better."
         )
     
-    if image_count > 6:
+    if image_count > MAX_ITEM_IMAGES:
         return False, (
-            f"You've uploaded {image_count} images, but the maximum is 6 images per item. "
-            f"Please remove {image_count - 6} image(s) and try again."
+            f"You've uploaded {image_count} images, but the maximum is {MAX_ITEM_IMAGES} images per item. "
+            f"Please remove {image_count - MAX_ITEM_IMAGES} image(s) and try again."
         )
     
     return True, None
@@ -291,7 +294,7 @@ def get_user_friendly_error_message(error_obj, field=None):
     
     # Map technical error patterns to user-friendly messages
     error_mappings = {
-        'No file selected': 'Please select at least one image to upload.',
+        'No file selected': 'Please select at least 6 images to upload.',
         'File is empty': 'The image file you uploaded is empty. Please select a valid image file.',
         'unknown file type': 'The image file could not be read. Please try a different image.',
         'corrupted': 'The image file appears to be corrupted. Please try a different image.',

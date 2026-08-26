@@ -2,18 +2,18 @@
 
 ## Problem Identified
 Images stored in the database had paths like:
-- `barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG` (Cloudinary-style paths)
+- `barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG` (legacy nested paths)
 
 But the actual files in `/static/uploads/` were stored as:
 - `1_0_1771234294_Barter_logo.PNG` (simple filenames)
 
-This mismatch occurred because the database entries were created when Cloudinary was enabled, storing Cloudinary public IDs, but the actual files were saved locally without the Cloudinary folder structure.
+This mismatch occurred because database entries kept legacy nested path prefixes while files were saved locally as plain filenames.
 
 ## Solution Implemented
 
 Updated the `image_url` filter in `app.py` to:
 
-1. Extract the filename from Cloudinary-style paths (e.g., get `0_1_0_1771234294_Barter_logo.PNG` from `barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG`)
+1. Extract the filename from nested paths (e.g., get `0_1_0_1771234294_Barter_logo.PNG` from `barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG`)
 2. Check if the file exists with that name
 3. If not found, try removing the first underscore-separated component (handles the database naming mismatch)
 4. Return the correct path to the actual file
@@ -21,7 +21,7 @@ Updated the `image_url` filter in `app.py` to:
 ## Code Changes
 
 **File: app.py (image_url filter)**
-- Extracts filename from Cloudinary paths by splitting on `/` and taking the last component
+- Extracts filename from nested paths by splitting on `/` and taking the last component
 - Checks if extracted filename matches an actual file
 - Falls back to removing first component if exact match not found
 - Returns the corrected path to `static/uploads/`
@@ -29,11 +29,11 @@ Updated the `image_url` filter in `app.py` to:
 ## Testing Results
 
 Filter testing passed all test cases:
-- ✓ Cloudinary paths (e.g., `barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG`)
+- ✓ Nested legacy paths (e.g., `barterex/1/1/1/0_1_0_1771234294_Barter_logo.PNG`)
 - ✓ Simple filenames (e.g., `1_0_1771234294_Barter_logo.PNG`)
 - ✓ NULL/empty values
 - ✓ Full HTTP URLs
-- ✓ Cloudinary.com URLs
+- ✓ External HTTP image URLs
 
 ## Expected Results
 

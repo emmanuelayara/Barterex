@@ -13,9 +13,9 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     phone_number = db.Column(db.String(15), nullable=True)
     profile_picture = db.Column(db.String(200), nullable=True)  # URL to the profile picture
-    nin = db.Column(db.String(20), nullable=True)  # National Identity Number for verification
+    nin = db.Column(db.String(20), nullable=True)  # National Identity Number
     government_id_document = db.Column(db.String(255), nullable=True)  # Uploaded government-issued ID path
-    id_verification_status = db.Column(db.String(30), default='not_submitted', nullable=False)  # not_submitted, pending_review, verified, rejected
+    id_verification_status = db.Column(db.String(30), default='not_submitted', nullable=False)  # not_submitted, submitted
     id_verified_at = db.Column(db.DateTime, nullable=True)
     address = db.Column(db.String(255))
     city = db.Column(db.String(50))
@@ -140,9 +140,9 @@ class User(db.Model, UserMixin):
         # Check if all required fields are filled (not None and not empty string)
         return all(field for field in required_fields)
 
-    def is_identity_verified(self):
-        """Return whether the user's identity verification was approved."""
-        return self.id_verification_status == 'verified'
+    def has_submitted_identity(self):
+        """Return whether the user has submitted their NIN and government ID."""
+        return self.id_verification_status == 'submitted'
     
     def get_incomplete_profile_fields(self):
         """

@@ -1320,7 +1320,7 @@
         <li>
           <div class="guideline-icon">📸</div>
           <div class="guideline-text">
-            Upload <strong>multiple high-quality images</strong> from different angles (max 6 images)
+            Upload <strong>6 to 15 high-quality images</strong> from different angles
           </div>
         </li>
       </ul>
@@ -1366,19 +1366,19 @@
         <div class="form-group">
           <label class="form-label">
             <span class="label-icon">📸</span>
-            Upload Images (Max 6)
+            Upload Images (6-15)
           </label>
           <div class="file-upload-container">
             <div class="file-upload-area" id="fileUploadArea">
               <div class="file-upload-icon" id="uploadIcon">📷</div>
               <div class="file-upload-text">Drag & drop multiple images here</div>
-              <div class="file-upload-subtext">or click to browse files (JPG, PNG, WEBP) - Max 6 images</div>
+              <div class="file-upload-subtext">or click to browse files (JPG, PNG, WEBP) - 6 to 15 images</div>
               <input type="file" class="file-input" id="imageInput" name="images" accept="image/*" multiple>
             </div>
             
             <div class="images-preview-container" id="imagesPreviewContainer" style="display: none;">
               <div class="upload-counter">
-                <span id="imageCount">0</span> / 6 images selected
+                <span id="imageCount">0</span> / 15 images selected
               </div>
               <div class="images-preview-grid" id="imagesPreviewGrid"></div>
             </div>
@@ -1396,6 +1396,8 @@
 <script>
   let selectedFiles = [];
   let primaryImageIndex = 0;
+  const minImages = 6;
+  const maxImages = 15;
 
   const fileUploadArea = document.getElementById('fileUploadArea');
   const fileInput = document.getElementById('imageInput');
@@ -1430,12 +1432,12 @@
   function handleMultipleFileUpload(files) {
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
-    // Limit to 6 images total
-    const remainingSlots = 6 - selectedFiles.length;
+    // Limit to 15 images total
+    const remainingSlots = maxImages - selectedFiles.length;
     const filesToAdd = imageFiles.slice(0, remainingSlots);
     
     if (imageFiles.length > remainingSlots) {
-      alert(`You can only upload ${remainingSlots} more image(s). Maximum 6 images allowed.`);
+      alert(`You can only upload ${remainingSlots} more image(s). Maximum ${maxImages} images allowed.`);
     }
     
     filesToAdd.forEach(file => {
@@ -1517,12 +1519,12 @@
   const form = document.getElementById('uploadForm');
 
   form.addEventListener('submit', function(e) {
-    if (selectedFiles.length === 0) {
+    if (selectedFiles.length < minImages) {
       e.preventDefault();
       if (typeof warningToast !== 'undefined') {
-        warningToast('Please select at least one image before submitting.');
+        warningToast(`Please select at least ${minImages} images before submitting.`);
       } else {
-        alert('Please select at least one image before submitting.');
+        alert(`Please select at least ${minImages} images before submitting.`);
       }
       return;
     }

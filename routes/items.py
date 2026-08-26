@@ -18,7 +18,7 @@ from file_upload_validator import validate_upload, generate_safe_filename
 from trading_points import award_points_for_purchase, create_level_up_notification
 from upload_validation_helper import (
     validate_upload_request, validate_image_type, validate_image_size, 
-    validate_image_dimensions, get_user_friendly_error_message
+    validate_image_dimensions, validate_image_count, get_user_friendly_error_message
 )
 
 # Import limiter - handle gracefully if not available
@@ -112,14 +112,9 @@ def upload_item():
             flash(f'Please complete your profile before uploading items. Missing: {", ".join(incomplete_fields)}', 'warning')
             return redirect(url_for('user.settings'))
 
-        if not current_user.is_identity_verified():
-            logger.warning(f"Unverified user attempted to upload item: {current_user.username}, Status: {current_user.id_verification_status}")
-            if current_user.id_verification_status == 'pending_review':
-                flash('Your identity verification is still under review. You can upload items after it is approved.', 'warning')
-            elif current_user.id_verification_status == 'rejected':
-                flash('Your identity verification was not approved. Please review and resubmit your details before uploading items.', 'warning')
-            else:
-                flash('Please verify your identity before uploading items.', 'warning')
+        if not current_user.has_submitted_identity():
+            logger.warning(f"User without submitted identity documents attempted to upload item: {current_user.username}")
+            flash('Please submit your NIN and government ID before uploading items.', 'warning')
             return redirect(url_for('user.settings'))
 
         form = UploadItemForm()
@@ -143,15 +138,13 @@ def upload_item():
         image_validation_errors = []
         
         if not images_from_request or len([f for f in images_from_request if f and f.filename]) == 0:
-            image_validation_errors.append('Please upload at least one image so buyers can see your item.')
+            image_validation_errors.append('Please upload at least 6 images so buyers can see your item.')
         else:
             # Check image count
             valid_images = [f for f in images_from_request if f and f.filename]
-            if len(valid_images) > 6:
-                image_validation_errors.append(
-                    f'You\'ve uploaded {len(valid_images)} images, but the maximum is 6 images. '
-                    f'Please remove {len(valid_images) - 6} image(s) and try again.'
-                )
+            is_valid, error_msg = validate_image_count(len(valid_images))
+            if not is_valid:
+                image_validation_errors.append(error_msg)
             
             # Check each image type
             for img_file in valid_images:

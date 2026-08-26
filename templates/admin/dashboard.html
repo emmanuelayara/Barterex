@@ -1178,11 +1178,6 @@
         return url;
       }
 
-      // If already a Cloudinary URL, return as-is
-      if (url.includes('res.cloudinary.com')) {
-        return url;
-      }
-
       // If already a local static path, return as-is
       if (url.includes('/static/')) {
         return url.replace(/\/+/g, '/');

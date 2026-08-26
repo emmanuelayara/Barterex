@@ -24,6 +24,8 @@ logger = setup_logger(__name__)
 
 # Magic bytes for different file types (file signatures) - STRICT validation
 MAGIC_BYTES = {
+    # PDF signature
+    b'%PDF-': 'pdf',
     # JPEG signatures (three common variants)
     b'\xFF\xD8\xFF\xE0': 'jpg',   # JPEG with JFIF
     b'\xFF\xD8\xFF\xE1': 'jpg',   # JPEG with Exif
@@ -37,6 +39,7 @@ MAGIC_BYTES = {
 
 # MIME type whitelist - only image types
 ALLOWED_MIME_TYPES = {
+    'application/pdf',
     'image/jpeg',
     'image/png',
     'image/gif',
@@ -45,6 +48,7 @@ ALLOWED_MIME_TYPES = {
 
 # File extension to MIME type mapping (strict)
 EXTENSION_MIME_MAP = {
+    'pdf': {'application/pdf'},
     'jpg': {'image/jpeg'},
     'jpeg': {'image/jpeg'},
     'png': {'image/png'},
@@ -113,6 +117,9 @@ def get_mime_type_from_content(file_data):
         str: MIME type or None
     """
     try:
+        if file_data.startswith(b'%PDF-'):
+            return 'application/pdf'
+
         # Try using python-magic if available for better detection
         import magic
         mime = magic.Magic(mime=True)
@@ -394,10 +401,11 @@ def validate_upload(file_obj, max_size=10*1024*1024, allowed_extensions={'png', 
         raise FileUploadError(f"File type mismatch: detected {detected_type}, filename has .{ext} extension. This may be a polyglot attack.")
     
     # ===== LAYER 8: Image integrity and dimensions check =====
-    img_valid, img_msg = validate_image_integrity(file_data)
-    if not img_valid:
-        logger.warning(f"Upload rejected at layer 8 (image integrity): {img_msg}")
-        raise FileUploadError(img_msg)
+    if detected_type != 'pdf':
+        img_valid, img_msg = validate_image_integrity(file_data)
+        if not img_valid:
+            logger.warning(f"Upload rejected at layer 8 (image integrity): {img_msg}")
+            raise FileUploadError(img_msg)
     
     # ===== LAYER 9: Optional virus/malware scan =====
     if enable_virus_scan:

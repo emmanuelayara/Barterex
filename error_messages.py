@@ -108,8 +108,8 @@ class ErrorMessages:
     }
     
     NO_IMAGE_SELECTED = {
-        'message': 'Please select at least one image.',
-        'action': 'Upload at least one image for your item.',
+        'message': 'Please select at least 6 images.',
+        'action': 'Upload at least 6 images for your item.',
         'suggestion': 'Click "Add Image" to select photos'
     }
     
