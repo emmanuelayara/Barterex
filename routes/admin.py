@@ -506,7 +506,7 @@ def ban_user(user_id):
                                       ban_date=user.ban_date,
                                       unban_url=url_for('auth.banned', _external=True))
             send_email_async(
-                subject="Your Barterex Account Has Been Suspended",
+                subject="Your Barter Express Account Has Been Suspended",
                 recipients=[user.email],
                 html_body=html_body
             )
@@ -912,7 +912,7 @@ def approve_item(item_id):
                 user_id=item.user_id,
                 message=f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits! "
                         f"You earned 10 trading points. New Balance: ₦{item.user.credits:,} credits. "
-                        f"Keep using Barterex for seamless trading."
+                        f"Keep using Barter Express for seamless trading."
             )
         
         db.session.add(notification)
@@ -1820,7 +1820,7 @@ def export_user_data(user_id):
                 
                 # Header section
                 if include_header:
-                    story.append(Paragraph("BARTEREX", title_style))
+                    story.append(Paragraph("BARTER EXPRESS", title_style))
                     story.append(Paragraph("Data Export Report - GDPR Compliance", subtitle_style))
                     
                     # Divider line

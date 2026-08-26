@@ -108,7 +108,7 @@ def get_transaction_explanation(transaction):
         elif transaction.transaction_type == 'admin_credit':
             explanation['explanation'] = (
                 f"An admin credited ₦{transaction.amount:,.0f} to your account. "
-                f"{transaction.description or 'Thank you for using Barterex!'}"
+                f"{transaction.description or 'Thank you for using Barter Express!'}"
             )
         elif transaction.transaction_type == 'refund':
             explanation['explanation'] = (

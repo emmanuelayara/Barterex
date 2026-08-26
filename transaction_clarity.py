@@ -261,7 +261,7 @@ def generate_pdf_receipt(order, user):
         )
         
         # Title
-        elements.append(Paragraph("🛒 BARTEREX TRANSACTION RECEIPT", title_style))
+        elements.append(Paragraph("🛒 BARTER EXPRESS TRANSACTION RECEIPT", title_style))
         elements.append(Spacer(1, 0.2*inch))
         
         # Order header info
@@ -368,7 +368,7 @@ def generate_pdf_receipt(order, user):
             alignment=1
         )
         elements.append(Paragraph(
-            "Thank you for using Barterex! For support, visit our website or contact us.<br/>" +
+            "Thank you for using Barter Express! For support, visit our website or contact us.<br/>" +
             f"Generated on {datetime.utcnow().strftime('%d %B %Y at %H:%M')}",
             footer_style
         ))
@@ -422,7 +422,7 @@ def generate_html_receipt(order, user):
         <body>
             <div class="container">
                 <div class="header">
-                    <h2>🛒 Barterex Transaction Receipt</h2>
+                    <h2>🛒 Barter Express Transaction Receipt</h2>
                     <p>Order #{order.order_number}</p>
                 </div>
                 
@@ -498,7 +498,7 @@ def generate_html_receipt(order, user):
                 </div>
                 
                 <div class="footer">
-                    <p>Thank you for using Barterex!</p>
+                    <p>Thank you for using Barter Express!</p>
                     <p>For support, visit our website or contact us.</p>
                     <p>Generated on {datetime.utcnow().strftime('%d %B %Y at %H:%M')}</p>
                 </div>

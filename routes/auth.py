@@ -97,7 +97,7 @@ def register():
                 support_url=support_url
             )
             send_email_async(
-                subject="✅ Verify Your Barterex Email Address",
+                subject="✅ Verify Your Barter Express Email Address",
                 recipients=[user.email],
                 html_body=html
             )
@@ -184,7 +184,7 @@ def verify_email(token):
         # Send welcome email after verification
         html = render_template("emails/welcome_email.html", username=user.username)
         send_email_async(
-            subject="🎉 Welcome to Barterex!",
+            subject="🎉 Welcome to Barter Express!",
             recipients=[user.email],
             html_body=html
         )
@@ -250,7 +250,7 @@ def resend_verification():
             support_url=support_url
         )
         send_email_async(
-            subject="✅ Verify Your Barterex Email Address",
+            subject="✅ Verify Your Barter Express Email Address",
             recipients=[user.email],
             html_body=html
         )
@@ -348,7 +348,7 @@ def login():
 
                 if user.first_login:
                     flash(
-                        "🎉 Welcome to Barterex! You've received 1000 starter credits. Let's get trading!",
+                        "🎉 Welcome to Barter Express! You've received 1000 starter credits. Let's get trading!",
                         "success"
                     )
                     user.first_login = False

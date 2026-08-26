@@ -605,7 +605,7 @@ Order Details:
 Your refund has been processed and added back to your account.
 
 Best regards,
-Barterex Team
+Barter Express Team
                 """,
                 html_body=f"""
 <html>
@@ -630,7 +630,7 @@ Barterex Team
       
       <p>If you have any questions about your cancelled order, please contact our support team.</p>
       
-      <p>Best regards,<br><strong>Barterex Team</strong></p>
+      <p>Best regards,<br><strong>Barter Express Team</strong></p>
     </div>
   </body>
 </html>
@@ -788,7 +788,7 @@ def settings():
                                 <p style="font-size: 16px;">Hi <strong>{username}</strong>,</p>
                                 
                                 <p style="font-size: 16px;">
-                                    Your Barterex account has been successfully deleted. All your personal information, 
+                                    Your Barter Express account has been successfully deleted. All your personal information, 
                                     items, trades, and transactions have been permanently removed from our system.
                                 </p>
                                 
@@ -811,14 +811,14 @@ def settings():
                                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
                                 
                                 <p style="font-size: 14px; color: #64748b;">
-                                    We appreciate you being part of the Barterex community. If you have any feedback 
+                                    We appreciate you being part of the Barter Express community. If you have any feedback 
                                     about your experience, feel free to reach out to us at 
                                     <a href="mailto:barter@barterxpress.com" style="color: #ff7a00; text-decoration: none;">barter@barterxpress.com</a>.
                                 </p>
                                 
                                 <p style="font-size: 14px; color: #64748b;">
                                     Best regards,<br>
-                                    <strong>The Barterex Team</strong>
+                                    <strong>The Barter Express Team</strong>
                                 </p>
                             </div>
                         </body>
@@ -826,7 +826,7 @@ def settings():
                     """
                     
                     send_email_async(
-                        subject='Goodbye from Barterex - Account Deleted',
+                        subject='Goodbye from Barter Express - Account Deleted',
                         recipients=[user_email],
                         html_body=goodbye_html
                     )

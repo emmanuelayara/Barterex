@@ -20,11 +20,11 @@ with app.app_context():
         mail = Mail(app)
         
         msg = Message(
-            subject="Barterex Test Email",
+            subject="Barter Express Test Email",
             sender=config.get('MAIL_DEFAULT_SENDER'),
             recipients=['ayaraemmanuel16@gmail.com']
         )
-        msg.html = "<h1>Test Email</h1><p>This is a test email from Barterex.</p>"
+        msg.html = "<h1>Test Email</h1><p>This is a test email from Barter Express.</p>"
         
         print("Attempting to send test email...")
         mail.send(msg)

@@ -208,7 +208,7 @@ class MonnifyPaymentService:
                 'customerName': user.username,
                 'customerEmail': user.email,
                 'paymentReference': transaction_ref,
-                'paymentDescription': f'Purchase {credits} credits on Barterex',
+                'paymentDescription': f'Purchase {credits} credits on Barter Express',
                 'incomeSplitConfig': [],
                 'redirectUrl': MonnifyPaymentService.CALLBACK_URL
             }

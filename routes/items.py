@@ -76,9 +76,9 @@ def create_notification(user_id, message):
         </head>
         <body>
             <div class="container">
-                <h2>📬 New Notification from Barterex</h2>
+                <h2>📬 New Notification from Barter Express</h2>
                 <div class="message">{message}</div>
-                <p>Thanks for using Barterex!</p>
+                <p>Thanks for using Barter Express!</p>
                 <div class="footer">
                     <p>This is an automated message. Please do not reply to this email.</p>
                 </div>
@@ -870,7 +870,7 @@ def finalize_purchase():
                         <div class="footer">
                             <p>This is an automated confirmation email. Please do not reply to this email.</p>
                             <p>If you have any questions, please contact our support team.</p>
-                            <p>© 2026 Barterex. All rights reserved.</p>
+                            <p>© 2026 Barter Express. All rights reserved.</p>
                         </div>
                     </div>
                 </body>
@@ -878,7 +878,7 @@ def finalize_purchase():
                 """
                 
                 send_email_async(
-                    subject=f"Order Confirmation #{order_number} - Barterex",
+                    subject=f"Order Confirmation #{order_number} - Barter Express",
                     recipients=[current_user.email],
                     html_body=email_html
                 )

@@ -221,7 +221,7 @@ def send_wishlist_email(recipient, user_name, item_title, item_id, category, con
                 raise
             
             # Get sender configuration
-            sender = app.config.get('MAIL_DEFAULT_SENDER', ('Barterex', 'noreply@barterex.com'))
+            sender = app.config.get('MAIL_DEFAULT_SENDER', ('Barter Express', 'noreply@barterex.com'))
             logger.info(f'[WISHLIST] Using sender: {sender}')
             
             # Create and send email

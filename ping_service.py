@@ -36,10 +36,10 @@ def ping_service(url):
 
 if __name__ == "__main__":
     # Replace with your actual Render service URL
-    SERVICE_URL = "https://barterex.onrender.com"
+    SERVICE_URL = "https://barterxpress.com"
     
     # You can also add a health check endpoint if you have one
-    # SERVICE_URL = "https://barterex.onrender.com/health"
+    # SERVICE_URL = "https://barterxpress.com/health"
     
     logging.info(f"Starting ping job for {SERVICE_URL}")
     success = ping_service(SERVICE_URL)
