@@ -178,11 +178,15 @@ GRANT ALL PRIVILEGES ON DATABASE barterex_db TO barterex_user;
 
 ## 4.2 Import Render dump
 
+> **Note:** If your Hostinger database was already reset/recreated (e.g. to clear out old broken migration history), skip this step and go straight to 4.3 — `flask db upgrade` will build the schema from scratch on the empty database.
+
 ```bash
 psql "postgresql://barterex_user:replace_db_password@127.0.0.1:5432/barterex_db" < barterex_render_backup.sql
 ```
 
 ## 4.3 Run migrations (safe even if already up)
+
+Make sure you've pulled the latest code first (`git pull origin main`) so the VPS has the current `migrations/` folder — the migration history was reset locally, so an old checkout would be out of sync.
 
 ```bash
 cd /var/www/barterex/app

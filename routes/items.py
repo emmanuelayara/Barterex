@@ -18,7 +18,7 @@ from file_upload_validator import validate_upload, generate_safe_filename
 from trading_points import award_points_for_purchase, create_level_up_notification
 from upload_validation_helper import (
     validate_upload_request, validate_image_type, validate_image_size, 
-    validate_image_dimensions, validate_image_count, get_user_friendly_error_message
+    validate_image_count, get_user_friendly_error_message
 )
 
 # Import limiter - handle gracefully if not available
@@ -256,19 +256,6 @@ def upload_item():
                                     file_size = analysis.get('file_size')
                             except Exception as e:
                                 logger.warning(f"Image analysis failed: {e}")
-                            
-                            # Validate image dimensions if available
-                            if width and height:
-                                is_valid, error_msg = validate_image_dimensions(
-                                    width,
-                                    height,
-                                    file.filename,
-                                    min_width=400,
-                                    min_height=300
-                                )
-                                if not is_valid:
-                                    # Log warning but don't block - just inform user
-                                    logger.warning(f"Image dimension warning for {file.filename}: {error_msg}")
                             
                             item_image = ItemImage(
                                 item_id=new_item.id,

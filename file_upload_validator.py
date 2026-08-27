@@ -222,16 +222,13 @@ def validate_file_extension(filename, allowed_extensions={'png', 'jpg', 'jpeg', 
     return True, "Extension valid", ext
 
 
-def validate_image_integrity(file_data, max_dimensions=(4096, 4096)):
+def validate_image_integrity(file_data):
     """
-    Validate that file is a real, valid image - not corrupted, trojaned, or oversized.
+    Validate that file is a real, valid image - not corrupted or malformed.
     Uses PIL to verify the image can be opened and is not malformed.
-    Also checks image dimensions to prevent zip bomb-like attacks.
     
     Args:
         file_data: Binary file data
-        max_dimensions: Maximum allowed image dimensions (width, height)
-        
     Returns:
         tuple: (is_valid: bool, message: str)
     """
@@ -242,20 +239,7 @@ def validate_image_integrity(file_data, max_dimensions=(4096, 4096)):
         # Verify image can be loaded
         img.load()
         
-        # Check dimensions to prevent zip bomb-like attacks
         width, height = img.size
-        max_width, max_height = max_dimensions
-        
-        if width > max_width or height > max_height:
-            logger.warning(f"Image dimensions too large: {width}x{height} > {max_width}x{max_height}")
-            return False, f"Image dimensions too large: {width}x{height}. Maximum: {max_width}x{max_height}"
-        
-        # Check minimum dimensions (prevent tiny placeholder images)
-        min_width, min_height = 50, 50  # Minimum 50x50 pixels
-        if width < min_width or height < min_height:
-            logger.warning(f"Image dimensions too small: {width}x{height} < {min_width}x{min_height}")
-            return False, f"Image dimensions too small: {width}x{height}. Minimum: {min_width}x{min_height}"
-        
         logger.debug(f"Image validation passed - Type: {img.format}, Size: {img.size}, Dimensions: {width}x{height}")
         return True, "Image valid"
         

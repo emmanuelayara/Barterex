@@ -24,7 +24,7 @@ UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max size: 50MB (global limit)
+app.config['MAX_CONTENT_LENGTH'] = 150 * 1024 * 1024  # Max size: 150MB (global limit)
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 
 # ✅ File upload security configuration

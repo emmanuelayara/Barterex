@@ -1135,9 +1135,9 @@
             <ul class="nav-links">
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="{{ url_for('items.upload_item') }}" class="nav-link{% if request.endpoint == 'items.upload_item' %} active{% endif %}" data-tooltip="Upload Item">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span class="nav-text">Upload</span>
+                        <a href="{{ url_for('user.user_orders') }}" class="nav-link{% if request.endpoint == 'user.user_orders' %} active{% endif %}" data-tooltip="Orders">
+                            <i class="fas fa-credit-card"></i>
+                            <span class="nav-text">Orders</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -1216,9 +1216,9 @@
                 <i class="fas fa-heart"></i>
                 <span>Wishlist</span>
             </a>
-            <a href="{{ url_for('user.user_orders') }}" class="bottom-nav-item {% if request.endpoint == 'user.user_orders' %}active{% endif %}">
-                <i class="fas fa-credit-card"></i>
-                <span>Orders</span>
+            <a href="{{ url_for('items.upload_item') }}" class="bottom-nav-item {% if request.endpoint == 'items.upload_item' %}active{% endif %}">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload</span>
             </a>
             <a href="{{ url_for('user.notifications') }}" class="bottom-nav-item {% if request.endpoint == 'user.notifications' %}active{% endif %}">
                 <i class="fas fa-bell"></i>

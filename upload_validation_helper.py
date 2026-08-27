@@ -138,37 +138,19 @@ def validate_image_size(file_size_bytes, filename, max_size_mb=10):
     return True, None
 
 
-def validate_image_dimensions(width, height, filename, min_width=400, min_height=300):
+def validate_image_dimensions(width, height, filename):
     """
-    Validate image dimensions.
+    Validate that image dimensions are available.
     
     Args:
         width: Image width in pixels
         height: Image height in pixels
         filename: Name of the file
-        min_width: Minimum width required
-        min_height: Minimum height required
-    
     Returns:
         tuple: (is_valid: bool, error_message: str or None)
     """
     if width is None or height is None:
         return False, f"'{filename}' has invalid dimensions. Please use a valid image file."
-    
-    if width < min_width or height < min_height:
-        return False, (
-            f"'{filename}' is too small ({width}x{height} pixels). "
-            f"Please use images that are at least {min_width}x{min_height} pixels. "
-            f"Higher resolution images help buyers see details better."
-        )
-    
-    # Check for unusually extreme aspect ratios
-    aspect_ratio = width / height if height > 0 else 0
-    if aspect_ratio > 5 or aspect_ratio < 0.2:
-        return False, (
-            f"'{filename}' has an unusual shape (aspect ratio: {aspect_ratio:.1f}:1). "
-            f"Please use photos that are closer to normal proportions (landscape or portrait)."
-        )
     
     return True, None
 
