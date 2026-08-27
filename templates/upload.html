@@ -1453,7 +1453,7 @@
             <div class="upload-progress-track" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
               <div class="upload-progress-bar" id="uploadProgressBar"></div>
             </div>
-            <p class="upload-progress-status" id="uploadProgressStatus">Please keep this page open while your item is uploaded.</p>
+            <p class="upload-progress-status" id="uploadProgressStatus">Keep this page open while your item is being uploaded.</p>
           </div>
         </div>
       </form>
@@ -1706,7 +1706,7 @@
         submitBtn.innerHTML = '✅ Uploaded Successfully!';
         submitBtn.style.background = 'var(--success-gradient)';
         setTimeout(() => {
-          window.location.href = '/marketplace';
+          window.location.href = '/dashboard';
         }, 2000);
       } else {
         handleUploadError(new Error('Submission failed'));
