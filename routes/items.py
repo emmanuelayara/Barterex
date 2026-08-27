@@ -14,7 +14,7 @@ from logger_config import setup_logger
 from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailableError, FileUploadError, DatabaseError, CheckoutError
 from error_handlers import handle_errors, safe_database_operation, retry_operation
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
-from file_upload_validator import validate_upload, generate_safe_filename
+from file_upload_validator import validate_upload, generate_safe_filename, optimize_image_for_storage
 from trading_points import award_points_for_purchase, create_level_up_notification
 from upload_validation_helper import (
     validate_upload_request, validate_image_type, validate_image_size, 
@@ -226,8 +226,13 @@ def upload_item():
                                 upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
                                 image_path = os.path.join(upload_root, unique_filename)
                                 os.makedirs(os.path.dirname(image_path), exist_ok=True)
-                                file.seek(0)  # Reset file pointer
-                                file.save(image_path)
+                                file.seek(0)
+                                optimized_data = optimize_image_for_storage(
+                                    file.read(),
+                                    file.filename.rsplit('.', 1)[1].lower()
+                                )
+                                with open(image_path, 'wb') as stored_file:
+                                    stored_file.write(optimized_data)
 
                                 # Store ONLY the filename, not the full path - the image_url filter will construct the proper URL
                                 image_url = unique_filename

@@ -15,7 +15,7 @@ import mimetypes
 import hashlib
 import shutil
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageOps
 from werkzeug.utils import secure_filename
 from exceptions import FileUploadError
 from logger_config import setup_logger
@@ -68,6 +68,41 @@ FILE_SIZE_LIMITS = {
 
 # Global max file size (safety limit)
 GLOBAL_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB absolute maximum
+
+# Listing images do not need the full resolution produced by most cameras.
+STORED_IMAGE_MAX_DIMENSION = 1920
+STORED_IMAGE_QUALITY = 85
+
+
+def optimize_image_for_storage(file_data, file_type):
+    """Resize and compress a validated image before storing it."""
+    image = Image.open(io.BytesIO(file_data))
+    image = ImageOps.exif_transpose(image)
+    image.thumbnail(
+        (STORED_IMAGE_MAX_DIMENSION, STORED_IMAGE_MAX_DIMENSION),
+        Image.Resampling.LANCZOS
+    )
+
+    output = io.BytesIO()
+    save_options = {'optimize': True}
+
+    if file_type in {'jpg', 'jpeg'}:
+        if image.mode not in {'RGB', 'L'}:
+            image = image.convert('RGB')
+        save_options.update(quality=STORED_IMAGE_QUALITY, progressive=True)
+        image.save(output, format='JPEG', **save_options)
+    elif file_type == 'png':
+        save_options['compress_level'] = 9
+        image.save(output, format='PNG', **save_options)
+    elif file_type == 'webp':
+        save_options.update(quality=STORED_IMAGE_QUALITY, method=6)
+        image.save(output, format='WEBP', **save_options)
+    elif file_type == 'gif':
+        image.save(output, format='GIF', **save_options)
+    else:
+        raise ValueError(f"Unsupported image type for optimization: {file_type}")
+
+    return output.getvalue()
 
 
 def get_file_type_from_magic_bytes(file_data):
