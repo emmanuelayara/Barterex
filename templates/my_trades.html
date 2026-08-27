@@ -1051,10 +1051,10 @@
                 {% if trade.status == 'pending' %}
                   <div class="trade-card-value" style="color: #ffc107; font-weight: 600;">⏳ Pending Approval</div>
                 {% elif trade.status == 'approved' %}
-                  <div class="trade-card-value">{% if trade.value %}₦{{ "{:,.2f}".format(trade.value) }}{% endif %}</div>
+                  <div class="trade-card-value">{% if trade.value %}ᗸ{{ "{:,.2f}".format(trade.value) }}{% endif %}</div>
                   <div style="color: #28a745; font-size: 0.85rem; font-weight: 600; margin-top: 4px;">✓ Approved</div>
                 {% else %}
-                  <div class="trade-card-value">{% if trade.value %}₦{{ "{:,.2f}".format(trade.value) }}{% else %}—{% endif %}</div>
+                  <div class="trade-card-value">{% if trade.value %}ᗸ{{ "{:,.2f}".format(trade.value) }}{% else %}—{% endif %}</div>
                 {% endif %}
                 <div class="trade-card-date">Uploaded</div>
               </div>
@@ -1118,7 +1118,7 @@
               {% endif %}
               <div class="trade-card-content">
                 <h3 class="trade-card-title">{{ trade.item.name }}</h3>
-                <div class="trade-card-value">{% if trade.item.value %}₦{{ "{:,.2f}".format(trade.item.value) }}{% else %}—{% endif %}</div>
+                <div class="trade-card-value">{% if trade.item.value %}ᗸ{{ "{:,.2f}".format(trade.item.value) }}{% else %}—{% endif %}</div>
                 <div class="trade-card-date">{{ trade.timestamp.strftime('%b %d, %Y') }}</div>
               </div>
             </div>

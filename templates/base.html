@@ -1441,6 +1441,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 min-width: auto;
             }
         }
+
+        /* Share Popover */
+        .share-popover {
+            position: absolute;
+            z-index: 10001;
+            background: var(--surface, #fff);
+            color: var(--text-primary, #1a202c);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            animation: shareFadeIn 0.15s ease-out;
+        }
+
+        @keyframes shareFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .share-popover-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--text-secondary, #718096);
+            padding: 4px 10px 8px;
+        }
+
+        .share-popover-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: inherit;
+            font-size: 0.9rem;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .share-popover-link:hover {
+            background: rgba(255, 122, 0, 0.1);
+        }
+
+        .share-popover-copy {
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            margin-top: 4px;
+            padding-top: 10px;
+        }
     `;
     document.head.appendChild(loadingStyles);
 });
@@ -1495,6 +1552,82 @@ window.successToast = (msg, duration) => showToast(msg, 'success', duration);
 window.errorToast = (msg, duration) => showToast(msg, 'error', duration);
 window.infoToast = (msg, duration) => showToast(msg, 'info', duration);
 window.warningToast = (msg, duration) => showToast(msg, 'warning', duration);
+
+// ============================================================================
+// ITEM SHARE SYSTEM
+// ============================================================================
+// Uses the native Web Share API on supported devices, falling back to a
+// popover with links to popular apps/platforms and a copy-link option.
+window.shareItem = function(itemName, itemUrl, event) {
+    if (event) event.stopPropagation();
+
+    const shareText = `Look at this cool item I found on Barter Express: ${itemName}`;
+    const shareUrl = itemUrl || window.location.href;
+
+    if (navigator.share) {
+        navigator.share({ title: 'Barter Express', text: shareText, url: shareUrl }).catch(() => {});
+        return;
+    }
+
+    openSharePopover(shareText, shareUrl, event);
+};
+
+function openSharePopover(shareText, shareUrl, event) {
+    closeSharePopover();
+
+    const encodedText = encodeURIComponent(shareText);
+    const encodedUrl = encodeURIComponent(shareUrl);
+
+    const links = [
+        { label: 'WhatsApp', icon: '💬', href: `https://wa.me/?text=${encodedText}%20${encodedUrl}` },
+        { label: 'Telegram', icon: '✈️', href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}` },
+        { label: 'X (Twitter)', icon: '🐦', href: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}` },
+        { label: 'Facebook', icon: '📘', href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+        { label: 'Email', icon: '📧', href: `mailto:?subject=${encodeURIComponent('Check this out on Barter Express')}&body=${encodedText}%20${encodedUrl}` }
+    ];
+
+    const popover = document.createElement('div');
+    popover.id = 'share-popover';
+    popover.className = 'share-popover';
+    popover.innerHTML = `
+        <div class="share-popover-title">Share this item</div>
+        ${links.map(l => `<a href="${l.href}" target="_blank" rel="noopener noreferrer" class="share-popover-link"><span>${l.icon}</span>${l.label}</a>`).join('')}
+        <button type="button" class="share-popover-link share-popover-copy" onclick="copyShareLink('${shareUrl.replace(/'/g, "\\'")}')"><span>🔗</span>Copy Link</button>
+    `;
+    document.body.appendChild(popover);
+
+    const anchor = event && event.currentTarget ? event.currentTarget.getBoundingClientRect() : null;
+    if (anchor) {
+        const top = Math.min(anchor.bottom + window.scrollY + 8, window.scrollY + window.innerHeight - 260);
+        const left = Math.min(anchor.left + window.scrollX, window.scrollX + window.innerWidth - 220);
+        popover.style.top = `${top}px`;
+        popover.style.left = `${left}px`;
+    }
+
+    setTimeout(() => document.addEventListener('click', handleSharePopoverOutsideClick), 0);
+}
+
+function handleSharePopoverOutsideClick(e) {
+    const popover = document.getElementById('share-popover');
+    if (popover && !popover.contains(e.target)) {
+        closeSharePopover();
+    }
+}
+
+function closeSharePopover() {
+    const popover = document.getElementById('share-popover');
+    if (popover) popover.remove();
+    document.removeEventListener('click', handleSharePopoverOutsideClick);
+}
+
+window.copyShareLink = function(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        window.successToast('Link copied to clipboard!');
+    }).catch(() => {
+        window.errorToast('Could not copy link');
+    });
+    closeSharePopover();
+};
 
 // ============================================================================
 // REAL-TIME NOTIFICATIONS SYSTEM

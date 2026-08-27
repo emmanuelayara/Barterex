@@ -1119,7 +1119,7 @@
           <th>Item Name</th>
           <th>Condition</th>
           <th>Location</th>
-          <th>Value (₦)</th>
+          <th>Value (ᗸ BXC)</th>
         </tr>
       </thead>
       <tbody>
@@ -1141,24 +1141,24 @@
     {% endif %}
   </div>
 
-  <!-- Credits Summary -->
+  <!-- BXC Summary -->
   <div class="credits-summary">
-    <h3 style="margin-top: 0; color: white;">💰 Credit Transaction Summary</h3>
+    <h3 style="margin-top: 0; color: white;">💰 BXC Transaction Summary</h3>
     <div class="credits-row">
       <span>Your Balance Before Order:</span>
-      <strong>{{ transaction_exp['credits']['balance_before'] }}</strong>
+      <strong>ᗸ{{ transaction_exp['credits']['balance_before'] }}</strong>
     </div>
     <div class="credits-row">
       <span>Total Items Value:</span>
-      <strong>{{ transaction_exp['credits']['total_items_value'] }}</strong>
+      <strong>ᗸ{{ transaction_exp['credits']['total_items_value'] }}</strong>
     </div>
     <div class="credits-row">
-      <span>Credits Used:</span>
-      <strong>{{ transaction_exp['credits']['credits_used'] }}</strong>
+      <span>BXC Used:</span>
+      <strong>ᗸ{{ transaction_exp['credits']['credits_used'] }}</strong>
     </div>
     <div class="credits-row credits-total">
       <span>Your Balance After Order:</span>
-      <strong>{{ transaction_exp['credits']['balance_after'] }}</strong>
+      <strong>ᗸ{{ transaction_exp['credits']['balance_after'] }}</strong>
     </div>
     <div class="explanation-box" style="background: rgba(255, 255, 255, 0.1); border-color: white; color: white; margin-top: 15px;">
       {{ transaction_exp['credits']['explanation'] }}
@@ -1190,7 +1190,7 @@
       <div class="modal-body">
         <p>Are you sure you want to cancel order <strong>{{ order.order_number }}</strong>?</p>
         <p style="font-size: 0.9rem; color: var(--text-secondary);">
-          This order is currently <strong>{{ order.status }}</strong>. If you cancel, your credits will be refunded to your account.
+          This order is currently <strong>{{ order.status }}</strong>. If you cancel, your BXC will be refunded to your account.
         </p>
         
         <div class="cancel-reason">

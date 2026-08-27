@@ -886,7 +886,7 @@
                         <div class="item-category">{{ item.category }} • {{ item.location }}</div>
                         <div class="item-value">
                             <i class="fas fa-coins"></i>
-                            ₦{{ "{:,.2f}".format(item.value) }} Credits
+                            ᗸ{{ "{:,.2f}".format(item.value) }} BXC
                         </div>
                     </div>
                 </div>
@@ -905,23 +905,23 @@
                     {% for item in items %}
                     <div class="summary-row">
                         <span>{{ item.name }}</span>
-                        <span>{{ "{:,.0f}".format(item.value) }} Credits</span>
+                        <span>ᗸ{{ "{:,.0f}".format(item.value) }} BXC</span>
                     </div>
                     {% endfor %}
                     <div class="summary-row">
-                        <span style="font-weight: 600; color: #666;">Total Credits Required:</span>
+                        <span style="font-weight: 600; color: #666;">Total BXC Required:</span>
                         <span style="color: var(--primary-color); font-weight: 800; font-size: 1.2rem;">
-                            ₦{{ "{:,.0f}".format(total_credits) }} Credits
+                            ᗸ{{ "{:,.0f}".format(total_credits) }} BXC
                         </span>
                     </div>
                 </div>
 
                 <div class="credit-info">
                     <div class="current-balance">
-                        <i class="fas fa-wallet"></i> Current Balance: ₦{{ "{:,.2f}".format(current_user.credits) }} Credits
+                        <i class="fas fa-wallet"></i> Current Balance: ᗸ{{ "{:,.2f}".format(current_user.credits) }} BXC
                     </div>
                     <div class="balance-after">
-                        Balance after purchase: ₦{{ "{:,.2f}".format(current_user.credits - total_credits) }} Credits
+                        Balance after purchase: ᗸ{{ "{:,.2f}".format(current_user.credits - total_credits) }} BXC
                     </div>
                 </div>
             </div>
@@ -982,7 +982,7 @@
                     <i class="fas fa-triangle-exclamation"></i>
                 </div>
                 <p class="warning-text">
-                    <strong>Important:</strong> Once you confirm, your credits will be permanently deducted and items marked as purchased. This action cannot be undone. Your order will be processed immediately.
+                    <strong>Important:</strong> Once you confirm, your BXC will be permanently deducted and items marked as purchased. This action cannot be undone. Your order will be processed immediately.
                 </p>
             </div>
         </div>
@@ -1009,7 +1009,7 @@
             const itemCount = {{ items|length }};
             const totalCredits = {{ total_credits }};
             
-            if (!confirm(`Confirm purchase of ${itemCount} item(s) for ₦${totalCredits.toLocaleString()} credits?`)) {
+            if (!confirm(`Confirm purchase of ${itemCount} item(s) for ᗸ${totalCredits.toLocaleString()} BXC?`)) {
                 e.preventDefault();
                 return false;
             }

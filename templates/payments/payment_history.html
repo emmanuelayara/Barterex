@@ -186,7 +186,7 @@
 
   <div class="history-header">
     <h1>💳 Payment History</h1>
-    <p>View all your credit purchase transactions</p>
+    <p>View all your BXC purchase transactions</p>
   </div>
 
   {% if payments %}
@@ -196,7 +196,7 @@
           <tr>
             <th>Date</th>
             <th>Amount</th>
-            <th>Credits</th>
+            <th>BXC</th>
             <th>Status</th>
             <th>Reference</th>
           </tr>
@@ -215,7 +215,7 @@
               ₦{{ "{:,.2f}".format(payment.amount) }}
             </td>
             <td class="credits-cell">
-              {{ payment.credits|int }} Credits
+              ᗸ{{ payment.credits|int }} BXC
             </td>
             <td>
               <span class="status-badge status-{{ payment.status.lower() }}">
@@ -237,7 +237,7 @@
       <div class="empty-state">
         <div class="empty-state-icon">💰</div>
         <h3>No Payments Yet</h3>
-        <p>You haven't purchased any credits yet. Start funding your account to buy items!</p>
+        <p>You haven't purchased any BXC yet. Start funding your account to buy items!</p>
         <a href="{{ url_for('payments.fund_account') }}" class="btn-fund">
           <i class="fas fa-plus-circle"></i>
           Fund Your Account

@@ -2291,13 +2291,13 @@
     <div class="stats-grid">
       <div class="stat-card" style="position: relative;">
         <!-- Fund Account Button -->
-        <a href="{{ url_for('payments.fund_account') }}" class="fund-account-btn" title="Buy credits with cash">
+        <a href="{{ url_for('payments.fund_account') }}" class="fund-account-btn" title="Buy BXC with cash">
           <i class="fas fa-plus-circle"></i>
           <span>Fund Account</span>
         </a>
         <div class="stat-icon">💰</div>
-        <div class="stat-title">Credit Balance</div>
-        <div class="stat-value">₦{{ "{:,.2f}".format(current_user.credits) }}</div> 
+        <div class="stat-title">BXC Balance</div>
+        <div class="stat-value">ᗸ{{ "{:,.2f}".format(current_user.credits) }}</div> 
         <div class="stat-description">Available for transactions</div>
       </div>
 
@@ -2461,7 +2461,7 @@
               <span class="referral-stat-label">Referrals</span>
             </div>
             <div class="referral-stat">
-              <span class="referral-stat-value">₦{{ current_user.referral_bonus_earned }}</span>
+              <span class="referral-stat-value">ᗸ{{ current_user.referral_bonus_earned }}</span>
               <span class="referral-stat-label">Earned</span>
             </div>
           </div>

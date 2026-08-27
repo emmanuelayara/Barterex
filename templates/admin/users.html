@@ -94,7 +94,7 @@
                                 <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
                                 <option value="username" {% if sort_by == 'username' %}selected{% endif %}>Username</option>
                                 <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Date Joined</option>
-                                <option value="credits" {% if sort_by == 'credits' %}selected{% endif %}>Credits</option>
+                                <option value="credits" {% if sort_by == 'credits' %}selected{% endif %}>BXC</option>
                             </select>
                         </div>
 
@@ -177,7 +177,7 @@
                                 </th>
                                 <th class="sortable" data-sort="credits">
                                     <div class="th-content">
-                                        <i class="bi bi-currency-exchange me-1"></i>Credits
+                                        <i class="bi bi-currency-exchange me-1"></i>BXC
                                         <i class="bi bi-chevron-expand sort-icon"></i>
                                     </div>
                                 </th>
@@ -223,7 +223,7 @@
                                 <td>
                                     <div class="credit-display">
                                         <i class="bi bi-currency-exchange me-1 text-warning"></i>
-                                        <span class="credit-amount">₦{{ "{:,.2f}".format(user.credits) }}</span>
+                                        <span class="credit-amount">ᗸ{{ "{:,.2f}".format(user.credits) }}</span>
                                     </div>
                                 </td>
                                 <td>

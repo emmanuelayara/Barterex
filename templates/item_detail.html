@@ -429,6 +429,29 @@
     transform: translateY(0);
   }
 
+  .share-button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px 24px;
+    background: transparent;
+    color: #FF7A00;
+    border: 2px solid #FF7A00;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .share-button:hover {
+    background: rgba(255, 122, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .share-button:active {
+    transform: translateY(0);
+  }
+
   /* ===== RELATED ITEMS SECTION ===== */
   .related-section {
     background: white;
@@ -779,8 +802,8 @@
 
           <!-- Price -->
           <div class="price-section">
-            <div class="price-label">Credit Value</div>
-            <div class="price-value">💰 ₦{{ "{:,.2f}".format(item.value) }}</div>
+            <div class="price-label">BXC Value</div>
+            <div class="price-value">💰 ᗸ{{ "{:,.2f}".format(item.value) }}</div>
           </div>
 
           <!-- Description -->
@@ -798,6 +821,9 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="trade-button">🛒 Add to Cart</button>
             </form>
+            <button type="button" class="share-button" onclick="shareItem('{{ item.name|e }}', '{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}', event)">
+              📤 Share Item
+            </button>
           </div>
         </div>
       </div>
@@ -822,7 +848,7 @@
                 {% endif %}
                 <div class="related-content">
                   <h4 class="related-name">{{ related.name }}</h4>
-                  <div class="related-price">₦{{ "{:,.2f}".format(related.value) }}</div>
+                  <div class="related-price">ᗸ{{ "{:,.2f}".format(related.value) }}</div>
                 </div>
               </a>
             </div>

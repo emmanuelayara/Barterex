@@ -476,9 +476,9 @@
     <!-- Header -->
     <div class="fund-header">
       <h1>💳 Fund Your Account</h1>
-      <p>Buy credits to purchase items</p>
+      <p>Buy ᗸ BXC (Barter Express Credits) to purchase items</p>
       <div class="conversion-info">
-        💡 1 Naira = 1 Credit | Pay exactly what you want to trade!
+        💡 ₦1 Naira = ᗸ1 BXC | Pay exactly what you want to trade!
       </div>
     </div>
 
@@ -517,7 +517,7 @@
         <!-- Credits Display -->
         <div class="credits-display">
           <div class="credits-display-label">You will receive</div>
-          <div class="credits-display-value" id="credits-value">0 Credits</div>
+          <div class="credits-display-value" id="credits-value">ᗸ0 BXC</div>
         </div>
 
         <!-- Submit Button -->
@@ -537,11 +537,11 @@
       <div class="info-content">
         <ul>
           <li>Enter the amount you want to fund</li>
-          <li>See exactly how many credits you'll get (1:1 ratio)</li>
+          <li>See exactly how many BXC you'll get (1:1 ratio)</li>
           <li>Click "Proceed to Payment"</li>
           <li>Complete payment securely with Paystack</li>
-          <li>Credits added instantly to your account</li>
-          <li>Use credits to purchase items immediately</li>
+          <li>BXC added instantly to your account</li>
+          <li>Use BXC to purchase items immediately</li>
         </ul>
       </div>
     </div>
@@ -554,10 +554,10 @@
       </div>
       <div class="info-content">
         <ul>
-          <li><strong>Why 1 Naira = 1 Credit?</strong> We believe in fair value - pay exactly what you trade!</li>
+          <li><strong>Why ₦1 Naira = ᗸ1 BXC?</strong> We believe in fair value - pay exactly what you trade!</li>
           <li><strong>Are my payments secure?</strong> Yes, we use Paystack for secure payment processing.</li>
           <li><strong>Can I get a refund?</strong> Refunds follow Paystack's policy. Contact support if needed.</li>
-          <li><strong>Do credits expire?</strong> No, your credits never expire and stay in your account.</li>
+          <li><strong>Do BXC expire?</strong> No, your BXC never expire and stay in your account.</li>
           <li><strong>What's the minimum?</strong> Minimum is ₦{{ "{:,}".format(min_amount) }} to start trading.</li>
         </ul>
       </div>
@@ -578,7 +578,7 @@
   function updateCreditsDisplay() {
     const amount = parseFloat(document.getElementById('amount-input').value) || 0;
     const credits = Math.floor(amount * CONVERSION_RATE);
-    document.getElementById('credits-value').textContent = credits.toLocaleString() + ' Credits';
+    document.getElementById('credits-value').textContent = 'ᗸ' + credits.toLocaleString() + ' BXC';
   }
 
   function showError(message) {

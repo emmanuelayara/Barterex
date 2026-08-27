@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Payment Successful - Credits Added{% endblock %}
+{% block title %}Payment Successful - BXC Added{% endblock %}
 
 {% block content %}
 <style>
@@ -172,15 +172,15 @@
     <div class="success-icon">✓</div>
     
     <h1 class="success-title">Payment Successful!</h1>
-    <p class="success-message">Your payment has been processed and your credits have been added to your account.</p>
+    <p class="success-message">Your payment has been processed and your BXC have been added to your account.</p>
     
     <div class="credits-box">
-      <div class="credits-label">Credits Added</div>
-      <div class="credits-amount">+{{ credits_added|int }} Credits</div>
+      <div class="credits-label">BXC Added</div>
+      <div class="credits-amount">+ᗸ{{ credits_added|int }} BXC</div>
       <div class="credits-added">🎉 Instant Delivery</div>
       
       <div class="new-balance" style="margin-top: 16px;">New Balance</div>
-      <div class="balance-amount">{{ "{:,.0f}".format(new_balance) }} Credits</div>
+      <div class="balance-amount">ᗸ{{ "{:,.0f}".format(new_balance) }} BXC</div>
     </div>
 
     <div class="reference-box">
