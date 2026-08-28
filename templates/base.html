@@ -1572,6 +1572,15 @@ window.shareItem = function(itemName, itemUrl, event) {
     openSharePopover(shareText, shareUrl, event);
 };
 
+// Reads item name/url from data-* attributes on the clicked element, avoiding
+// unsafe interpolation of user-supplied item names into inline JS strings.
+window.shareItemFromButton = function(button, event) {
+    if (event) event.stopPropagation();
+    const itemName = button.dataset.itemName || 'this item';
+    const itemUrl = button.dataset.itemUrl || window.location.href;
+    window.shareItem(itemName, itemUrl, event);
+};
+
 function openSharePopover(shareText, shareUrl, event) {
     closeSharePopover();
 
@@ -1627,6 +1636,50 @@ window.copyShareLink = function(url) {
         window.errorToast('Could not copy link');
     });
     closeSharePopover();
+};
+
+// ============================================================================
+// FAVORITE TOGGLE SYSTEM
+// ============================================================================
+window.toggleFavoriteButton = function(button, itemId, event) {
+    if (event) event.stopPropagation();
+    if (button.disabled) return;
+    button.disabled = true;
+
+    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+
+    fetch(`/api/favorites/toggle/${itemId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+            return null;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (!data) return;
+        if (data.success) {
+            button.classList.toggle('favorited', data.is_favorited);
+            button.textContent = data.is_favorited ? '❤️' : '🤍';
+            button.title = data.is_favorited ? 'Remove from favorites' : 'Add to favorites';
+            window.successToast(data.is_favorited ? '❤️ Added to favorites' : 'Removed from favorites', 2500);
+        } else {
+            window.errorToast(data.error || 'Could not update favorites', 3000);
+        }
+    })
+    .catch(() => {
+        window.errorToast('An error occurred. Please try again.', 3000);
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
 };
 
 // ============================================================================

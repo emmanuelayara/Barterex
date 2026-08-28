@@ -460,9 +460,7 @@
                 </form>
 
                 <!-- Share Button -->
-                <button type="button" class="favorite-share-btn" title="Share item" onclick="shareItem('{{ item.name|e }}', '{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}', event)">
-                  📤
-                </button>
+                <button type="button" class="favorite-share-btn" title="Share item" data-item-name="{{ item.name }}" data-item-url="{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}" onclick="shareItemFromButton(this, event)"><i class="fas fa-paper-plane"></i></button>
               </div>
 
               <!-- Content -->
@@ -531,9 +529,7 @@
                 </form>
 
                 <!-- Share Button -->
-                <button type="button" class="favorite-share-btn" title="Share item" onclick="shareItem('{{ item.name|e }}', '{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}', event)">
-                  📤
-                </button>
+                <button type="button" class="favorite-share-btn" title="Share item" data-item-name="{{ item.name }}" data-item-url="{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}" onclick="shareItemFromButton(this, event)"><i class="fas fa-paper-plane"></i></button>
               </div>
 
               <!-- Content -->

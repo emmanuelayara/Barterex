@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload
 from typing import Dict, Any, Union, List
 
 from app import db
-from models import Item, ItemImage
+from models import Item, ItemImage, Favorite
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, DatabaseError
 from error_handlers import handle_errors
@@ -132,9 +132,13 @@ def view_item(item_id: int) -> Union[str, Response]:
             Item.is_available == True
         ).limit(5).all()
 
+        is_favorited = False
+        if current_user.is_authenticated:
+            is_favorited = Favorite.query.filter_by(user_id=current_user.id, item_id=item.id).first() is not None
+
         logger.info(f"Item viewed - Item ID: {item_id}, Name: {item.name}, User: {item.user_id}")
         breadcrumbs = ['Marketplace', item.category, item.name[:50]]  # Truncate long names
-        return render_template('item_detail.html', item=item, item_images=item_images, related_items=related_items, csrf_token=generate_csrf, breadcrumbs=breadcrumbs)
+        return render_template('item_detail.html', item=item, item_images=item_images, related_items=related_items, is_favorited=is_favorited, csrf_token=generate_csrf, breadcrumbs=breadcrumbs)
         
     except Exception as e:
         logger.error(f"Error viewing item {item_id}: {str(e)}", exc_info=True)

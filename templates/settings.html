@@ -258,19 +258,19 @@
   }
 
   #profile .settings-card {
-    max-width: 600px;
+    max-width: 720px;
     margin: 0 auto;
   }
 
   #profile form {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
   }
 
   #profile .form-group {
     width: 100%;
-    text-align: center;
+    text-align: left;
   }
 
   #profile .form-row {
@@ -280,7 +280,7 @@
 
   #profile .form-label {
     display: block;
-    margin: 0 auto 8px;
+    margin: 0 0 8px;
   }
 
   #profile .form-control {
@@ -482,6 +482,82 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+  }
+
+  .profile-header-banner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px;
+    margin-bottom: 28px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(255, 143, 31, 0.04));
+    border: 1px solid rgba(255, 122, 0, 0.15);
+  }
+
+  html.dark-mode .profile-header-banner {
+    background: linear-gradient(135deg, rgba(255, 122, 0, 0.15), rgba(255, 122, 0, 0.05));
+    border-color: rgba(255, 122, 0, 0.25);
+  }
+
+  .profile-avatar-badge {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(255, 122, 0, 0.35);
+  }
+
+  .profile-avatar-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .profile-header-text h2 {
+    margin: 0 0 4px 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #054e97;
+  }
+
+  html.dark-mode .profile-header-text h2 {
+    color: #f1f5f9;
+  }
+
+  .profile-header-text p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #64748b;
+  }
+
+  html.dark-mode .profile-header-text p {
+    color: #cbd5e1;
+  }
+
+  .input-wrapper textarea.form-control + .input-icon {
+    top: 22px;
+    transform: none;
+  }
+
+  .input-wrapper textarea.form-control:focus + .input-icon {
+    top: 22px;
+    transform: scale(1.15);
+  }
+
+  @media (max-width: 480px) {
+    .profile-header-banner {
+      flex-direction: column;
+      text-align: center;
+    }
   }
 
   .profile-section {
@@ -1542,45 +1618,72 @@
         <!-- Profile Tab -->
         <div id="profile" class="tab-content active">
       <div class="settings-card">
-        <form method="POST" enctype="multipart/form-data">
-          <input type="hidden" name="form_type" value="profile">
+        <div class="profile-header-banner">
+          <div class="profile-avatar-badge">
+            {% if current_user.profile_picture %}
+              <img src="{{ current_user.profile_picture | image_url }}" alt="{{ current_user.username }}">
+            {% else %}
+              {{ current_user.username[0].upper() }}
+            {% endif %}
+          </div>
+          <div class="profile-header-text">
+            <h2>✨ Edit Your Profile</h2>
+            <p>Hi {{ current_user.username }}, keep your details up to date for smooth trading &amp; delivery.</p>
+          </div>
+        </div>
 
-          <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">✨ Edit Your Profile</h2>
+        <form method="POST" enctype="multipart/form-data" onsubmit="showLoading('Saving your profile...')">
+          <input type="hidden" name="form_type" value="profile">
 
           <div class="profile-form-shell">
             <div class="profile-section">
-              <h3 class="section-title">Contact Information</h3>
+              <h3 class="section-title"><i class="fas fa-address-card" style="margin-right: 6px;"></i>Contact Information</h3>
               <p class="section-subtitle">Keep your contact details current for orders and account updates.</p>
               <div class="profile-field-grid">
                 <div class="form-group">
                   {{ profile_form.email.label(class="form-label") }}
-                  {{ profile_form.email(class="form-control", placeholder="your.email@example.com") }}
+                  <div class="input-wrapper">
+                    {{ profile_form.email(class="form-control", placeholder="your.email@example.com") }}
+                    <i class="fas fa-envelope input-icon"></i>
+                  </div>
                 </div>
 
                 <div class="form-group">
                   {{ profile_form.phone_number.label(class="form-label") }}
-                  {{ profile_form.phone_number(class="form-control", placeholder="+234 800 000 0000") }}
+                  <div class="input-wrapper">
+                    {{ profile_form.phone_number(class="form-control", placeholder="+234 800 000 0000") }}
+                    <i class="fas fa-phone input-icon"></i>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div class="profile-section">
-              <h3 class="section-title">Address Details</h3>
+              <h3 class="section-title"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>Address Details</h3>
               <p class="section-subtitle">This helps with delivery and pickup.</p>
               <div class="form-group full">
                 {{ profile_form.address.label(class="form-label") }}
-                {{ profile_form.address(class="form-control", placeholder="Enter your full home or delivery address") }}
+                <div class="input-wrapper">
+                  {{ profile_form.address(class="form-control", placeholder="Enter your full home or delivery address") }}
+                  <i class="fas fa-home input-icon"></i>
+                </div>
               </div>
 
               <div class="profile-field-grid" style="margin-top: 20px;">
                 <div class="form-group">
                   {{ profile_form.city.label(class="form-label") }}
-                  {{ profile_form.city(class="form-control", placeholder="City") }}
+                  <div class="input-wrapper">
+                    {{ profile_form.city(class="form-control", placeholder="City") }}
+                    <i class="fas fa-city input-icon"></i>
+                  </div>
                 </div>
 
                 <div class="form-group">
                   {{ profile_form.state.label(class="form-label") }}
-                  {{ profile_form.state(class="form-control") }}
+                  <div class="input-wrapper">
+                    {{ profile_form.state(class="form-control") }}
+                    <i class="fas fa-flag input-icon"></i>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1590,6 +1693,9 @@
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-save"></i> Save Changes
             </button>
+            <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+              <i class="fas fa-times"></i> Cancel
+            </a>
           </div>
         </form>
       </div>

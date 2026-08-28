@@ -638,29 +638,6 @@
     backdrop-filter: blur(8px);
   }
 
-  .item-share-btn {
-    position: absolute;
-    bottom: 6px;
-    right: 6px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    border: none;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    backdrop-filter: blur(8px);
-    z-index: 2;
-  }
-
-  .item-share-btn:hover {
-    background: var(--primary-color);
-  }
-
   .item-content {
     padding: 12px;
     display: flex;
@@ -1589,7 +1566,7 @@
   <div class="marketplace-container">
     <div class="marketplace-header">
       <h1>🛒 Explore the Marketplace</h1>
-      <p>For the sake of the "TESTING" items prices are not realistic. <br> Launching Soon. </p>
+      <p>1ᗸ = 1₦ <br> Launching Soon. </p>
     </div>
 
     <div class="filter-section">
@@ -1768,7 +1745,6 @@
               <div class="image-counter">{{ ns.filtered_images|length }} images</div>
             {% endif %}
             <div class="item-badge">{{ item.condition }}</div>
-            <button type="button" class="item-share-btn" title="Share item" onclick="shareItem('{{ item.name|e }}', '{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}', event)">📤</button>
           </div>
           
           <div class="item-content">

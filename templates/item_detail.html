@@ -430,26 +430,72 @@
   }
 
   .share-button {
-    width: 100%;
-    margin-top: 10px;
-    padding: 12px 24px;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
     background: transparent;
     color: #FF7A00;
     border: 2px solid #FF7A00;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
+    border-radius: 50%;
+    font-size: 1.1rem;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.3s ease;
   }
 
   .share-button:hover {
     background: rgba(255, 122, 0, 0.1);
-    transform: translateY(-2px);
+    transform: scale(1.05);
   }
 
   .share-button:active {
-    transform: translateY(0);
+    transform: scale(0.95);
+  }
+
+  .favorite-button {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: transparent;
+    color: #FF7A00;
+    border: 2px solid #FF7A00;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .favorite-button:hover {
+    background: rgba(255, 122, 0, 0.1);
+    transform: scale(1.05);
+  }
+
+  .favorite-button:active {
+    transform: scale(0.95);
+  }
+
+  .favorite-button.favorited {
+    background: rgba(255, 122, 0, 0.1);
+  }
+
+  .title-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .item-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   /* ===== RELATED ITEMS SECTION ===== */
@@ -787,14 +833,18 @@
         <div class="info-section">
           <!-- Header: Title & Meta -->
           <div class="item-header">
-            <h1 class="item-title">{{ item.name }}</h1>
+            <div class="item-title-row">
+              <h1 class="item-title">{{ item.name }}</h1>
+              <div class="title-actions">
+                {% if current_user.is_authenticated and current_user.id != item.user_id %}
+                  <button type="button" class="favorite-button {{ 'favorited' if is_favorited else '' }}" title="{{ 'Remove from favorites' if is_favorited else 'Add to favorites' }}" onclick="toggleFavoriteButton(this, {{ item.id }}, event)">{{ '❤️' if is_favorited else '🤍' }}</button>
+                {% endif %}
+                <button type="button" class="share-button" title="Share item" data-item-name="{{ item.name }}" data-item-url="{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}" onclick="shareItemFromButton(this, event)"><i class="fas fa-paper-plane"></i></button>
+              </div>
+            </div>
 
             <div class="item-meta">
-              <div class="meta-tag">🏷️ {{ item.category }}</div>
               <div class="meta-tag">⚡ {{ item.condition }}</div>
-              {% if item_images and item_images|length > 1 %}
-                <div class="meta-tag">📸 {{ item_images|length }} Photos</div>
-              {% endif %}
             </div>
 
             <div class="location-info">📍 Available in {{ item.location }}</div>
@@ -803,7 +853,7 @@
           <!-- Price -->
           <div class="price-section">
             <div class="price-label">BXC Value</div>
-            <div class="price-value">💰 ᗸ{{ "{:,.2f}".format(item.value) }}</div>
+            <div class="price-value"> ᗸ{{ "{:,.2f}".format(item.value) }}</div>
           </div>
 
           <!-- Description -->
@@ -821,9 +871,7 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="trade-button">🛒 Add to Cart</button>
             </form>
-            <button type="button" class="share-button" onclick="shareItem('{{ item.name|e }}', '{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}', event)">
-              📤 Share Item
-            </button>
+
           </div>
         </div>
       </div>
