@@ -208,8 +208,22 @@
         .remember-me {
             display: flex;
             align-items: center;
+            gap: 8px;
             margin-bottom: 20px;
             justify-content: center;
+        }
+
+        .form-checkbox {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            flex-shrink: 0;
+            accent-color: #ff7a00;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            line-height: 16px;
         }
 
         .custom-checkbox {
@@ -244,6 +258,8 @@
             color: #4a5568;
             cursor: pointer;
             user-select: none;
+            display: inline-flex;
+            align-items: center;
         }
 
         .submit-button {
@@ -884,21 +900,8 @@
         }
 
         // ===== LOGIN FORM HANDLING =====
-        const rememberCheckbox = document.getElementById('rememberCheckbox');
         const submitBtn = document.getElementById('submitBtn');
         const form = document.getElementById('loginForm');
-
-        let rememberMe = false;
-
-        // Remember me checkbox
-        rememberCheckbox.addEventListener('click', function() {
-            rememberMe = !rememberMe;
-            if (rememberMe) {
-                this.classList.add('checked');
-            } else {
-                this.classList.remove('checked');
-            }
-        });
 
         // Form submission with enhanced loading feedback
         form.addEventListener('submit', function(e) {

@@ -629,6 +629,43 @@
     color: var(--text-secondary);
   }
 
+  .upload-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .upload-action-btn {
+    border: none;
+    border-radius: 20px;
+    padding: 7px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .add-more-btn {
+    background: rgba(255, 122, 0, 0.12);
+    color: #ff7a00;
+  }
+
+  .add-more-btn:hover {
+    background: #ff7a00;
+    color: white;
+  }
+
+  .clear-all-btn {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+  }
+
+  .clear-all-btn:hover {
+    background: #ef4444;
+    color: white;
+  }
+
   /* AI Price Estimator Styles */
   .ai-estimator-section {
     background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
@@ -1438,6 +1475,10 @@
               <div class="upload-counter">
                 <span id="imageCount">0</span> / 15 images selected
               </div>
+              <div class="upload-actions">
+                <button type="button" class="upload-action-btn add-more-btn" id="addMoreBtn">➕ Add More</button>
+                <button type="button" class="upload-action-btn clear-all-btn" id="clearAllBtn">🗑️ Remove All</button>
+              </div>
               <div class="images-preview-grid" id="imagesPreviewGrid"></div>
             </div>
           </div>
@@ -1488,6 +1529,8 @@
   const imagesPreviewContainer = document.getElementById('imagesPreviewContainer');
   const imagesPreviewGrid = document.getElementById('imagesPreviewGrid');
   const imageCountDisplay = document.getElementById('imageCount');
+  const addMoreBtn = document.getElementById('addMoreBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
   const submitBtn = document.getElementById('submitBtn');
   const uploadProgress = document.getElementById('uploadProgress');
   const uploadProgressLabel = document.getElementById('uploadProgressLabel');
@@ -1517,6 +1560,25 @@
   fileInput.addEventListener('change', (e) => {
     const files = Array.from(e.target.files);
     handleMultipleFileUpload(files);
+  });
+
+  addMoreBtn.addEventListener('click', () => {
+    if (selectedFiles.length >= maxImages) {
+      if (typeof warningToast !== 'undefined') {
+        warningToast(`Maximum ${maxImages} images allowed.`);
+      } else {
+        alert(`Maximum ${maxImages} images allowed.`);
+      }
+      return;
+    }
+    fileInput.click();
+  });
+
+  clearAllBtn.addEventListener('click', () => {
+    selectedFiles = [];
+    primaryImageIndex = 0;
+    updateImagePreviews();
+    updateFileInput();
   });
 
   function handleMultipleFileUpload(files) {
