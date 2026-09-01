@@ -600,6 +600,24 @@
     gap: 20px;
   }
 
+  .profile-view-value {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    color: #054e97;
+    font-size: 1rem;
+    min-height: 20px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  html.dark-mode .profile-view-value {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+  }
+
   .field-hint {
     display: block;
     margin-top: 8px;
@@ -1632,7 +1650,7 @@
           </div>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" onsubmit="showLoading('Saving your profile...')">
+        <form method="POST" enctype="multipart/form-data" onsubmit="showLoading('Saving your profile...')" id="profileEditForm" style="display:none;">
           <input type="hidden" name="form_type" value="profile">
 
           <div class="profile-form-shell">
@@ -1693,13 +1711,57 @@
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-save"></i> Save Changes
             </button>
-            <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+            <button type="button" class="btn btn-secondary" id="cancelProfileEditBtn">
               <i class="fas fa-times"></i> Cancel
-            </a>
+            </button>
           </div>
         </form>
+
+        <!-- Read-only Profile View -->
+        <div id="profileViewMode">
+          <div class="profile-form-shell">
+            <div class="profile-section">
+              <h3 class="section-title"><i class="fas fa-address-card" style="margin-right: 6px;"></i>Contact Information</h3>
+              <div class="profile-field-grid">
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <div class="profile-view-value">{{ current_user.email or '—' }}</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <div class="profile-view-value">{{ current_user.phone_number or '—' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-section">
+              <h3 class="section-title"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>Address Details</h3>
+              <div class="form-group full">
+                <label class="form-label">Address</label>
+                <div class="profile-view-value">{{ current_user.address or '—' }}</div>
+              </div>
+              <div class="profile-field-grid" style="margin-top: 20px;">
+                <div class="form-group">
+                  <label class="form-label">City</label>
+                  <div class="profile-view-value">{{ current_user.city or '—' }}</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">State</label>
+                  <div class="profile-view-value">{{ current_user.state or '—' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-buttons">
+            <button type="button" class="btn btn-primary" id="editProfileBtn">
+              <i class="fas fa-edit"></i> Edit Profile
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+
 
     <!-- Items Tab -->
     <div id="items" class="tab-content">
@@ -1896,6 +1958,24 @@
     // Close sidebar on mobile after tab click
     closeSidebar();
   }
+
+  // Toggle between read-only profile view and the editable form
+  document.addEventListener('DOMContentLoaded', function() {
+    const viewMode = document.getElementById('profileViewMode');
+    const editForm = document.getElementById('profileEditForm');
+    const editBtn = document.getElementById('editProfileBtn');
+    const cancelBtn = document.getElementById('cancelProfileEditBtn');
+
+    editBtn?.addEventListener('click', function() {
+      viewMode.style.display = 'none';
+      editForm.style.display = '';
+    });
+
+    cancelBtn?.addEventListener('click', function() {
+      editForm.style.display = 'none';
+      viewMode.style.display = '';
+    });
+  });
 
   function toggleSidebar() {
     const sidebar = document.querySelector('.settings-sidebar');

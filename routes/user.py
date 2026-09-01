@@ -421,7 +421,7 @@ def profile_settings() -> Union[str, Response]:
             
             logger.info(f"Profile updated successfully - User: {current_user.username}, Email: {current_user.email}")
             flash('Profile updated successfully', 'success')
-            return redirect(url_for('user.dashboard'))
+            return redirect(url_for('user.profile_settings'))
 
         return render_template('profile_settings.html', user=current_user, form=form)
         

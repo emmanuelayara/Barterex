@@ -233,6 +233,37 @@
   }  .form-actions {
     margin-top: 32px;
     text-align: center;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .profile-view-value {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    color: #2d3748;
+    font-size: 14px;
+    min-height: 20px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .btn-cancel {
+    background: #edf2f7;
+    color: #4a5568;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-cancel:hover {
+    background: #e2e8f0;
   }
 
   .btn-submit {
@@ -656,26 +687,82 @@
   </div>
 
   <!-- Profile Container -->
+  {% set edit_mode = request.method == 'POST' or request.args.get('edit') %}
   <div class="profile-container">
-    <div class="profile-form">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">
+              {% if category == 'success' %}✅{% else %}❌{% endif %}
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Read-only Profile View -->
+    <div class="profile-form" id="profileViewCard" {% if edit_mode %}style="display:none;"{% endif %}>
+      <div class="form-header">
+        <h2 class="form-title">👤 Your Profile</h2>
+        <p class="form-subtitle">Here's your current personal information</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <div class="form-label-wrapper">
+            <span class="form-label">Email</span>
+            <span class="input-icon">📧</span>
+          </div>
+          <div class="profile-view-value">{{ user.email or '—' }}</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-wrapper">
+            <span class="form-label">Phone Number</span>
+            <span class="input-icon">📱</span>
+          </div>
+          <div class="profile-view-value">{{ user.phone_number or '—' }}</div>
+        </div>
+
+        <div class="form-group full">
+          <div class="form-label-wrapper">
+            <span class="form-label">Address</span>
+            <span class="input-icon">📍</span>
+          </div>
+          <div class="profile-view-value">{{ user.address or '—' }}</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-wrapper">
+            <span class="form-label">City</span>
+            <span class="input-icon">🏙️</span>
+          </div>
+          <div class="profile-view-value">{{ user.city or '—' }}</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-wrapper">
+            <span class="form-label">State</span>
+            <span class="input-icon">🗺️</span>
+          </div>
+          <div class="profile-view-value">{{ user.state or '—' }}</div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-submit" id="editProfileBtn">✏️ Edit Profile</button>
+      </div>
+    </div>
+
+    <!-- Editable Profile Form -->
+    <div class="profile-form" id="profileEditCard" {% if not edit_mode %}style="display:none;"{% endif %}>
       <div class="form-header">
         <h2 class="form-title">✨ Edit Your Profile</h2>
         <p class="form-subtitle">Update your personal information to enhance your trading experience</p>
       </div>
-
-      <!-- Flash Messages -->
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flash-messages">
-            {% for category, message in messages %}
-              <div class="flash-message flash-{{ category }}">
-                {% if category == 'success' %}✅{% else %}❌{% endif %}
-                {{ message }}
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
 
       <form method="POST" enctype="multipart/form-data" id="profileForm">
         {{ form.hidden_tag() }}
@@ -738,6 +825,7 @@
 
         <div class="form-actions">
           {{ form.submit(class="btn-submit", id="submitBtn") }}
+          <button type="button" class="btn-cancel" id="cancelEditBtn">Cancel</button>
         </div>
       </form>
     </div>
@@ -755,6 +843,22 @@ document.addEventListener('DOMContentLoaded', function() {
     submitBtn.classList.add('loading');
     submitBtn.innerHTML = '💾 Saving...';
     submitBtn.disabled = true;
+  });
+
+  // Toggle between read-only view and edit form
+  const viewCard = document.getElementById('profileViewCard');
+  const editCard = document.getElementById('profileEditCard');
+  const editBtn = document.getElementById('editProfileBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+
+  editBtn?.addEventListener('click', function() {
+    viewCard.style.display = 'none';
+    editCard.style.display = '';
+  });
+
+  cancelBtn?.addEventListener('click', function() {
+    editCard.style.display = 'none';
+    viewCard.style.display = '';
   });
 
   // Input focus animations with wrapper styling
