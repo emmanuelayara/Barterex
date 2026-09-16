@@ -26,6 +26,27 @@ logger = setup_logger(__name__)
 
 marketplace_bp = Blueprint('marketplace', __name__)
 
+# Icons shown for each category on the home page's "Popular Categories" section
+CATEGORY_ICONS = {
+    "Phones & Gadgets": "📱",
+    "Consumer Electronics": "💻",
+    "Fashion Accessories": "🛍️",
+    "Footwear": "👟",
+    "Beauty & Personal Care": "💄",
+    "Gaming & Accessories": "🎮",
+    "Kitchen Wares & Appliances": "🍽️"
+}
+
+
+def _get_top_categories(limit: int = 3) -> List[Dict[str, Any]]:
+    """Return the categories with the most approved & available items, most popular first."""
+    category_stats = get_category_stats()
+    ranked = sorted(category_stats.items(), key=lambda entry: entry[1], reverse=True)
+    return [
+        {'name': name, 'count': count, 'icon': CATEGORY_ICONS.get(name, '🏷️')}
+        for name, count in ranked if count > 0
+    ][:limit]
+
 # ==================== ROUTES ====================
 
 @marketplace_bp.route('/')
@@ -99,15 +120,14 @@ def marketplace() -> Union[str, Response]:
 @handle_errors
 def home() -> Union[str, Response]:
     try:
-        # Using eager loading to prevent N+1 queries when accessing item.user in template
-        trending_items = Item.query.options(joinedload(Item.user)).filter_by(is_approved=True).order_by(Item.id.desc()).limit(6).all()
-        logger.info(f"Home page loaded - {len(trending_items)} trending items displayed")
+        top_categories = _get_top_categories(limit=3)
+        logger.info(f"Home page loaded - Top categories: {[c['name'] for c in top_categories]}")
         breadcrumbs = ['Home']
-        return render_template('home.html', trending_items=trending_items, breadcrumbs=breadcrumbs)
+        return render_template('home.html', top_categories=top_categories, breadcrumbs=breadcrumbs)
     except Exception as e:
         logger.error(f"Error loading home page: {str(e)}", exc_info=True)
         flash('An error occurred while loading the home page. Please refresh.', 'danger')
-        return render_template('home.html', trending_items=[], breadcrumbs=['Home'])
+        return render_template('home.html', top_categories=[], breadcrumbs=['Home'])
 
 
 @marketplace_bp.route('/item/<int:item_id>', methods=['GET', 'POST'])
