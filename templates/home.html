@@ -651,6 +651,26 @@
       color: #f1f5f9;
     }
 
+    /* Empty state message when no categories have items yet */
+    .categories-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      font-weight: 500;
+      padding: 30px 20px;
+      animation: emptyStateFloat 2.4s ease-in-out infinite;
+    }
+
+    html.dark-mode .categories-empty {
+      color: #cbd5e1;
+    }
+
+    @keyframes emptyStateFloat {
+      0%, 100% { transform: translateY(0); opacity: 0.75; }
+      50% { transform: translateY(-8px); opacity: 1; }
+    }
+
     /* Trending items with brand colors */
     .trending-grid {
       display: grid;
@@ -854,7 +874,8 @@
 
       .hero {
         padding: 56px 20px;
-        min-height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
       }
 
       .hero h1 {
@@ -1127,7 +1148,7 @@
           <span>{{ cat.icon }} {{ cat.name }}</span>
         </a>
         {% else %}
-        <p class="text-center">No categories to show yet. Check back soon! 🚀</p>
+        <p class="categories-empty">No categories to show yet. Check back soon! 🚀</p>
         {% endfor %}
       </div>
     </section>
