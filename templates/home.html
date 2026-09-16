@@ -915,7 +915,13 @@
         font-size: 2rem;
       }
 
-      .steps-grid, .benefits-grid, .categories-grid {
+      .steps-grid, .benefits-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-top: 32px;
+      }
+
+      .categories-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 16px;
         margin-top: 32px;
