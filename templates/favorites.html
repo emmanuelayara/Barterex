@@ -414,7 +414,7 @@
   <div class="favorites-container">
     <!-- Header -->
     <div class="favorites-header">
-      <h1>❤️ Saved Items</h1>
+      <h1>Saved Items</h1>
       <p>Items you've saved for later</p>
       
       {% if total_favorites > 0 %}
@@ -437,7 +437,7 @@
     {% if favorited_items %}
       <!-- Available Items Section -->
       {% if available_items %}
-        <h2 style="color: var(--text-primary); margin: 30px 0 20px 0; font-size: 1.3rem;">📍 Available Items</h2>
+        <h2 style="color: var(--text-primary); margin: 30px 0 20px 0; font-size: 1.3rem;">Available Items</h2>
         <div class="favorites-grid">
           {% for item in available_items %}
             <div class="favorite-card">
@@ -501,7 +501,7 @@
 
       <!-- Unavailable Items Section -->
       {% if unavailable_items %}
-        <h2 style="color: var(--text-primary); margin: 40px 0 20px 0; font-size: 1.3rem;">🔔 Sold Items (Keep watching!)</h2>
+        <h2 style="color: var(--text-primary); margin: 40px 0 20px 0; font-size: 1.3rem;">Sold Items (Keep watching!)</h2>
         <div class="favorites-grid">
           {% for item in unavailable_items %}
             <div class="favorite-card" style="opacity: 0.7; border: 2px dashed var(--primary-color);">

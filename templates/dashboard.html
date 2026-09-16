@@ -2344,7 +2344,7 @@
     <div class="widgets-grid">
       <!-- Progress Rings Card -->
       <div class="progress-card">
-        <h3>📊 Your Progress</h3>
+        <h3>Your Progress</h3>
         
         <!-- Profile and identity completion -->
         <div class="progress-item">
@@ -2408,7 +2408,7 @@
 
           <!-- Tier Progression Display -->
           <div class="tier-progression-in-card">
-            <div class="tier-progression-title">🏆 Tier Progression & Rewards</div>
+            <div class="tier-progression-title">Tier Progression & Rewards</div>
             <div class="tier-progression-grid">
               <!-- Beginner -->
               <div class="tier-progress-item {% if 1 <= current_user.level <= 5 %}active{% endif %}">
@@ -2501,7 +2501,7 @@
     <!-- Personalized Recommendations -->
     {% if similar_items %}
     <div class="recommendations-card">
-      <h3>✨ Recommended For You</h3>
+      <h3>Recommended For You</h3>
       <div class="recommendations-grid">
         {% for item in similar_items %}
         <div class="recommendation-item" onclick="window.location.href='{{ url_for('marketplace.view_item', item_id=item.id) }}'">
@@ -2523,7 +2523,7 @@
     </div>
     {% else %}
     <div class="recommendations-card">
-      <h3>✨ Recommended For You</h3>
+      <h3>Recommended For You</h3>
       <div class="empty-recommendations">
         <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
         <p>Browse the marketplace to see personalized recommendations!</p>

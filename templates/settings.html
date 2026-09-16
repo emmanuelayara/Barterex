@@ -98,6 +98,11 @@
     width: 100%;
   }
 
+  .tab-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 4px 0;
+  }
+
   .settings-content-area {
     flex: 1;
     min-width: 0;
@@ -1593,6 +1598,9 @@
           <button class="tab-button" onclick="switchTab('delete', event)">
             <i class="fas fa-trash-alt"></i> Delete Account
           </button>
+
+          <div class="tab-divider"></div>
+
           <a href="{{ url_for('user.user_items') }}" class="tab-button">
             <i class="fas fa-box"></i> My Items
           </a>

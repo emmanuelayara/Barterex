@@ -348,7 +348,7 @@ def login():
 
                 if user.first_login:
                     flash(
-                        "🎉 Welcome to Barter Express! You've received 1000 starter credits. Let's get trading!",
+                        "🎉 Welcome to Barter Express! You've received ᗸ1,000 starter BXC. Let's get trading!",
                         "success"
                     )
                     user.first_login = False

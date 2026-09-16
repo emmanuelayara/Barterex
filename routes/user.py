@@ -575,7 +575,7 @@ def cancel_order(order_id):
         item_names = [f"{oi.item.name}" for oi in order.items]
         items_text = ', '.join(item_names) if item_names else "Items"
         
-        notification_message = f"Order {order.order_number} cancelled. {items_text}. Credits refunded: ₦{refund_amount:,.0f}"
+        notification_message = f"Order {order.order_number} cancelled. {items_text}. BXC refunded: ᗸ{refund_amount:,.0f}"
         
         notification = Notification(
             user_id=current_user.id,
@@ -599,7 +599,7 @@ Your order {order.order_number} has been successfully cancelled.
 Order Details:
 - Order Number: {order.order_number}
 - Items: {', '.join(item_names)}
-- Credits Refunded: ₦{refund_amount:,.0f}
+- BXC Refunded: ᗸ{refund_amount:,.0f}
 - Cancellation Date: {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p')}
 {f'Reason: {cancellation_reason}' if cancellation_reason else ''}
 
@@ -622,7 +622,7 @@ Barter Express Team
         <h3 style="margin-top: 0; color: #ff7a00;">Order Details</h3>
         <p><strong>Order Number:</strong> {order.order_number}</p>
         <p><strong>Items:</strong> {', '.join(item_names)}</p>
-        <p><strong>Credits Refunded:</strong> <span style="color: #28a745; font-size: 18px; font-weight: bold;">₦{refund_amount:,.0f}</span></p>
+        <p><strong>BXC Refunded:</strong> <span style="color: #28a745; font-size: 18px; font-weight: bold;">ᗸ{refund_amount:,.0f} BXC</span></p>
         <p><strong>Cancellation Date:</strong> {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p')}</p>
         {f'<p><strong>Reason:</strong> {cancellation_reason}</p>' if cancellation_reason else ''}
       </div>
@@ -641,7 +641,7 @@ Barter Express Team
             logger.error(f"Error sending cancellation email: {str(e)}", exc_info=True)
         
         logger.info(f"Order cancelled - User: {current_user.username}, Order: {order_id}, Refund: ₦{refund_amount}")
-        flash(f'Order cancelled successfully. ₦{refund_amount:,.0f} has been refunded to your account.', 'success')
+        flash(f'Order cancelled successfully. ᗸ{refund_amount:,.0f} BXC has been refunded to your account.', 'success')
         return redirect(url_for('user.view_order_details', order_id=order_id))
     
     except Exception as e:

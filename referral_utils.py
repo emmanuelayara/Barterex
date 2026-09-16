@@ -48,7 +48,7 @@ def is_profile_complete(user):
 
 def award_referral_signup_bonus(referred_user):
     """
-    Award ₦100 referral bonus to the user who referred the given user,
+    Award 100 BXC referral bonus to the user who referred the given user,
     when the referred user completes their profile.
     
     Args:
@@ -114,7 +114,7 @@ def award_referral_signup_bonus(referred_user):
         # Create notification for referrer
         notification = Notification(
             user_id=referrer.id,
-            message=f'🎉 {referred_user.username} completed their profile! You earned ₦{BONUS_AMOUNT} referral bonus.',
+            message=f'🎉 {referred_user.username} completed their profile! You earned ᗸ{BONUS_AMOUNT} BXC referral bonus.',
             notification_type='referral',
             category='reward'
         )
@@ -127,12 +127,12 @@ def award_referral_signup_bonus(referred_user):
             f"Referral signup bonus awarded - "
             f"Referrer: {referrer.username} (ID: {referrer.id}), "
             f"Referred: {referred_user.username} (ID: {referred_user.id}), "
-            f"Amount: ₦{BONUS_AMOUNT}"
+            f"Amount: {BONUS_AMOUNT} BXC"
         )
         
         return {
             'success': True,
-            'message': f'✅ Referral bonus of ₦{BONUS_AMOUNT} awarded to {referrer.username}',
+            'message': f'✅ Referral bonus of ᗸ{BONUS_AMOUNT} BXC awarded to {referrer.username}',
             'referrer': referrer,
             'amount': BONUS_AMOUNT
         }

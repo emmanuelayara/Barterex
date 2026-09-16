@@ -769,13 +769,13 @@ def finalize_purchase():
             
             # Build items list for notification
             items_list = "<br>".join([
-                f"• [{item.item_number}] {item.name} - ₦{item.value:,.0f} Credits"
+                f"• [{item.item_number}] {item.name} - ᗸ{item.value:,.0f} BXC"
                 for item in purchased_items
             ])
             
             # Compact single-line notification message with item numbers
             items_summary = ", ".join([f"[{item.item_number}] {item.name}" for item in purchased_items])
-            notification_message = f"✓ Order Confirmed! Order #{order_number} for {len(purchased_items)} item(s): {items_summary}. Total: ₦{total_cost:,.0f} Credits. Delivery: {delivery_method.title()}. Est. delivery: 7 business days."
+            notification_message = f"✓ Order Confirmed! Order #{order_number} for {len(purchased_items)} item(s): {items_summary}. Total: ᗸ{total_cost:,.0f} BXC. Delivery: {delivery_method.title()}. Est. delivery: 7 business days."
             
             # Create notification in database
             notification = Notification(user_id=current_user.id, message=notification_message)
@@ -824,17 +824,17 @@ def finalize_purchase():
                         
                         <div class="items-section">
                             <h3 style="color: #333; border-bottom: 2px solid #ff7a00; padding-bottom: 10px;">Items Ordered ({len(purchased_items)})</h3>
-                            {''.join([f'<div class="item"><strong>[{item.item_number}] {item.name}</strong><br><span style="color: #ff7a00; font-weight: bold;">₦{item.value:,.0f} Credits</span></div>' for item in purchased_items])}
+                            {''.join([f'<div class="item"><strong>[{item.item_number}] {item.name}</strong><br><span style="color: #ff7a00; font-weight: bold;">ᗸ{item.value:,.0f} BXC</span></div>' for item in purchased_items])}
                         </div>
                         
                         <div class="summary">
                             <div class="summary-row">
                                 <span>Subtotal:</span>
-                                <span>₦{total_cost:,.0f}</span>
+                                <span>ᗸ{total_cost:,.0f} BXC</span>
                             </div>
                             <div class="summary-row total">
                                 <span>Total Cost:</span>
-                                <span>₦{total_cost:,.0f} Credits</span>
+                                <span>ᗸ{total_cost:,.0f} BXC</span>
                             </div>
                         </div>
                         

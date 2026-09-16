@@ -239,7 +239,7 @@ def create_level_up_notification(user, level_up_info):
         # Create notification with badge icon
         message = (
             f"{tier_badge} Congratulations! You've reached Level {new_level} ({new_tier})! "
-            f"You earned {credits_awarded} credits as a reward. Keep trading to reach higher levels!"
+            f"You earned {credits_awarded} BXC as a reward. Keep trading to reach higher levels!"
         )
         
         notification = Notification(

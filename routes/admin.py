@@ -903,15 +903,15 @@ def approve_item(item_id):
             notification = Notification(
                 user_id=item.user_id,
                 message=f"🎉 Your item '{item.name}' has been approved! You earned 10 trading points. "
-                        f"New Balance: ₦{item.user.credits:,} credits. "
+                        f"New Balance: ᗸ{item.user.credits:,.0f} BXC. "
                         f"Congratulations on reaching Level {level_up_info['new_level']} ({level_up_info['new_tier']})! "
-                        f"You earned {level_up_info['credits_awarded']} bonus credits. Keep trading!"
+                        f"You earned {level_up_info['credits_awarded']} bonus BXC. Keep trading!"
             )
         else:
             notification = Notification(
                 user_id=item.user_id,
-                message=f"🎉 Your item '{item.name}' has been approved for ₦{item.value} credits! "
-                        f"You earned 10 trading points. New Balance: ₦{item.user.credits:,} credits. "
+                message=f"🎉 Your item '{item.name}' has been approved for ᗸ{item.value:,.0f} BXC! "
+                        f"You earned 10 trading points. New Balance: ᗸ{item.user.credits:,.0f} BXC. "
                         f"Keep using Barter Express for seamless trading."
             )
         
@@ -1475,7 +1475,7 @@ def update_order_status(order_id):
                 note.message = (
                     f"{status_messages.get(order.status, f'Order status updated to {order.status}')} "
                     f"🎉 You earned 20 trading points and reached Level {level_up_info['new_level']} ({level_up_info['new_tier']})! "
-                    f"Bonus reward: {level_up_info['credits_awarded']} credits added!"
+                    f"Bonus reward: {level_up_info['credits_awarded']} BXC added!"
                 )
             else:
                 # Add points earned message if no level up

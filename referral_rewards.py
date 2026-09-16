@@ -105,7 +105,7 @@ def award_referral_bonus(referred_user_id, bonus_type, amount=100):
         
         notification = Notification(
             user_id=referrer.id,
-            message=f'🎉 Referral bonus earned! {referred_user.username} {bonus_desc}. You earned ₦{amount} credits!',
+            message=f'🎉 Referral bonus earned! {referred_user.username} {bonus_desc}. You earned ᗸ{amount} BXC!',
             notification_type='referral',
             category='reward'
         )
@@ -118,7 +118,7 @@ def award_referral_bonus(referred_user_id, bonus_type, amount=100):
             'success': True,
             'referrer_id': referrer.id,
             'amount_awarded': amount,
-            'message': f'{bonus_type.capitalize()} bonus of ₦{amount} awarded to {referrer.username}'
+            'message': f'{bonus_type.capitalize()} bonus of ᗸ{amount} BXC awarded to {referrer.username}'
         }
     
     except Exception as e:

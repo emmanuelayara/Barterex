@@ -505,7 +505,7 @@ def notify_credit_purchase(user_id, amount_naira, credits_purchased, previous_ba
             return None
         
         # Create in-app notification
-        message = f"🎉 You successfully purchased {credits_purchased} credits for ₦{amount_naira:,.0f}! Your balance is now {new_balance:,.0f} credits."
+        message = f"🎉 You successfully purchased ᗸ{credits_purchased:,.0f} BXC for ₦{amount_naira:,.0f}! Your balance is now ᗸ{new_balance:,.0f} BXC."
         
         notification = NotificationService.create_notification(
             user_id=user_id,
@@ -554,7 +554,7 @@ def notify_credit_purchase(user_id, amount_naira, credits_purchased, previous_ba
             
             mail = Mail(current_app)
             msg = Message(
-                subject=f'Credit Purchase Confirmation - {credits_purchased} Credits Added',
+                subject=f'Credit Purchase Confirmation - {credits_purchased:,.0f} BXC Added',
                 recipients=[user.email],
                 html=email_html
             )
