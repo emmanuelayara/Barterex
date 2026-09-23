@@ -1489,33 +1489,55 @@
     position: fixed;
     top: 70%;
     right: 20px;
-    transform: translateY(-50%);
-    width: 45px;
-    height: 45px;
+    transform: translateY(-50%) scale(0.6);
+    width: 48px;
+    height: 48px;
     background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
     color: white;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 1.2rem;
-    z-index: 999;
-    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.4);
-    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    z-index: 900;
+    box-shadow: 0 4px 14px rgba(255, 122, 0, 0.4);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    touch-action: none;
+  }
+
+  #backToTopBtn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) scale(1);
   }
 
   #backToTopBtn:hover {
     background: linear-gradient(135deg, #ff8c00, var(--primary-color));
-    transform: translateY(-50%) translateX(-3px);
-    box-shadow: 0 6px 16px rgba(255, 122, 0, 0.5);
+    box-shadow: 0 8px 22px rgba(255, 122, 0, 0.55);
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  #backToTopBtn.dragging {
+    transition: none;
+    cursor: grabbing;
+    z-index: 1200;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #backToTopBtn i {
+    font-size: 1.1rem;
+    line-height: 1;
   }
 
   @media (max-width: 640px) {
     #backToTopBtn {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       right: 15px;
       font-size: 1rem;
     }
@@ -1584,7 +1606,9 @@
 </style>
 
 <!-- Back to Top Button -->
-<button id="backToTopBtn" title="Back to top" style="display: none; position: fixed; bottom: 30px; right: 20px; z-index: 80;">↑</button>
+<button id="backToTopBtn" title="Back to top" aria-label="Back to top">
+  <i class="fas fa-arrow-up"></i>
+</button>
 
 <div class="marketplace-page">
   <div class="marketplace-container">
@@ -2337,7 +2361,128 @@
   }
 
   // ==================== BACK TO TOP BUTTON ====================
-  // This will be initialized in DOMContentLoaded below
+  // Long-press (mobile) or right-click-and-hold (desktop) to drag the button anywhere on screen
+  function initBackToTopDrag(btn) {
+    const LONG_PRESS_MS = 500;
+    const MOVE_CANCEL_THRESHOLD = 10;
+
+    let pressTimer = null;
+    let dragging = false;
+    let moved = false;
+    let suppressNextClick = false;
+    let startX = 0, startY = 0;
+    let offsetX = 0, offsetY = 0;
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function cancelPressTimer() {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+
+    function beginDrag(clientX, clientY) {
+      dragging = true;
+      moved = false;
+      const rect = btn.getBoundingClientRect();
+      offsetX = clientX - rect.left;
+      offsetY = clientY - rect.top;
+      btn.style.transform = 'none';
+      btn.style.right = 'auto';
+      btn.style.left = rect.left + 'px';
+      btn.style.top = rect.top + 'px';
+      btn.classList.add('dragging');
+    }
+
+    function moveDrag(clientX, clientY) {
+      if (!dragging) return;
+      moved = true;
+      const rect = btn.getBoundingClientRect();
+      const maxLeft = window.innerWidth - rect.width;
+      const maxTop = window.innerHeight - rect.height;
+      btn.style.left = clamp(clientX - offsetX, 0, maxLeft) + 'px';
+      btn.style.top = clamp(clientY - offsetY, 0, maxTop) + 'px';
+    }
+
+    function endDrag() {
+      dragging = false;
+      btn.classList.remove('dragging');
+      if (moved) {
+        suppressNextClick = true;
+      }
+    }
+
+    // Mobile: long-press to start dragging
+    btn.addEventListener('touchstart', function(e) {
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      cancelPressTimer();
+      pressTimer = setTimeout(function() {
+        beginDrag(touch.clientX, touch.clientY);
+      }, LONG_PRESS_MS);
+    }, { passive: true });
+
+    btn.addEventListener('touchmove', function(e) {
+      const touch = e.touches[0];
+      if (dragging) {
+        e.preventDefault();
+        moveDrag(touch.clientX, touch.clientY);
+      } else if (pressTimer && (Math.abs(touch.clientX - startX) > MOVE_CANCEL_THRESHOLD || Math.abs(touch.clientY - startY) > MOVE_CANCEL_THRESHOLD)) {
+        cancelPressTimer();
+      }
+    }, { passive: false });
+
+    btn.addEventListener('touchend', function() {
+      cancelPressTimer();
+      if (dragging) {
+        endDrag();
+      }
+    });
+
+    // Desktop: right-click and hold to start dragging
+    btn.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    btn.addEventListener('mousedown', function(e) {
+      if (e.button !== 2) return;
+      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
+      cancelPressTimer();
+      pressTimer = setTimeout(function() {
+        beginDrag(e.clientX, e.clientY);
+      }, LONG_PRESS_MS);
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (dragging) {
+        moveDrag(e.clientX, e.clientY);
+      } else if (pressTimer && (Math.abs(e.clientX - startX) > MOVE_CANCEL_THRESHOLD || Math.abs(e.clientY - startY) > MOVE_CANCEL_THRESHOLD)) {
+        cancelPressTimer();
+      }
+    });
+
+    document.addEventListener('mouseup', function() {
+      cancelPressTimer();
+      if (dragging) {
+        endDrag();
+      }
+    });
+
+    // Swallow the click that follows a drag so it doesn't scroll to top
+    btn.addEventListener('click', function(e) {
+      if (suppressNextClick) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        suppressNextClick = false;
+      }
+    }, true);
+  }
 
   // ==================== INITIALIZATION ====================
   document.addEventListener('DOMContentLoaded', function() {
@@ -2401,19 +2546,15 @@
       const scrollHandler = function() {
         const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
         if (scrollTop > 300) {
-          if (backToTopBtn.style.display !== 'flex') {
-            backToTopBtn.style.display = 'flex';
-            console.log('🟢 Scroll: Button shown (scrollTop: ' + scrollTop + ')');
-          }
+          backToTopBtn.classList.add('visible');
         } else {
-          if (backToTopBtn.style.display !== 'none') {
-            backToTopBtn.style.display = 'none';
-            console.log('🟡 Scroll: Button hidden (scrollTop: ' + scrollTop + ')');
-          }
+          backToTopBtn.classList.remove('visible');
         }
       };
       
       window.addEventListener('scroll', scrollHandler, { passive: true });
+
+      initBackToTopDrag(backToTopBtn);
 
       // Scroll to top when button is clicked
       backToTopBtn.addEventListener('click', function(e) {
