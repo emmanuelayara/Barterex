@@ -54,6 +54,7 @@ def inject_admin_context():
 # ==================== ROUTES ====================
 
 @admin_bp.route('/register', methods=['GET', 'POST'])
+@admin_login_required
 @handle_errors
 def admin_register():
     try:
