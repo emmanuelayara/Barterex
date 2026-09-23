@@ -901,31 +901,6 @@
         /* ========================================
            LOADING OVERLAY STYLES
            ======================================== */
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(4px);
-        }
-
-        .loading-overlay.hidden {
-            display: none;
-        }
-
-        .spinner {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
 
         /* Brand loader: rotating ring around the Barter Express logo */
         .brand-loader {
@@ -951,17 +926,8 @@
             width: 44px;
             height: 44px;
             object-fit: contain;
-            background: var(--white);
-            border-radius: 10px;
-            padding: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-        }
-
-        .spinner-text {
-            color: var(--white);
-            font-size: 1rem;
-            font-weight: 500;
-            letter-spacing: 1px;
+            background: transparent;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
         }
 
         @keyframes spin {
@@ -1207,17 +1173,6 @@
     {% endif %}
 {% endwith %}
 
-<!-- LOADING OVERLAY -->
-<div id="loadingOverlay" class="loading-overlay hidden">
-    <div class="spinner">
-        <div class="brand-loader">
-            <div class="brand-loader-ring"></div>
-            <img src="/static/logo.png" alt="Loading" class="brand-loader-logo">
-        </div>
-        <div class="spinner-text">Loading...</div>
-    </div>
-</div>
-
 <!-- PAGE CONTENT -->
 {% block content %}
 <div class="container">
@@ -1357,25 +1312,15 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingStyles.textContent = `
         .loading-content {
             text-align: center;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        html.dark-mode .loading-content {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            background: transparent;
+            padding: 20px;
+            box-shadow: none;
         }
 
         .loading-text {
-            color: #333;
+            color: #f1f5f9;
             font-weight: 500;
             margin: 0;
-        }
-
-        html.dark-mode .loading-text {
-            color: #f1f5f9;
         }
 
         /* Toast Notification Styles */
@@ -2002,34 +1947,6 @@ function notifyOrderStatus(orderId, status) {
 /* ========================================
    LOADING STATE MANAGEMENT
    ======================================== */
-
-function showLoading(message = 'Loading...') {
-    // Use the global-loading-overlay that was created in DOMContentLoaded
-    const overlay = document.getElementById('global-loading-overlay');
-    if (overlay) {
-        const text = overlay.querySelector('.loading-text');
-        if (text) text.textContent = message;
-        overlay.style.display = 'flex';
-    }
-    // Also support the old loadingOverlay element if it exists
-    const oldOverlay = document.getElementById('loadingOverlay');
-    if (oldOverlay) {
-        oldOverlay.classList.remove('hidden');
-    }
-}
-
-function hideLoading() {
-    // Hide the global-loading-overlay
-    const overlay = document.getElementById('global-loading-overlay');
-    if (overlay) {
-        overlay.style.display = 'none';
-    }
-    // Also hide the old loadingOverlay element if it exists
-    const oldOverlay = document.getElementById('loadingOverlay');
-    if (oldOverlay) {
-        oldOverlay.classList.add('hidden');
-    }
-}
 
 // Auto-hide loading on page load - with multiple safety nets
 window.addEventListener('load', function() {
