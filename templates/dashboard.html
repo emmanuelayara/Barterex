@@ -43,28 +43,42 @@
     font-weight: 400;
   }
 
+  /* Floating Manage Account button: fixed so it stays in place while scrolling, on desktop and mobile */
+  /* right offset tracks .main-content's right edge (max-width: 1200px, centered) instead of the viewport edge */
   .settings-btn-dashboard {
+    position: fixed;
+    top: 90px;
+    right: max(16px, calc((100vw - 1200px) / 2 + 16px));
+    z-index: 500;
     display: flex;
     align-items: center;
     gap: 6px;
     background: linear-gradient(135deg, #ff7a00, #ff7a00);
     color: white;
     padding: 10px 16px;
-    border-radius: 10px;
+    border-radius: 999px;
     text-decoration: none;
     font-weight: 600;
     font-size: 0.85rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+    transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.35);
     border: none;
     cursor: pointer;
     white-space: nowrap;
+    touch-action: none;
   }
 
   .settings-btn-dashboard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(255, 122, 0, 0.4);
+    box-shadow: 0 6px 25px rgba(255, 122, 0, 0.45);
     background: linear-gradient(135deg, #ff8c1a, #ff8c1a);
+  }
+
+  .settings-btn-dashboard.dragging {
+    transition: none;
+    cursor: grabbing;
+    z-index: 1200;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .settings-btn-dashboard i {
@@ -72,15 +86,17 @@
   }
 
   @media (max-width: 768px) {
-    .welcome-section {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 16px;
+    .settings-btn-dashboard {
+      top: 70px;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 50%;
     }
 
-    .settings-btn-dashboard {
-      width: 100%;
-      justify-content: center;
+    .settings-btn-dashboard span {
+      display: none;
     }
   }
 
@@ -370,98 +386,6 @@
     .stat-card-balance .fund-account-btn {
       grid-column: 1;
       justify-self: start;
-    }
-  }
-
-  /* Manage Account: show inside Address card on small screens (icon-only on mobile) */
-  .manage-account-btn {
-    display: none; /* hidden by default on larger screens */
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #ff7a00, #ff8c1a);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-  }
-
-  @media (max-width: 768px) {
-    /* hide the header settings button and show inline in the stat card */
-    .welcome-section .settings-btn-dashboard {
-      display: none !important;
-    }
-
-    .stat-card .manage-account-btn {
-      display: inline-flex;
-      justify-self: end;
-      align-self: start;
-      grid-column: 3;
-      grid-row: 1;
-      padding: 6px 10px;
-      font-size: 0.75rem;
-    }
-    /* show icon-only on small/tablet screens by hiding the label */
-    .stat-card .manage-account-btn span {
-      display: none;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .stat-card .manage-account-btn {
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      margin: 0;
-      border-radius: 8px;
-      gap: 0;
-      font-size: 0;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .stat-card .manage-account-btn span {
-      display: none;
-    }
-
-    .stat-card .manage-account-btn i {
-      font-size: 0.95rem;
-      line-height: 1;
-    }
-  }
-
-  /* Ensure manage-account icon matches the left location icon sizes */
-  .stat-card .manage-account-btn i {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    font-size: 16px;
-    line-height: 1;
-    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
-    border-radius: 8px;
-    color: white;
-  }
-
-  @media (max-width: 768px) {
-    .stat-card .manage-account-btn i {
-      width: 15px;
-      height: 15px;
-      font-size: 14px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .stat-card .manage-account-btn i {
-      width: 24px;
-      height: 24px;
-      font-size: 12px;
     }
   }
 
@@ -1525,10 +1449,6 @@
       <div class="stat-card">
         <div class="stat-icon">📍</div>
         <div class="stat-title">Address</div>
-          <a href="{{ url_for('user.settings') }}" class="manage-account-btn" title="Manage Account">
-            <i class="fas fa-user-cog"></i>
-            <span>Manage Account</span>
-          </a>
         <div class="stat-value" style="font-size: 0.70rem; line-height: 1.3;">
           {% if current_user.address %}
             {{ current_user.address }}
@@ -2133,8 +2053,134 @@
     });
   }
 
+  // Long-press (mobile) or right-click-and-hold (desktop) to drag the floating Manage Account button anywhere on screen
+  function initFloatingManageButtonDrag() {
+    const btn = document.querySelector('.settings-btn-dashboard');
+    if (!btn) return;
+
+    const LONG_PRESS_MS = 500;
+    const MOVE_CANCEL_THRESHOLD = 10;
+
+    let pressTimer = null;
+    let dragging = false;
+    let moved = false;
+    let suppressNextClick = false;
+    let startX = 0, startY = 0;
+    let offsetX = 0, offsetY = 0;
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function cancelPressTimer() {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+
+    function beginDrag(clientX, clientY) {
+      dragging = true;
+      moved = false;
+      const rect = btn.getBoundingClientRect();
+      offsetX = clientX - rect.left;
+      offsetY = clientY - rect.top;
+      btn.style.right = 'auto';
+      btn.style.left = rect.left + 'px';
+      btn.style.top = rect.top + 'px';
+      btn.classList.add('dragging');
+    }
+
+    function moveDrag(clientX, clientY) {
+      if (!dragging) return;
+      moved = true;
+      const rect = btn.getBoundingClientRect();
+      const maxLeft = window.innerWidth - rect.width;
+      const maxTop = window.innerHeight - rect.height;
+      btn.style.left = clamp(clientX - offsetX, 0, maxLeft) + 'px';
+      btn.style.top = clamp(clientY - offsetY, 0, maxTop) + 'px';
+    }
+
+    function endDrag() {
+      dragging = false;
+      btn.classList.remove('dragging');
+      if (moved) {
+        suppressNextClick = true;
+      }
+    }
+
+    // Mobile: long-press to start dragging
+    btn.addEventListener('touchstart', function(e) {
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      cancelPressTimer();
+      pressTimer = setTimeout(function() {
+        beginDrag(touch.clientX, touch.clientY);
+      }, LONG_PRESS_MS);
+    }, { passive: true });
+
+    btn.addEventListener('touchmove', function(e) {
+      const touch = e.touches[0];
+      if (dragging) {
+        e.preventDefault();
+        moveDrag(touch.clientX, touch.clientY);
+      } else if (pressTimer && (Math.abs(touch.clientX - startX) > MOVE_CANCEL_THRESHOLD || Math.abs(touch.clientY - startY) > MOVE_CANCEL_THRESHOLD)) {
+        cancelPressTimer();
+      }
+    }, { passive: false });
+
+    btn.addEventListener('touchend', function() {
+      cancelPressTimer();
+      if (dragging) {
+        endDrag();
+      }
+    });
+
+    // Desktop: right-click and hold to start dragging
+    btn.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    btn.addEventListener('mousedown', function(e) {
+      if (e.button !== 2) return;
+      e.preventDefault();
+      startX = e.clientX;
+      startY = e.clientY;
+      cancelPressTimer();
+      pressTimer = setTimeout(function() {
+        beginDrag(e.clientX, e.clientY);
+      }, LONG_PRESS_MS);
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (dragging) {
+        moveDrag(e.clientX, e.clientY);
+      } else if (pressTimer && (Math.abs(e.clientX - startX) > MOVE_CANCEL_THRESHOLD || Math.abs(e.clientY - startY) > MOVE_CANCEL_THRESHOLD)) {
+        cancelPressTimer();
+      }
+    });
+
+    document.addEventListener('mouseup', function() {
+      cancelPressTimer();
+      if (dragging) {
+        endDrag();
+      }
+    });
+
+    // Swallow the click that follows a drag so it doesn't navigate to Manage Account
+    btn.addEventListener('click', function(e) {
+      if (suppressNextClick) {
+        e.preventDefault();
+        suppressNextClick = false;
+      }
+    });
+  }
+
   // Animate progress rings on page load
   document.addEventListener('DOMContentLoaded', function() {
+    initFloatingManageButtonDrag();
+
     const circles = document.querySelectorAll('.progress-ring-circle');
     circles.forEach(circle => {
       circle.style.animation = 'progressRingAnimation 1.5s ease-out forwards';
