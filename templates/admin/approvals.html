@@ -367,6 +367,25 @@
     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.08);
   }
 
+  .video-url-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: var(--surface);
+    color: var(--text-primary);
+    margin-top: 6px;
+  }
+
+  .video-url-input:focus {
+    outline: none;
+    border-color: #ff0000;
+    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.08);
+  }
+
   /* Collapsible Rejection Form */
   .rejection-section {
     max-height: 0;
@@ -822,6 +841,18 @@
                     placeholder="Value"
                     min="0.1"
                     required
+                  >
+
+                  <label for="video_url_{{ item.id }}" class="appraisal-label">
+                    <span class="credit-icon">📹</span>
+                    Video (optional)
+                  </label>
+                  <input
+                    type="url"
+                    name="video_url"
+                    id="video_url_{{ item.id }}"
+                    class="video-url-input"
+                    placeholder="https://youtube.com/watch?v=..."
                   >
 
                   <div class="action-buttons">

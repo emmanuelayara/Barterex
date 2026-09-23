@@ -4,6 +4,7 @@ from datetime import datetime
 import random
 import secrets
 import json
+from urllib.parse import urlparse
 from sqlalchemy.orm import validates
 
 
@@ -301,6 +302,8 @@ class Item(db.Model):
     category = db.Column(db.String(100), nullable=False)  # Electronics, etc.
     credited = db.Column(db.Boolean, default=False)
     location = db.Column(db.String(100))  # New field
+    # YouTube link recorded by staff during appraisal, shown as a "Video" button on the item detail page
+    video_url = db.Column(db.String(300), nullable=True)
     # Unique number in format EA-XXXXXX (cryptographically secure)
     item_number = db.Column(
         db.String(20), 
@@ -335,6 +338,22 @@ class Item(db.Model):
                 valid_options = ', '.join(sorted(self.VALID_CONDITIONS))
                 raise ValueError(f'Invalid condition. Must be one of: {valid_options}')
         return condition
+
+    @validates('video_url')
+    def validate_video_url(self, key, video_url):
+        """Validate that video_url, if provided, is a YouTube link"""
+        if video_url:
+            video_url = video_url.strip()
+            if not video_url:
+                return None
+            parsed = urlparse(video_url)
+            if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+                raise ValueError('Video link must be a valid URL')
+            allowed_hosts = {'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtu.be'}
+            if parsed.netloc.lower() not in allowed_hosts:
+                raise ValueError('Video link must be a YouTube URL (youtube.com or youtu.be)')
+            return video_url
+        return None
     
     # Database indexes for frequently queried fields (performance optimization)
     # ✅ user_id: Used in dashboard, user profile, "my items" queries

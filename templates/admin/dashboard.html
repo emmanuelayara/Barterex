@@ -1041,6 +1041,12 @@
                        placeholder="e.g. 500" min="1" step="1" required>
                 <small class="text-muted">Enter the BXC value for this item</small>
               </div>
+              <div class="mb-3">
+                <label for="itemVideoUrl" class="form-label"><strong>Video URL (optional)</strong></label>
+                <input type="url" class="form-control" id="itemVideoUrl" name="video_url"
+                       placeholder="https://youtube.com/watch?v=...">
+                <small class="text-muted">Paste the YouTube link of the item's video, if one was recorded</small>
+              </div>
               <input type="hidden" id="itemIdInput" name="item_id">
             </form>
           </div>
@@ -1543,6 +1549,7 @@
     document.getElementById('submitApprove').addEventListener('click', function() {
       const itemId = document.getElementById('itemIdInput').value;
       const value = document.getElementById('itemValue').value;
+      const videoUrl = document.getElementById('itemVideoUrl').value;
 
       if (!value || value < 1) {
         alert('Please enter a valid item value');
@@ -1560,7 +1567,7 @@
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'value=' + encodeURIComponent(value)
+        body: 'value=' + encodeURIComponent(value) + '&video_url=' + encodeURIComponent(videoUrl)
       })
       .then(response => {
         if (response.ok) {
@@ -1630,6 +1637,7 @@
       document.getElementById('submitReject').disabled = false;
       document.getElementById('submitApprove').innerHTML = '<i class="bi bi-check-lg me-2"></i>Approve Item';
       document.getElementById('submitReject').innerHTML = '<i class="bi bi-x-lg me-2"></i>Reject Item';
+      document.getElementById('itemVideoUrl').value = '';
     });
   });
 

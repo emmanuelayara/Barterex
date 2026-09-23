@@ -861,12 +861,20 @@ def approve_item(item_id):
         except ValueError:
             logger.warning(f"Invalid item value provided - Item ID: {item_id}, Value: {request.form.get('value')}, Admin ID: {session.get('admin_id')}")
             raise ValidationError("Item value must be a positive number", field="value")
-            
+
+        # Optional YouTube video link recorded by staff during appraisal
+        video_url = request.form.get('video_url', '').strip() or None
+
         # Update item approval status
         item.value = value
         item.is_approved = True
         item.is_available = True
         item.status = 'approved'
+        try:
+            item.video_url = video_url
+        except ValueError as e:
+            logger.warning(f"Invalid video URL provided - Item ID: {item_id}, URL: {video_url}, Admin ID: {session.get('admin_id')}")
+            raise ValidationError(str(e), field="video_url")
 
         # Award credits to user (only once, since we checked is_approved above)
         item.user.credits += int(value)
@@ -875,6 +883,7 @@ def approve_item(item_id):
         flag_modified(item, 'is_approved')
         flag_modified(item, 'is_available')
         flag_modified(item, 'value')
+        flag_modified(item, 'video_url')
         
         # Log to audit log
         log_item_approval(item_id, item.name, value, user_id=item.user_id, user_name=item.user.username)
