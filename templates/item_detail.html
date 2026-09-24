@@ -2,7 +2,7 @@
 {% block title %}Item Details{% endblock %}
 
 {% block head_extra %}
-{% set og_description = (item.description or 'Check out this item on Barter Express') | striptags | truncate(160) %}
+{% set og_description = (item.description or 'Check out this item on Barter Express') | striptags | truncate(20, True, '', 0) %}
 <meta property="og:type" content="product">
 <meta property="og:title" content="{{ item.name }} - Barter Express">
 <meta property="og:description" content="{{ og_description }}">
