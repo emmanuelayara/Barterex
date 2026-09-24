@@ -1,6 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Item Details{% endblock %}
 
+{% block head_extra %}
+{% set og_raw_image = (item_images[0].image_url if item_images else None) | image_url %}
+{% if og_raw_image.startswith('http://') or og_raw_image.startswith('https://') %}
+  {% set og_image = og_raw_image %}
+{% else %}
+  {% set og_image = request.url_root.rstrip('/') + og_raw_image %}
+{% endif %}
+{% set og_description = (item.description or 'Check out this item on Barter Express') | striptags | truncate(160) %}
+<meta property="og:type" content="product">
+<meta property="og:title" content="{{ item.name }} - Barter Express">
+<meta property="og:description" content="{{ og_description }}">
+<meta property="og:image" content="{{ og_image }}">
+<meta property="og:url" content="{{ url_for('marketplace.view_item', item_id=item.id, _external=True) }}">
+<meta property="og:site_name" content="Barter Express">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ item.name }} - Barter Express">
+<meta name="twitter:description" content="{{ og_description }}">
+<meta name="twitter:image" content="{{ og_image }}">
+{% endblock %}
+
 {% block content %}
 <style>
   * {

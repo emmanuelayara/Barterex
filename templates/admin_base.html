@@ -340,10 +340,6 @@
         <div class="brand-icon">
           <i class="bi bi-gear-fill"></i>
         </div>
-        <div class="brand-text">
-          <h1>Admin Panel</h1>
-          <p class="brand-subtitle">Barter Express</p>
-        </div>
       </a>
 
       <!-- Admin Name Display -->
@@ -359,8 +355,8 @@
         <i class="bi bi-list"></i>
       </button>
 
-      <!-- Navigation Links -->
-      {% if current_user.is_admin %}
+      <!-- Minimal Navigation: full admin menu lives on the dashboard's own button grid -->
+      {% if session.get('admin_id') %}
       <div class="admin-nav-links" id="navLinks">
         <div class="nav-item">
           <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link">
@@ -368,48 +364,9 @@
             Dashboard
           </a>
         </div>
-        
+
         <div class="nav-item">
-          <a href="{{ url_for('admin.approve_items') }}" class="nav-link d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-check-circle"></i> Approve Items</span>
-            {% if pending_items_count > 0 %}
-            <span class="badge bg-danger rounded-pill ms-2" title="{{ pending_items_count }} items pending approval">{{ pending_items_count }}</span>
-            {% endif %}
-          </a>
-        </div>
-        
-        <div class="nav-item">
-          <a href="{{ url_for('admin.manage_users') }}" class="nav-link">
-            <i class="bi bi-people"></i>
-            Manage Users
-          </a>
-        </div>
-        
-        <div class="nav-item">
-          <a href="{{ url_for('admin.pending_appeals') }}" class="nav-link d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-chat-left-quote"></i> Unban Appeals</span>
-            <span class="badge bg-warning text-dark rounded-pill ms-2" title="Pending unban appeals">
-              <i class="bi bi-hourglass-split me-1"></i>{{ pending_appeals }}
-            </span>
-          </a>
-        </div>
-        
-        <div class="nav-item">
-          <a href="{{ url_for('admin.audit_log') }}" class="nav-link">
-            <i class="bi bi-shield-check"></i>
-            Audit Log
-          </a>
-        </div>
-        
-        <div class="nav-item">
-          <a href="{{ url_for('admin.admin_register') }}" class="nav-link">
-            <i class="bi bi-person-plus"></i>
-            Create Admin
-          </a>
-        </div>
-        
-        <div class="nav-item">
-          <a href="{{ url_for('auth.logout') }}" class="nav-link" onclick="handleLogout(event)">
+          <a href="{{ url_for('admin.admin_logout') }}" class="nav-link" onclick="handleLogout(event)">
             <i class="bi bi-box-arrow-right"></i>
             Logout
           </a>

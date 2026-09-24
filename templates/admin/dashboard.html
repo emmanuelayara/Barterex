@@ -16,7 +16,7 @@
   /* Enhanced Admin Header - Mobile Optimized */
   .admin-header {
     background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
-    padding: 20px 15px;
+    padding: 5px 8px;
     color: white;
     border-bottom: 4px solid var(--accent-orange);
     border-radius: 0 0 16px 16px;
@@ -38,8 +38,8 @@
   }
 
   .admin-header h1 {
-    font-size: 1.75rem;
-    margin-bottom: 10px;
+    font-size: 1rem;
+    margin-bottom: 2px;
     font-weight: 700;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     position: relative;
@@ -47,35 +47,69 @@
   }
 
   .admin-header .lead {
-    font-size: 0.95rem;
+    font-size: 0.7rem;
     opacity: 0.9;
-    margin-bottom: 15px;
+    margin-bottom: 4px;
     position: relative;
     z-index: 2;
   }
 
   /* Enhanced Navigation Buttons - Mobile Optimized */
-  .admin-nav-btns {
+  .admin-nav-groups {
     position: relative;
     z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .nav-group {
+    width: 100%;
+    padding-top: 2px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .nav-group:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .nav-group-label {
+    display: block;
+    text-align: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+    margin-bottom: 2px;
+  }
+
+  .admin-nav-btns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .admin-nav-btns a {
-    margin: 3px;
-    padding: 8px 12px;
-    border-radius: 8px;
+    margin: 1px;
+    padding: 2px 6px;
+    border-radius: 5px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
     text-decoration: none;
     transition: var(--transition);
     backdrop-filter: blur(10px);
     border: 2px solid transparent;
     position: relative;
     overflow: hidden;
-    font-size: 0.85rem;
-    min-height: 36px;
+    font-size: 0.7rem;
+    min-height: 20px;
   }
 
   .admin-nav-btns a::before {
@@ -102,14 +136,14 @@
   .count-badge {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     color: var(--primary-blue);
-    border-radius: 12px;
-    padding: 2px 8px;
-    font-size: 0.7rem;
+    border-radius: 8px;
+    padding: 1px 5px;
+    font-size: 0.65rem;
     font-weight: 700;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
     animation: pulse-badge 2s infinite;
-    min-width: 20px;
+    min-width: 16px;
     text-align: center;
   }
 
@@ -676,78 +710,101 @@
   <h1><i class="bi bi-speedometer2 me-2 d-none d-sm-inline"></i>Admin Dashboard</h1>
   <p class="lead">Manage your platform with ease and efficiency</p>
   
-  <div class="admin-nav-btns d-flex flex-wrap justify-content-center">
-    <a href="{{ url_for('admin.admin_dashboard', status='all') }}" class="btn {{ 'btn-primary' if status == 'all' else 'btn-outline-primary' }}">
-      <i class="bi bi-list-ul"></i>
-      <span class="d-none d-sm-inline">All Items</span>
-      <span class="d-inline d-sm-none">All</span>
-      <span class="count-badge">{{ total_items }}</span>
-    </a>
-    <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="btn {{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }} {% if pending_items > 0 %}animate-pending{% endif %}">
-      <i class="bi bi-clock-history"></i>
-      <span class="d-none d-sm-inline">Pending</span>
-      <span class="d-inline d-sm-none">Pending</span>
-      <span class="count-badge {% if pending_items > 0 %}pulse-badge{% endif %}">{{ pending_items }}</span>
-    </a>
-    <a href="{{ url_for('admin.admin_dashboard', status='approved') }}" class="btn {{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">
-      <i class="bi bi-check-circle"></i>
-      <span class="d-none d-sm-inline">Approved</span>
-      <span class="d-inline d-sm-none">OK</span>
-      <span class="count-badge">{{ approved_items }}</span>
-    </a>
-    <a href="{{ url_for('admin.admin_dashboard', status='rejected') }}" class="btn {{ 'btn-danger' if status == 'rejected' else 'btn-outline-danger' }}">
-      <i class="bi bi-x-circle"></i>
-      <span class="d-none d-sm-inline">Rejected</span>
-      <span class="d-inline d-sm-none">X</span>
-      <span class="count-badge">{{ rejected_items }}</span>
-    </a>
-    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-light">
-      <i class="bi bi-people"></i>
-      <span class="d-none d-sm-inline">Manage Users</span>
-      <span class="d-inline d-sm-none">Users</span>
-    </a>
-    <a href="{{ url_for('admin.manage_orders') }}" class="btn btn-outline-light">
-      <i class="bi bi-box-seam"></i>
-      <span class="d-none d-sm-inline">Manage Orders</span>
-      <span class="d-inline d-sm-none">Orders</span>
-    </a>
-    <a href="{{ url_for('admin.manage_pickup_stations') }}" class="btn btn-outline-light">
-      <i class="bi bi-geo-alt"></i>
-      <span class="d-none d-sm-inline">Manage Pickup Stations</span>
-      <span class="d-inline d-sm-none">Stations</span>
-    </a>
-    <a href="{{ url_for('admin.maintenance_mode') }}" class="btn btn-outline-light">
-      <i class="bi bi-tools"></i>
-      <span class="d-none d-sm-inline">Maintenance Mode</span>
-      <span class="d-inline d-sm-none">Maint.</span>
-    </a>
-    <a href="{{ url_for('admin.system_settings') }}" class="btn btn-outline-light">
-      <i class="bi bi-sliders"></i>
-      <span class="d-none d-sm-inline">System Settings</span>
-      <span class="d-inline d-sm-none">Settings</span>
-    </a>
-    <a href="{{ url_for('admin.audit_log') }}" class="btn btn-outline-light">
-      <i class="bi bi-file-earmark-text"></i>
-      <span class="d-none d-sm-inline">Audit Log</span>
-      <span class="d-inline d-sm-none">Log</span>
-    </a>
-    <a href="{{ url_for('admin.pending_appeals') }}" class="btn btn-outline-light">
-      <i class="bi bi-chat-left-quote"></i>
-      <span class="d-none d-sm-inline">Unban Appeals</span>
-      <span class="d-inline d-sm-none">Appeals</span>
-      <span class="count-badge {% if pending_appeals > 0 %}pulse-badge{% endif %}">{{ pending_appeals }}</span>
-    </a>
-    <a href="{{ url_for('admin.view_messages') }}" class="btn btn-outline-light">
-      <i class="bi bi-envelope"></i>
-      <span class="d-none d-sm-inline">Messages</span>
-      <span class="d-inline d-sm-none">Msgs</span>
-      <span class="count-badge {% if pending_messages_count > 0 %}pulse-badge{% endif %}">{{ pending_messages_count }}</span>
-    </a>
-    <a href="{{ url_for('admin.admin_logout') }}" class="btn btn-outline-light">
-      <i class="bi bi-box-arrow-right"></i>
-      <span class="d-none d-sm-inline">Logout</span>
-      <span class="d-inline d-sm-none">Out</span>
-    </a>
+  <div class="admin-nav-groups">
+    <div class="nav-group">
+      <span class="nav-group-label">Item Moderation</span>
+      <div class="admin-nav-btns">
+        <a href="{{ url_for('admin.admin_dashboard', status='all') }}" class="btn {{ 'btn-primary' if status == 'all' else 'btn-outline-primary' }}">
+          <i class="bi bi-list-ul"></i>
+          <span class="d-none d-sm-inline">All Items</span>
+          <span class="d-inline d-sm-none">All</span>
+          <span class="count-badge">{{ total_items }}</span>
+        </a>
+        <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="btn {{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }} {% if pending_items > 0 %}animate-pending{% endif %}">
+          <i class="bi bi-clock-history"></i>
+          <span class="d-none d-sm-inline">Pending</span>
+          <span class="d-inline d-sm-none">Pending</span>
+          <span class="count-badge {% if pending_items > 0 %}pulse-badge{% endif %}">{{ pending_items }}</span>
+        </a>
+        <a href="{{ url_for('admin.admin_dashboard', status='approved') }}" class="btn {{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">
+          <i class="bi bi-check-circle"></i>
+          <span class="d-none d-sm-inline">Approved</span>
+          <span class="d-inline d-sm-none">OK</span>
+          <span class="count-badge">{{ approved_items }}</span>
+        </a>
+        <a href="{{ url_for('admin.admin_dashboard', status='rejected') }}" class="btn {{ 'btn-danger' if status == 'rejected' else 'btn-outline-danger' }}">
+          <i class="bi bi-x-circle"></i>
+          <span class="d-none d-sm-inline">Rejected</span>
+          <span class="d-inline d-sm-none">X</span>
+          <span class="count-badge">{{ rejected_items }}</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Management</span>
+      <div class="admin-nav-btns">
+        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-light">
+          <i class="bi bi-people"></i>
+          <span class="d-none d-sm-inline">Manage Users</span>
+          <span class="d-inline d-sm-none">Users</span>
+        </a>
+        <a href="{{ url_for('admin.manage_orders') }}" class="btn btn-outline-light">
+          <i class="bi bi-box-seam"></i>
+          <span class="d-none d-sm-inline">Manage Orders</span>
+          <span class="d-inline d-sm-none">Orders</span>
+        </a>
+        <a href="{{ url_for('admin.manage_pickup_stations') }}" class="btn btn-outline-light">
+          <i class="bi bi-geo-alt"></i>
+          <span class="d-none d-sm-inline">Manage Pickup Stations</span>
+          <span class="d-inline d-sm-none">Stations</span>
+        </a>
+        <a href="{{ url_for('admin.admin_register') }}" class="btn btn-outline-light">
+          <i class="bi bi-person-plus"></i>
+          <span class="d-none d-sm-inline">Create Admin</span>
+          <span class="d-inline d-sm-none">New Admin</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">System</span>
+      <div class="admin-nav-btns">
+        <a href="{{ url_for('admin.maintenance_mode') }}" class="btn btn-outline-light">
+          <i class="bi bi-tools"></i>
+          <span class="d-none d-sm-inline">Maintenance Mode</span>
+          <span class="d-inline d-sm-none">Maint.</span>
+        </a>
+        <a href="{{ url_for('admin.system_settings') }}" class="btn btn-outline-light">
+          <i class="bi bi-sliders"></i>
+          <span class="d-none d-sm-inline">System Settings</span>
+          <span class="d-inline d-sm-none">Settings</span>
+        </a>
+        <a href="{{ url_for('admin.audit_log') }}" class="btn btn-outline-light">
+          <i class="bi bi-file-earmark-text"></i>
+          <span class="d-none d-sm-inline">Audit Log</span>
+          <span class="d-inline d-sm-none">Log</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Support</span>
+      <div class="admin-nav-btns">
+        <a href="{{ url_for('admin.pending_appeals') }}" class="btn btn-outline-light">
+          <i class="bi bi-chat-left-quote"></i>
+          <span class="d-none d-sm-inline">Unban Appeals</span>
+          <span class="d-inline d-sm-none">Appeals</span>
+          <span class="count-badge {% if pending_appeals > 0 %}pulse-badge{% endif %}">{{ pending_appeals }}</span>
+        </a>
+        <a href="{{ url_for('admin.view_messages') }}" class="btn btn-outline-light">
+          <i class="bi bi-envelope"></i>
+          <span class="d-none d-sm-inline">Messages</span>
+          <span class="d-inline d-sm-none">Msgs</span>
+          <span class="count-badge {% if pending_messages_count > 0 %}pulse-badge{% endif %}">{{ pending_messages_count }}</span>
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 
