@@ -7,7 +7,7 @@ from typing import Dict, Any, Union, List
 import os
 from PIL import Image
 
-from app import db, get_upload_root_path, format_image_url
+from app import db
 from models import Item, ItemImage, Favorite
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, DatabaseError
@@ -136,6 +136,7 @@ def _get_or_create_og_preview_image(item_id, filename):
     """Resize/compress the local upload to a small cached JPEG for link-preview crawlers
     (WhatsApp's crawler silently drops oversized og:image originals). Returns
     (static_path, width, height) or (None, None, None) if the source can't be read."""
+    from app import get_upload_root_path
     upload_root = get_upload_root_path()
     cache_dir = os.path.join(upload_root, 'og_cache')
     cache_path = os.path.join(cache_dir, f'{item_id}.jpg')
@@ -190,6 +191,7 @@ def view_item(item_id: int) -> Union[str, Response]:
             is_favorited = Favorite.query.filter_by(user_id=current_user.id, item_id=item.id).first() is not None
 
         # Build a small, compressed og:image for link-preview crawlers (see helper above)
+        from app import format_image_url
         resolved_image = format_image_url(item_images[0].image_url) if item_images else '/static/placeholder.png'
         og_image_width = og_image_height = None
         if resolved_image.startswith('http://') or resolved_image.startswith('https://'):
