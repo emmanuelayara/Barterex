@@ -158,25 +158,6 @@ def format_image_url(url):
     return '/static/placeholder.png'
 
 
-@app.template_global()
-def get_image_dimensions(image_path):
-    """Return (width, height) for a local static image path, or (None, None) if unavailable (e.g. remote URL, unreadable file)."""
-    try:
-        if not image_path:
-            return (None, None)
-        image_path = str(image_path)
-        if image_path.startswith('http://') or image_path.startswith('https://'):
-            return (None, None)
-        file_path = os.path.join(app.root_path, image_path.lstrip('/'))
-        if not os.path.exists(file_path):
-            return (None, None)
-        from PIL import Image
-        with Image.open(file_path) as img:
-            return img.size
-    except Exception:
-        return (None, None)
-
-
 @app.route('/debug/image-status')
 @login_required
 def debug_image_status():

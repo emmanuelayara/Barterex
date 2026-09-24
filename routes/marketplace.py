@@ -4,8 +4,10 @@ from flask_wtf.csrf import generate_csrf
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from typing import Dict, Any, Union, List
+import os
+from PIL import Image
 
-from app import db
+from app import db, get_upload_root_path, format_image_url
 from models import Item, ItemImage, Favorite
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, DatabaseError
@@ -130,6 +132,37 @@ def home() -> Union[str, Response]:
         return render_template('home.html', top_categories=[], breadcrumbs=['Home'])
 
 
+def _get_or_create_og_preview_image(item_id, filename):
+    """Resize/compress the local upload to a small cached JPEG for link-preview crawlers
+    (WhatsApp's crawler silently drops oversized og:image originals). Returns
+    (static_path, width, height) or (None, None, None) if the source can't be read."""
+    upload_root = get_upload_root_path()
+    cache_dir = os.path.join(upload_root, 'og_cache')
+    cache_path = os.path.join(cache_dir, f'{item_id}.jpg')
+
+    if not os.path.exists(cache_path):
+        source_path = os.path.join(upload_root, filename)
+        if not os.path.exists(source_path):
+            return (None, None, None)
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+            with Image.open(source_path) as img:
+                img = img.convert('RGB')
+                img.thumbnail((1200, 1200))
+                img.save(cache_path, 'JPEG', quality=80, optimize=True)
+        except Exception:
+            logger.warning(f"Could not build OG preview image for item {item_id}", exc_info=True)
+            return (None, None, None)
+
+    try:
+        with Image.open(cache_path) as img:
+            width, height = img.size
+    except Exception:
+        return (None, None, None)
+
+    return (f'/static/uploads/og_cache/{item_id}.jpg', width, height)
+
+
 @marketplace_bp.route('/item/<int:item_id>', methods=['GET', 'POST'])
 @handle_errors
 def view_item(item_id: int) -> Union[str, Response]:
@@ -156,9 +189,29 @@ def view_item(item_id: int) -> Union[str, Response]:
         if current_user.is_authenticated:
             is_favorited = Favorite.query.filter_by(user_id=current_user.id, item_id=item.id).first() is not None
 
+        # Build a small, compressed og:image for link-preview crawlers (see helper above)
+        resolved_image = format_image_url(item_images[0].image_url) if item_images else '/static/placeholder.png'
+        og_image_width = og_image_height = None
+        if resolved_image.startswith('http://') or resolved_image.startswith('https://'):
+            og_image_url = resolved_image
+        elif resolved_image == '/static/placeholder.png':
+            og_image_url = request.url_root.rstrip('/') + resolved_image
+        else:
+            filename = resolved_image.split('/')[-1]
+            cached_path, w, h = _get_or_create_og_preview_image(item.id, filename)
+            if cached_path:
+                og_image_url = request.url_root.rstrip('/') + cached_path
+                og_image_width, og_image_height = w, h
+            else:
+                og_image_url = request.url_root.rstrip('/') + resolved_image
+
         logger.info(f"Item viewed - Item ID: {item_id}, Name: {item.name}, User: {item.user_id}")
         breadcrumbs = ['Marketplace', item.category, item.name[:50]]  # Truncate long names
-        return render_template('item_detail.html', item=item, item_images=item_images, related_items=related_items, is_favorited=is_favorited, csrf_token=generate_csrf, breadcrumbs=breadcrumbs)
+        return render_template(
+            'item_detail.html', item=item, item_images=item_images, related_items=related_items,
+            is_favorited=is_favorited, csrf_token=generate_csrf, breadcrumbs=breadcrumbs,
+            og_image_url=og_image_url, og_image_width=og_image_width, og_image_height=og_image_height
+        )
         
     except Exception as e:
         logger.error(f"Error viewing item {item_id}: {str(e)}", exc_info=True)
