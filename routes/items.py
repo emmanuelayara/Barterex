@@ -15,6 +15,7 @@ from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailab
 from error_handlers import handle_errors, safe_database_operation, retry_operation
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename, optimize_image_for_storage
+from valuator_client import start_ai_valuation, is_enabled as valuator_enabled
 from trading_points import award_points_for_purchase, create_level_up_notification
 from upload_validation_helper import (
     validate_upload_request, validate_image_type, validate_image_size, 
@@ -307,9 +308,20 @@ def upload_item():
             if uploaded_images:
                 new_item.image_url = uploaded_images[0].image_url
             
+            if valuator_enabled():
+                new_item.verification_status = 'pending_valuation'   # admin page shows "AI valuation running..."
+
             try:
                 db.session.commit()
                 logger.info(f"Item submitted for approval - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")
+
+                # AI valuation runs in the background AFTER the item is safely saved.
+                # It can never block or break the upload: any problem is logged and ignored.
+                try:
+                    _upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+                    start_ai_valuation(new_item, current_user, _upload_root)
+                except Exception as ai_err:
+                    logger.warning(f"Could not start AI valuation for item {new_item.id}: {ai_err}")
                 flash(f'✅ Success! Your item has been submitted for approval with {len(uploaded_images)} image(s). We\'ll review it shortly.', "success")
                 return redirect(url_for('marketplace.marketplace'))
             except Exception as e:

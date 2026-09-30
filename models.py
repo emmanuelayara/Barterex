@@ -312,6 +312,22 @@ class Item(db.Model):
         default=lambda: f"EA-{secrets.token_hex(4).upper()}"
     )
     
+    # --- AI valuation (filled in the background by the valuator service; see valuator_client.py) ---
+    # These are ADVICE for the admin only. Credits are still decided by the admin's approved value.
+    ai_estimated_value = db.Column(db.Float, nullable=True)
+    ai_confidence = db.Column(db.String(20), nullable=True)          # High / Medium / Low
+    ai_market_listings = db.Column(db.Integer, nullable=True)        # comparables found
+    ai_value_range_low = db.Column(db.Float, nullable=True)
+    ai_value_range_high = db.Column(db.Float, nullable=True)
+    ai_risk_score = db.Column(db.Float, nullable=True)
+    ai_risk_level = db.Column(db.String(20), nullable=True)          # LOW / MEDIUM / HIGH
+    ai_risk_flags = db.Column(db.Text, nullable=True)                # JSON list
+    ai_sources_used = db.Column(db.Text, nullable=True)              # JSON list
+    verification_status = db.Column(db.String(30), nullable=True)   # pending_valuation / ai_approved / flagged_for_review / ai_rejected / valuation_unavailable
+    verification_notes = db.Column(db.Text, nullable=True)
+    ai_valuated_at = db.Column(db.DateTime, nullable=True)           # None = still running / never ran
+    valuator_valuation_id = db.Column(db.Integer, nullable=True)     # id in the valuator DB (for /api/verify)
+
     images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
     
     # Valid condition values for items

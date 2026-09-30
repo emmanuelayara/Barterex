@@ -17,6 +17,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from logger_config import setup_logger
 from exceptions import ValidationError, DatabaseError, AuthenticationError, AuthorizationError
 from error_handlers import handle_errors, safe_database_operation
+from valuator_client import report_verification
 
 logger = setup_logger(__name__)
 
@@ -965,6 +966,12 @@ def approve_item(item_id):
             # Don't fail the approval if email fails - user can still see notification in dashboard
         
         flash(f"Item '{item.name}' approved with value {value} credits.", "success")
+
+        # Tell the valuator the human verdict (background, fire-and-forget; never blocks approval)
+        try:
+            report_verification(item_id, 'passed', session.get('admin_id'))
+        except Exception as ai_err:
+            logger.warning(f"Could not report approval to valuator for item {item_id}: {ai_err}")
         
     except ValidationError as e:
         logger.warning(f"Validation error approving item: {str(e)}")
@@ -1042,6 +1049,11 @@ def reject_item(item_id):
         db.session.add(notification)
         
         flash(f'Item rejected. Reason: {reason}', 'warning')
+
+        try:
+            report_verification(item_id, 'failed', session.get('admin_id'))
+        except Exception as ai_err:
+            logger.warning(f"Could not report rejection to valuator for item {item_id}: {ai_err}")
         
     except ValidationError as e:
         logger.warning(f"Validation error rejecting item: {str(e)}")
