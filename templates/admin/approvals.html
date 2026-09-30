@@ -824,6 +824,34 @@
                 <span class="condition-badge">⭐ {{ item.condition }}</span>
               </div>
 
+              <!-- AI valuation suggestion (advice only - the admin's value decides the credits) -->
+              {% if item.ai_estimated_value %}
+              <div class="ai-suggestion" style="margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(102,126,234,0.10);border:1px solid rgba(102,126,234,0.35);font-size:0.75rem;line-height:1.5;">
+                <strong>🤖 AI suggests ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</strong>
+                {% if item.ai_value_range_low and item.ai_value_range_high %}
+                  <span>(range ᗸ{{ '{:,.0f}'.format(item.ai_value_range_low) }} – ᗸ{{ '{:,.0f}'.format(item.ai_value_range_high) }})</span>
+                {% endif %}
+                <br>
+                <span>Confidence: {{ (item.ai_confidence or 'n/a')|replace('_', ' ')|capitalize }}</span>
+                {% if item.ai_market_listings %}<span> · {{ item.ai_market_listings }} comparable listings</span>{% endif %}
+                {% if item.ai_risk_level %}
+                  <br>
+                  <span style="font-weight:700;color:{% if item.ai_risk_level == 'HIGH' %}#dc2626{% elif item.ai_risk_level == 'MEDIUM' %}#d97706{% else %}#16a34a{% endif %};">
+                    Risk: {{ item.ai_risk_level }}{% if item.ai_risk_score is not none %} ({{ '%.0f'|format(item.ai_risk_score) }}){% endif %}
+                  </span>
+                {% endif %}
+                {% if item.ai_risk_level == 'HIGH' %}<br><span style="color:#dc2626;">⚠️ High risk - check this item carefully and enter the value yourself.</span>{% endif %}
+              </div>
+              {% elif not item.ai_valuated_at and item.verification_status == 'pending_valuation' %}
+              <div class="ai-suggestion" style="margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(148,163,184,0.15);font-size:0.75rem;">
+                🤖 AI valuation running… refresh in a minute (or enter the value yourself).
+              </div>
+              {% else %}
+              <div class="ai-suggestion" style="margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(148,163,184,0.15);font-size:0.75rem;">
+                🤖 AI valuation unavailable - please enter the value manually.
+              </div>
+              {% endif %}
+
               <!-- Compact Form -->
               <div class="appraisal-section">
                 <form method="POST" action="{{ url_for('admin.approve_item', item_id=item.id) }}" class="approval-form">
@@ -840,6 +868,7 @@
                     class="value-input" 
                     placeholder="Value"
                     min="0.1"
+                    {% if item.ai_estimated_value and item.ai_risk_level != 'HIGH' %}value="{{ item.ai_estimated_value|round|int }}"{% endif %}
                     required
                   >
 
