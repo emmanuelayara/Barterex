@@ -12,10 +12,10 @@ from forms import UploadItemForm, OrderForm
 from routes.auth import send_email_async
 from logger_config import setup_logger
 from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailableError, FileUploadError, DatabaseError, CheckoutError
-from error_handlers import handle_errors, safe_database_operation, retry_operation
+from error_handlers import handle_errors, handle_api_errors, safe_database_operation, retry_operation
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename, optimize_image_for_storage
-from valuator_client import start_ai_valuation, is_enabled as valuator_enabled
+from valuator_client import start_ai_valuation, is_enabled as valuator_enabled, item_fields_signature
 from trading_points import award_points_for_purchase, create_level_up_notification
 from upload_validation_helper import (
     validate_upload_request, validate_image_type, validate_image_size, 
@@ -92,6 +92,39 @@ def create_notification(user_id, message):
             recipients=[user.email],
             html_body=html
         )
+
+def consume_accepted_ai_valuation(name, description, condition, usage_duration, category):
+    """
+    Checks the AI-valuation preview the user accepted on the upload page (see
+    POST /items/estimate-value) against the session and the just-submitted item
+    fields. One-time use: always removed from the session, whether it turns out
+    valid or not. Returns the stored ai_* field dict, or None if there's no
+    valid, unexpired, matching preview to use (the upload then falls back to
+    the normal background-valuation flow with no provisional credit).
+    """
+    pending = session.pop('pending_item_valuation', None)
+    token = request.form.get('ai_valuation_token')
+    if not token or not pending:
+        return None
+
+    if pending.get('token') != token:
+        logger.warning(f"AI valuation token mismatch - User: {current_user.username}")
+        return None
+
+    try:
+        expires_at = datetime.fromisoformat(pending['expires_at'])
+    except (KeyError, ValueError):
+        return None
+    if datetime.utcnow() > expires_at:
+        logger.info(f"AI valuation preview expired - User: {current_user.username}")
+        return None
+
+    current_signature = item_fields_signature(name, description, condition, usage_duration, category)
+    if current_signature != pending.get('fields_signature'):
+        logger.warning(f"AI valuation fields changed since preview - User: {current_user.username}")
+        return None
+
+    return pending.get('ai_fields')
 
 # ==================== ROUTES ====================
 
@@ -307,22 +340,52 @@ def upload_item():
             
             if uploaded_images:
                 new_item.image_url = uploaded_images[0].image_url
-            
-            if valuator_enabled():
+
+            # Did the user accept an AI value on the upload-page modal? (see /items/estimate-value)
+            accepted_ai_fields = consume_accepted_ai_valuation(
+                name=form.name.data,
+                description=form.description.data,
+                condition=form.condition.data,
+                usage_duration=form.usage_duration.data,
+                category=form.category.data,
+            )
+            provisional_amount = None
+
+            if accepted_ai_fields:
+                for field_name, field_value in accepted_ai_fields.items():
+                    setattr(new_item, field_name, field_value)
+                new_item.ai_valuated_at = datetime.utcnow()
+
+                estimated_value = accepted_ai_fields.get('ai_estimated_value')
+                risk_level = (accepted_ai_fields.get('ai_risk_level') or '').upper()
+                if estimated_value and risk_level != 'HIGH':
+                    provisional_amount = int(round(estimated_value))
+                    current_user.provisional_credits = (current_user.provisional_credits or 0) + provisional_amount
+                    new_item.provisional_credit_amount = provisional_amount
+                    new_item.provisional_credit_granted_at = datetime.utcnow()
+                    new_item.status = 'pending_physical_verification'
+            elif valuator_enabled():
                 new_item.verification_status = 'pending_valuation'   # admin page shows "AI valuation running..."
 
             try:
                 db.session.commit()
                 logger.info(f"Item submitted for approval - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")
 
-                # AI valuation runs in the background AFTER the item is safely saved.
-                # It can never block or break the upload: any problem is logged and ignored.
-                try:
-                    _upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
-                    start_ai_valuation(new_item, current_user, _upload_root)
-                except Exception as ai_err:
-                    logger.warning(f"Could not start AI valuation for item {new_item.id}: {ai_err}")
-                flash(f'✅ Success! Your item has been submitted for approval with {len(uploaded_images)} image(s). We\'ll review it shortly.', "success")
+                # Only queue the background valuator when there's no already-accepted preview result -
+                # never pay for a second AI valuation of the same submission.
+                if not accepted_ai_fields:
+                    try:
+                        _upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+                        start_ai_valuation(new_item, current_user, _upload_root)
+                    except Exception as ai_err:
+                        logger.warning(f"Could not start AI valuation for item {new_item.id}: {ai_err}")
+
+                if provisional_amount:
+                    logger.info(f"Provisional credits granted - User: {current_user.username}, Item: {new_item.id}, Amount: {provisional_amount}")
+                    flash(f'✅ Success! Based on the AI value you accepted, ᗸ{provisional_amount:,} provisional BXC was added to '
+                          f'your account - usable to reserve items while an admin confirms your item in person.', "success")
+                else:
+                    flash(f'✅ Success! Your item has been submitted for approval with {len(uploaded_images)} image(s). We\'ll review it shortly.', "success")
                 return redirect(url_for('marketplace.marketplace'))
             except Exception as e:
                 db.session.rollback()
@@ -353,6 +416,112 @@ def upload_item():
         user_message = get_user_friendly_error_message(str(e))
         flash(user_message, 'danger')
         return redirect(url_for('items.upload_item'))
+
+
+@items_bp.route('/items/estimate-value', methods=['POST'])
+@rate_limit("6 per hour")  # each call runs a 35-45s AI valuation - keep it expensive to abuse
+@login_required
+@handle_api_errors
+def estimate_value():
+    """
+    Synchronous AI-valuation preview for the upload page modal. Runs the SAME
+    valuator call as the background job (see valuator_client.py), but inline so
+    the result can be shown to the user before the item is actually submitted.
+
+    Never touches the database - nothing is saved here. The accepted value is
+    only trusted later (on the real /upload submit) if it matches the signed
+    preview stored in the session (see item_fields_signature / verify it there).
+    """
+    import json
+    import secrets
+    from valuator_client import (
+        client as valuator_http_client, is_enabled as valuator_is_enabled,
+        map_condition_to_valuator, map_category_to_valuator, parse_usage_duration,
+        account_days_old, encode_image_bytes_to_base64, extract_item_ai_fields,
+        item_fields_signature, MAX_IMAGES_SENT,
+    )
+
+    if not valuator_is_enabled():
+        return jsonify({'success': False, 'error': 'AI valuation is not available right now.'}), 503
+
+    name = (request.form.get('name') or '').strip()
+    description = (request.form.get('description') or '').strip()
+    condition = (request.form.get('condition') or '').strip()
+    usage_duration = (request.form.get('usage_duration') or '').strip()
+    category = (request.form.get('category') or '').strip()
+
+    if not name or not condition or not category:
+        return jsonify({'success': False, 'error': 'Please fill in the item name, condition and category first.'}), 400
+
+    allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+    images_from_request = [f for f in request.files.getlist('images') if f and f.filename]
+    encoded_images = []
+    for file in images_from_request[:MAX_IMAGES_SENT]:
+        is_valid, error_msg = validate_image_type(file.filename, allowed_extensions)
+        if not is_valid:
+            return jsonify({'success': False, 'error': f'{file.filename}: {error_msg}'}), 400
+
+        file.seek(0, 2)
+        file_size = file.tell()
+        file.seek(0)
+        is_valid, error_msg = validate_image_size(file_size, file.filename, max_size_mb=10)
+        if not is_valid:
+            return jsonify({'success': False, 'error': f'{file.filename}: {error_msg}'}), 400
+
+        try:
+            encoded_images.append(encode_image_bytes_to_base64(file.read(), label=file.filename))
+        except Exception as e:
+            logger.warning(f"Estimate-value: could not read image {file.filename}: {e}")
+
+    response = valuator_http_client.valuate(
+        title=name,
+        description=f"{description}\nUsed for: {usage_duration}".strip() if usage_duration else description,
+        condition=map_condition_to_valuator(condition),
+        sale_type='new' if condition.strip().lower() == 'brand new' else 'second_hand',
+        age_years=parse_usage_duration(usage_duration),
+        image_count=len(images_from_request),
+        images=encoded_images,
+        account_days=account_days_old(getattr(current_user, 'created_at', None)),
+        category=map_category_to_valuator(category),
+    )
+
+    if not response.get('success'):
+        logger.info(f"AI valuation preview unavailable for user {current_user.username}: {response.get('error')}")
+        return jsonify({'success': False, 'error': response.get('error') or 'AI valuation is unavailable right now.'}), 502
+
+    fields = extract_item_ai_fields(response)
+    token = secrets.token_urlsafe(16)
+    expires_at = datetime.utcnow() + timedelta(minutes=15)
+
+    session['pending_item_valuation'] = {
+        'token': token,
+        'expires_at': expires_at.isoformat(),
+        'fields_signature': item_fields_signature(name, description, condition, usage_duration, category),
+        'ai_fields': fields,
+    }
+
+    logger.info(f"AI valuation preview generated - User: {current_user.username}, Value: {fields.get('ai_estimated_value')}")
+
+    return jsonify({
+        'success': True,
+        'token': token,
+        'expires_at': expires_at.isoformat(),
+        'estimated_value': fields.get('ai_estimated_value'),
+        'value_range': {
+            'low': fields.get('ai_value_range_low'),
+            'high': fields.get('ai_value_range_high'),
+        },
+        'confidence': fields.get('ai_confidence'),
+        'market_listings': fields.get('ai_market_listings'),
+        'risk': {
+            'level': fields.get('ai_risk_level'),
+            'score': fields.get('ai_risk_score'),
+            'flags': json.loads(fields.get('ai_risk_flags') or '[]'),
+        },
+        'sources_used': json.loads(fields.get('ai_sources_used') or '[]'),
+        'verification_status': fields.get('verification_status'),
+        'notes': fields.get('verification_notes'),
+    })
 
 
 @items_bp.route('/add_to_cart/<int:item_id>', methods=['POST', 'GET'])

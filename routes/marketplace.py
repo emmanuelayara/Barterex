@@ -12,6 +12,9 @@ from models import Item, ItemImage, Favorite
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, DatabaseError
 from error_handlers import handle_errors
+from services.reservation_service import (
+    create_reservation, cancel_reservation, complete_reservation, get_active_reservation, RESERVATION_HOLD_HOURS
+)
 from search_discovery import (
     get_search_suggestions,
     get_trending_items,
@@ -56,6 +59,9 @@ def _get_top_categories(limit: int = 3) -> List[Dict[str, Any]]:
 @handle_errors
 def marketplace() -> Union[str, Response]:
     try:
+        from services.reservation_service import release_expired_reservations
+        release_expired_reservations()  # re-list any items whose reservation hold has lapsed
+
         page = request.args.get('page', 1, type=int)
         condition_filter = request.args.get('condition')
         category_filter = request.args.get('category')
@@ -190,6 +196,8 @@ def view_item(item_id: int) -> Union[str, Response]:
         if current_user.is_authenticated:
             is_favorited = Favorite.query.filter_by(user_id=current_user.id, item_id=item.id).first() is not None
 
+        active_reservation = get_active_reservation(item)
+
         # Build a small, compressed og:image for link-preview crawlers (see helper above)
         from app import format_image_url
         resolved_image = format_image_url(item_images[0].image_url) if item_images else '/static/placeholder.png'
@@ -212,13 +220,63 @@ def view_item(item_id: int) -> Union[str, Response]:
         return render_template(
             'item_detail.html', item=item, item_images=item_images, related_items=related_items,
             is_favorited=is_favorited, csrf_token=generate_csrf, breadcrumbs=breadcrumbs,
-            og_image_url=og_image_url, og_image_width=og_image_width, og_image_height=og_image_height
+            og_image_url=og_image_url, og_image_width=og_image_width, og_image_height=og_image_height,
+            active_reservation=active_reservation, reservation_hold_hours=RESERVATION_HOLD_HOURS
         )
         
     except Exception as e:
         logger.error(f"Error viewing item {item_id}: {str(e)}", exc_info=True)
         flash(f'Could not load item. It may have been removed.', 'danger')
         return redirect(url_for('marketplace.marketplace'))
+
+
+@marketplace_bp.route('/item/<int:item_id>/reserve', methods=['POST'])
+@login_required
+@handle_errors
+def reserve_item(item_id: int) -> Response:
+    """Hold a marketplace item using the buyer's provisional credits (see services/reservation_service.py)."""
+    item = Item.query.filter_by(id=item_id).with_for_update().first_or_404()
+    reservation, error = create_reservation(current_user, item)
+    if error:
+        logger.info(f"Reservation failed - Item: {item_id}, User: {current_user.username}, Reason: {error}")
+        flash(error, 'danger')
+    else:
+        flash(f"'{item.name}' reserved for {RESERVATION_HOLD_HOURS} hours using "
+              f"ᗸ{reservation.provisional_credits_used:,} provisional credits.", 'success')
+    return redirect(url_for('marketplace.view_item', item_id=item_id))
+
+
+@marketplace_bp.route('/item/<int:item_id>/cancel-reservation', methods=['POST'])
+@login_required
+@handle_errors
+def cancel_item_reservation(item_id: int) -> Response:
+    """Let a buyer release their own active reservation early and get the provisional credits back."""
+    from models import Reservation
+    reservation = Reservation.query.filter_by(item_id=item_id, user_id=current_user.id, status='active').first_or_404()
+    ok, error = cancel_reservation(reservation, current_user)
+    if error:
+        flash(error, 'danger')
+    else:
+        flash("Reservation cancelled - your provisional credits were refunded.", 'info')
+    return redirect(request.referrer or url_for('marketplace.view_item', item_id=item_id))
+
+
+@marketplace_bp.route('/item/<int:item_id>/complete-reservation', methods=['POST'])
+@login_required
+@handle_errors
+def complete_item_reservation(item_id: int) -> Response:
+    """Finalize an active reservation into a real purchase once the buyer has enough real credits."""
+    from models import Reservation
+    reservation = Reservation.query.filter_by(
+        item_id=item_id, user_id=current_user.id, status='active'
+    ).with_for_update().first_or_404()
+    item_name = reservation.item.name if reservation.item else 'Item'
+    ok, error = complete_reservation(reservation, current_user)
+    if error:
+        flash(error, 'danger')
+        return redirect(request.referrer or url_for('marketplace.view_item', item_id=item_id))
+    flash(f"🎉 Purchase complete! '{item_name}' is now yours.", 'success')
+    return redirect(url_for('user.my_reservations'))
 
 
 # ==================== API ENDPOINTS ====================

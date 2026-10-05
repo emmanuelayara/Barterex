@@ -447,6 +447,28 @@ def user_orders():
         return redirect(url_for('user.dashboard'))
 
 
+@user_bp.route('/my_reservations')
+@login_required
+@handle_errors
+def my_reservations():
+    try:
+        from models import Reservation
+        from services.reservation_service import release_expired_reservations
+
+        release_expired_reservations()  # clear any stale holds before listing
+
+        page = request.args.get('page', 1, type=int)
+        reservations = Reservation.query.filter_by(user_id=current_user.id).options(
+            joinedload(Reservation.item)
+        ).order_by(Reservation.created_at.desc()).paginate(page=page, per_page=10)
+        logger.info(f"User reservations accessed - User: {current_user.username}, Reservations: {reservations.total}")
+        return render_template('my_reservations.html', reservations=reservations)
+    except Exception as e:
+        logger.error(f"Error loading reservations for user {current_user.username}: {str(e)}", exc_info=True)
+        flash('An error occurred while loading your reservations.', 'danger')
+        return redirect(url_for('user.dashboard'))
+
+
 @user_bp.route('/order/<int:order_id>')
 @login_required
 @handle_errors

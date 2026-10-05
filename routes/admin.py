@@ -23,6 +23,10 @@ logger = setup_logger(__name__)
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
+# Items waiting on an admin decision: plain uploads AND items that already got a
+# provisional credit from an accepted AI value, still awaiting physical verification.
+PENDING_ITEM_STATUSES = ('pending', 'pending_physical_verification')
+
 # ==================== DECORATORS ====================
 
 def admin_login_required(f):
@@ -41,7 +45,7 @@ def inject_admin_context():
     """Inject admin-wide context variables into all admin templates"""
     try:
         # Get count of pending items
-        pending_items_count = Item.query.filter_by(status='pending').count()
+        pending_items_count = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).count()
         # Get count of unread messages
         pending_messages_count = ContactMessage.query.filter_by(is_read=False, status='pending').count()
         return dict(
@@ -209,7 +213,9 @@ def admin_dashboard():
 
         query = Item.query.options(joinedload(Item.user), joinedload(Item.images))
 
-        if status != 'all':
+        if status == 'pending':
+            query = query.filter(Item.status.in_(PENDING_ITEM_STATUSES))
+        elif status != 'all':
             query = query.filter(Item.status == status)
 
         if search:
@@ -225,7 +231,7 @@ def admin_dashboard():
         total_users = User.query.count()
         total_items = Item.query.count()
         approved_items = Item.query.filter_by(status='approved').count()
-        pending_items = Item.query.filter_by(status='pending').count()
+        pending_items = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).count()
         rejected_items = Item.query.filter_by(status='rejected').count()
         traded_items = Item.query.filter_by(is_available=False).count()
         total_credits_traded = db.session.query(db.func.sum(Item.value)).filter_by(is_available=False).scalar() or 0
@@ -381,7 +387,7 @@ def view_user(user_id):
         # Item statistics
         items_uploaded = Item.query.filter_by(uploaded_by_id=user.id).count()
         items_approved = Item.query.filter_by(uploaded_by_id=user.id, is_approved=True).count()
-        items_pending = Item.query.filter_by(uploaded_by_id=user.id, is_approved=False, status='pending').count()
+        items_pending = Item.query.filter(Item.uploaded_by_id == user.id, Item.is_approved == False, Item.status.in_(PENDING_ITEM_STATUSES)).count()
         items_rejected = Item.query.filter_by(uploaded_by_id=user.id, status='rejected').count()
         items_traded = Item.query.filter_by(uploaded_by_id=user.id, is_available=False).count()
         
@@ -815,8 +821,8 @@ def approve_items():
     try:
         # ✅ Use joinedload to eagerly load the images relationship to avoid N+1 queries
         # and ensure images are available in templates
-        items = Item.query.filter_by(status='pending').options(joinedload(Item.images)).all()
-        pending_count = Item.query.filter_by(status='pending').count()
+        items = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).options(joinedload(Item.images)).all()
+        pending_count = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).count()
         logger.info(f"Item approvals page accessed - Pending items: {len(items)}, Count query: {pending_count}")
         
         # Debug: Log all item statuses to understand database state
@@ -878,7 +884,13 @@ def approve_item(item_id):
             logger.warning(f"Invalid video URL provided - Item ID: {item_id}, URL: {video_url}, Admin ID: {session.get('admin_id')}")
             raise ValidationError(str(e), field="video_url")
 
-        # Award credits to user (only once, since we checked is_approved above)
+        # Award credits to user (only once, since we checked is_approved above).
+        # If this item already got provisional credits at upload time (AI value accepted),
+        # settle that hold into real credits instead of granting on top of it.
+        if item.provisional_credit_amount and not item.provisional_credit_settled:
+            item.user.provisional_credits = max(0, (item.user.provisional_credits or 0) - item.provisional_credit_amount)
+            item.provisional_credit_settled = True
+            flag_modified(item, 'provisional_credit_settled')
         item.user.credits += int(value)
         # Mark item as modified to ensure changes persist through subsequent operations
         flag_modified(item, 'status')
@@ -1002,6 +1014,14 @@ def reject_item(item_id):
         item.status = 'rejected'
         item.rejection_reason = reason
 
+        # Reverse any provisional credits granted at upload time (AI value was accepted but
+        # the item failed physical verification) - they were never real, spendable credits.
+        reversed_provisional_amount = None
+        if item.provisional_credit_amount and not item.provisional_credit_settled:
+            reversed_provisional_amount = item.provisional_credit_amount
+            item.user.provisional_credits = max(0, (item.user.provisional_credits or 0) - reversed_provisional_amount)
+            item.provisional_credit_settled = True
+
         logger.info(f"Item rejected - Item ID: {item_id}, Name: {item.name}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
         
         # Log to audit log
@@ -1041,9 +1061,11 @@ def reject_item(item_id):
             # Don't raise - email failure shouldn't block the rejection
         
         # Create notification for user
+        reversal_note = (f" Note: the ᗸ{reversed_provisional_amount:,.0f} provisional credit for this item has been removed."
+                         if reversed_provisional_amount else "")
         notification = Notification(
             user_id=item.user_id,
-            message=f"❌ Your item '{item.name}' was not approved. Reason: {reason}. "
+            message=f"❌ Your item '{item.name}' was not approved. Reason: {reason}.{reversal_note} "
                     f"Please review the feedback and resubmit with improvements."
         )
         db.session.add(notification)

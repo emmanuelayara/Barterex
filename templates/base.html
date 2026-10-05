@@ -1129,6 +1129,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{{ url_for('user.my_reservations') }}" class="nav-link{% if request.endpoint == 'user.my_reservations' %} active{% endif %}" data-tooltip="Reservations">
+                            <i class="fas fa-bookmark"></i>
+                            <span class="nav-text">Reservations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{{ url_for('items.view_cart') }}" class="nav-link{% if request.endpoint == 'items.view_cart' %} active{% endif %}" data-tooltip="Shopping Cart" style="position: relative;">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="nav-text">Cart</span>

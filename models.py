@@ -25,6 +25,9 @@ class User(db.Model, UserMixin):
     
     # Credits & first login flag
     credits = db.Column(db.Integer, default=0)
+    # Credits granted from an ACCEPTED AI valuation, before the item is physically verified.
+    # Spendable only on reservations (see Reservation model), never on checkout directly.
+    provisional_credits = db.Column(db.Integer, default=0)
     first_login = db.Column(db.Boolean, default=True)
     
     # Checkout transaction tracking (CRITICAL: for audit trail and fraud detection)
@@ -91,6 +94,7 @@ class User(db.Model, UserMixin):
     orders = db.relationship('Order', back_populates='user', lazy=True)
     activity_logs = db.relationship('ActivityLog', back_populates='user', lazy=True, cascade='all, delete-orphan')
     security_settings = db.relationship('SecuritySettings', back_populates='user', lazy=True, uselist=False, cascade='all, delete-orphan')
+    reservations = db.relationship('Reservation', back_populates='user', lazy=True, foreign_keys='[Reservation.user_id]')
 
     def generate_referral_code(self):
         """Generate a unique referral code for the user"""
@@ -328,6 +332,19 @@ class Item(db.Model):
     ai_valuated_at = db.Column(db.DateTime, nullable=True)           # None = still running / never ran
     valuator_valuation_id = db.Column(db.Integer, nullable=True)     # id in the valuator DB (for /api/verify)
 
+    # --- Provisional credits (granted at upload time when the seller ACCEPTS the AI value) ---
+    # Settled when an admin approves/rejects: converted to real credits, or reversed. See routes/admin.py.
+    provisional_credit_amount = db.Column(db.Float, nullable=True)
+    provisional_credit_granted_at = db.Column(db.DateTime, nullable=True)
+    provisional_credit_settled = db.Column(db.Boolean, default=False)
+
+    # --- Reservation hold (provisional credits spent to hold this item pending physical verification) ---
+    reserved_by_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_reserved_by'), nullable=True)
+    reserved_by = db.relationship('User', foreign_keys=[reserved_by_id])
+    reserved_at = db.Column(db.DateTime, nullable=True)
+    reservation_expires_at = db.Column(db.DateTime, nullable=True)
+    reservations = db.relationship('Reservation', back_populates='item', lazy=True, foreign_keys='[Reservation.item_id]')
+
     images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
     
     # Valid condition values for items
@@ -381,6 +398,7 @@ class Item(db.Model):
         db.Index('idx_item_category', 'category'),
         db.Index('idx_item_is_available', 'is_available'),
         db.Index('idx_item_status', 'status'),
+        db.Index('idx_item_reserved_by_id', 'reserved_by_id'),
         # Composite index for common combined queries
         db.Index('idx_item_category_available', 'category', 'is_available'),
     )
@@ -419,7 +437,41 @@ class ItemImage(db.Model):
     def has_quality_issues(self):
         """Check if image has any quality issues"""
         return len(self.get_quality_flags()) > 0
-    
+
+
+class Reservation(db.Model):
+    """
+    A user's provisional-credit hold on an item, reserved after accepting an AI
+    valuation and before the item is physically verified by an admin.
+    """
+    VALID_STATUSES = {'active', 'completed', 'expired', 'cancelled'}
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_reservation_user'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_reservation_item'), nullable=False)
+    provisional_credits_used = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), default='active', nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    cancelled_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship('User', back_populates='reservations', foreign_keys=[user_id])
+    item = db.relationship('Item', back_populates='reservations', foreign_keys=[item_id])
+
+    __table_args__ = (
+        db.Index('idx_reservation_user_id', 'user_id'),
+        db.Index('idx_reservation_item_id', 'item_id'),
+        db.Index('idx_reservation_status', 'status'),
+    )
+
+    def __repr__(self):
+        return f'<Reservation {self.id} user={self.user_id} item={self.item_id} status={self.status}>'
+
+    def is_expired(self):
+        """True if still marked active but past its expiry time."""
+        return self.status == 'active' and datetime.utcnow() > self.expires_at
+
 
 
 class Trade(db.Model):

@@ -462,6 +462,44 @@
     transform: translateY(0);
   }
 
+  .action-section form + form,
+  .action-section form + .reservation-banner,
+  .reservation-banner + form {
+    margin-top: 10px;
+  }
+
+  .trade-button.secondary {
+    background: white;
+    color: #ff7a00;
+    border: 2px solid #ff7a00;
+  }
+
+  .trade-button.secondary:hover {
+    background: #fff7ed;
+  }
+
+  html.dark-mode .trade-button.secondary {
+    background: transparent;
+    color: #ff9500;
+    border-color: #ff9500;
+  }
+
+  .reservation-banner {
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgba(255, 122, 0, 0.08);
+    border: 1px solid rgba(255, 122, 0, 0.3);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-primary, #1a202c);
+  }
+
+  html.dark-mode .reservation-banner {
+    background: rgba(255, 149, 0, 0.1);
+    border-color: rgba(255, 149, 0, 0.35);
+    color: #e2e8f0;
+  }
+
   /* Watch video link, shown below the image/slideshow section */
   .video-link-section {
     margin-top: 10px;
@@ -954,11 +992,45 @@
 
           <!-- Button -->
           <div class="action-section">
-            <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="trade-button">🛒 Add to Cart</button>
-            </form>
+            {% if item.is_available %}
+              <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="trade-button">🛒 Add to Cart</button>
+              </form>
+            {% elif not active_reservation %}
+              <div class="reservation-banner">This item is no longer available.</div>
+            {% endif %}
 
+            {% if current_user.is_authenticated and current_user.id != item.user_id %}
+              {% if active_reservation and active_reservation.user_id == current_user.id %}
+                <div class="reservation-banner">
+                  <strong>🔖 You reserved this item</strong> using ᗸ{{ '{:,.0f}'.format(active_reservation.provisional_credits_used) }} provisional credits.
+                  Hold expires {{ active_reservation.expires_at.strftime('%b %d, %I:%M %p') }}.
+                  {% if (current_user.credits or 0) >= active_reservation.provisional_credits_used %}
+                    You have enough real credits to complete this purchase now.
+                  {% else %}
+                    Complete unlocks once an admin physically verifies your uploaded item and approves it.
+                  {% endif %}
+                </div>
+                {% if (current_user.credits or 0) >= active_reservation.provisional_credits_used %}
+                  <form method="POST" action="{{ url_for('marketplace.complete_item_reservation', item_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="trade-button">✅ Complete Purchase</button>
+                  </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('marketplace.cancel_item_reservation', item_id=item.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="trade-button secondary">Cancel Reservation</button>
+                </form>
+              {% elif active_reservation %}
+                <div class="reservation-banner">🔒 This item is currently reserved by another buyer.</div>
+              {% elif item.value and (current_user.provisional_credits or 0) >= item.value %}
+                <form method="POST" action="{{ url_for('marketplace.reserve_item', item_id=item.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="trade-button secondary">🔖 Reserve with Provisional Credits (ᗸ{{ '{:,.0f}'.format(current_user.provisional_credits) }} available, held {{ reservation_hold_hours }}h)</button>
+                </form>
+              {% endif %}
+            {% endif %}
           </div>
         </div>
       </div>

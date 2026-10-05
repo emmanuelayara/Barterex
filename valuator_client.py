@@ -117,6 +117,18 @@ def map_category_to_valuator(category: str):
     return CATEGORY_MAP.get(category.strip().lower())
 
 
+def item_fields_signature(name, description, condition, usage_duration, category) -> str:
+    """
+    Stable hash of the fields that affect a valuation. Used to check that a
+    user accepting a previewed AI value hasn't quietly changed the item's
+    details since the preview was generated (see routes/items.py estimate_value).
+    """
+    import hashlib
+    raw = '|'.join((part or '').strip().lower() for part in
+                    (name, description, condition, usage_duration, category))
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()
+
+
 _WORD_NUMBERS = {'a': 1, 'an': 1, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
                  'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
                  'ten': 10, 'half': 0.5}
@@ -171,6 +183,14 @@ def encode_image_file_to_base64(file_path: str) -> str:
     """
     with open(file_path, 'rb') as f:
         raw = f.read()
+    return encode_image_bytes_to_base64(raw, label=file_path)
+
+
+def encode_image_bytes_to_base64(raw: bytes, label: str = '<upload>') -> str:
+    """
+    Same shrinking as encode_image_file_to_base64, but for bytes already in
+    memory (e.g. a FileStorage upload that hasn't been saved to disk yet).
+    """
     try:
         from PIL import Image
         img = Image.open(io.BytesIO(raw))
@@ -183,7 +203,7 @@ def encode_image_file_to_base64(file_path: str) -> str:
             img.convert('RGB').save(out, format='JPEG', quality=85)
             raw = out.getvalue()
     except Exception as e:
-        logger.warning(f"Valuator: could not shrink {file_path} ({e}); sending original")
+        logger.warning(f"Valuator: could not shrink {label} ({e}); sending original")
     return base64.b64encode(raw).decode('utf-8')
 
 
