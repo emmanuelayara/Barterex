@@ -10,8 +10,14 @@ temp copy.
 
 Settings (.env):
     GCS_BUCKET_NAME             Bucket to hold temp videos (unset = feature OFF)
-    GOOGLE_APPLICATION_CREDENTIALS   Path to the service account JSON key
+    GOOGLE_APPLICATION_CREDENTIALS   Path to a service account JSON key, OR unset
+                                     if using `gcloud auth application-default login`
                                      (standard Google Cloud env var)
+    GCS_SERVICE_ACCOUNT_EMAIL   Set this to impersonate the bucket's service account
+                                 (via IAM) instead of a key file - needed when your
+                                 org blocks service-account key creation. Requires the
+                                 logged-in ADC user to have "Service Account Token
+                                 Creator" on that service account.
     GCS_SIGNED_URL_MINUTES      How long upload/preview links stay valid. Default 20.
 
 Nothing here can crash the app if GCS isn't configured yet: every public
@@ -40,6 +46,10 @@ def _bucket_name():
     return (os.getenv('GCS_BUCKET_NAME') or '').strip()
 
 
+def _service_account_email():
+    return (os.getenv('GCS_SERVICE_ACCOUNT_EMAIL') or '').strip()
+
+
 def _signed_url_minutes():
     try:
         return max(5, int(os.getenv('GCS_SIGNED_URL_MINUTES', '20')))
@@ -61,6 +71,32 @@ def is_configured() -> bool:
 
 def _client():
     from google.cloud import storage
+
+    # When service-account KEY FILES are blocked (e.g. by an org policy), set
+    # GOOGLE_APPLICATION_CREDENTIALS to your own `gcloud auth application-default
+    # login` user credentials and GCS_SERVICE_ACCOUNT_EMAIL to the bucket's
+    # service account - this impersonates that service account (via the IAM
+    # Credentials API) for every call, including signed URLs, with no key file.
+    sa_email = _service_account_email()
+    if sa_email:
+        import google.auth
+        from google.auth import impersonated_credentials
+
+        # An empty GOOGLE_APPLICATION_CREDENTIALS in .env still counts as "set" to
+        # google-auth, which skips its normal ADC file discovery - drop it so the
+        # gcloud `auth application-default login` credentials are found instead.
+        if not os.getenv('GOOGLE_APPLICATION_CREDENTIALS', '').strip():
+            os.environ.pop('GOOGLE_APPLICATION_CREDENTIALS', None)
+
+        source_credentials, _ = google.auth.default()
+        target_credentials = impersonated_credentials.Credentials(
+            source_credentials=source_credentials,
+            target_principal=sa_email,
+            target_scopes=['https://www.googleapis.com/auth/cloud-platform'],
+            lifetime=3600,
+        )
+        return storage.Client(credentials=target_credentials)
+
     return storage.Client()
 
 
