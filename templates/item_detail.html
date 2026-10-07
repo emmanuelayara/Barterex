@@ -1004,31 +1004,20 @@
             {% if current_user.is_authenticated and current_user.id != item.user_id %}
               {% if active_reservation and active_reservation.user_id == current_user.id %}
                 <div class="reservation-banner">
-                  <strong>🔖 You reserved this item</strong> using ᗸ{{ '{:,.0f}'.format(active_reservation.provisional_credits_used) }} provisional credits.
-                  Hold expires {{ active_reservation.expires_at.strftime('%b %d, %I:%M %p') }}.
-                  {% if (current_user.credits or 0) >= active_reservation.provisional_credits_used %}
-                    You have enough real credits to complete this purchase now.
-                  {% else %}
-                    Complete unlocks once an admin physically verifies your uploaded item and approves it.
-                  {% endif %}
+                  <strong>🔖 You're acquiring this item</strong> backed by ᗸ{{ '{:,.0f}'.format(active_reservation.provisional_credits_used) }} of your own activated items.
+                  Settlement window ends {{ active_reservation.expires_at.strftime('%b %d, %I:%M %p') }}.
+                  <br>Bring your chosen item(s) in for final verification - the seller must do the same with this item. Both must pass for the trade to complete.
                 </div>
-                {% if (current_user.credits or 0) >= active_reservation.provisional_credits_used %}
-                  <form method="POST" action="{{ url_for('marketplace.complete_item_reservation', item_id=item.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="trade-button">✅ Complete Purchase</button>
-                  </form>
-                {% endif %}
                 <form method="POST" action="{{ url_for('marketplace.cancel_item_reservation', item_id=item.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <button type="submit" class="trade-button secondary">Cancel Reservation</button>
                 </form>
               {% elif active_reservation %}
                 <div class="reservation-banner">🔒 This item is currently reserved by another buyer.</div>
-              {% elif item.value and (current_user.provisional_credits or 0) >= item.value %}
-                <form method="POST" action="{{ url_for('marketplace.reserve_item', item_id=item.id) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                  <button type="submit" class="trade-button secondary">🔖 Reserve with Provisional Credits (ᗸ{{ '{:,.0f}'.format(current_user.provisional_credits) }} available, held {{ reservation_hold_hours }}h)</button>
-                </form>
+              {% elif item.value %}
+                <a href="{{ url_for('marketplace.choose_backing_assets', item_id=item.id) }}" class="trade-button secondary" style="display:block;text-align:center;text-decoration:none;">
+                  🔖 Get with BXC (choose your items, held {{ reservation_hold_hours }}h)
+                </a>
               {% endif %}
             {% endif %}
           </div>

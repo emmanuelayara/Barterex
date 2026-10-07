@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 
 from app import db, app
-from models import Item, ItemImage, Cart, CartItem, Trade, Order, OrderItem, PickupStation, Notification
+from models import Item, ItemImage, ItemVideo, Cart, CartItem, Trade, Order, OrderItem, PickupStation, Notification
 from forms import UploadItemForm, OrderForm
 from routes.auth import send_email_async
 from logger_config import setup_logger
@@ -203,7 +203,7 @@ def upload_item():
                 location=current_user.state,
                 is_available=False,
                 is_approved=False,
-                status='pending'
+                status='valuation_only'  # private "My Valuations" stage - no commitment, no admin queue, no credits yet
             )
             db.session.add(new_item)
             db.session.flush()
@@ -342,6 +342,9 @@ def upload_item():
                 new_item.image_url = uploaded_images[0].image_url
 
             # Did the user accept an AI value on the upload-page modal? (see /items/estimate-value)
+            # "My Valuations" is a private, no-commitment stage: this only stores the estimate for
+            # display here - no credits are granted and nothing is queued for admin review yet.
+            # That happens later, when the user selects "Trade This Item".
             accepted_ai_fields = consume_accepted_ai_valuation(
                 name=form.name.data,
                 description=form.description.data,
@@ -349,27 +352,17 @@ def upload_item():
                 usage_duration=form.usage_duration.data,
                 category=form.category.data,
             )
-            provisional_amount = None
 
             if accepted_ai_fields:
                 for field_name, field_value in accepted_ai_fields.items():
                     setattr(new_item, field_name, field_value)
                 new_item.ai_valuated_at = datetime.utcnow()
-
-                estimated_value = accepted_ai_fields.get('ai_estimated_value')
-                risk_level = (accepted_ai_fields.get('ai_risk_level') or '').upper()
-                if estimated_value and risk_level != 'HIGH':
-                    provisional_amount = int(round(estimated_value))
-                    current_user.provisional_credits = (current_user.provisional_credits or 0) + provisional_amount
-                    new_item.provisional_credit_amount = provisional_amount
-                    new_item.provisional_credit_granted_at = datetime.utcnow()
-                    new_item.status = 'pending_physical_verification'
             elif valuator_enabled():
-                new_item.verification_status = 'pending_valuation'   # admin page shows "AI valuation running..."
+                new_item.verification_status = 'pending_valuation'   # My Valuations shows "AI valuation running..."
 
             try:
                 db.session.commit()
-                logger.info(f"Item submitted for approval - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")
+                logger.info(f"Item saved to My Valuations - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")
 
                 # Only queue the background valuator when there's no already-accepted preview result -
                 # never pay for a second AI valuation of the same submission.
@@ -380,13 +373,9 @@ def upload_item():
                     except Exception as ai_err:
                         logger.warning(f"Could not start AI valuation for item {new_item.id}: {ai_err}")
 
-                if provisional_amount:
-                    logger.info(f"Provisional credits granted - User: {current_user.username}, Item: {new_item.id}, Amount: {provisional_amount}")
-                    flash(f'✅ Success! Based on the AI value you accepted, ᗸ{provisional_amount:,} provisional BXC was added to '
-                          f'your account - usable to reserve items while an admin confirms your item in person.', "success")
-                else:
-                    flash(f'✅ Success! Your item has been submitted for approval with {len(uploaded_images)} image(s). We\'ll review it shortly.', "success")
-                return redirect(url_for('marketplace.marketplace'))
+                flash(f'✅ Success! Your item was successfully saved to My Valuations with {len(uploaded_images)} image(s). '
+                      f'When you\'re ready to exchange it, open it from My Valuations and select "Trade This Item".', "success")
+                return redirect(url_for('user.my_valuations'))
             except Exception as e:
                 db.session.rollback()
                 logger.error(f"Error committing item upload: {str(e)}", exc_info=True)
@@ -522,6 +511,168 @@ def estimate_value():
         'verification_status': fields.get('verification_status'),
         'notes': fields.get('verification_notes'),
     })
+
+
+@items_bp.route('/items/<int:item_id>/trade-this-item', methods=['POST'])
+@login_required
+@handle_errors
+@safe_database_operation("trade_this_item")
+def trade_this_item(item_id):
+    """
+    Moves a private "My Valuations" item into the admin pre-verification queue.
+    This is the user's commitment point - see routes/admin.py preverification_queue.
+    """
+    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
+
+    if item.status != 'valuation_only':
+        flash('This item is not available to trade right now.', 'info')
+        return redirect(url_for('user.my_valuations'))
+
+    if not request.form.get('ownership_confirmed'):
+        flash('Please confirm you own this item before submitting it for trade.', 'danger')
+        return redirect(url_for('user.my_valuations'))
+
+    item.ownership_confirmed = True
+    item.serial_number = (request.form.get('serial_number') or '').strip() or None
+    item.status = 'trade_requested'
+    item.trade_requested_at = datetime.utcnow()
+    item.rejection_reason = None  # clear any feedback from a previous pre-verification attempt
+
+    logger.info(f"Item submitted for pre-verification - Item: {item.id}, User: {current_user.username}")
+    flash(f"'{item.name}' was submitted for pre-verification. We'll notify you once it's reviewed.", 'success')
+    return redirect(url_for('user.my_valuations'))
+
+
+@items_bp.route('/items/<int:item_id>/activate/request-upload-url', methods=['POST'])
+@rate_limit("10 per hour")
+@login_required
+@handle_api_errors
+def request_activation_upload_url(item_id):
+    """
+    Step 1 of "Activate for Trade": mints a signed GCS URL so the browser can
+    upload the verification video directly - the Barterex VPS never sees the
+    video bytes. See services/video_service.py.
+    """
+    from services import video_service
+
+    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first()
+    if not item:
+        return jsonify({'success': False, 'error': 'Item not found.'}), 404
+    if item.status != 'preverification_approved':
+        return jsonify({'success': False, 'error': 'This item is not ready to be activated.'}), 400
+
+    content_type = (request.get_json(silent=True) or {}).get('content_type', 'video/mp4')
+    if content_type not in video_service.ALLOWED_VIDEO_TYPES:
+        return jsonify({'success': False, 'error': 'Please upload an MP4, MOV, WEBM or M4V video.'}), 400
+
+    object_name = video_service.build_object_name(item.id, content_type)
+    result = video_service.generate_upload_url(object_name, content_type)
+    status_code = 200 if result.get('success') else 503
+    return jsonify(result), status_code
+
+
+@items_bp.route('/items/<int:item_id>/activate/confirm-upload', methods=['POST'])
+@rate_limit("10 per hour")
+@login_required
+@handle_errors
+@safe_database_operation("confirm_activation_upload")
+def confirm_activation_upload(item_id):
+    """Step 2: the browser calls this once the video has finished uploading to GCS."""
+    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
+
+    if item.status != 'preverification_approved':
+        flash('This item is not ready to be activated.', 'danger')
+        return redirect(url_for('user.my_valuations'))
+
+    object_name = (request.form.get('object_name') or '').strip()
+    if not object_name:
+        flash('The video upload did not complete. Please try again.', 'danger')
+        return redirect(url_for('user.my_valuations'))
+
+    db.session.add(ItemVideo(item_id=item.id, uploaded_by_id=current_user.id, temp_video_url=object_name, status='pending'))
+    item.status = 'pending_activation'
+
+    logger.info(f"Activation video submitted - Item: {item.id}, User: {current_user.username}")
+    flash(f"Video submitted for '{item.name}'! An admin will review it before your item goes live.", 'success')
+    return redirect(url_for('user.my_valuations'))
+
+
+@items_bp.route('/items/<int:item_id>/reconfirm', methods=['POST'])
+@login_required
+@handle_errors
+@safe_database_operation("reconfirm_item")
+def reconfirm_item(item_id):
+    """
+    30-day marketplace freshness check (see services/freshness_service.py):
+    upload a fresh photo to relist a stale item. High-value items also need
+    their stored code visible in the photo - that part can't be verified
+    automatically, so it goes to an admin for a quick visual check instead of
+    relisting instantly.
+    """
+    from services.freshness_service import HIGH_VALUE_THRESHOLD
+
+    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
+    if item.status != 'reconfirmation_required':
+        flash('This item is not awaiting reconfirmation.', 'info')
+        return redirect(url_for('user.user_items'))
+
+    file = request.files.get('reconfirmation_photo')
+    if not file or not file.filename:
+        flash('Please upload a fresh photo of your item.', 'danger')
+        return redirect(url_for('user.user_items'))
+
+    allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+    is_valid, error_msg = validate_image_type(file.filename, allowed_extensions)
+    if not is_valid:
+        flash(error_msg, 'danger')
+        return redirect(url_for('user.user_items'))
+
+    file.seek(0, 2)
+    file_size = file.tell()
+    file.seek(0)
+    is_valid, error_msg = validate_image_size(file_size, file.filename, max_size_mb=10)
+    if not is_valid:
+        flash(error_msg, 'danger')
+        return redirect(url_for('user.user_items'))
+
+    try:
+        validate_upload(
+            file,
+            max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10 * 1024 * 1024),
+            allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'}),
+            enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+        )
+    except FileUploadError as e:
+        flash(get_user_friendly_error_message(str(e), 'images'), 'danger')
+        return redirect(url_for('user.user_items'))
+
+    is_high_value = bool(item.value and item.value >= HIGH_VALUE_THRESHOLD)
+    if is_high_value and not request.form.get('code_confirmed'):
+        flash(f'Please confirm the code {item.reconfirmation_code} is visible in your photo.', 'danger')
+        return redirect(url_for('user.user_items'))
+
+    unique_filename = generate_safe_filename(file, current_user.id, item_id=item.id, index=len(item.images))
+    upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+    image_path = os.path.join(upload_root, unique_filename)
+    os.makedirs(os.path.dirname(image_path), exist_ok=True)
+    optimized_data = optimize_image_for_storage(file.read(), file.filename.rsplit('.', 1)[1].lower())
+    with open(image_path, 'wb') as stored_file:
+        stored_file.write(optimized_data)
+
+    db.session.add(ItemImage(item_id=item.id, image_url=unique_filename, is_primary=False, order_index=len(item.images)))
+
+    if is_high_value:
+        item.status = 'reconfirmation_review'
+        logger.info(f"Reconfirmation submitted for admin review - Item: {item.id}, User: {current_user.username}")
+        flash('Photo submitted! Since this is a high-value item, an admin will confirm the code is visible before relisting it.', 'success')
+    else:
+        item.last_reconfirmed_at = datetime.utcnow()
+        item.status = 'approved'
+        item.is_available = True
+        logger.info(f"Item reconfirmed and relisted - Item: {item.id}, User: {current_user.username}")
+        flash(f"'{item.name}' is back on the marketplace!", 'success')
+
+    return redirect(url_for('user.user_items'))
 
 
 @items_bp.route('/add_to_cart/<int:item_id>', methods=['POST', 'GET'])

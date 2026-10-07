@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% block title %}My Valuations{% endblock %}
+{% block content %}
+<style>
+  .page-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  html.dark-mode .page-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .main-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 25px 15px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: white;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .page-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  .valuations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .valuation-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  html.dark-mode .valuation-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  }
+
+  .valuation-thumb {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #f5f5f5;
+  }
+
+  .valuation-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .valuation-info h3 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    color: var(--text-primary, #1a202c);
+  }
+
+  html.dark-mode .valuation-info h3 {
+    color: #f1f5f9;
+  }
+
+  .valuation-meta {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .valuation-estimate {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #7c3aed;
+  }
+
+  .valuation-estimate.pending {
+    color: #9ca3af;
+    font-weight: 500;
+    font-style: italic;
+  }
+
+  .stage-pill {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: rgba(107, 114, 128, 0.12);
+    color: #4b5563;
+  }
+
+  .stage-pill.stage-preverification_approved { background: rgba(16, 185, 129, 0.15); color: #059669; }
+  .stage-pill.stage-pending_activation { background: rgba(124, 58, 237, 0.15); color: #6d28d9; }
+  .stage-pill.stage-trade_requested { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
+
+  .final-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #16a34a;
+    margin-bottom: 4px;
+  }
+
+  .activate-btn { background: #7c3aed; }
+
+  .activate-help {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #6b7280);
+    margin: 0;
+  }
+
+  .activate-file-input {
+    font-size: 0.75rem;
+  }
+
+  .activate-progress {
+    font-size: 0.72rem;
+    color: #7c3aed;
+    font-weight: 600;
+  }
+
+  .activate-error {
+    font-size: 0.72rem;
+    color: #dc2626;
+  }
+
+  .valuation-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .trade-this-btn {
+    display: inline-block;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    background: #ff7a00;
+    color: white;
+    list-style: none;
+  }
+
+  .trade-this-btn::-webkit-details-marker { display: none; }
+
+  .trade-details[open] .trade-this-btn {
+    border-radius: 8px 8px 0 0;
+  }
+
+  .trade-form {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+  }
+
+  html.dark-mode .trade-form {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .trade-checkbox {
+    font-size: 0.72rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--text-primary, #1a202c);
+  }
+
+  html.dark-mode .trade-checkbox {
+    color: #e2e8f0;
+  }
+
+  .trade-input {
+    padding: 7px 9px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.78rem;
+  }
+
+  .trade-submit-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+    background: #16a34a;
+    color: white;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .valuation-card-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .rejection-note {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+  }
+
+  html.dark-mode .rejection-note {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+  }
+
+  .empty-state {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  html.dark-mode .empty-state {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #cbd5e1;
+  }
+
+  .empty-state a {
+    color: #ff7a00;
+    font-weight: 700;
+  }
+</style>
+
+<div class="page-container">
+  <input type="hidden" id="globalCsrfToken" value="{{ csrf_token() }}">
+  <div class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">📊 My Valuations</h1>
+      <p class="page-subtitle">Discover what your items are worth - no commitment until you choose to trade them.</p>
+    </div>
+
+    {% if items.items %}
+      <div class="valuations-list">
+        {% for item in items.items %}
+          {% set thumb = item.image_url or (item.images[0].image_url if item.images else None) %}
+          <div class="valuation-card-wrap">
+            <div class="valuation-card">
+              {% if thumb %}
+                <img src="{{ thumb | image_url }}" class="valuation-thumb" alt="{{ item.name }}">
+              {% else %}
+                <div class="valuation-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📦</div>
+              {% endif %}
+              <div class="valuation-info">
+                <h3>{{ item.name }}</h3>
+                <div class="valuation-meta">{{ item.category }} · {{ item.condition }}</div>
+                {% if item.ai_estimated_value %}
+                  <div class="valuation-estimate">🤖 Estimated value: ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</div>
+                {% elif item.verification_status == 'pending_valuation' %}
+                  <div class="valuation-estimate pending">AI valuation running… refresh in a minute</div>
+                {% else %}
+                  <div class="valuation-estimate pending">No AI estimate available for this item</div>
+                {% endif %}
+                <div class="stage-pill stage-{{ item.status }}">
+                  {{ {'valuation_only': 'Not yet submitted', 'trade_requested': 'Awaiting pre-verification',
+                      'preverification_approved': 'Ready to Activate for Trade',
+                      'pending_activation': 'Video submitted - awaiting review'}[item.status] }}
+                </div>
+              </div>
+              <div class="valuation-actions">
+                {% if item.status == 'valuation_only' %}
+                  <details class="trade-details">
+                    <summary class="trade-this-btn">Trade This Item</summary>
+                    <form method="POST" action="{{ url_for('items.trade_this_item', item_id=item.id) }}" class="trade-form">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                      <label class="trade-checkbox">
+                        <input type="checkbox" name="ownership_confirmed" value="1" required>
+                        I confirm I own this item and it matches the description/photos
+                      </label>
+                      <input type="text" name="serial_number" placeholder="Serial number / IMEI (optional)" class="trade-input">
+                      <button type="submit" class="trade-submit-btn">Submit for Pre-Verification</button>
+                    </form>
+                  </details>
+                {% elif item.status == 'preverification_approved' %}
+                  <div class="final-value">Final Value: ᗸ{{ '{:,.0f}'.format(item.value) if item.value else '—' }}</div>
+                  <details class="trade-details">
+                    <summary class="trade-this-btn activate-btn">🎬 Activate for Trade</summary>
+                    <div class="trade-form activate-form" data-item-id="{{ item.id }}">
+                      <p class="activate-help">Record or select a short video showing this item's condition and functionality.</p>
+                      <input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" capture="environment" class="activate-file-input">
+                      <button type="button" class="trade-submit-btn activate-upload-btn">Upload &amp; Submit Video</button>
+                      <div class="activate-progress" hidden>Uploading… <span class="activate-progress-pct">0%</span></div>
+                      <div class="activate-error" hidden></div>
+                    </div>
+                  </details>
+                {% endif %}
+              </div>
+            </div>
+            {% if item.rejection_reason %}
+              <div class="rejection-note">⚠️ Feedback: {{ item.rejection_reason }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if items.pages > 1 %}
+        <div style="text-align:center;margin-top:20px;">
+          {% for p in range(1, items.pages + 1) %}
+            <a href="{{ url_for('user.my_valuations', page=p) }}" style="color:white;margin:0 6px;{% if p == items.page %}font-weight:700;text-decoration:underline;{% endif %}">{{ p }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <p>You haven't valuated any items yet.</p>
+        <p><a href="{{ url_for('items.upload_item') }}">Upload an item</a> to discover its estimated value.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // "Activate for Trade" - upload the verification video straight to cloud storage,
+  // then confirm with the server. See routes/items.py request_activation_upload_url /
+  // confirm_activation_upload and services/video_service.py.
+  document.querySelectorAll('.activate-form').forEach(function (form) {
+    const itemId = form.dataset.itemId;
+    const fileInput = form.querySelector('.activate-file-input');
+    const uploadBtn = form.querySelector('.activate-upload-btn');
+    const progress = form.querySelector('.activate-progress');
+    const progressPct = form.querySelector('.activate-progress-pct');
+    const errorBox = form.querySelector('.activate-error');
+    const csrfToken = document.getElementById('globalCsrfToken');
+
+    uploadBtn.addEventListener('click', function () {
+      const file = fileInput.files[0];
+      errorBox.hidden = true;
+      if (!file) {
+        errorBox.textContent = 'Please choose or record a video first.';
+        errorBox.hidden = false;
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      progress.hidden = false;
+      progressPct.textContent = '0%';
+
+      fetch(`/items/${itemId}/activate/request-upload-url`, {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, csrfToken ? { 'X-CSRFToken': csrfToken.value } : {}),
+        body: JSON.stringify({ content_type: file.type || 'video/mp4' }),
+      })
+        .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+        .then(function (result) {
+          if (result.status !== 200 || !result.data.success) {
+            throw new Error((result.data && result.data.error) || 'Could not start the upload.');
+          }
+
+          const xhr = new XMLHttpRequest();
+          xhr.open('PUT', result.data.upload_url, true);
+          xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+
+          xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) {
+              progressPct.textContent = Math.round((e.loaded / e.total) * 100) + '%';
+            }
+          });
+
+          xhr.addEventListener('load', function () {
+            if (xhr.status < 200 || xhr.status >= 300) {
+              errorBox.textContent = 'The upload failed. Please try again.';
+              errorBox.hidden = false;
+              uploadBtn.disabled = false;
+              progress.hidden = true;
+              return;
+            }
+
+            const confirmData = new FormData();
+            confirmData.append('object_name', result.data.object_name);
+            if (csrfToken) confirmData.append('csrf_token', csrfToken.value);
+
+            fetch(`/items/${itemId}/activate/confirm-upload`, { method: 'POST', body: confirmData })
+              .then(function () { window.location.reload(); });
+          });
+
+          xhr.addEventListener('error', function () {
+            errorBox.textContent = 'Network error while uploading the video.';
+            errorBox.hidden = false;
+            uploadBtn.disabled = false;
+            progress.hidden = true;
+          });
+
+          xhr.send(file);
+        })
+        .catch(function (err) {
+          errorBox.textContent = err.message;
+          errorBox.hidden = false;
+          uploadBtn.disabled = false;
+          progress.hidden = true;
+        });
+    });
+  });
+</script>
+{% endblock %}

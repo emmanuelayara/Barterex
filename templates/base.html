@@ -1123,6 +1123,12 @@
             <ul class="nav-links">
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
+                        <a href="{{ url_for('user.my_valuations') }}" class="nav-link{% if request.endpoint == 'user.my_valuations' %} active{% endif %}" data-tooltip="My Valuations">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="nav-text">Valuations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{{ url_for('user.user_orders') }}" class="nav-link{% if request.endpoint == 'user.user_orders' %} active{% endif %}" data-tooltip="Orders">
                             <i class="fas fa-credit-card"></i>
                             <span class="nav-text">Orders</span>

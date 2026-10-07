@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}Choose Items to Back This Purchase{% endblock %}
+{% block content %}
+<style>
+  .page-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  html.dark-mode .page-container { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+
+  .main-content { max-width: 800px; margin: 0 auto; padding: 25px 15px; }
+
+  .page-header { text-align: center; margin-bottom: 16px; color: white; }
+  .page-title { font-size: 1.7rem; font-weight: 700; margin-bottom: 6px; }
+  .page-subtitle { font-size: 0.9rem; opacity: 0.9; }
+
+  .target-banner {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 16px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    font-weight: 700;
+    color: #1a202c;
+  }
+
+  html.dark-mode .target-banner { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #f1f5f9; }
+
+  .asset-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .asset-card {
+    background: white;
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+  }
+
+  html.dark-mode .asset-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+
+  .asset-card input[type="checkbox"] { width: 18px; height: 18px; }
+
+  .asset-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #f5f5f5; }
+
+  .asset-info { flex: 1; }
+  .asset-info h4 { margin: 0; font-size: 0.9rem; color: var(--text-primary, #1a202c); }
+  html.dark-mode .asset-info h4 { color: #f1f5f9; }
+  .asset-value { font-size: 0.8rem; font-weight: 700; color: #16a34a; }
+
+  .running-total {
+    position: sticky;
+    bottom: 10px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+    margin-top: 16px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  html.dark-mode .running-total { background: #1e293b; color: #f1f5f9; }
+
+  .running-total.insufficient { color: #dc2626; }
+  .running-total.sufficient { color: #16a34a; }
+
+  .confirm-btn {
+    width: 100%;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    background: #ff7a00;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .empty-state { background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 30px 20px; text-align: center; color: #6b7280; }
+</style>
+
+<div class="page-container">
+  <div class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">🧺 Choose Items to Back This Purchase</h1>
+      <p class="page-subtitle">Select one or more of your own activated items worth enough to cover "{{ item.name }}".</p>
+    </div>
+
+    <div class="target-banner">Target: ᗸ{{ '{:,.0f}'.format(item.value) }} for "{{ item.name }}"</div>
+
+    {% if eligible_items %}
+      <form method="POST" action="{{ url_for('marketplace.reserve_item', item_id=item.id) }}" id="backingForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="asset-list">
+          {% for asset in eligible_items %}
+            <label class="asset-card">
+              <input type="checkbox" name="backing_item_id" value="{{ asset.id }}" data-value="{{ asset.value or 0 }}" class="asset-checkbox">
+              {% set thumb = asset.image_url or (asset.images[0].image_url if asset.images else None) %}
+              {% if thumb %}
+                <img src="{{ thumb | image_url }}" class="asset-thumb" alt="{{ asset.name }}">
+              {% else %}
+                <div class="asset-thumb" style="display:flex;align-items:center;justify-content:center;">📦</div>
+              {% endif %}
+              <div class="asset-info">
+                <h4>{{ asset.name }}</h4>
+                <div class="asset-value">ᗸ{{ '{:,.0f}'.format(asset.value) if asset.value else '0' }}</div>
+              </div>
+            </label>
+          {% endfor %}
+        </div>
+
+        <div class="running-total insufficient" id="runningTotal">
+          Selected: ᗸ0 / ᗸ{{ '{:,.0f}'.format(item.value) }}
+          <button type="submit" class="confirm-btn" id="confirmBtn" disabled>Confirm &amp; Reserve</button>
+        </div>
+      </form>
+    {% else %}
+      <div class="empty-state">
+        <p>You don't have any activated items available right now.</p>
+        <p>Upload and activate an item first to earn purchasing power.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  const target = {{ item.value or 0 }};
+  const checkboxes = document.querySelectorAll('.asset-checkbox');
+  const runningTotal = document.getElementById('runningTotal');
+  const confirmBtn = document.getElementById('confirmBtn');
+
+  function updateTotal() {
+    let total = 0;
+    checkboxes.forEach(cb => { if (cb.checked) total += parseFloat(cb.dataset.value || '0'); });
+    const sufficient = total >= target;
+    runningTotal.classList.toggle('sufficient', sufficient);
+    runningTotal.classList.toggle('insufficient', !sufficient);
+    confirmBtn.disabled = !sufficient;
+    runningTotal.childNodes[0].textContent = `Selected: ᗸ${total.toLocaleString()} / ᗸ${target.toLocaleString()} `;
+  }
+
+  checkboxes.forEach(cb => cb.addEventListener('change', updateTotal));
+  updateTotal();
+</script>
+{% endblock %}

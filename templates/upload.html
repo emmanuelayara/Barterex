@@ -1897,13 +1897,13 @@
           hideLoading();
         }
         if (typeof successToast !== 'undefined') {
-          successToast('Item uploaded successfully! Redirecting...');
+          successToast('Item saved! Redirecting to My Valuations...');
         }
         submitBtn.classList.remove('loading');
-        submitBtn.innerHTML = '✅ Uploaded Successfully!';
+        submitBtn.innerHTML = '✅ Saved Successfully!';
         submitBtn.style.background = 'var(--success-gradient)';
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          window.location.href = '{{ url_for("user.my_valuations") }}';
         }, 2000);
       } else {
         handleUploadError(new Error('Submission failed'));

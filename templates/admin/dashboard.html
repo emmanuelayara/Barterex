@@ -738,6 +738,26 @@
           <span class="d-inline d-sm-none">X</span>
           <span class="count-badge">{{ rejected_items }}</span>
         </a>
+        <a href="{{ url_for('admin.preverification_queue') }}" class="btn btn-outline-primary">
+          <i class="bi bi-search"></i>
+          <span class="d-none d-sm-inline">Pre-Verification</span>
+          <span class="d-inline d-sm-none">Pre-Verify</span>
+        </a>
+        <a href="{{ url_for('admin.video_review_queue') }}" class="btn btn-outline-primary">
+          <i class="bi bi-camera-video"></i>
+          <span class="d-none d-sm-inline">Video Review</span>
+          <span class="d-inline d-sm-none">Videos</span>
+        </a>
+        <a href="{{ url_for('admin.reconfirmation_review_queue') }}" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-repeat"></i>
+          <span class="d-none d-sm-inline">Reconfirmations</span>
+          <span class="d-inline d-sm-none">Reconfirm</span>
+        </a>
+        <a href="{{ url_for('admin.settlement_queue') }}" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-left-right"></i>
+          <span class="d-none d-sm-inline">Settlement Queue</span>
+          <span class="d-inline d-sm-none">Settlements</span>
+        </a>
       </div>
     </div>
 

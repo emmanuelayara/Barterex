@@ -109,6 +109,20 @@
   .status-badge.expired { background: rgba(148, 163, 184, 0.2); color: #64748b; }
   .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
 
+  .verify-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin: 2px 4px 2px 0;
+  }
+
+  .verify-pill.not_submitted { background: rgba(148, 163, 184, 0.2); color: #64748b; }
+  .verify-pill.submitted { background: rgba(37, 99, 235, 0.15); color: #2563eb; }
+  .verify-pill.passed { background: rgba(16, 185, 129, 0.15); color: #059669; }
+  .verify-pill.failed { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
   .reservation-actions {
     display: flex;
     flex-direction: column;
@@ -176,27 +190,32 @@
               <span class="status-badge {{ reservation.status }}">{{ reservation.status }}</span>
               <h3>{{ reservation.item.name if reservation.item else 'Item removed' }}</h3>
               <div class="reservation-meta">
-                ᗸ{{ '{:,.0f}'.format(reservation.provisional_credits_used) }} held
+                ᗸ{{ '{:,.0f}'.format(reservation.provisional_credits_used) }} backed by {{ reservation.backing_assets|length }} of your item(s)
                 {% if reservation.status == 'active' %}
-                  · expires {{ reservation.expires_at.strftime('%b %d, %I:%M %p') }}
+                  · settlement window ends {{ reservation.expires_at.strftime('%b %d, %I:%M %p') }}
                 {% elif reservation.status == 'cancelled' and reservation.cancelled_at %}
                   · cancelled {{ reservation.cancelled_at.strftime('%b %d, %Y') }}
+                {% elif reservation.status == 'expired' %}
+                  · expired (settlement window lapsed)
                 {% elif reservation.status == 'completed' and reservation.completed_at %}
                   · completed {{ reservation.completed_at.strftime('%b %d, %Y') }}
                 {% endif %}
               </div>
+              {% if reservation.status == 'active' %}
+                <div style="margin-top:6px;">
+                  <span class="verify-pill {{ reservation.seller_item_verification_status }}">Seller's item: {{ reservation.seller_item_verification_status|replace('_',' ') }}</span>
+                  {% for asset in reservation.backing_assets %}
+                    <span class="verify-pill {{ asset.verification_status }}">{{ asset.item.name if asset.item else 'Your item' }}: {{ asset.verification_status|replace('_',' ') }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
             <div class="reservation-actions">
               {% if reservation.item %}
                 <a href="{{ url_for('marketplace.view_item', item_id=reservation.item_id) }}" class="trade-btn">View Item</a>
               {% endif %}
-              {% if reservation.status == 'active' %}
-                {% if (current_user.credits or 0) >= reservation.provisional_credits_used %}
-                  <form method="POST" action="{{ url_for('marketplace.complete_item_reservation', item_id=reservation.item_id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="trade-btn" style="border:none;">Complete Purchase</button>
-                  </form>
-                {% endif %}
+              {% if reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted'
+                    and reservation.backing_assets|selectattr('verification_status', 'equalto', 'not_submitted')|list|length == reservation.backing_assets|length %}
                 <form method="POST" action="{{ url_for('marketplace.cancel_item_reservation', item_id=reservation.item_id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <button type="submit" class="cancel-btn">Cancel</button>
@@ -216,8 +235,8 @@
       {% endif %}
     {% else %}
       <div class="empty-state">
-        <p>You haven't reserved any items yet.</p>
-        <p>Accept an AI valuation when uploading an item to earn provisional credits, then reserve items here while your item awaits physical verification.</p>
+        <p>You haven't started any purchases yet.</p>
+        <p>Activate items for trade to earn purchasing power, then use "Get with BXC" on the marketplace to back a purchase with your own items.</p>
       </div>
     {% endif %}
   </div>

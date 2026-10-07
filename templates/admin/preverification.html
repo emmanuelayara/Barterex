@@ -1,0 +1,301 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Pre-Verification Queue{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --orange-gradient: linear-gradient(135deg, #ff7b00 0%, #ff9500 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
+    --surface: #ffffff;
+    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
+    --border-radius: 10px;
+  }
+
+  .approval-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 15px 0;
+  }
+
+  .container { max-width: 1400px; padding-left: 15px; padding-right: 15px; }
+
+  .approval-header {
+    text-align: center;
+    margin-bottom: 18px;
+    padding: 18px 15px;
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .approval-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .approval-subtitle { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+
+  .approval-card {
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .approval-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+
+  .card-image-container {
+    height: 110px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  .card-image { width: 100%; height: 100%; object-fit: cover; }
+
+  .enhanced-card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+
+  .item-title { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+  .item-description { color: var(--text-secondary); font-size: 0.75rem; margin: 0; }
+
+  .item-info-row { display: flex; gap: 4px; margin: 6px 0; flex-wrap: wrap; }
+
+  .info-chip {
+    padding: 3px 7px;
+    background: rgba(102, 126, 234, 0.06);
+    border-radius: 4px;
+    border-left: 2px solid #667eea;
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .chip-label { font-size: 0.6rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+  .chip-value { font-weight: 600; color: var(--text-primary); font-size: 0.72rem; }
+
+  .condition-badge {
+    display: inline-block;
+    padding: 3px 7px;
+    background: var(--success-gradient);
+    color: white;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+  }
+
+  .ownership-flag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .ownership-flag.confirmed { background: rgba(16, 185, 129, 0.12); color: #059669; }
+  .ownership-flag.missing { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+  .ai-suggestion {
+    margin: 8px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(102, 126, 234, 0.10);
+    border: 1px solid rgba(102, 126, 234, 0.35);
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  .appraisal-section {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03), rgba(255, 123, 0, 0.03));
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 6px;
+    border: 1px solid rgba(102, 126, 234, 0.08);
+  }
+
+  .appraisal-label { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; font-size: 0.72rem; }
+
+  .value-input, .notes-textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    background: var(--surface);
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .notes-textarea { min-height: 40px; resize: vertical; font-family: inherit; }
+
+  .rejection-section { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; margin-top: 6px; }
+  .rejection-section.active { max-height: 140px; opacity: 1; }
+
+  .rejection-textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    resize: vertical;
+    min-height: 40px;
+    font-family: inherit;
+  }
+
+  .action-buttons { display: flex; gap: 4px; margin-top: 6px; }
+
+  .action-btn {
+    flex: 1;
+    padding: 7px 8px;
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 0.68rem;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  .approve-btn { background: var(--success-gradient); color: white; }
+  .reject-btn { background: var(--danger-gradient); color: white; }
+  .reject-btn.active { background: #6b7280; }
+  .submit-rejection-btn { background: var(--danger-gradient); color: white; margin-top: 6px; width: 100%; }
+  .cancel-rejection-btn { background: #6b7280; color: white; margin-top: 4px; width: 100%; }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 15px;
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    margin: 15px 0;
+  }
+
+  .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .empty-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+  .empty-subtitle { color: var(--text-secondary); font-size: 0.85rem; }
+</style>
+
+<div class="approval-page">
+  <div class="container">
+    <div class="approval-header">
+      <h2>🔍 Pre-Verification Queue</h2>
+      <p class="approval-subtitle">Items owners have chosen to "Trade This Item" - confirm ownership/condition and set the Final Value.</p>
+    </div>
+
+    {% if items %}
+      <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2">
+        {% for item in items %}
+        <div class="col">
+          <div class="approval-card">
+            {% set primary_image = item.image_url or (item.images[0].image_url if item.images else None) %}
+            {% if primary_image %}
+              <div class="card-image-container">
+                <img src="{{ primary_image | image_url }}" class="card-image" alt="{{ item.name }}" onerror="this.src='/static/placeholder.png'">
+              </div>
+            {% endif %}
+            <div class="enhanced-card-body">
+              <h3 class="item-title">{{ item.name }}</h3>
+              <p class="item-description">{{ item.description }}</p>
+
+              <div class="item-info-row">
+                <div class="info-chip">
+                  <div class="chip-label">👤 User</div>
+                  <div class="chip-value">{{ item.user.username }}</div>
+                </div>
+                <div class="info-chip">
+                  <div class="chip-label">📂 Cat</div>
+                  <div class="chip-value">{{ item.category }}</div>
+                </div>
+              </div>
+
+              <div style="text-align:center;">
+                <span class="condition-badge">⭐ {{ item.condition }}</span>
+              </div>
+
+              <div style="margin:6px 0;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+                {% if item.ownership_confirmed %}
+                  <span class="ownership-flag confirmed">✅ Ownership confirmed</span>
+                {% else %}
+                  <span class="ownership-flag missing">⚠️ Ownership not confirmed</span>
+                {% endif %}
+                {% if item.serial_number %}
+                  <span class="ownership-flag confirmed">🔢 S/N: {{ item.serial_number }}</span>
+                {% endif %}
+              </div>
+
+              {% if item.ai_estimated_value %}
+              <div class="ai-suggestion">
+                <strong>🤖 AI suggested ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</strong>
+                {% if item.ai_risk_level %}
+                  <br><span style="font-weight:700;color:{% if item.ai_risk_level == 'HIGH' %}#dc2626{% elif item.ai_risk_level == 'MEDIUM' %}#d97706{% else %}#16a34a{% endif %};">Risk: {{ item.ai_risk_level }}</span>
+                {% endif %}
+              </div>
+              {% endif %}
+
+              <div class="appraisal-section">
+                <form method="POST" action="{{ url_for('admin.approve_preverification', item_id=item.id) }}" class="approval-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <label for="final_value_{{ item.id }}" class="appraisal-label">💰 Final Value (BXC)</label>
+                  <input type="number" step="0.1" min="0.1" name="final_value" id="final_value_{{ item.id }}" class="value-input"
+                         placeholder="Final value" {% if item.ai_estimated_value and item.ai_risk_level != 'HIGH' %}value="{{ item.ai_estimated_value|round|int }}"{% endif %} required>
+
+                  <label for="notes_{{ item.id }}" class="appraisal-label">📝 Pre-verification notes (optional)</label>
+                  <textarea name="preverification_notes" id="notes_{{ item.id }}" class="notes-textarea" placeholder="Condition notes, checks performed..."></textarea>
+
+                  <div class="action-buttons">
+                    <button type="submit" class="action-btn approve-btn">✅ Approve</button>
+                    <button type="button" class="action-btn reject-btn" onclick="toggleRejectForm({{ item.id }})">❌ Reject</button>
+                  </div>
+                </form>
+
+                <div class="rejection-section" id="rejection_{{ item.id }}">
+                  <form method="POST" action="{{ url_for('admin.reject_preverification', item_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <textarea name="rejection_reason" placeholder="What does the owner need to fix?" rows="2" class="rejection-textarea" required></textarea>
+                    <button type="submit" class="action-btn submit-rejection-btn">Submit Rejection</button>
+                    <button type="button" class="action-btn cancel-rejection-btn" onclick="toggleRejectForm({{ item.id }})">Cancel</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🎉</div>
+        <h3 class="empty-title">Nothing to pre-verify</h3>
+        <p class="empty-subtitle">No items are awaiting pre-verification right now.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function toggleRejectForm(itemId) {
+    const section = document.getElementById(`rejection_${itemId}`);
+    const btn = document.querySelector(`[onclick="toggleRejectForm(${itemId})"]`);
+    const open = section.classList.toggle('active');
+    btn.classList.toggle('active', open);
+    btn.innerHTML = open ? '↩️ Cancel' : '❌ Reject';
+    if (!open) {
+      section.querySelector('textarea').value = '';
+    }
+  }
+</script>
+{% endblock %}

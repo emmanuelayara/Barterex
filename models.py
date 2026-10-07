@@ -28,6 +28,9 @@ class User(db.Model, UserMixin):
     # Credits granted from an ACCEPTED AI valuation, before the item is physically verified.
     # Spendable only on reservations (see Reservation model), never on checkout directly.
     provisional_credits = db.Column(db.Integer, default=0)
+    # Drops when a user fails to submit an item for final verification within the
+    # settlement window, or submits one that fails inspection. See services/reservation_service.py.
+    reliability_score = db.Column(db.Integer, default=100)
     first_login = db.Column(db.Boolean, default=True)
     
     # Checkout transaction tracking (CRITICAL: for audit trail and fraud detection)
@@ -345,6 +348,33 @@ class Item(db.Model):
     reservation_expires_at = db.Column(db.DateTime, nullable=True)
     reservations = db.relationship('Reservation', back_populates='item', lazy=True, foreign_keys='[Reservation.item_id]')
 
+    # Set when this item is chosen as one of the BUYER's own backing assets for a
+    # pending purchase (see ReservationAsset) - locked out of the marketplace and
+    # ineligible to back any other purchase until that reservation resolves.
+    locked_for_reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=True)
+
+    # --- Staged non-custody lifecycle (valuation -> trade request -> pre-verification -> activation) ---
+    # `status` keeps its existing values (pending/approved/rejected/etc. - see PENDING_ITEM_STATUSES in
+    # routes/admin.py) PLUS these new pre-listing stages, set by routes built in later phases:
+    #   valuation_only -> trade_requested -> preverification_approved -> pending_activation -> approved
+    LIFECYCLE_STATUSES = (
+        'valuation_only', 'trade_requested', 'preverification_approved', 'pending_activation'
+    )
+    trade_requested_at = db.Column(db.DateTime, nullable=True)
+    preverification_notes = db.Column(db.Text, nullable=True)
+    preverification_approved_at = db.Column(db.DateTime, nullable=True)
+    preverification_approved_by_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=True)
+    ownership_confirmed = db.Column(db.Boolean, default=False)
+    serial_number = db.Column(db.String(100), nullable=True)  # serial/IMEI, where applicable
+    activated_at = db.Column(db.DateTime, nullable=True)       # when "Activate for Trade" completed (video approved)
+
+    # --- 30-day marketplace freshness reconfirmation ---
+    last_reconfirmed_at = db.Column(db.DateTime, nullable=True)
+    reconfirmation_code = db.Column(db.String(12), nullable=True)  # must appear in the reconfirmation photo/video
+
+    # --- Seller-submitted verification video (see ItemVideo) ---
+    videos = db.relationship('ItemVideo', back_populates='item', lazy=True, cascade='all, delete-orphan')
+
     images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
     
     # Valid condition values for items
@@ -439,12 +469,56 @@ class ItemImage(db.Model):
         return len(self.get_quality_flags()) > 0
 
 
+class ItemVideo(db.Model):
+    """
+    A seller-submitted "Activate for Trade" verification video. Uploaded directly
+    from the user's device to temporary cloud storage (see services/video_service.py,
+    built in a later phase) - never touches the VPS. An admin reviews it; on
+    approval it's pushed to the official YouTube channel and the temp copy is
+    deleted. Kept as its own table (not columns on Item) so a rejected submission
+    and its resubmission both stay in history.
+    """
+    VALID_STATUSES = {'pending', 'approved', 'rejected'}
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_itemvideo_item'), nullable=False)
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_itemvideo_uploader'), nullable=False)
+
+    temp_video_url = db.Column(db.String(500), nullable=True)   # temp cloud storage path, cleared after publish
+    status = db.Column(db.String(20), default='pending', nullable=False)
+    rejection_reason = db.Column(db.Text, nullable=True)
+
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    reviewed_by_admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=True)
+
+    youtube_video_id = db.Column(db.String(50), nullable=True)
+    youtube_url = db.Column(db.String(300), nullable=True)
+    temp_copy_deleted_at = db.Column(db.DateTime, nullable=True)
+
+    item = db.relationship('Item', back_populates='videos')
+    uploaded_by = db.relationship('User', foreign_keys=[uploaded_by_id])
+    reviewed_by_admin = db.relationship('Admin', foreign_keys=[reviewed_by_admin_id])
+
+    __table_args__ = (
+        db.Index('idx_itemvideo_item_id', 'item_id'),
+        db.Index('idx_itemvideo_status', 'status'),
+    )
+
+    def __repr__(self):
+        return f'<ItemVideo {self.id} for Item {self.item_id} status={self.status}>'
+
+
 class Reservation(db.Model):
     """
-    A user's provisional-credit hold on an item, reserved after accepting an AI
-    valuation and before the item is physically verified by an admin.
+    A buyer's "Get with BXC" request on a marketplace item, backed by one or
+    more of the buyer's own activated items (see ReservationAsset). Both the
+    seller's item and every backing asset must pass a final, parallel physical
+    verification within the settlement window before the purchase settles -
+    see services/reservation_service.py.
     """
     VALID_STATUSES = {'active', 'completed', 'expired', 'cancelled'}
+    VERIFICATION_STATUSES = {'not_submitted', 'submitted', 'passed', 'failed'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_reservation_user'), nullable=False)
@@ -456,8 +530,15 @@ class Reservation(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     cancelled_at = db.Column(db.DateTime, nullable=True)
 
+    # Final (re-)verification of the SELLER's item, in parallel with each backing
+    # asset's own verification (see ReservationAsset.verification_status below).
+    seller_item_verification_status = db.Column(db.String(20), default='not_submitted', nullable=False)
+    seller_item_verified_at = db.Column(db.DateTime, nullable=True)
+    seller_item_verification_notes = db.Column(db.Text, nullable=True)
+
     user = db.relationship('User', back_populates='reservations', foreign_keys=[user_id])
     item = db.relationship('Item', back_populates='reservations', foreign_keys=[item_id])
+    backing_assets = db.relationship('ReservationAsset', back_populates='reservation', cascade='all, delete-orphan')
 
     __table_args__ = (
         db.Index('idx_reservation_user_id', 'user_id'),
@@ -472,6 +553,35 @@ class Reservation(db.Model):
         """True if still marked active but past its expiry time."""
         return self.status == 'active' and datetime.utcnow() > self.expires_at
 
+
+class ReservationAsset(db.Model):
+    """
+    One of the BUYER's own activated items, selected as collateral backing a
+    Reservation (a buyer may combine several items to cover the price). Each
+    asset needs its own pass/fail final verification, parallel to the seller's
+    item - see services/reservation_service.py.
+    """
+    VALID_STATUSES = Reservation.VERIFICATION_STATUSES
+
+    id = db.Column(db.Integer, primary_key=True)
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id', name='fk_reservationasset_reservation'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_reservationasset_item'), nullable=False)
+    amount = db.Column(db.Integer, nullable=False)  # value this item contributes toward the purchase
+
+    verification_status = db.Column(db.String(20), default='not_submitted', nullable=False)
+    verified_at = db.Column(db.DateTime, nullable=True)
+    verification_notes = db.Column(db.Text, nullable=True)
+
+    reservation = db.relationship('Reservation', back_populates='backing_assets')
+    item = db.relationship('Item', foreign_keys=[item_id])
+
+    __table_args__ = (
+        db.Index('idx_reservationasset_reservation_id', 'reservation_id'),
+        db.Index('idx_reservationasset_item_id', 'item_id'),
+    )
+
+    def __repr__(self):
+        return f'<ReservationAsset {self.id} reservation={self.reservation_id} item={self.item_id} status={self.verification_status}>'
 
 
 class Trade(db.Model):

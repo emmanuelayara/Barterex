@@ -13,7 +13,8 @@ from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, DatabaseError
 from error_handlers import handle_errors
 from services.reservation_service import (
-    create_reservation, cancel_reservation, complete_reservation, get_active_reservation, RESERVATION_HOLD_HOURS
+    create_reservation, cancel_reservation, get_active_reservation,
+    get_eligible_backing_items, RESERVATION_HOLD_HOURS
 )
 from search_discovery import (
     get_search_suggestions,
@@ -60,7 +61,9 @@ def _get_top_categories(limit: int = 3) -> List[Dict[str, Any]]:
 def marketplace() -> Union[str, Response]:
     try:
         from services.reservation_service import release_expired_reservations
+        from services.freshness_service import deactivate_stale_items
         release_expired_reservations()  # re-list any items whose reservation hold has lapsed
+        deactivate_stale_items()  # hide any items overdue for their 30-day reconfirmation
 
         page = request.args.get('page', 1, type=int)
         condition_filter = request.args.get('condition')
@@ -230,27 +233,46 @@ def view_item(item_id: int) -> Union[str, Response]:
         return redirect(url_for('marketplace.marketplace'))
 
 
+@marketplace_bp.route('/item/<int:item_id>/choose-backing-assets')
+@login_required
+@handle_errors
+def choose_backing_assets(item_id: int) -> Union[str, Response]:
+    """"Get with BXC": pick which of the buyer's own activated items will back this purchase."""
+    item = Item.query.get_or_404(item_id)
+    if item.user_id == current_user.id:
+        flash("You can't acquire your own item.", 'info')
+        return redirect(url_for('marketplace.view_item', item_id=item_id))
+    if not item.is_approved or not item.is_available or not item.value:
+        flash('This item is not available right now.', 'info')
+        return redirect(url_for('marketplace.view_item', item_id=item_id))
+
+    eligible_items = get_eligible_backing_items(current_user)
+    return render_template('choose_backing_assets.html', item=item, eligible_items=eligible_items)
+
+
 @marketplace_bp.route('/item/<int:item_id>/reserve', methods=['POST'])
 @login_required
 @handle_errors
 def reserve_item(item_id: int) -> Response:
-    """Hold a marketplace item using the buyer's provisional credits (see services/reservation_service.py)."""
+    """Lock in a "Get with BXC" purchase using the buyer's chosen backing assets as collateral."""
     item = Item.query.filter_by(id=item_id).with_for_update().first_or_404()
-    reservation, error = create_reservation(current_user, item)
+    backing_item_ids = request.form.getlist('backing_item_id', type=int)
+    reservation, error = create_reservation(current_user, item, backing_item_ids)
     if error:
         logger.info(f"Reservation failed - Item: {item_id}, User: {current_user.username}, Reason: {error}")
         flash(error, 'danger')
-    else:
-        flash(f"'{item.name}' reserved for {RESERVATION_HOLD_HOURS} hours using "
-              f"ᗸ{reservation.provisional_credits_used:,} provisional credits.", 'success')
-    return redirect(url_for('marketplace.view_item', item_id=item_id))
+        return redirect(url_for('marketplace.choose_backing_assets', item_id=item_id))
+    flash(f"'{item.name}' is on hold for {RESERVATION_HOLD_HOURS} hours. Bring your chosen item(s) and this "
+          f"item's owner will bring theirs in for final verification - both must pass for the trade to complete.",
+          'success')
+    return redirect(url_for('user.my_reservations'))
 
 
 @marketplace_bp.route('/item/<int:item_id>/cancel-reservation', methods=['POST'])
 @login_required
 @handle_errors
 def cancel_item_reservation(item_id: int) -> Response:
-    """Let a buyer release their own active reservation early and get the provisional credits back."""
+    """Let a buyer release their own active reservation early, before verification starts."""
     from models import Reservation
     reservation = Reservation.query.filter_by(item_id=item_id, user_id=current_user.id, status='active').first_or_404()
     ok, error = cancel_reservation(reservation, current_user)
@@ -259,24 +281,6 @@ def cancel_item_reservation(item_id: int) -> Response:
     else:
         flash("Reservation cancelled - your provisional credits were refunded.", 'info')
     return redirect(request.referrer or url_for('marketplace.view_item', item_id=item_id))
-
-
-@marketplace_bp.route('/item/<int:item_id>/complete-reservation', methods=['POST'])
-@login_required
-@handle_errors
-def complete_item_reservation(item_id: int) -> Response:
-    """Finalize an active reservation into a real purchase once the buyer has enough real credits."""
-    from models import Reservation
-    reservation = Reservation.query.filter_by(
-        item_id=item_id, user_id=current_user.id, status='active'
-    ).with_for_update().first_or_404()
-    item_name = reservation.item.name if reservation.item else 'Item'
-    ok, error = complete_reservation(reservation, current_user)
-    if error:
-        flash(error, 'danger')
-        return redirect(request.referrer or url_for('marketplace.view_item', item_id=item_id))
-    flash(f"🎉 Purchase complete! '{item_name}' is now yours.", 'success')
-    return redirect(url_for('user.my_reservations'))
 
 
 # ==================== API ENDPOINTS ====================

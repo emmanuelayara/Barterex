@@ -1085,6 +1085,425 @@ def reject_item(item_id):
     return redirect(url_for('admin.admin_dashboard'))
 
 
+@admin_bp.route('/pre-verification')
+@admin_login_required
+@handle_errors
+def preverification_queue():
+    """Items whose owner clicked "Trade This Item" - awaiting pre-verification (ownership, serial/IMEI, condition)."""
+    try:
+        items = Item.query.filter_by(status='trade_requested').options(
+            joinedload(Item.images)
+        ).order_by(Item.trade_requested_at.asc()).all()
+        return render_template('admin/preverification.html', items=items)
+    except Exception as e:
+        logger.error(f"Error loading pre-verification queue: {str(e)}", exc_info=True)
+        flash('An error occurred while loading the pre-verification queue.', 'danger')
+        return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/pre-verification/<int:item_id>/approve', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("approve_preverification")
+def approve_preverification(item_id):
+    from audit_logger import log_audit_action
+
+    try:
+        item = Item.query.get_or_404(item_id)
+
+        if item.status != 'trade_requested':
+            flash(f"Item '{item.name}' is not awaiting pre-verification.", "info")
+            return redirect(url_for('admin.preverification_queue'))
+
+        try:
+            final_value = float(request.form['final_value'])
+            if final_value <= 0:
+                raise ValueError("Value must be positive")
+        except (ValueError, KeyError):
+            logger.warning(f"Invalid final value provided - Item ID: {item_id}, Value: {request.form.get('final_value')}, Admin ID: {session.get('admin_id')}")
+            raise ValidationError("Final value must be a positive number", field="final_value")
+
+        item.value = final_value
+        item.preverification_notes = request.form.get('preverification_notes', '').strip() or None
+        item.preverification_approved_at = datetime.utcnow()
+        item.preverification_approved_by_id = session.get('admin_id')
+        item.status = 'preverification_approved'
+
+        log_audit_action(
+            action_type='approve_preverification',
+            target_type='item',
+            target_id=item_id,
+            target_name=item.name,
+            description=f"Pre-verification approved for '{item.name}', final value set to {final_value}",
+            after_value={'status': 'preverification_approved', 'value': final_value}
+        )
+
+        db.session.add(Notification(
+            user_id=item.user_id,
+            message=f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
+                    f"Open it from My Valuations and select \"Activate for Trade\" when you're ready."
+        ))
+
+        logger.info(f"Pre-verification approved - Item ID: {item_id}, Name: {item.name}, Final Value: {final_value}, Admin ID: {session.get('admin_id')}")
+        flash(f"Pre-verification approved for '{item.name}' at {final_value} credits.", "success")
+
+    except ValidationError as e:
+        logger.warning(f"Validation error approving pre-verification: {str(e)}")
+        flash(str(e.message), 'danger')
+        raise  # Re-raise so decorator knows to rollback
+
+    return redirect(url_for('admin.preverification_queue'))
+
+
+@admin_bp.route('/pre-verification/<int:item_id>/reject', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("reject_preverification")
+def reject_preverification(item_id):
+    from audit_logger import log_audit_action
+
+    try:
+        item = Item.query.get_or_404(item_id)
+        reason = request.form.get('rejection_reason', '').strip()
+
+        if not reason:
+            logger.warning(f"Pre-verification rejection without reason - Item ID: {item_id}, Admin ID: {session.get('admin_id')}")
+            raise ValidationError("You must provide a rejection reason", field="rejection_reason")
+
+        if item.status != 'trade_requested':
+            flash(f"Item '{item.name}' is not awaiting pre-verification.", "info")
+            return redirect(url_for('admin.preverification_queue'))
+
+        # Not a terminal rejection - send it back to My Valuations so the owner can fix and retry.
+        item.status = 'valuation_only'
+        item.rejection_reason = reason
+        item.ownership_confirmed = False
+
+        log_audit_action(
+            action_type='reject_preverification',
+            target_type='item',
+            target_id=item_id,
+            target_name=item.name,
+            description=f"Pre-verification rejected for '{item.name}'",
+            reason=reason,
+            after_value={'status': 'valuation_only'}
+        )
+
+        db.session.add(Notification(
+            user_id=item.user_id,
+            message=f"⚠️ Pre-verification for '{item.name}' needs attention. Reason: {reason}. "
+                    f"It's back in My Valuations - fix the issue and select \"Trade This Item\" again."
+        ))
+
+        logger.info(f"Pre-verification rejected - Item ID: {item_id}, Name: {item.name}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
+        flash(f"Pre-verification rejected for '{item.name}'.", "warning")
+
+    except ValidationError as e:
+        logger.warning(f"Validation error rejecting pre-verification: {str(e)}")
+        flash(str(e.message), 'danger')
+        raise  # Re-raise so decorator knows to rollback
+
+    return redirect(url_for('admin.preverification_queue'))
+
+
+@admin_bp.route('/video-review')
+@admin_login_required
+@handle_errors
+def video_review_queue():
+    """Verification videos submitted via "Activate for Trade", awaiting a watch + approve/reject."""
+    from models import ItemVideo
+    from services import video_service
+
+    try:
+        videos = ItemVideo.query.filter_by(status='pending').options(
+            joinedload(ItemVideo.item)
+        ).order_by(ItemVideo.submitted_at.asc()).all()
+        preview_urls = {video.id: video_service.generate_read_url(video.temp_video_url) for video in videos}
+        return render_template('admin/video_review.html', videos=videos, preview_urls=preview_urls,
+                                video_storage_configured=video_service.is_configured())
+    except Exception as e:
+        logger.error(f"Error loading video review queue: {str(e)}", exc_info=True)
+        flash('An error occurred while loading the video review queue.', 'danger')
+        return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/video-review/<int:video_id>/approve', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("approve_activation_video")
+def approve_activation_video(video_id):
+    """
+    Publishes the video to YouTube and, on success, activates the item: lists it
+    on the marketplace and grants the owner provisional BXC. See services/
+    video_service.py and services/youtube_publisher.py.
+    """
+    from models import ItemVideo
+    from audit_logger import log_audit_action
+    from services import video_service, youtube_publisher
+
+    video = ItemVideo.query.get_or_404(video_id)
+    if video.status != 'pending':
+        flash('This video has already been reviewed.', 'info')
+        return redirect(url_for('admin.video_review_queue'))
+
+    item = video.item
+    if not item:
+        flash('The item for this video no longer exists.', 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+
+    video_bytes = video_service.download_bytes(video.temp_video_url)
+    if video_bytes is None:
+        flash('Could not fetch the video from storage. Please try again.', 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+
+    result = youtube_publisher.upload_video(
+        video_bytes, title=item.name, description=item.description or '', privacy_status='unlisted'
+    )
+    if not result.get('success'):
+        flash(f"Could not publish to YouTube: {result.get('error')}", 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+
+    video.status = 'approved'
+    video.reviewed_at = datetime.utcnow()
+    video.reviewed_by_admin_id = session.get('admin_id')
+    video.youtube_video_id = result['video_id']
+    video.youtube_url = result['url']
+    if video_service.delete_object(video.temp_video_url):
+        video.temp_copy_deleted_at = datetime.utcnow()
+        video.temp_video_url = None
+
+    item.video_url = result['url']
+    item.status = 'approved'
+    item.is_approved = True
+    item.is_available = True
+    item.activated_at = datetime.utcnow()
+    item.last_reconfirmed_at = item.activated_at  # starts the 30-day freshness clock
+
+    provisional_amount = None
+    if item.value:
+        provisional_amount = int(round(item.value))
+        item.user.provisional_credits = (item.user.provisional_credits or 0) + provisional_amount
+        item.provisional_credit_amount = provisional_amount
+        item.provisional_credit_granted_at = datetime.utcnow()
+        item.provisional_credit_settled = False
+
+    log_audit_action(
+        action_type='approve_activation_video',
+        target_type='item',
+        target_id=item.id,
+        target_name=item.name,
+        description=f"Activation video approved and published for '{item.name}' ({result['url']})",
+        after_value={'status': 'approved', 'video_url': result['url']}
+    )
+
+    db.session.add(Notification(
+        user_id=item.user_id,
+        message=f"🎉 '{item.name}' is now live on the marketplace! Watch its video: {result['url']}. "
+                + (f"ᗸ{provisional_amount:,} provisional BXC was added to your account." if provisional_amount else '')
+    ))
+
+    logger.info(f"Activation video approved - Item ID: {item.id}, Video ID: {video.id}, YouTube: {result['url']}, Admin ID: {session.get('admin_id')}")
+    flash(f"'{item.name}' is now live! Video published to {result['url']}.", 'success')
+    return redirect(url_for('admin.video_review_queue'))
+
+
+@admin_bp.route('/video-review/<int:video_id>/reject', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("reject_activation_video")
+def reject_activation_video(video_id):
+    from models import ItemVideo
+    from audit_logger import log_audit_action
+    from services import video_service
+
+    video = ItemVideo.query.get_or_404(video_id)
+    reason = request.form.get('rejection_reason', '').strip()
+
+    if not reason:
+        flash('You must provide a rejection reason.', 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+    if video.status != 'pending':
+        flash('This video has already been reviewed.', 'info')
+        return redirect(url_for('admin.video_review_queue'))
+
+    item = video.item
+
+    video.status = 'rejected'
+    video.rejection_reason = reason
+    video.reviewed_at = datetime.utcnow()
+    video.reviewed_by_admin_id = session.get('admin_id')
+    if video_service.delete_object(video.temp_video_url):
+        video.temp_copy_deleted_at = datetime.utcnow()
+        video.temp_video_url = None
+
+    if item:
+        item.status = 'preverification_approved'  # back to "ready to Activate for Trade"
+
+    log_audit_action(
+        action_type='reject_activation_video',
+        target_type='item',
+        target_id=item.id if item else None,
+        target_name=item.name if item else None,
+        description=f"Activation video rejected for '{item.name if item else video.item_id}'",
+        reason=reason,
+        after_value={'status': 'preverification_approved'}
+    )
+
+    if item:
+        db.session.add(Notification(
+            user_id=item.user_id,
+            message=f"⚠️ The verification video for '{item.name}' was not approved. Reason: {reason}. "
+                    f"Open it from My Valuations and select \"Activate for Trade\" to try again."
+        ))
+
+    logger.info(f"Activation video rejected - Video ID: {video.id}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
+    flash('Video rejected.', 'warning')
+    return redirect(url_for('admin.video_review_queue'))
+
+
+@admin_bp.route('/settlement-queue')
+@admin_login_required
+@handle_errors
+def settlement_queue():
+    """
+    Active "Get with BXC" purchases awaiting final physical verification - both
+    the seller's item and every buyer backing asset must be checked in person
+    (at a Barter Express point / partner / pickup service) before the all-or-
+    nothing settlement in services/reservation_service.py can complete.
+    """
+    from models import Reservation
+    from services.reservation_service import release_expired_reservations
+
+    try:
+        release_expired_reservations()
+        reservations = Reservation.query.filter_by(status='active').options(
+            joinedload(Reservation.item), joinedload(Reservation.user), joinedload(Reservation.backing_assets)
+        ).order_by(Reservation.created_at.asc()).all()
+        return render_template('admin/settlement_queue.html', reservations=reservations)
+    except Exception as e:
+        logger.error(f"Error loading settlement queue: {str(e)}", exc_info=True)
+        flash('An error occurred while loading the settlement queue.', 'danger')
+        return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/settlement-queue/<int:reservation_id>/verify-seller-item', methods=['POST'])
+@admin_login_required
+@handle_errors
+def verify_seller_item_route(reservation_id):
+    from models import Reservation
+    from services.reservation_service import verify_seller_item
+
+    reservation = Reservation.query.get_or_404(reservation_id)
+    passed = request.form.get('result') == 'pass'
+    notes = request.form.get('notes', '').strip() or None
+    ok, error = verify_seller_item(reservation, passed, notes)
+    if error:
+        flash(error, 'danger')
+    else:
+        flash(f"Seller's item marked {'passed' if passed else 'failed'}.", 'success' if passed else 'warning')
+    return redirect(url_for('admin.settlement_queue'))
+
+
+@admin_bp.route('/settlement-queue/asset/<int:asset_id>/verify', methods=['POST'])
+@admin_login_required
+@handle_errors
+def verify_backing_asset_route(asset_id):
+    from models import ReservationAsset
+    from services.reservation_service import verify_backing_asset
+
+    asset = ReservationAsset.query.get_or_404(asset_id)
+    passed = request.form.get('result') == 'pass'
+    notes = request.form.get('notes', '').strip() or None
+    ok, error = verify_backing_asset(asset, passed, notes)
+    if error:
+        flash(error, 'danger')
+    else:
+        flash(f"Backing item marked {'passed' if passed else 'failed'}.", 'success' if passed else 'warning')
+    return redirect(url_for('admin.settlement_queue'))
+
+
+@admin_bp.route('/reconfirmation-review')
+@admin_login_required
+@handle_errors
+def reconfirmation_review_queue():
+    """
+    High-value items whose owner submitted a fresh reconfirmation photo. Only
+    an admin can visually confirm the stored code is actually in the photo -
+    see services/freshness_service.py.
+    """
+    try:
+        items = Item.query.filter_by(status='reconfirmation_review').options(joinedload(Item.images)).order_by(Item.id.asc()).all()
+        return render_template('admin/reconfirmation_review.html', items=items)
+    except Exception as e:
+        logger.error(f"Error loading reconfirmation review queue: {str(e)}", exc_info=True)
+        flash('An error occurred while loading the reconfirmation review queue.', 'danger')
+        return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/reconfirmation-review/<int:item_id>/approve', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("approve_reconfirmation")
+def approve_reconfirmation(item_id):
+    from audit_logger import log_audit_action
+
+    item = Item.query.get_or_404(item_id)
+    if item.status != 'reconfirmation_review':
+        flash('This item is not awaiting reconfirmation review.', 'info')
+        return redirect(url_for('admin.reconfirmation_review_queue'))
+
+    item.last_reconfirmed_at = datetime.utcnow()
+    item.status = 'approved'
+    item.is_available = True
+
+    log_audit_action(
+        action_type='approve_reconfirmation', target_type='item', target_id=item.id, target_name=item.name,
+        description=f"Reconfirmation approved for '{item.name}'", after_value={'status': 'approved'}
+    )
+    db.session.add(Notification(
+        user_id=item.user_id,
+        message=f"✅ '{item.name}' has been reconfirmed and is back on the marketplace!"
+    ))
+
+    logger.info(f"Reconfirmation approved - Item ID: {item.id}, Admin ID: {session.get('admin_id')}")
+    flash(f"'{item.name}' reconfirmed and relisted.", 'success')
+    return redirect(url_for('admin.reconfirmation_review_queue'))
+
+
+@admin_bp.route('/reconfirmation-review/<int:item_id>/reject', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("reject_reconfirmation")
+def reject_reconfirmation(item_id):
+    from audit_logger import log_audit_action
+
+    item = Item.query.get_or_404(item_id)
+    reason = request.form.get('rejection_reason', '').strip()
+    if not reason:
+        flash('You must provide a reason.', 'danger')
+        return redirect(url_for('admin.reconfirmation_review_queue'))
+    if item.status != 'reconfirmation_review':
+        flash('This item is not awaiting reconfirmation review.', 'info')
+        return redirect(url_for('admin.reconfirmation_review_queue'))
+
+    item.status = 'reconfirmation_required'  # stays hidden, owner can resubmit
+    item.rejection_reason = reason
+
+    log_audit_action(
+        action_type='reject_reconfirmation', target_type='item', target_id=item.id, target_name=item.name,
+        description=f"Reconfirmation rejected for '{item.name}'", reason=reason,
+        after_value={'status': 'reconfirmation_required'}
+    )
+    db.session.add(Notification(
+        user_id=item.user_id,
+        message=f"⚠️ Reconfirmation photo for '{item.name}' was rejected. Reason: {reason}. Please resubmit from My Items."
+    ))
+
+    logger.info(f"Reconfirmation rejected - Item ID: {item.id}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
+    flash('Reconfirmation rejected.', 'warning')
+    return redirect(url_for('admin.reconfirmation_review_queue'))
+
+
 @admin_bp.route('/delete-item/<int:item_id>', methods=['POST'])
 @admin_login_required
 @handle_errors

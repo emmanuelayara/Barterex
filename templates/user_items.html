@@ -215,6 +215,59 @@
     gap: 10px;
   }
 
+  .recon-banner {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+  }
+
+  html.dark-mode .recon-banner {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+  }
+
+  .recon-details summary {
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .recon-details summary::-webkit-details-marker { display: none; }
+
+  .recon-form {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  html.dark-mode .recon-form {
+    border-color: #334155;
+  }
+
+  .recon-code-note {
+    font-size: 0.75rem;
+    color: #6d28d9;
+    margin: 0;
+  }
+
+  .recon-checkbox {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .recon-file-input {
+    font-size: 0.78rem;
+  }
+
   .btn {
     padding: 8px 14px;
     border-radius: 12px;
@@ -654,7 +707,11 @@
 
                 {% if item.user_id == current_user.id %}
                   <div class="item-status">
-                    {% if item.is_approved %}
+                    {% if item.status == 'reconfirmation_required' %}
+                      <span class="status-badge status-pending">⚠️ Needs Reconfirmation</span>
+                    {% elif item.status == 'reconfirmation_review' %}
+                      <span class="status-badge status-pending">🔁 Reconfirmation Under Review</span>
+                    {% elif item.is_approved %}
                       <span class="status-badge status-approved">
                         ✅ Approved
                       </span>
@@ -665,17 +722,41 @@
                     {% endif %}
                   </div>
 
-                  <div class="item-actions">
-                    {% if not item.is_approved %}
-                      <a href="{{ url_for('user.edit_item', item_id=item.id) }}" class="btn btn-edit">
-                        ✏️ Edit Item
-                      </a>
-                    {% else %}
-                      <button class="btn btn-locked" disabled>
-                        🔒 Item Locked
-                      </button>
-                    {% endif %}
-                  </div>
+                  {% if item.status == 'reconfirmation_required' %}
+                    <div class="recon-banner">
+                      This item was hidden from the marketplace after 30 days. Upload a fresh photo to relist it.
+                      {% if item.rejection_reason %}<br><strong>Admin feedback:</strong> {{ item.rejection_reason }}{% endif %}
+                    </div>
+                    <details class="recon-details">
+                      <summary class="btn btn-edit">📷 Reconfirm Item</summary>
+                      <form method="POST" action="{{ url_for('items.reconfirm_item', item_id=item.id) }}" enctype="multipart/form-data" class="recon-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        {% if item.reconfirmation_code %}
+                          <p class="recon-code-note">High-value item: make sure code <strong>{{ item.reconfirmation_code }}</strong> is visible (written on paper) in your photo.</p>
+                          <label class="recon-checkbox">
+                            <input type="checkbox" name="code_confirmed" value="1" required>
+                            The code {{ item.reconfirmation_code }} is visible in my photo
+                          </label>
+                        {% endif %}
+                        <input type="file" name="reconfirmation_photo" accept="image/*" capture="environment" required class="recon-file-input">
+                        <button type="submit" class="btn btn-edit" style="margin-top:8px;">Submit Photo</button>
+                      </form>
+                    </details>
+                  {% elif item.status == 'reconfirmation_review' %}
+                    <div class="recon-banner">Your reconfirmation photo is awaiting admin review.</div>
+                  {% else %}
+                    <div class="item-actions">
+                      {% if not item.is_approved %}
+                        <a href="{{ url_for('user.edit_item', item_id=item.id) }}" class="btn btn-edit">
+                          ✏️ Edit Item
+                        </a>
+                      {% else %}
+                        <button class="btn btn-locked" disabled>
+                          🔒 Item Locked
+                        </button>
+                      {% endif %}
+                    </div>
+                  {% endif %}
                 {% endif %}
               </div>
             </div>

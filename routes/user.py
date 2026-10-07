@@ -140,6 +140,9 @@ def dashboard() -> Union[str, Response]:
 @handle_errors
 def user_items() -> Union[str, Response]:
     try:
+        from services.freshness_service import deactivate_stale_items
+        deactivate_stale_items()  # hide any items overdue for their 30-day reconfirmation
+
         page = request.args.get('page', 1, type=int)
         # Get items uploaded by the user, excluding items that were purchased (in OrderItem)
         items = Item.query.filter_by(uploaded_by_id=current_user.id).filter(
@@ -447,6 +450,29 @@ def user_orders():
         return redirect(url_for('user.dashboard'))
 
 
+@user_bp.route('/my_valuations')
+@login_required
+@handle_errors
+def my_valuations():
+    """
+    Private tracker for items in any pre-listing stage - valuation_only,
+    trade_requested, preverification_approved, pending_activation.
+    See models.Item.LIFECYCLE_STATUSES.
+    """
+    try:
+        page = request.args.get('page', 1, type=int)
+        items = Item.query.filter(
+            Item.user_id == current_user.id,
+            Item.status.in_(Item.LIFECYCLE_STATUSES)
+        ).options(joinedload(Item.images)).order_by(Item.id.desc()).paginate(page=page, per_page=10)
+        logger.info(f"My Valuations accessed - User: {current_user.username}, Count: {items.total}")
+        return render_template('my_valuations.html', items=items)
+    except Exception as e:
+        logger.error(f"Error loading valuations for user {current_user.username}: {str(e)}", exc_info=True)
+        flash('An error occurred while loading your valuations.', 'danger')
+        return redirect(url_for('user.dashboard'))
+
+
 @user_bp.route('/my_reservations')
 @login_required
 @handle_errors
@@ -459,7 +485,7 @@ def my_reservations():
 
         page = request.args.get('page', 1, type=int)
         reservations = Reservation.query.filter_by(user_id=current_user.id).options(
-            joinedload(Reservation.item)
+            joinedload(Reservation.item), joinedload(Reservation.backing_assets)
         ).order_by(Reservation.created_at.desc()).paginate(page=page, per_page=10)
         logger.info(f"User reservations accessed - User: {current_user.username}, Reservations: {reservations.total}")
         return render_template('my_reservations.html', reservations=reservations)

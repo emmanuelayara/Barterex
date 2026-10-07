@@ -1,0 +1,134 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Settlement Queue{% endblock %}
+
+{% block content %}
+<style>
+  .approval-page { min-height: 100vh; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 15px 0; }
+  .container { max-width: 1200px; padding-left: 15px; padding-right: 15px; }
+
+  .approval-header {
+    text-align: center;
+    margin-bottom: 18px;
+    padding: 18px 15px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .approval-header h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
+  .approval-subtitle { font-size: 0.8rem; color: #6b7280; margin: 0; }
+
+  .settle-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .settle-header {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+  }
+
+  .settle-side {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .settle-side h4 { margin: 0 0 4px; font-size: 0.85rem; }
+  .settle-side .meta { font-size: 0.75rem; color: #6b7280; margin-bottom: 8px; }
+
+  .verify-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+
+  .verify-status.not_submitted { background: rgba(148, 163, 184, 0.2); color: #64748b; }
+  .verify-status.passed { background: rgba(16, 185, 129, 0.15); color: #059669; }
+  .verify-status.failed { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
+  .verify-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .verify-form input[type="text"] {
+    flex: 1;
+    min-width: 140px;
+    padding: 5px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 5px;
+    font-size: 0.72rem;
+  }
+
+  .verify-btn { border: none; border-radius: 5px; padding: 6px 10px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+  .verify-btn.pass { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+  .verify-btn.fail { background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: white; }
+
+  .empty-state { text-align: center; padding: 30px 15px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
+</style>
+
+<div class="approval-page">
+  <div class="container">
+    <div class="approval-header">
+      <h2>⚖️ Settlement Queue</h2>
+      <p class="approval-subtitle">"Get with BXC" purchases awaiting final physical verification of both sides - mark pass/fail as items arrive at a verification point.</p>
+    </div>
+
+    {% if reservations %}
+      {% for reservation in reservations %}
+        <div class="settle-card">
+          <div class="settle-header">
+            <div><strong>Buyer:</strong> {{ reservation.user.username if reservation.user else '—' }}</div>
+            <div><strong>Settlement window ends:</strong> {{ reservation.expires_at.strftime('%b %d, %Y %I:%M %p') }}</div>
+          </div>
+
+          <div class="settle-side">
+            <h4>🏷️ Seller's item: {{ reservation.item.name if reservation.item else 'Item removed' }}
+              <span class="verify-status {{ reservation.seller_item_verification_status }}">{{ reservation.seller_item_verification_status|replace('_',' ') }}</span>
+            </h4>
+            <div class="meta">Owner: {{ reservation.item.user.username if reservation.item and reservation.item.user else '—' }} · Value: ᗸ{{ '{:,.0f}'.format(reservation.item.value) if reservation.item and reservation.item.value else '—' }}</div>
+            {% if reservation.seller_item_verification_status == 'not_submitted' %}
+              <form method="POST" action="{{ url_for('admin.verify_seller_item_route', reservation_id=reservation.id) }}" class="verify-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="text" name="notes" placeholder="Notes (optional)">
+                <button type="submit" name="result" value="pass" class="verify-btn pass">✅ Passed</button>
+                <button type="submit" name="result" value="fail" class="verify-btn fail">❌ Failed</button>
+              </form>
+            {% endif %}
+          </div>
+
+          {% for asset in reservation.backing_assets %}
+            <div class="settle-side">
+              <h4>🎒 Buyer's item: {{ asset.item.name if asset.item else 'Item removed' }}
+                <span class="verify-status {{ asset.verification_status }}">{{ asset.verification_status|replace('_',' ') }}</span>
+              </h4>
+              <div class="meta">Value contributed: ᗸ{{ '{:,.0f}'.format(asset.amount) }}</div>
+              {% if asset.verification_status == 'not_submitted' %}
+                <form method="POST" action="{{ url_for('admin.verify_backing_asset_route', asset_id=asset.id) }}" class="verify-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <input type="text" name="notes" placeholder="Notes (optional)">
+                  <button type="submit" name="result" value="pass" class="verify-btn pass">✅ Passed</button>
+                  <button type="submit" name="result" value="fail" class="verify-btn fail">❌ Failed</button>
+                </form>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state"><p>No purchases are awaiting final verification right now.</p></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
