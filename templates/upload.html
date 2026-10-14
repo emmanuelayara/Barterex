@@ -1493,18 +1493,10 @@
 
         <div class="form-group">
           <label class="form-label">
-            <span class="label-icon">🏷️</span>
-            {{ form.name.label.text }}
+            <span class="label-icon">📂</span>
+            {{ form.category.label.text }}
           </label>
-          {{ form.name(class="form-input", placeholder="Enter a descriptive name for your item") }}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="label-icon">📝</span>
-            {{ form.description.label.text }}
-          </label>
-          {{ form.description(class="form-textarea", rows="4", placeholder="Describe your item in detail - include brand, model, features, and any important details") }}
+          {{ form.category(class="form-select", id="category") }}
         </div>
 
         <div class="form-group">
@@ -1525,10 +1517,18 @@
 
         <div class="form-group">
           <label class="form-label">
-            <span class="label-icon">📂</span>
-            {{ form.category.label.text }}
+            <span class="label-icon">🏷️</span>
+            {{ form.name.label.text }}
           </label>
-          {{ form.category(class="form-select") }}
+          {{ form.name(class="form-input", placeholder="Enter a descriptive name for your item") }}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span class="label-icon">📝</span>
+            {{ form.description.label.text }}
+          </label>
+          {{ form.description(class="form-textarea", id="description", rows="4", placeholder="Describe your item in detail - include brand, model, features, and any important details") }}
         </div>
 
         <div class="form-group">
@@ -1652,6 +1652,114 @@
 
   conditionSelect.addEventListener('change', toggleUsageDurationField);
   toggleUsageDurationField();
+
+  // ==================== DESCRIPTION PLACEHOLDER GUIDANCE ====================
+  // The placeholder adapts to the selected category (what details matter for that kind of
+  // item) and condition (brand new = specs; fairly used = functional parts, damages, discrepancies).
+  const categorySelect = document.getElementById('category');
+  const descriptionField = document.getElementById('description');
+
+  const categoryDetails = {
+    'Phones & Gadgets': {
+      basics: 'Brand, model, storage/RAM and colour',
+      extras: 'Battery health, network lock status, charger/box included',
+      checks: 'screen, touch, cameras, speakers, mic, buttons, charging port, Face ID/fingerprint, Wi-Fi/SIM'
+    },
+    'Consumer Electronics': {
+      basics: 'Brand, model, year, size/screen size and key specs',
+      extras: 'Power rating, ports/connections, remote and accessories included, warranty',
+      checks: 'power-on, display/picture, sound, ports, remote, every function you can test'
+    },
+    'Fashion Accessories': {
+      basics: 'Type (watch, bag, belt, jewellery...), brand, material, size and colour',
+      extras: 'Authenticity proof, receipt, box/dust bag',
+      checks: 'clasps, zips, straps, buckles, stitching, glass/lens, movement or battery (for watches)'
+    },
+    'Footwear': {
+      basics: 'Brand, model, size (state EU/UK/US), colour and material',
+      extras: 'Original box, extra laces, insoles',
+      checks: 'sole wear, heel wear, creasing, stitching, glue/separation, odour, inside lining'
+    },
+    'Beauty & Personal Care': {
+      basics: 'Brand, product type, shade/scent and size/volume',
+      extras: 'Expiry or batch date, seal status, where it was bought',
+      checks: 'seal intact, amount remaining, texture/smell, packaging damage'
+    },
+    'Gaming & Accessories': {
+      basics: 'Console/game/accessory name, model, storage size and region',
+      extras: 'Number of controllers, cables, games or discs included, account/online locks',
+      checks: 'buttons, analog sticks (drift), disc reading, ports, HDMI output, online connection, overheating/fan noise'
+    },
+    'Kitchen Wares & Appliances': {
+      basics: 'Type, brand, model, capacity/size, power rating and material',
+      extras: 'Parts and accessories included, warranty, manual',
+      checks: 'heating, blending/cooking functions, buttons/dials, lids, seals, cords and plugs'
+    }
+  };
+
+  const defaultCategoryDetails = {
+    basics: 'Brand, model, size, colour and key features',
+    extras: 'Accessories, box, receipt or warranty included',
+    checks: 'every function or feature you can test'
+  };
+
+  function buildDescriptionPlaceholder(condition, category) {
+    const d = categoryDetails[category] || defaultCategoryDetails;
+
+    if (condition === 'Fairly Used') {
+      return [
+        'Be honest and specific. Accurate details lead to a fairer valuation.',
+        '',
+        'ABOUT THE ITEM',
+        '• ' + d.basics,
+        '• ' + d.extras,
+        '',
+        'FUNCTIONAL PARTS',
+        '• What is in good working order or good shape (' + d.checks + ')',
+        '• Anything that is faulty, weak, worn or only works sometimes',
+        '',
+        'DAMAGES & DISCREPANCIES',
+        '• Scratches, dents, cracks, stains or wear, and exactly where',
+        '• Repairs, replaced parts or anything missing',
+        '• Anything different from the original that could affect its value'
+      ].join('\n');
+    }
+
+    return [
+      'Describe your brand-new item so buyers know exactly what they are getting.',
+      '',
+      '• ' + d.basics,
+      '• ' + d.extras,
+      '• Confirm it is unused and in original packaging, and mention any defects (if none, say so)'
+    ].join('\n');
+  }
+
+  // Grow the textarea so the whole placeholder is visible (it is clipped, not scrollable, otherwise)
+  function fitDescriptionToPlaceholder() {
+    const cs = getComputedStyle(descriptionField);
+    const mirror = document.createElement('div');
+    mirror.style.cssText = 'position:absolute;visibility:hidden;white-space:pre-wrap;overflow-wrap:break-word;pointer-events:none;';
+    mirror.style.width = descriptionField.clientWidth + 'px';
+    mirror.style.font = cs.font;
+    mirror.style.lineHeight = cs.lineHeight;
+    mirror.style.padding = cs.padding;
+    mirror.style.boxSizing = 'border-box';
+    mirror.textContent = descriptionField.placeholder;
+    document.body.appendChild(mirror);
+    const needed = mirror.offsetHeight + 8;
+    document.body.removeChild(mirror);
+    descriptionField.style.minHeight = Math.max(110, needed) + 'px';
+  }
+
+  function updateDescriptionPlaceholder() {
+    descriptionField.placeholder = buildDescriptionPlaceholder(conditionSelect.value, categorySelect.value);
+    fitDescriptionToPlaceholder();
+  }
+
+  conditionSelect.addEventListener('change', updateDescriptionPlaceholder);
+  categorySelect.addEventListener('change', updateDescriptionPlaceholder);
+  window.addEventListener('resize', fitDescriptionToPlaceholder);
+  updateDescriptionPlaceholder();
 
   let selectedFiles = [];
   let primaryImageIndex = 0;

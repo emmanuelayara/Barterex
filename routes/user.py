@@ -714,6 +714,35 @@ def settings():
         if request.method == 'POST':
             form_type = request.form.get('form_type')
 
+            # ========== PROFILE PICTURE UPLOAD ==========
+            if form_type == 'profile_picture':
+                picture = request.files.get('profile_picture')
+                if not picture or not picture.filename:
+                    flash('❌ Please choose an image to upload.', 'danger')
+                    return redirect(url_for('user.settings'))
+
+                try:
+                    validate_upload(
+                        picture,
+                        max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10 * 1024 * 1024),
+                        allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif', 'webp'}),
+                        enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
+                    )
+
+                    unique_filename = generate_safe_filename(picture, current_user.id)
+                    upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+                    os.makedirs(upload_root, exist_ok=True)
+                    picture.save(os.path.join(upload_root, unique_filename))
+
+                    current_user.profile_picture = unique_filename
+                    db.session.commit()
+                    logger.info(f"Profile picture updated - User: {current_user.username}, File: {unique_filename}")
+                    flash('✅ Profile photo updated', 'success')
+                except FileUploadError as e:
+                    logger.warning(f"Profile picture upload failed: {str(e)}")
+                    flash(f"❌ Profile photo upload failed: {str(e)}", 'danger')
+                return redirect(url_for('user.settings'))
+
             # ========== IDENTITY VERIFICATION UPDATE ==========
             if form_type == 'identity_verification':
                 nin = (request.form.get('nin') or '').strip()

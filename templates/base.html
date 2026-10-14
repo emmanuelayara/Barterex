@@ -210,6 +210,25 @@
             flex-shrink: 0;
         }
 
+        /* Box with a check badge (Font Awesome Free has no box-check icon) */
+        .barterex-navbar .nav-link i.icon-box-check {
+            position: relative;
+            margin-right: 4px;
+        }
+
+        .barterex-navbar .nav-link i.icon-box-check::after {
+            content: "\f058";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            right: -7px;
+            bottom: -5px;
+            font-size: 0.6em;
+            line-height: 1;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.55);
+        }
+
         /* Hide text on mobile */
         .barterex-navbar .nav-link .nav-text {
             display: none;
@@ -1123,21 +1142,9 @@
             <ul class="nav-links">
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="{{ url_for('user.my_valuations') }}" class="nav-link{% if request.endpoint == 'user.my_valuations' %} active{% endif %}" data-tooltip="My Valuations">
-                            <i class="fas fa-chart-line"></i>
-                            <span class="nav-text">Valuations</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="{{ url_for('user.user_orders') }}" class="nav-link{% if request.endpoint == 'user.user_orders' %} active{% endif %}" data-tooltip="Orders">
-                            <i class="fas fa-credit-card"></i>
+                            <i class="fas fa-box icon-box-check"></i>
                             <span class="nav-text">Orders</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ url_for('user.my_reservations') }}" class="nav-link{% if request.endpoint == 'user.my_reservations' %} active{% endif %}" data-tooltip="Reservations">
-                            <i class="fas fa-bookmark"></i>
-                            <span class="nav-text">Reservations</span>
                         </a>
                     </li>
                     <li class="nav-item">

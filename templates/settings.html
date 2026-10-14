@@ -169,6 +169,18 @@
     text-align: left;
   }
 
+  .tab-button i.icon-reserved-sign {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-style: normal;
+  }
+
+  .tab-button i.icon-reserved-sign svg {
+    width: 1.25em;
+    height: 1.25em;
+  }
+
   .tab-button:hover {
     background: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
@@ -211,7 +223,6 @@
     width: 100%;
     text-align: left;
     text-decoration: none;
-    margin-top: auto;
   }
 
   .fund-account-button:hover {
@@ -525,6 +536,53 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  .avatar-upload-form {
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .profile-avatar-badge {
+    position: relative;
+    cursor: pointer;
+  }
+
+  /* Empty state: dashed plus button inviting the user to upload a photo */
+  .profile-avatar-badge.avatar-empty {
+    border: 2px dashed rgba(255, 255, 255, 0.85);
+    font-size: 1.4rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .profile-avatar-badge.avatar-empty:hover {
+    transform: scale(1.06);
+    box-shadow: 0 8px 22px rgba(255, 122, 0, 0.5);
+  }
+
+  /* Camera overlay shown on hover so users can replace an existing photo */
+  .avatar-edit-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: white;
+    font-size: 1.1rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .profile-avatar-badge.has-photo:hover .avatar-edit-overlay,
+  .profile-avatar-badge.has-photo:focus-within .avatar-edit-overlay {
+    opacity: 1;
+  }
+
+  .profile-header-text p.avatar-upload-hint {
+    margin-top: 6px;
+    color: #ff7a00;
+    font-weight: 600;
   }
 
   .profile-header-text h2 {
@@ -1601,15 +1659,27 @@
 
           <div class="tab-divider"></div>
 
+          <a href="{{ url_for('payments.fund_account') }}" class="fund-account-button">
+            <i class="fas fa-coins"></i> Fund Account
+          </a>
+
           <a href="{{ url_for('user.user_items') }}" class="tab-button">
             <i class="fas fa-box"></i> My Items
           </a>
           <a href="{{ url_for('user.my_trades') }}" class="tab-button">
             <i class="fas fa-exchange-alt"></i> My Trades
           </a>
-
-          <a href="{{ url_for('payments.fund_account') }}" class="fund-account-button">
-            <i class="fas fa-coins"></i> Fund Account
+          <a href="{{ url_for('user.my_reservations') }}" class="tab-button">
+            <i class="icon-reserved-sign" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M6 5H22V19H2Z"/>
+                <path d="M10 5L6 19"/>
+                <path d="M12.5 12H19"/>
+              </svg>
+            </i> Reservations
+          </a>
+          <a href="{{ url_for('user.my_valuations') }}" class="tab-button">
+            <i class="fas fa-chart-line"></i> Valuations
           </a>
         </div>
 
@@ -1645,16 +1715,27 @@
         <div id="profile" class="tab-content active">
       <div class="settings-card">
         <div class="profile-header-banner">
-          <div class="profile-avatar-badge">
+          <form method="POST" action="{{ url_for('user.settings') }}" enctype="multipart/form-data" id="avatarUploadForm" class="avatar-upload-form">
+            <input type="hidden" name="form_type" value="profile_picture">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="profile_picture" id="avatarFileInput" accept="image/png,image/jpeg,image/gif,image/webp">
             {% if current_user.profile_picture %}
-              <img src="{{ current_user.profile_picture | image_url }}" alt="{{ current_user.username }}">
+              <label for="avatarFileInput" class="profile-avatar-badge has-photo" title="Change profile photo">
+                <img src="{{ current_user.profile_picture | image_url }}" alt="{{ current_user.username }}">
+                <span class="avatar-edit-overlay"><i class="fas fa-camera"></i></span>
+              </label>
             {% else %}
-              {{ current_user.username[0].upper() }}
+              <label for="avatarFileInput" class="profile-avatar-badge avatar-empty" title="Upload a profile photo" aria-label="Upload a profile photo">
+                <i class="fas fa-plus"></i>
+              </label>
             {% endif %}
-          </div>
+          </form>
           <div class="profile-header-text">
             <h2>✨ Edit Your Profile</h2>
             <p>Hi {{ current_user.username }}, keep your details up to date for smooth trading &amp; delivery.</p>
+            {% if not current_user.profile_picture %}
+              <p class="avatar-upload-hint"><i class="fas fa-camera"></i> Tap the + to upload your profile photo.</p>
+            {% endif %}
           </div>
         </div>
 
@@ -1982,6 +2063,27 @@
     cancelBtn?.addEventListener('click', function() {
       editForm.style.display = 'none';
       viewMode.style.display = '';
+    });
+
+    // Auto-upload the profile photo as soon as one is chosen
+    const avatarInput = document.getElementById('avatarFileInput');
+    avatarInput?.addEventListener('change', function() {
+      const file = avatarInput.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert('Please choose an image file (PNG, JPG, GIF or WEBP).');
+        avatarInput.value = '';
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image is too large. Please choose one under 10MB.');
+        avatarInput.value = '';
+        return;
+      }
+
+      if (typeof showLoading === 'function') showLoading('Uploading your photo...');
+      document.getElementById('avatarUploadForm').submit();
     });
   });
 
