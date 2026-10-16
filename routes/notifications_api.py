@@ -190,29 +190,9 @@ def send_order_placed():
 @login_required
 @handle_errors
 def send_item_added_to_cart():
-    """
-    Send notification for item added to cart
-    POST data: { item_id }
-    """
-    data = request.get_json()
-    item_id = data.get('item_id')
-    
-    if not item_id:
-        return jsonify({'error': 'item_id required'}), 400
-    
-    notification = NotificationService.notify_item_added_to_cart(
-        current_user.id,
-        item_id
-    )
-    
-    if notification:
-        return jsonify({
-            'status': 'success',
-            'message': 'Item added notification',
-            'notification_id': notification.id
-        }), 201
-    else:
-        return jsonify({'error': 'Failed to create notification'}), 500
+    return jsonify({
+        'error': 'Cart actions have been retired. Use Favorites to save items.',
+    }), 410
 
 
 # ============================================================================

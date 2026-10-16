@@ -1,19 +1,9 @@
-"""
-30-day marketplace freshness reconfirmation for listed items.
-
-Lazily swept (no cron needed) - see deactivate_stale_items(), called from the
-marketplace listing and "My Items" page. A stale item is pulled off the
-marketplace (is_available=False) and marked status='reconfirmation_required'
-until its owner uploads a fresh photo (see routes/items.py reconfirm_item).
-High-value items also need a stored code visible in that photo, which only an
-admin can confirm by eye (see routes/admin.py reconfirmation_review_queue) -
-low-value items relist instantly, self-service.
-"""
+"""30-day marketplace freshness reconfirmation for listed items."""
 import secrets
 from datetime import datetime, timedelta
 
 from app import db
-from models import Item
+from models import Item, Notification
 from logger_config import setup_logger
 
 logger = setup_logger(__name__)
@@ -29,24 +19,37 @@ def generate_reconfirmation_code() -> str:
 def deactivate_stale_items():
     """
     Pulls listed items off the marketplace once their freshness window has
-    lapsed. Cheap/indexed - safe to call on every marketplace/My Items load.
+    lapsed. Safe to rerun from the maintenance scheduler or a request path.
     Returns the number of items deactivated.
     """
     cutoff = datetime.utcnow() - timedelta(days=FRESHNESS_WINDOW_DAYS)
     stale = Item.query.filter(
         Item.status == 'approved',
         Item.is_available == True,
+        Item.owner_type == 'user',
+        Item.user_id.isnot(None),
         db.or_(
             Item.last_reconfirmed_at < cutoff,
             db.and_(Item.last_reconfirmed_at.is_(None), Item.activated_at < cutoff),
         ),
-    ).all()
+    ).order_by(Item.id.asc()).with_for_update().all()
 
     for item in stale:
         item.is_available = False
         item.status = 'reconfirmation_required'
         if item.value and item.value >= HIGH_VALUE_THRESHOLD and not item.reconfirmation_code:
             item.reconfirmation_code = generate_reconfirmation_code()
+        db.session.add(Notification(
+            user_id=item.user_id,
+            message=(
+                f"'{item.name}' was removed from the marketplace because its 30-day "
+                "freshness check is due. Submit a recent photo from My Items to relist it."
+            ),
+            notification_type='listing',
+            category='alert',
+            action_url='/user-items',
+            priority='normal',
+        ))
 
     if stale:
         db.session.commit()

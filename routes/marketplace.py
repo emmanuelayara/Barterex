@@ -8,7 +8,7 @@ import os
 from PIL import Image
 
 from app import db
-from models import Item, ItemImage, Favorite
+from models import Item, ItemImage, Favorite, PickupStation
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, DatabaseError
 from error_handlers import handle_errors
@@ -60,10 +60,8 @@ def _get_top_categories(limit: int = 3) -> List[Dict[str, Any]]:
 @handle_errors
 def marketplace() -> Union[str, Response]:
     try:
-        from services.reservation_service import release_expired_reservations
-        from services.freshness_service import deactivate_stale_items
-        release_expired_reservations()  # re-list any items whose reservation hold has lapsed
-        deactivate_stale_items()  # hide any items overdue for their 30-day reconfirmation
+        from services.maintenance_service import run_maintenance_sweep
+        run_maintenance_sweep()
 
         page = request.args.get('page', 1, type=int)
         condition_filter = request.args.get('condition')
@@ -247,7 +245,15 @@ def choose_backing_assets(item_id: int) -> Union[str, Response]:
         return redirect(url_for('marketplace.view_item', item_id=item_id))
 
     eligible_items = get_eligible_backing_items(current_user)
-    return render_template('choose_backing_assets.html', item=item, eligible_items=eligible_items)
+    stations = PickupStation.query.filter_by(state=current_user.state).order_by(
+        PickupStation.name.asc()
+    ).all() if current_user.state else []
+    return render_template(
+        'choose_backing_assets.html',
+        item=item,
+        eligible_items=eligible_items,
+        stations=stations,
+    )
 
 
 @marketplace_bp.route('/item/<int:item_id>/reserve', methods=['POST'])
@@ -255,16 +261,51 @@ def choose_backing_assets(item_id: int) -> Union[str, Response]:
 @handle_errors
 def reserve_item(item_id: int) -> Response:
     """Lock in a "Get with BXC" purchase using the buyer's chosen backing assets as collateral."""
-    item = Item.query.filter_by(id=item_id).with_for_update().first_or_404()
+    item = Item.query.get_or_404(item_id)
     backing_item_ids = request.form.getlist('backing_item_id', type=int)
-    reservation, error = create_reservation(current_user, item, backing_item_ids)
+    funding_mode = request.form.get('funding_mode', 'item_backed')
+    delivery_method = request.form.get('delivery_method')
+    delivery_address = request.form.get('delivery_address')
+    pickup_station_id = request.form.get('pickup_station_id', type=int)
+    consent_confirmed = (
+        funding_mode == 'spendable'
+        or request.form.get('surrender_consent') == 'yes'
+    )
+    if delivery_method == 'pickup':
+        station = PickupStation.query.filter_by(
+            id=pickup_station_id,
+            state=current_user.state,
+        ).first() if pickup_station_id else None
+        if not station:
+            flash('Choose an available pickup station in your state.', 'danger')
+            return redirect(url_for('marketplace.choose_backing_assets', item_id=item_id))
+    reservation, error = create_reservation(
+        current_user,
+        item,
+        backing_item_ids,
+        consent_confirmed=consent_confirmed,
+        funding_mode=funding_mode,
+        delivery_method=delivery_method,
+        delivery_address=delivery_address,
+        pickup_station_id=pickup_station_id,
+    )
     if error:
         logger.info(f"Reservation failed - Item: {item_id}, User: {current_user.username}, Reason: {error}")
         flash(error, 'danger')
         return redirect(url_for('marketplace.choose_backing_assets', item_id=item_id))
-    flash(f"'{item.name}' is on hold for {RESERVATION_HOLD_HOURS} hours. Bring your chosen item(s) and this "
-          f"item's owner will bring theirs in for final verification - both must pass for the trade to complete.",
-          'success')
+    if funding_mode == 'spendable':
+        flash(
+            f"'{item.name}' is on hold for {RESERVATION_HOLD_HOURS} hours. Your spendable BXC is held "
+            "until the requested item passes inspection.",
+            'success',
+        )
+    else:
+        flash(
+            f"'{item.name}' is on hold for {RESERVATION_HOLD_HOURS} hours. If it passes inspection, each "
+            "verified backing item becomes Barter Express property and its BXC value is credited to you. "
+            "If it fails inspection, we will ask you again before transferring title.",
+            'success',
+        )
     return redirect(url_for('user.my_reservations'))
 
 

@@ -4,7 +4,7 @@ Handles earning points, calculating levels, awarding rewards, and notifications
 """
 
 from app import db
-from models import User, Notification
+from models import CreditTransaction, User, Notification
 from datetime import datetime, timezone
 from logger_config import setup_logger
 from rank_rewards import get_tier_info, get_tier_badge
@@ -122,8 +122,18 @@ def award_points_for_upload(user, item_name):
         level_up_info = None
         if new_level > old_level:
             # Award credits for level up
+            balance_before = int(user.credits or 0)
             user.credits += CREDITS_PER_LEVEL_UP
             db.session.add(user)
+            db.session.add(CreditTransaction(
+                user_id=user.id,
+                amount=CREDITS_PER_LEVEL_UP,
+                transaction_type='level_up_bonus',
+                description=f'Level-up reward for reaching level {new_level}',
+                reason='level_up_reward',
+                balance_before=balance_before,
+                balance_after=user.credits,
+            ))
             
             level_up_info = {
                 'old_level': old_level,
@@ -184,8 +194,18 @@ def award_points_for_purchase(user, order_number):
         level_up_info = None
         if new_level > old_level:
             # Award credits for level up
+            balance_before = int(user.credits or 0)
             user.credits += CREDITS_PER_LEVEL_UP
             db.session.add(user)
+            db.session.add(CreditTransaction(
+                user_id=user.id,
+                amount=CREDITS_PER_LEVEL_UP,
+                transaction_type='level_up_bonus',
+                description=f'Level-up reward for reaching level {new_level}',
+                reason='level_up_reward',
+                balance_before=balance_before,
+                balance_after=user.credits,
+            ))
             
             level_up_info = {
                 'old_level': old_level,

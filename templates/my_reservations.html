@@ -105,6 +105,7 @@
   }
 
   .status-badge.active { background: rgba(16, 185, 129, 0.15); color: #059669; }
+  .status-badge.awaiting_consent { background: rgba(245, 158, 11, 0.18); color: #b45309; }
   .status-badge.completed { background: rgba(99, 102, 241, 0.15); color: #4f46e5; }
   .status-badge.expired { background: rgba(148, 163, 184, 0.2); color: #64748b; }
   .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
@@ -170,10 +171,12 @@
   <div class="main-content">
     <div class="page-header">
       <h1 class="page-title">🔖 My Reservations</h1>
+      <a href="{{ url_for('user.my_revaluations') }}" class="trade-btn">Review revaluation proposals</a>
     </div>
 
     <div class="credits-banner">
-      Provisional Credits Available: ᗸ{{ '{:,.0f}'.format(current_user.provisional_credits or 0) }}
+      Provisional BXC Available: ᗸ{{ '{:,.0f}'.format(current_user.provisional_credits or 0) }}
+      · Spendable BXC Available: ᗸ{{ '{:,.0f}'.format(current_user.credits or 0) }}
     </div>
 
     {% if reservations.items %}
@@ -187,12 +190,27 @@
               <div class="reservation-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📦</div>
             {% endif %}
             <div class="reservation-info">
-              <span class="status-badge {{ reservation.status }}">{{ reservation.status }}</span>
+              <span class="status-badge {{ reservation.status }}">
+                {% if reservation.status == 'awaiting_consent' %}awaiting your decision{% else %}{{ reservation.status }}{% endif %}
+              </span>
               <h3>{{ reservation.item.name if reservation.item else 'Item removed' }}</h3>
               <div class="reservation-meta">
-                ᗸ{{ '{:,.0f}'.format(reservation.provisional_credits_used) }} backed by {{ reservation.backing_assets|length }} of your item(s)
+                {% if reservation.funding_mode == 'spendable' %}
+                  Spendable BXC funding
+                {% else %}
+                  ᗸ{{ '{:,.0f}'.format(reservation.provisional_credits_used) }} backed by {{ reservation.backing_assets|length }} of your item(s)
+                {% endif %}
+                {% if reservation.purchase_value %} · agreed purchase value ᗸ{{ '{:,.0f}'.format(reservation.purchase_value) }}{% endif %}
+                {% if reservation.status == 'active' and reservation.spendable_credits_held %}
+                  · ᗸ{{ '{:,.0f}'.format(reservation.spendable_credits_held) }} spendable BXC held for this purchase
+                {% endif %}
                 {% if reservation.status == 'active' %}
                   · settlement window ends {{ reservation.expires_at.strftime('%b %d, %I:%M %p') }}
+                  {% if reservation.revaluation_shortfall_expires_at %}
+                    · shortfall coverage due {{ reservation.revaluation_shortfall_expires_at.strftime('%b %d, %I:%M %p') }}
+                  {% endif %}
+                {% elif reservation.status == 'awaiting_consent' and reservation.title_transfer_decision_expires_at %}
+                  · respond by {{ reservation.title_transfer_decision_expires_at.strftime('%b %d, %I:%M %p') }}
                 {% elif reservation.status == 'cancelled' and reservation.cancelled_at %}
                   · cancelled {{ reservation.cancelled_at.strftime('%b %d, %Y') }}
                 {% elif reservation.status == 'expired' %}
@@ -201,18 +219,140 @@
                   · completed {{ reservation.completed_at.strftime('%b %d, %Y') }}
                 {% endif %}
               </div>
+              <div class="reservation-meta">
+                Delivery: {{ reservation.delivery_method|replace('_', ' ')|title }}
+                {% if reservation.delivery_method == 'home delivery' %}
+                  · {{ reservation.delivery_address }} · Home-service fee: {{ reservation.delivery_fee_status }}
+                  {% if reservation.delivery_quote_naira %} (₦{{ '{:,.2f}'.format(reservation.delivery_quote_naira) }}){% endif %}
+                  {% if reservation.delivery_fee_status == 'paid' %}
+                    · Non-refundable fee paid
+                  {% elif reservation.delivery_fee_status == 'awaiting_payment' %}
+                    · Accept the quote and pay through Paystack before pickup or dispatch
+                  {% endif %}
+                {% elif reservation.pickup_station %}
+                  · {{ reservation.pickup_station.name }} ({{ reservation.pickup_station.city }})
+                {% endif %}
+              </div>
+              {% if reservation.backing_return_status == 'return_required' %}
+                <div class="reservation-meta">Your failed or retained backing item(s) are scheduled to return through the booked home service. The fee remains non-refundable.</div>
+              {% elif reservation.backing_return_status == 'returned' %}
+                <div class="reservation-meta">Your backing-item return was recorded through the booked home service.</div>
+              {% endif %}
+              {% if reservation.order %}
+                <div class="reservation-meta">
+                  Order {{ reservation.order.order_number }} · fulfillment status: {{ reservation.order.status }}
+                </div>
+              {% endif %}
+              {% for proposal in reservation.revaluations %}
+                <div class="reservation-meta">
+                  Revaluation: ᗸ{{ '{:,.0f}'.format(proposal.original_value) }} → ᗸ{{ '{:,.0f}'.format(proposal.proposed_value) }}
+                  · {{ proposal.status|replace('_', ' ') }}
+                  {% if proposal.status == 'pending' %}
+                    · respond by {{ proposal.decision_expires_at.strftime('%b %d, %I:%M %p') }}
+                  {% endif %}
+                </div>
+              {% endfor %}
+              {% if reservation.status != 'active' %}
+                {% for asset in reservation.backing_assets %}
+                  {% if asset.item and asset.item.owner_type == 'barterex' %}
+                    <div class="reservation-meta">
+                      '{{ asset.item.name }}' passed verification and remains Barter Express property;
+                      ᗸ{{ '{:,.0f}'.format(asset.amount) }} was converted to spendable or held BXC.
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+              {% set reservation_shortfall = reservation_shortfalls.get(reservation.id, 0) %}
+              {% if reservation.status == 'active'
+                    and reservation_shortfall > 0
+                    and reservation.revaluations|selectattr('status', 'equalto', 'pending')|list|length == 0 %}
+                <div class="reservation-meta" style="margin-top:8px;">
+                  <strong>Additional coverage needed: ᗸ{{ '{:,.0f}'.format(reservation_shortfall) }}.</strong>
+                  Add eligible backing items, hold available spendable BXC, or
+                  <a href="{{ url_for('payments.fund_account') }}">fund your account with Paystack</a>
+                  before holding spendable BXC here.
+                </div>
+                {% if current_user.credits %}
+                  <form method="POST" action="{{ url_for('user.cover_reservation_revaluation_shortfall', reservation_id=reservation.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <label>Spendable BXC to hold
+                      <input type="number" name="amount" min="1"
+                             max="{{ [reservation_shortfall, current_user.credits]|min }}"
+                             step="1" required>
+                    </label>
+                    <button type="submit" class="trade-btn">Hold spendable BXC</button>
+                  </form>
+                {% endif %}
+                {% set eligible_backing_items = eligible_backing_items_by_reservation.get(reservation.id, []) %}
+                {% if eligible_backing_items %}
+                  <form method="POST" action="{{ url_for('user.add_reservation_revaluation_backing', reservation_id=reservation.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <strong>Additional eligible backing items</strong>
+                    {% for item in eligible_backing_items %}
+                      <label style="display:block;">
+                        <input type="checkbox" name="item_ids" value="{{ item.id }}">
+                        {{ item.name }} · ᗸ{{ '{:,.0f}'.format(item.value or 0) }}
+                      </label>
+                    {% endfor %}
+                    <label style="display:block;">
+                      <input type="checkbox" name="consent_confirmed" value="yes" required>
+                      I consent to transfer title to any selected item if it passes physical verification.
+                    </label>
+                    <button type="submit" class="trade-btn">Add items for verification</button>
+                  </form>
+                {% else %}
+                  <div class="reservation-meta">No other eligible backing items are currently available.</div>
+                {% endif %}
+              {% endif %}
               {% if reservation.status == 'active' %}
                 <div style="margin-top:6px;">
                   <span class="verify-pill {{ reservation.seller_item_verification_status }}">Seller's item: {{ reservation.seller_item_verification_status|replace('_',' ') }}</span>
                   {% for asset in reservation.backing_assets %}
-                    <span class="verify-pill {{ asset.verification_status }}">{{ asset.item.name if asset.item else 'Your item' }}: {{ asset.verification_status|replace('_',' ') }}</span>
+                    <span class="verify-pill {{ asset.verification_status }}">
+                      {{ asset.item.name if asset.item else 'Your item' }}:
+                      {% if asset.item and asset.item.owner_type == 'barterex' %}Barter Express property{% else %}{{ asset.verification_status|replace('_',' ') }}{% endif %}
+                    </span>
                   {% endfor %}
+                </div>
+              {% elif reservation.status == 'awaiting_consent' %}
+                <div class="reservation-meta" style="margin-top:8px;">
+                  {% if reservation.seller_item_revaluation_failed %}
+                    The requested item's revised value was not accepted or could not be applied.
+                  {% else %}
+                    The requested item failed inspection.
+                  {% endif %}
+                  Your verified backing item(s) are still yours. Choose within
+                  24 hours whether to transfer title to Barter Express; if you decline or do not respond, your items
+                  remain yours and their original provisional BXC is restored.
                 </div>
               {% endif %}
             </div>
             <div class="reservation-actions">
+              {% if reservation.delivery_method == 'home delivery'
+                    and reservation.delivery_fee_status == 'awaiting_payment' %}
+                <form method="POST" action="{{ url_for('user.pay_reservation_delivery_fee', reservation_id=reservation.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="trade-btn">
+                    Accept &amp; pay ₦{{ '{:,.2f}'.format(reservation.delivery_quote_naira) }}
+                  </button>
+                </form>
+              {% endif %}
+              {% if reservation.order %}
+                <a href="{{ url_for('user.view_order_details', order_id=reservation.order.id) }}" class="trade-btn">View Order</a>
+              {% endif %}
               {% if reservation.item %}
                 <a href="{{ url_for('marketplace.view_item', item_id=reservation.item_id) }}" class="trade-btn">View Item</a>
+              {% endif %}
+              {% if reservation.status == 'awaiting_consent' %}
+                <form method="POST" action="{{ url_for('user.respond_to_title_transfer', reservation_id=reservation.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" name="decision" value="accept" class="trade-btn">
+                    Transfer title
+                  </button>
+                  <button type="submit" name="decision" value="decline" class="cancel-btn">
+                    Keep my item
+                  </button>
+                </form>
               {% endif %}
               {% if reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted'
                     and reservation.backing_assets|selectattr('verification_status', 'equalto', 'not_submitted')|list|length == reservation.backing_assets|length %}

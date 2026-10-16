@@ -357,7 +357,7 @@
     <div class="nav-container">
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('user.dashboard') }}" class="nav-link">Dashboard</a>
             </li>
             <li class="nav-item">
                 <a href="{{ url_for('user.notifications') }}" class="nav-link">Notifications</a>
@@ -403,16 +403,6 @@
                     </label>
                 </div>
 
-                <div class="preference-item">
-                    <div class="preference-content">
-                        <div class="preference-label">Cart Items</div>
-                        <div class="preference-description">Notify when items are added or recommended</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" class="pref-toggle" data-pref="email_cart_items">
-                        <span class="slider"></span>
-                    </label>
-                </div>
             </div>
         </div>
 
@@ -427,16 +417,6 @@
             </p>
 
             <div class="settings-grid">
-                <div class="preference-item">
-                    <div class="preference-content">
-                        <div class="preference-label">Cart Items</div>
-                        <div class="preference-description">Show when items are added to cart</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" class="pref-toggle" data-pref="push_cart_items">
-                        <span class="slider"></span>
-                    </label>
-                </div>
 
                 <div class="preference-item">
                     <div class="preference-content">
@@ -578,8 +558,6 @@
         if (confirm('Are you sure you want to reset all preferences to default?')) {
             const defaultPreferences = {
                 'email_order_updates': true,
-                'email_cart_items': false,
-                'push_cart_items': true,
                 'push_order_updates': true,
                 'notification_frequency': 'instant'
             };

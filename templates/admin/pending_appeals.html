@@ -1,189 +1,132 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
-<div class="container-fluid py-2 py-md-4">
-    <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-start align-items-md-center mb-3 mb-md-4 flex-column flex-md-row gap-2 gap-md-0">
+<div class="adm-page">
+    <div class="adm-head">
         <div>
-            <h2 class="h4 h3-md mb-1 text-dark fw-bold">
-                <i class="fas fa-inbox text-warning me-2"></i>
-                Pending Unban Appeals
-            </h2>
-            <p class="text-muted small mb-0">
-                Review and approve or reject unban appeals from suspended users
-            </p>
+            <a href="{{ url_for('admin.manage_users') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Back to Users</a>
+            <h1>Pending Unban Appeals</h1>
+            <p>Review and approve or reject unban appeals from suspended users</p>
         </div>
-        <a 
-            href="{{ url_for('admin.manage_users') }}" 
-            class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
-            style="white-space: nowrap;">
-            <i class="fas fa-arrow-left"></i>
-            <span>Back to Users</span>
-        </a>
-    </div>
-
-    <!-- Appeals Count Badge -->
-    <div class="mb-4">
-        <div class="badge bg-warning text-dark fs-6 py-2 px-3">
-            <i class="fas fa-hourglass-end me-2"></i>
-            {{ appeals|length }} Pending {% if appeals|length != 1 %}Appeal{% else %}Appeals{% endif %}
+        <div class="adm-head-actions">
+            <span class="adm-pill warn"><i class="bi bi-hourglass-split"></i>
+                {{ appeals|length }} Pending {% if appeals|length != 1 %}Appeal{% else %}Appeals{% endif %}
+            </span>
         </div>
     </div>
 
     {% if appeals %}
-    <!-- Appeals List -->
-    <div class="row g-3 g-md-4">
-        {% for user in appeals %}
-        <div class="col-12">
-            <div class="card border-0 shadow-sm border-start border-4" style="border-color: #ffc107 !important; transition: all 0.3s ease;">
-                <div class="card-header bg-warning bg-opacity-10 border-0 p-3 p-md-4">
-                    <div class="row align-items-center g-2">
-                        <div class="col-auto">
-                            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
-                                 style="width: 45px; height: 45px; background: rgba(255,193,7,0.2);">
-                                {% if user.profile_picture %}
-                                    <img src="{{ user.profile_picture | image_url }}" alt="{{ user.username }}" 
-                                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                                {% else %}
-                                    <span class="fw-bold text-warning">{{ user.username[0].upper() }}</span>
-                                {% endif %}
-                            </div>
+    {% for user in appeals %}
+    <div class="adm-panel">
+        <div class="adm-row">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture | image_url }}" alt="{{ user.username }}" class="adm-thumb rounded-circle">
+            {% else %}
+                <div class="adm-panel-icon pa-avatar">{{ user.username[0].upper() }}</div>
+            {% endif %}
+            <div class="adm-row-main">
+                <h3 class="adm-row-title">{{ user.username }}</h3>
+                <div class="adm-row-meta">
+                    <span><i class="bi bi-envelope me-1"></i>{{ user.email }}</span>
+                </div>
+            </div>
+            <div class="adm-row-side">
+                <span class="adm-pill warn">Pending Review</span>
+            </div>
+        </div>
+
+        <div class="adm-panel-body">
+            <div class="pa-grid">
+                <!-- Ban Information -->
+                <div>
+                    <h4 class="pa-label"><i class="bi bi-ban me-1"></i>Ban Details</h4>
+                    <div class="pa-kv">
+                        <span>Banned on</span>
+                        <div>
+                            {% if user.ban_date %}
+                                {{ user.ban_date.strftime('%B %d, %Y at %I:%M %p') }}
+                                <span class="pa-muted">({{ (now - user.ban_date).days }} days ago)</span>
+                            {% else %}
+                                Not recorded
+                            {% endif %}
                         </div>
-                        <div class="col">
-                            <div class="min-width-0">
-                                <h5 class="mb-1 fw-bold text-dark">{{ user.username }}</h5>
-                                <small class="text-muted">
-                                    <i class="fas fa-envelope me-1"></i>
-                                    {{ user.email }}
-                                </small>
-                            </div>
-                        </div>
-                        <div class="col-auto text-end">
-                            <span class="badge bg-warning text-dark">Pending Review</span>
-                        </div>
+                    </div>
+                    <div class="pa-kv">
+                        <span>Reason</span>
+                        <div>{{ user.ban_reason or 'Not specified' }}</div>
                     </div>
                 </div>
 
-                <div class="card-body p-3 p-md-4">
-                    <div class="row g-3 g-md-4 mb-3 mb-md-4">
-                        <!-- Ban Information -->
-                        <div class="col-12 col-md-6">
-                            <h6 class="text-muted text-uppercase fw-bold mb-3 small">
-                                <i class="fas fa-ban text-danger me-1"></i>
-                                Ban Details
-                            </h6>
-                            <div class="ps-3 border-start border-danger border-2">
-                                <div class="mb-2">
-                                    <small class="text-muted fw-semibold">Banned on</small>
-                                    <div class="text-dark">
-                                        {% if user.ban_date %}
-                                            {{ user.ban_date.strftime('%B %d, %Y at %I:%M %p') }}
-                                            <span class="text-muted small">({{ (now - user.ban_date).days }} days ago)</span>
-                                        {% else %}
-                                            Not recorded
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div>
-                                    <small class="text-muted fw-semibold">Reason</small>
-                                    <div class="text-dark">{{ user.ban_reason or 'Not specified' }}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Appeal Information -->
-                        <div class="col-12 col-md-6">
-                            <h6 class="text-muted text-uppercase fw-bold mb-3 small">
-                                <i class="fas fa-clock text-info me-1"></i>
-                                Appeal Details
-                            </h6>
-                            <div class="ps-3 border-start border-info border-2">
-                                <div class="mb-2">
-                                    <small class="text-muted fw-semibold">Submitted on</small>
-                                    <div class="text-dark">
-                                        {% if user.unban_request_date %}
-                                            {{ user.unban_request_date.strftime('%B %d, %Y at %I:%M %p') }}
-                                            <span class="text-muted small">({{ (now - user.unban_request_date).days }} day{% if (now - user.unban_request_date).days != 1 %}s{% endif %} ago)</span>
-                                        {% else %}
-                                            Not recorded
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div>
-                                    <small class="text-muted fw-semibold">Status</small>
-                                    <div class="text-dark">
-                                        <span class="badge bg-warning">Awaiting Admin Review</span>
-                                    </div>
-                                </div>
-                            </div>
+                <!-- Appeal Information -->
+                <div>
+                    <h4 class="pa-label"><i class="bi bi-clock-history me-1"></i>Appeal Details</h4>
+                    <div class="pa-kv">
+                        <span>Submitted on</span>
+                        <div>
+                            {% if user.unban_request_date %}
+                                {{ user.unban_request_date.strftime('%B %d, %Y at %I:%M %p') }}
+                                <span class="pa-muted">({{ (now - user.unban_request_date).days }} day{% if (now - user.unban_request_date).days != 1 %}s{% endif %} ago)</span>
+                            {% else %}
+                                Not recorded
+                            {% endif %}
                         </div>
                     </div>
-
-                    <!-- Appeal Message -->
-                    <div class="mb-4">
-                        <h6 class="text-muted text-uppercase fw-bold mb-3 small">
-                            <i class="fas fa-message text-primary me-1"></i>
-                            User's Appeal Message
-                        </h6>
-                        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-left: 4px solid #0d6efd; border-radius: 8px; padding: 15px; font-size: 0.95rem;">
-                            <div style="color: #333; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">
-                                {{ user.appeal_message }}
-                            </div>
-                            <small class="text-muted d-block mt-2">
-                                <i class="fas fa-quote-left me-1"></i>
-                                Character count: <strong>{{ user.appeal_message|length }}/2000</strong>
-                            </small>
-                        </div>
+                    <div class="pa-kv">
+                        <span>Status</span>
+                        <div><span class="adm-pill warn">Awaiting Admin Review</span></div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Admin Actions -->
-                    <div class="d-flex gap-2 gap-md-3 flex-wrap align-items-center">
-                        <form action="{{ url_for('admin.unban_user', user_id=user.id) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="btn btn-success btn-sm px-3" 
-                                    onclick="return confirm('Approve this appeal and unban {{ user.username }}?');">
-                                <i class="fas fa-check-circle me-1"></i>
-                                <span class="d-none d-sm-inline">Approve Appeal & Unban</span>
-                                <span class="d-sm-none">Approve</span>
-                            </button>
-                        </form>
-
-                        <button type="button" class="btn btn-outline-danger btn-sm px-3" 
-                                onclick="showRejectModal('{{ user.id }}', '{{ user.username }}');">
-                            <i class="fas fa-times-circle me-1"></i>
-                            <span class="d-none d-sm-inline">Reject Appeal</span>
-                            <span class="d-sm-none">Reject</span>
-                        </button>
-
-                        <a href="{{ url_for('admin.view_user', user_id=user.id) }}" 
-                           class="btn btn-outline-primary btn-sm px-3">
-                            <i class="fas fa-user-circle me-1"></i>
-                            <span class="d-none d-sm-inline">View Full Profile</span>
-                            <span class="d-sm-none">Profile</span>
-                        </a>
-                    </div>
+            <!-- Appeal Message -->
+            <h4 class="pa-label mt-4"><i class="bi bi-chat-left-text me-1"></i>User's Appeal Message</h4>
+            <div class="pa-message">
+                <div class="pa-message-text">
+                    {{ user.appeal_message }}
+                </div>
+                <div class="pa-muted mt-2">
+                    <i class="bi bi-quote me-1"></i>
+                    Character count: <strong>{{ user.appeal_message|length }}/2000</strong>
                 </div>
             </div>
         </div>
-        {% endfor %}
+
+        <!-- Admin Actions -->
+        <div class="adm-panel-foot d-flex gap-2 flex-wrap align-items-center">
+            <form action="{{ url_for('admin.unban_user', user_id=user.id) }}" method="POST" style="display: inline;">
+                <button type="submit" class="adm-btn sm success"
+                        onclick="return confirm('Approve this appeal and unban {{ user.username }}?');">
+                    <i class="bi bi-check-circle"></i>
+                    <span class="d-none d-sm-inline">Approve Appeal &amp; Unban</span>
+                    <span class="d-sm-none">Approve</span>
+                </button>
+            </form>
+
+            <button type="button" class="adm-btn sm danger"
+                    onclick="showRejectModal('{{ user.id }}', '{{ user.username }}');">
+                <i class="bi bi-x-circle"></i>
+                <span class="d-none d-sm-inline">Reject Appeal</span>
+                <span class="d-sm-none">Reject</span>
+            </button>
+
+            <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="adm-btn sm ghost">
+                <i class="bi bi-person-circle"></i>
+                <span class="d-none d-sm-inline">View Full Profile</span>
+                <span class="d-sm-none">Profile</span>
+            </a>
+        </div>
     </div>
+    {% endfor %}
 
     {% else %}
     <!-- Empty State -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-body text-center py-5 py-md-6">
-            <div class="mb-3 mb-md-4">
-                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                     style="width: 80px; height: 80px; background: linear-gradient(135deg, #e7f1ff 0%, #f0f7ff 100%);">
-                    <i class="fas fa-inbox text-primary fs-2"></i>
-                </div>
-            </div>
-            <h4 class="text-dark fw-bold mb-2">No Pending Appeals</h4>
-            <p class="text-muted mb-4 mb-md-5">
-                All suspended users' appeals have been reviewed or no appeals have been submitted yet.
-            </p>
-            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-arrow-left me-1"></i>
-                Back to User Management
+    <div class="adm-panel">
+        <div class="adm-empty">
+            <i class="bi bi-inbox"></i>
+            <h6>No Pending Appeals</h6>
+            <p class="mb-3">All suspended users' appeals have been reviewed or no appeals have been submitted yet.</p>
+            <a href="{{ url_for('admin.manage_users') }}" class="adm-btn sm primary">
+                <i class="bi bi-arrow-left"></i> Back to User Management
             </a>
         </div>
     </div>
@@ -192,32 +135,32 @@
 
 <!-- Reject Appeal Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0">
-            <div class="modal-header border-0 bg-danger bg-opacity-10">
-                <h5 class="modal-title text-danger fw-bold">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2 text-danger"></i>
                     Reject Appeal
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="rejectForm" method="POST">
                 <div class="modal-body">
-                    <p class="text-muted mb-3">
+                    <p class="mb-3">
                         Are you sure you want to reject the appeal from <strong id="rejectUsername"></strong>?
                     </p>
-                    <div class="alert alert-warning alert-sm">
-                        <i class="fas fa-info-circle me-2"></i>
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
                         The user will remain banned and can submit another appeal after 30 days.
                     </div>
                 </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>
+                <div class="modal-footer">
+                    <button type="button" class="adm-btn sm ghost" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i>
                         Cancel
                     </button>
-                    <button type="submit" class="btn btn-danger btn-sm">
-                        <i class="fas fa-trash me-1"></i>
+                    <button type="submit" class="adm-btn sm danger">
+                        <i class="bi bi-trash"></i>
                         Reject Appeal
                     </button>
                 </div>
@@ -227,31 +170,15 @@
 </div>
 
 <style>
-    .card {
-        transition: all 0.3s ease;
-    }
-
-    @media (min-width: 768px) {
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.1) !important;
-        }
-    }
-
-    .badge {
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-
-    .border-start {
-        transition: border-color 0.3s ease;
-    }
-
-    .alert-sm {
-        padding: 10px 12px;
-        margin-bottom: 0;
-        font-size: 0.9rem;
-    }
+    .pa-avatar { width: 56px; height: 56px; border-radius: 50%; font-weight: 700; font-size: 1.2rem; }
+    .pa-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .pa-label { margin: 0 0 10px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .pa-kv { margin-bottom: 10px; font-size: 0.9rem; color: var(--ink); }
+    .pa-kv > span { display: block; font-size: 0.78rem; color: var(--muted); }
+    .pa-muted { font-size: 0.8rem; color: var(--muted); }
+    .pa-message { padding: 14px 16px; background: #f8fafc; border: 1px solid var(--line); border-left: 4px solid var(--primary-blue); border-radius: 10px; }
+    .pa-message-text { font-size: 0.92rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: var(--ink); }
+    @media (max-width: 640px) { .pa-grid { grid-template-columns: 1fr; gap: 16px; } }
 </style>
 
 <script>

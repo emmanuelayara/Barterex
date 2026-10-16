@@ -1142,16 +1142,15 @@
             <ul class="nav-links">
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a href="{{ url_for('user.user_orders') }}" class="nav-link{% if request.endpoint == 'user.user_orders' %} active{% endif %}" data-tooltip="Orders">
-                            <i class="fas fa-box icon-box-check"></i>
-                            <span class="nav-text">Orders</span>
+                        <a href="{{ url_for('user.my_reservations') }}" class="nav-link{% if request.endpoint == 'user.my_reservations' %} active{% endif %}" data-tooltip="Reservations">
+                            <i class="fas fa-bookmark"></i>
+                            <span class="nav-text">Reservations</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ url_for('items.view_cart') }}" class="nav-link{% if request.endpoint == 'items.view_cart' %} active{% endif %}" data-tooltip="Shopping Cart" style="position: relative;">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span class="nav-text">Cart</span>
-                            {% if cart_count > 0 %}<span class="badge" style="position: absolute; top: -8px; right: -8px; background: var(--primary-orange); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">{{ cart_count }}</span>{% endif %}
+                        <a href="{{ url_for('user.user_orders') }}" class="nav-link{% if request.endpoint == 'user.user_orders' %} active{% endif %}" data-tooltip="Orders">
+                            <i class="fas fa-box icon-box-check"></i>
+                            <span class="nav-text">Orders</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -1906,23 +1905,6 @@ window.addEventListener('beforeunload', function() {
 // ============================================================================
 // QUICK ACTION NOTIFICATION FUNCTIONS
 // ============================================================================
-
-/**
- * Show notification for item added to cart
- */
-function notifyItemAddedToCart(itemId, itemName) {
-    const message = `✓ "${itemName}" added to your cart`;
-    window.successToast(message, 4000);
-    
-    // Optional: Send to server
-    fetch('/api/notifications/cart/item-added', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ item_id: itemId })
-    }).catch(error => console.warn('Error logging notification:', error));
-}
 
 /**
  * Show notification for order placed

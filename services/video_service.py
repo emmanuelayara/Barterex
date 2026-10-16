@@ -25,6 +25,7 @@ function checks is_configured() first and returns a clear error otherwise.
 """
 import logging
 import os
+import re
 import uuid
 
 try:
@@ -40,6 +41,7 @@ ALLOWED_VIDEO_TYPES = {
     'video/x-m4v': 'm4v',
 }
 MAX_VIDEO_SIZE_BYTES = 200 * 1024 * 1024  # 200MB
+MAX_VIDEO_DURATION_SECONDS = 60
 
 
 def _bucket_name():
@@ -123,6 +125,31 @@ def generate_upload_url(object_name: str, content_type: str) -> dict:
     except Exception as e:
         logger.error(f"Could not create GCS upload URL: {e}", exc_info=True)
         return {'success': False, 'error': 'Could not prepare the upload. Please try again.'}
+
+
+def validate_uploaded_object(object_name: str, item_id: int) -> dict:
+    """Verify that a completed upload belongs to this item and is within size limits."""
+    if not object_name or not re.fullmatch(
+        rf'item-videos/{item_id}/[0-9a-f]{{32}}\.(?:mp4|mov|webm|m4v)',
+        object_name,
+    ):
+        return {'success': False, 'error': 'The uploaded video does not belong to this item.'}
+    if not is_configured():
+        return {'success': False, 'error': 'Video storage is not configured yet.'}
+    try:
+        blob = _client().bucket(_bucket_name()).blob(object_name)
+        if not blob.exists():
+            return {'success': False, 'error': 'The video upload could not be found. Please try again.'}
+        blob.reload()
+        if blob.content_type not in ALLOWED_VIDEO_TYPES:
+            return {'success': False, 'error': 'Please upload an MP4, MOV, WEBM or M4V video.'}
+        if not blob.size or blob.size > MAX_VIDEO_SIZE_BYTES:
+            delete_object(object_name)
+            return {'success': False, 'error': 'The video must be smaller than 200 MB.'}
+        return {'success': True}
+    except Exception as e:
+        logger.error(f"Could not validate uploaded GCS object {object_name}: {e}", exc_info=True)
+        return {'success': False, 'error': 'Could not verify the uploaded video. Please try again.'}
 
 
 def generate_read_url(object_name: str) -> str:

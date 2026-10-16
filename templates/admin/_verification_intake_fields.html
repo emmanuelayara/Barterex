@@ -1,0 +1,50 @@
+<fieldset class="intake-fields">
+  <legend>Physical receipt &amp; inspection record</legend>
+  <label>
+    Received at
+    <input type="text" name="received_location" maxlength="200" required
+           placeholder="Station, office, or other location">
+  </label>
+  <label>
+    Condition observed
+    <select name="observed_condition" required>
+      <option value="">Select condition</option>
+      {% for condition in inspection_item.VALID_CONDITIONS|sort %}
+        <option value="{{ condition }}">
+          {{ condition }}
+        </option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    Serial / IMEI observed
+    <input type="text" name="observed_serial_number" maxlength="100">
+  </label>
+  <label>
+    Serial check
+    <select name="serial_check" required>
+      <option value="">Select check result</option>
+      <option value="matched">Matches submitted number</option>
+      <option value="mismatch">Does not match</option>
+      <option value="not_applicable">Not applicable / no serial</option>
+    </select>
+  </label>
+  <label>
+    Item identity confirmed
+    <select name="identity_confirmed" required>
+      <option value="">Select result</option>
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </select>
+  </label>
+  <label>
+    Accessories received
+    <input type="text" name="accessories_received" maxlength="500"
+           placeholder="List included accessories, or enter none">
+  </label>
+  <label class="intake-wide">
+    Intake / inspection notes
+    <textarea name="intake_notes" rows="2" maxlength="2000"
+              placeholder="Record visible damage, function checks, or other observations"></textarea>
+  </label>
+</fieldset>

@@ -180,6 +180,7 @@ class AdminRegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired(), PasswordStrengthValidator()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    is_super_admin = BooleanField('Super admin (full access, can manage other admins)')
     submit = SubmitField('Register Admin')
 
     def validate_email(self, email):
@@ -189,6 +190,12 @@ class AdminRegisterForm(FlaskForm):
     def validate_username(self, username):
         if Admin.query.filter_by(username=username.data).first():
             raise ValidationError('Username already taken.')
+
+
+class AdminPermissionsForm(FlaskForm):
+    """Edit an existing admin's access. Permission checkboxes are read from request.form."""
+    is_super_admin = BooleanField('Super admin (full access, can manage other admins)')
+    submit = SubmitField('Save Changes')
 
 
 class AdminLoginForm(FlaskForm):

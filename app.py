@@ -1,4 +1,5 @@
 import os
+import click
 from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -90,6 +91,35 @@ from routes.wishlist import wishlist_bp
 from routes_account import account_bp
 from routes.payments import payment_bp
 from notifications import NotificationService
+
+
+@app.cli.command("reconcile-legacy-direct-checkouts")
+@click.option("--apply", "apply_changes", is_flag=True, help="Apply refunds and restore item ownership.")
+def reconcile_legacy_direct_checkouts_command(apply_changes):
+    """Preview legacy checkout reversals; pass --apply to commit the changes."""
+    from services.legacy_checkout_reconciliation import reconcile_legacy_direct_checkouts
+
+    report = reconcile_legacy_direct_checkouts(apply_changes=apply_changes)
+    for entry in report:
+        click.echo(
+            f"Order {entry['order_id']}: {entry['status']} "
+            f"(BXC refund {entry['credits_refunded']}): {entry['details']}"
+        )
+    click.echo(f"{'Applied' if apply_changes else 'Previewed'} {len(report)} legacy order(s).")
+
+
+@app.cli.command("maintenance-sweep")
+def maintenance_sweep_command():
+    """Expire reservation holds/consent windows and deactivate stale listings."""
+    from services.maintenance_service import run_maintenance_sweep
+
+    result = run_maintenance_sweep()
+    click.echo(
+        "Maintenance sweep complete: "
+        f"{result['expired_reservations']} reservation deadline(s) resolved; "
+        f"{result['stale_items']} stale listing(s) deactivated."
+    )
+
 
 # ✅ User loader for Flask-Login
 @login_manager.user_loader
@@ -297,9 +327,9 @@ def check_maintenance_mode():
         if 'marketplace' in current_route and not settings.allow_browsing:
             return render_template('marketplace_disabled.html'), 503
 
-# ✅ Context processor for cart info and CSRF token
+# ✅ Context processor for favorites and CSRF token
 @app.context_processor
-def inject_cart_info():
+def inject_favorites_info():
     from flask_login import current_user
     from flask_wtf.csrf import generate_csrf
     from models import Favorite
@@ -309,22 +339,14 @@ def inject_cart_info():
     }
     
     if current_user.is_authenticated:
-        cart = Cart.query.filter_by(user_id=current_user.id).first()
-        if cart:
-            cart_count = cart.get_item_count()
-        else:
-            cart_count = 0
-        
         # Get favorites count
         favorites_count = Favorite.query.filter_by(user_id=current_user.id).count()
         
         context.update({
-            'cart_count': cart_count,
             'favorites_count': favorites_count,
         })
     else:
         context.update({
-            'cart_count': 0,
             'favorites_count': 0,
         })
     

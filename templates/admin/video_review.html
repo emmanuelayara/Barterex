@@ -4,159 +4,118 @@
 
 {% block content %}
 <style>
-  .approval-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    padding: 15px 0;
-  }
+  .vid-warning { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 12px 16px; background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 12px; color: #b91c1c; font-size: 0.86rem; }
 
-  .container { max-width: 1100px; padding-left: 15px; padding-right: 15px; }
+  .vid-row { flex-wrap: wrap; align-items: flex-start; }
+  .vid-preview { flex-shrink: 0; width: 260px; max-width: 100%; }
+  .vid-preview video { display: block; width: 100%; border-radius: 10px; background: #000; }
+  .vid-no-preview { display: flex; align-items: center; justify-content: center; gap: 6px; height: 150px; border: 1px solid var(--line); border-radius: 10px; background: var(--tint); color: var(--muted); font-size: 0.85rem; }
+  .vid-row .adm-row-meta { flex-direction: column; margin-top: 6px; }
 
-  .approval-header {
-    text-align: center;
-    margin-bottom: 18px;
-    padding: 18px 15px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  }
+  .vid-actions { flex: 1 0 100%; padding: 14px; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; }
+  .vid-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  .vid-buttons form { flex: 2 1 260px; display: flex; }
+  .vid-buttons .adm-btn { flex: 1 1 140px; width: 100%; }
+  .vid-page .reject-btn.active { background: #fff; border-color: var(--line); color: var(--ink); }
 
-  .approval-header h2 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 6px;
-    color: #1a1a1a;
-  }
+  .rejection-section { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .rejection-section.active { display: block; }
+  .rejection-section .adm-btn { width: 100%; margin-top: 8px; }
+  .vid-submit-reject { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .vid-submit-reject:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
 
-  .approval-subtitle { font-size: 0.8rem; color: #6b7280; margin: 0; }
-
-  .config-warning {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #b91c1c;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 0.82rem;
-    margin-bottom: 16px;
-  }
-
-  .video-card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    padding: 14px;
-    margin-bottom: 14px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .video-preview video {
-    width: 260px;
-    max-width: 100%;
-    border-radius: 8px;
-    background: #000;
-  }
-
-  .video-info { flex: 1; min-width: 200px; }
-  .video-info h3 { font-size: 1rem; margin: 0 0 6px; }
-  .video-meta { font-size: 0.78rem; color: #6b7280; margin-bottom: 10px; }
-
-  .video-actions { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
-
-  .notes-textarea, .rejection-textarea {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #e5e7eb;
-    border-radius: 5px;
-    font-size: 0.75rem;
-    min-height: 50px;
-    font-family: inherit;
-  }
-
-  .action-btn {
-    border: none;
-    border-radius: 5px;
-    padding: 8px 10px;
-    font-weight: 700;
-    font-size: 0.72rem;
-    cursor: pointer;
-  }
-
-  .approve-btn { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
-  .reject-btn { background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: white; }
-  .cancel-btn { background: #6b7280; color: white; }
-
-  .rejection-section { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; }
-  .rejection-section.active { max-height: 160px; opacity: 1; margin-top: 6px; }
-
-  .empty-state {
-    text-align: center;
-    padding: 30px 15px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  }
+  @media (max-width: 640px) { .vid-preview { width: 100%; } }
 </style>
 
-<div class="approval-page">
-  <div class="container">
-    <div class="approval-header">
-      <h2>🎬 Video Review Queue</h2>
-      <p class="approval-subtitle">Verification videos submitted via "Activate for Trade" - approve to publish to YouTube and list the item.</p>
+<div class="adm-page narrow vid-page">
+  <a href="{{ url_for('admin.admin_dashboard') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+  <div class="adm-head">
+    <div>
+      <h1>Video Review Queue</h1>
+      <p>Verification videos submitted via "Activate for Trade" - approve to publish to YouTube and list the item.</p>
     </div>
-
-    {% if not video_storage_configured %}
-      <div class="config-warning">⚠️ Video storage (GCS_BUCKET_NAME) is not fully configured - previews below may not load.</div>
-    {% endif %}
-
-    {% if videos %}
-      {% for video in videos %}
-        <div class="video-card">
-          <div class="video-preview">
-            {% if preview_urls.get(video.id) %}
-              <video controls preload="none" src="{{ preview_urls[video.id] }}"></video>
-            {% else %}
-              <div style="width:260px;height:150px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;">No preview</div>
-            {% endif %}
-          </div>
-          <div class="video-info">
-            <h3>{{ video.item.name if video.item else 'Item removed' }}</h3>
-            <div class="video-meta">
-              Submitted by {{ video.uploaded_by.username if video.uploaded_by else 'unknown' }}
-              · {{ video.submitted_at.strftime('%b %d, %Y %I:%M %p') }}
-              {% if video.item %} · Final value ᗸ{{ '{:,.0f}'.format(video.item.value) if video.item.value else '—' }}{% endif %}
-            </div>
-          </div>
-          <div class="video-actions">
-            <form method="POST" action="{{ url_for('admin.approve_activation_video', video_id=video.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-              <button type="submit" class="action-btn approve-btn" style="width:100%;">✅ Approve &amp; Publish to YouTube</button>
-            </form>
-            <button type="button" class="action-btn reject-btn" onclick="toggleRejectForm({{ video.id }})">❌ Reject</button>
-            <div class="rejection-section" id="rejection_{{ video.id }}">
-              <form method="POST" action="{{ url_for('admin.reject_activation_video', video_id=video.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <textarea name="rejection_reason" class="rejection-textarea" placeholder="What's wrong with the video?" required></textarea>
-                <button type="submit" class="action-btn reject-btn" style="width:100%;margin-top:6px;">Submit Rejection</button>
-                <button type="button" class="action-btn cancel-btn" style="width:100%;margin-top:4px;" onclick="toggleRejectForm({{ video.id }})">Cancel</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="empty-state">
-        <p>No videos are awaiting review right now.</p>
-      </div>
-    {% endif %}
   </div>
+
+  {% if not video_storage_configured %}
+    <div class="vid-warning"><i class="bi bi-exclamation-triangle-fill"></i> Video storage (GCS_BUCKET_NAME) is not fully configured - previews below may not load.</div>
+  {% endif %}
+
+  {% if videos %}
+    <div class="adm-panel">
+      <div class="adm-panel-head">
+        <div class="adm-panel-icon"><i class="bi bi-camera-video"></i></div>
+        <div>
+          <h2>Videos awaiting review</h2>
+          <p>Approve to publish to YouTube and list the item.</p>
+        </div>
+        <div class="adm-panel-actions"><span class="adm-count is-alert">{{ videos|length }}</span></div>
+      </div>
+
+      <ul class="adm-list">
+        {% for video in videos %}
+          <li class="adm-row vid-row">
+            <div class="vid-preview">
+              {% if preview_urls.get(video.id) %}
+                <video controls preload="none" src="{{ preview_urls[video.id] }}"></video>
+              {% else %}
+                <div class="vid-no-preview"><i class="bi bi-camera-video-off"></i> No preview</div>
+              {% endif %}
+            </div>
+
+            <div class="adm-row-main">
+              <h3 class="adm-row-title">{{ video.item.name if video.item else 'Item removed' }}</h3>
+              <div class="adm-row-meta">
+                <span><i class="bi bi-person-circle"></i> Submitted by {{ video.uploaded_by.username if video.uploaded_by else 'unknown' }}</span>
+                <span><i class="bi bi-clock"></i> {{ video.submitted_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+                {% if video.item %}<span><i class="bi bi-stars"></i> AI activation value ᗸ{{ '{:,.0f}'.format(video.item.ai_estimated_value) if video.item.ai_estimated_value else 'Unavailable - approval blocked' }}</span>{% endif %}
+              </div>
+            </div>
+
+            <div class="adm-row-side">
+              <span class="adm-pill warn"><i class="bi bi-hourglass-split"></i> Pending</span>
+            </div>
+
+            <div class="vid-actions">
+              <div class="vid-buttons">
+                <form method="POST" action="{{ url_for('admin.approve_activation_video', video_id=video.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <button type="submit" class="adm-btn success approve-btn"><i class="bi bi-check-lg"></i> Approve &amp; Publish to YouTube</button>
+                </form>
+                <button type="button" class="adm-btn danger reject-btn" onclick="toggleRejectForm({{ video.id }})"><i class="bi bi-x-circle"></i> Reject</button>
+              </div>
+              <div class="rejection-section" id="rejection_{{ video.id }}">
+                <form method="POST" action="{{ url_for('admin.reject_activation_video', video_id=video.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <textarea name="rejection_reason" class="form-control rejection-textarea" rows="2" placeholder="What's wrong with the video?" required></textarea>
+                  <button type="submit" class="adm-btn vid-submit-reject"><i class="bi bi-x-circle"></i> Submit Rejection</button>
+                  <button type="button" class="adm-btn ghost cancel-btn" onclick="toggleRejectForm({{ video.id }})">Cancel</button>
+                </form>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="adm-panel">
+      <div class="adm-empty">
+        <i class="bi bi-camera-video"></i>
+        <h6>Nothing to review</h6>
+        <p class="mb-0">No videos are awaiting review right now.</p>
+      </div>
+    </div>
+  {% endif %}
 </div>
 
 <script>
   function toggleRejectForm(videoId) {
     const section = document.getElementById(`rejection_${videoId}`);
-    section.classList.toggle('active');
+    const btn = document.querySelector(`[onclick="toggleRejectForm(${videoId})"]`);
+    const open = section.classList.toggle('active');
+    if (btn) {
+      btn.classList.toggle('active', open);
+      btn.innerHTML = open ? '<i class="bi bi-arrow-counterclockwise"></i> Cancel' : '<i class="bi bi-x-circle"></i> Reject';
+    }
   }
 </script>
 {% endblock %}

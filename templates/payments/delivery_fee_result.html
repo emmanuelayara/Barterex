@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Home-service payment{% endblock %}
+{% block content %}
+<main class="container py-5">
+  <div class="card p-4 mx-auto" style="max-width: 650px;">
+    {% if success %}
+      <h1>Home-service fee paid</h1>
+      <p>Your non-refundable delivery fee was verified. Dispatch can proceed once reservation inspection is complete.</p>
+    {% else %}
+      <h1>Payment not completed</h1>
+      <p>{{ error or 'Paystack could not verify this delivery-fee payment.' }}</p>
+    {% endif %}
+    <p>Payment reference: {{ reference }}</p>
+    <a class="btn btn-primary" href="{{ url_for('user.my_reservations') }}">View my reservations</a>
+  </div>
+</main>
+{% endblock %}

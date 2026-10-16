@@ -54,6 +54,19 @@ def get_or_create_cart(user_id):
         db.session.commit()
     return cart
 
+
+def redirect_legacy_checkout(item_id=None):
+    session.pop('pending_checkout_items', None)
+    session.pop('pending_delivery', None)
+    flash(
+        "Use Favorites to save items, or reserve an item through the verified reservation flow.",
+        "info",
+    )
+    if item_id is not None:
+        return redirect(url_for('marketplace.view_item', item_id=item_id))
+    return redirect(url_for('favorites.view_favorites'))
+
+
 def create_notification(user_id, message):
     """Create notification and send email asynchronously"""
     from models import User
@@ -532,11 +545,28 @@ def trade_this_item(item_id):
         flash('Please confirm you own this item before submitting it for trade.', 'danger')
         return redirect(url_for('user.my_valuations'))
 
+    object_name = (request.form.get('object_name') or '').strip()
+    from services import video_service
+
+    upload_validation = video_service.validate_uploaded_object(object_name, item.id)
+    if not upload_validation.get('success'):
+        flash(
+            upload_validation.get('error', 'Upload a verification video before submitting this item.'),
+            'danger',
+        )
+        return redirect(url_for('user.my_valuations'))
+
     item.ownership_confirmed = True
     item.serial_number = (request.form.get('serial_number') or '').strip() or None
     item.status = 'trade_requested'
     item.trade_requested_at = datetime.utcnow()
     item.rejection_reason = None  # clear any feedback from a previous pre-verification attempt
+    db.session.add(ItemVideo(
+        item_id=item.id,
+        uploaded_by_id=current_user.id,
+        temp_video_url=object_name,
+        status='pending',
+    ))
 
     logger.info(f"Item submitted for pre-verification - Item: {item.id}, User: {current_user.username}")
     flash(f"'{item.name}' was submitted for pre-verification. We'll notify you once it's reviewed.", 'success')
@@ -558,8 +588,8 @@ def request_activation_upload_url(item_id):
     item = Item.query.filter_by(id=item_id, user_id=current_user.id).first()
     if not item:
         return jsonify({'success': False, 'error': 'Item not found.'}), 404
-    if item.status != 'preverification_approved':
-        return jsonify({'success': False, 'error': 'This item is not ready to be activated.'}), 400
+    if item.status not in ('valuation_only', 'preverification_approved'):
+        return jsonify({'success': False, 'error': 'This item is not ready for a verification video.'}), 400
 
     content_type = (request.get_json(silent=True) or {}).get('content_type', 'video/mp4')
     if content_type not in video_service.ALLOWED_VIDEO_TYPES:
@@ -579,20 +609,36 @@ def request_activation_upload_url(item_id):
 def confirm_activation_upload(item_id):
     """Step 2: the browser calls this once the video has finished uploading to GCS."""
     item = Item.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     if item.status != 'preverification_approved':
+        if is_ajax:
+            return jsonify({'success': False, 'error': 'This item is not ready to be activated.'}), 400
         flash('This item is not ready to be activated.', 'danger')
         return redirect(url_for('user.my_valuations'))
 
     object_name = (request.form.get('object_name') or '').strip()
-    if not object_name:
-        flash('The video upload did not complete. Please try again.', 'danger')
+    from services import video_service
+
+    upload_validation = video_service.validate_uploaded_object(object_name, item.id)
+    if not upload_validation.get('success'):
+        if is_ajax:
+            return jsonify({
+                'success': False,
+                'error': upload_validation.get('error', 'The video upload did not complete. Please try again.'),
+            }), 400
+        flash(
+            upload_validation.get('error', 'The video upload did not complete. Please try again.'),
+            'danger',
+        )
         return redirect(url_for('user.my_valuations'))
 
     db.session.add(ItemVideo(item_id=item.id, uploaded_by_id=current_user.id, temp_video_url=object_name, status='pending'))
     item.status = 'pending_activation'
 
     logger.info(f"Activation video submitted - Item: {item.id}, User: {current_user.username}")
+    if is_ajax:
+        return jsonify({'success': True})
     flash(f"Video submitted for '{item.name}'! An admin will review it before your item goes live.", 'success')
     return redirect(url_for('user.my_valuations'))
 
@@ -680,6 +726,8 @@ def reconfirm_item(item_id):
 @handle_errors
 @safe_database_operation("add_to_cart")
 def add_to_cart(item_id):
+    return redirect_legacy_checkout(item_id)
+
     try:
         # CRITICAL: Use row-level lock to prevent race condition
         # Item could be purchased by another user between validation and add_to_cart
@@ -720,33 +768,7 @@ def add_to_cart(item_id):
 @login_required
 @handle_errors
 def view_cart():
-    try:
-        cart = Cart.query.filter_by(user_id=current_user.id).first()
-        
-        if not cart:
-            cart_items = []
-            total_cost = 0
-        else:
-            cart_items = [ci for ci in cart.items if ci.item.is_available]
-            total_cost = cart.get_total_cost()
-            
-            unavailable_items = [ci for ci in cart.items if not ci.item.is_available]
-            if unavailable_items:
-                for ci in unavailable_items:
-                    db.session.delete(ci)
-                db.session.commit()
-                logger.info(f"Removed {len(unavailable_items)} unavailable items from cart - User: {current_user.username}")
-                if len(unavailable_items) == 1:
-                    flash("1 item was removed from your cart as it's no longer available.", "warning")
-                else:
-                    flash(f"{len(unavailable_items)} items were removed from your cart as they're no longer available.", "warning")
-        
-        return render_template('cart.html', cart_items=cart_items, total_cost=total_cost, csrf_token=generate_csrf)
-        
-    except Exception as e:
-        logger.error(f"Error viewing cart for user {current_user.username}: {str(e)}", exc_info=True)
-        flash('An error occurred while loading your cart.', 'danger')
-        return redirect(url_for('marketplace.marketplace'))
+    return redirect_legacy_checkout()
 
 
 @items_bp.route('/remove_from_cart/<int:item_id>', methods=['POST'])
@@ -754,25 +776,7 @@ def view_cart():
 @handle_errors
 @safe_database_operation("remove_from_cart")
 def remove_from_cart(item_id):
-    try:
-        cart = Cart.query.filter_by(user_id=current_user.id).first()
-        
-        if cart:
-            cart_item = CartItem.query.filter_by(cart_id=cart.id, item_id=item_id).first()
-            if cart_item:
-                db.session.delete(cart_item)
-                cart.updated_at = datetime.utcnow()
-                logger.info(f"Item removed from cart - Item: {item_id}, User: {current_user.username}")
-                flash("Item removed from cart.", "success")
-            else:
-                logger.warning(f"Attempted to remove non-existent cart item - Item: {item_id}, User: {current_user.username}")
-        
-        return redirect(url_for('items.view_cart'))
-        
-    except Exception as e:
-        logger.error(f"Error removing item from cart: {str(e)}", exc_info=True)
-        flash('An error occurred while removing the item.', 'danger')
-        return redirect(url_for('items.view_cart'))
+    return redirect_legacy_checkout()
 
 
 @items_bp.route('/clear_cart', methods=['POST'])
@@ -780,26 +784,7 @@ def remove_from_cart(item_id):
 @handle_errors
 @safe_database_operation("clear_cart")
 def clear_cart():
-    try:
-        cart = Cart.query.filter_by(user_id=current_user.id).first()
-        
-        if cart:
-            item_count = len(cart.items)
-            # Delete all cart items directly
-            CartItem.query.filter_by(cart_id=cart.id).delete()
-            db.session.commit()
-            logger.info(f"Cart cleared - User: {current_user.username}, Items: {item_count}")
-            flash(f"Cleared {item_count} item{'s' if item_count != 1 else ''} from your cart.", "success")
-        else:
-            flash("Your cart is already empty.", "info")
-        
-        return redirect(url_for('items.view_cart'))
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error clearing cart for user {current_user.username}: {str(e)}", exc_info=True)
-        flash('An error occurred while clearing your cart.', 'danger')
-        return redirect(url_for('items.view_cart'))
+    return redirect_legacy_checkout()
 
 
 @items_bp.route('/set_checkout_return_flag', methods=['POST'])
@@ -823,6 +808,8 @@ def set_checkout_return_flag():
 @login_required
 @handle_errors
 def checkout():
+    return redirect_legacy_checkout()
+
     """
     NEW FLOW: Checkout now only validates items and sets up pending order.
     Does NOT purchase yet - user must complete delivery setup first.
@@ -878,6 +865,8 @@ def checkout():
 @handle_errors
 @safe_database_operation("finalize_purchase")
 def finalize_purchase():
+    return redirect_legacy_checkout()
+
     """
     NEW FLOW: This is called AFTER user sets up delivery details.
     Finalizes the purchase by:
@@ -1394,6 +1383,8 @@ def finalize_purchase():
 @handle_errors
 @safe_database_operation("order_item")
 def order_item():
+    return redirect_legacy_checkout()
+
     """
     NEW FLOW: User sets up delivery BEFORE purchase is finalized.
     The purchase happens when they click "Confirm Purchase" button,
@@ -1450,4 +1441,3 @@ def order_item():
     
     # Cache-control headers are applied globally in app.py after_request handler
     return render_template('order_item.html', form=form, stations=stations, items=items)
-

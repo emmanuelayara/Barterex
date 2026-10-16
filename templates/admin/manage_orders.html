@@ -3,38 +3,66 @@
 {% block title %}Manage Orders{% endblock %}
 
 {% block content %}
-<div class="order-management-container">
+<style>
+  .mo-filter-form { gap: 12px; }
+  .mo-filter-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .mo-filter-controls .form-select { width: auto; min-width: 150px; }
+  .mo-reason { margin-top: 8px; padding: 8px 10px; border-left: 3px solid #dc2626; border-radius: 0 8px 8px 0; background: rgba(220, 38, 38, 0.05); font-size: 0.8rem; font-style: italic; color: var(--muted); }
+  .mo-reason strong { display: block; margin-bottom: 2px; font-style: normal; color: var(--ink); }
+  .mo-items { margin: 0; padding: 0; list-style: none; }
+  .mo-items li { font-size: 0.86rem; }
+  .mo-delivery-details { margin-top: 4px; font-size: 0.8rem; color: var(--muted); }
+  .mo-order-id { font-weight: 700; color: var(--primary-blue); white-space: nowrap; }
+  .mo-date { display: flex; flex-direction: column; white-space: nowrap; }
+  .mo-date .time { font-size: 0.78rem; color: var(--muted); }
+  .mo-done { color: var(--muted); font-size: 0.8rem; }
+  .orders-table th.sortable { cursor: pointer; }
+  .orders-table th.sortable:hover { color: var(--primary-blue); }
+  .orders-table { min-width: 880px; }
+  .mo-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .mo-foot .pagination-info { font-size: 0.82rem; color: var(--muted); }
+  .mo-head-stat { padding: 10px 16px; }
+  @media (max-width: 640px) {
+    .mo-filter-controls { width: 100%; }
+    .mo-filter-controls .form-select { flex: 1 1 140px; }
+  }
+</style>
+
+<div class="adm-page wide">
+    <a class="adm-back" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i> Admin dashboard</a>
+
     <!-- Header Section -->
-    <div class="page-header">
-        <div class="header-content">
-            <h2 class="page-title">
-                <span class="title-icon">📦</span>
-                Order Management
-            </h2>
-            <p class="page-subtitle">Monitor and manage all customer orders</p>
+    <div class="adm-head">
+        <div>
+            <h1>Order Management</h1>
+            <p>Monitor and manage all customer orders</p>
         </div>
-        <div class="header-stats">
-            <div class="stat-card">
-                <div class="stat-number">{{ orders|length }}</div>
-                <div class="stat-label">Total Orders</div>
+        <div class="adm-head-actions header-stats">
+            <div class="adm-stat mo-head-stat">
+                <div class="adm-stat-icon"><i class="bi bi-box-seam"></i></div>
+                <div>
+                    <div class="adm-stat-value stat-number">{{ orders|length }}</div>
+                    <div class="adm-stat-label">Total Orders</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Filters Section -->
-    <div class="filters-section">
-        <form method="GET" action="{{ url_for('admin.manage_orders') }}" class="filter-form">
-            <div class="search-box">
-                <input type="text" id="searchOrders" name="search" placeholder="Search by Order ID, Item, or Buyer..." 
-                       class="search-input" value="{{ search }}">
-                <span class="search-icon">🔍</span>
+    <div class="adm-panel">
+        <!-- Filters Section -->
+        <form method="GET" action="{{ url_for('admin.manage_orders') }}" class="adm-toolbar mo-filter-form">
+            <div class="adm-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchOrders" name="search" placeholder="Search by Order ID, Item, or Buyer..."
+                       class="form-control" value="{{ search }}">
             </div>
-            
-            <div class="filter-controls">
+
+            <div class="mo-filter-controls">
                 <!-- Status Filter -->
-                <select name="status" class="filter-select" id="statusFilter">
+                <select name="status" class="form-select" id="statusFilter">
                     <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Orders</option>
                     <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Ready for Pickup" {% if status_filter == 'Ready for Pickup' %}selected{% endif %}>Ready for Pickup</option>
                     <option value="Shipped" {% if status_filter == 'Shipped' %}selected{% endif %}>Shipped</option>
                     <option value="Out for Delivery" {% if status_filter == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
                     <option value="Delivered" {% if status_filter == 'Delivered' %}selected{% endif %}>Delivered</option>
@@ -42,45 +70,45 @@
                 </select>
 
                 <!-- Delivery Method Filter -->
-                <select name="delivery" class="filter-select" id="deliveryFilter">
+                <select name="delivery" class="form-select" id="deliveryFilter">
                     <option value="all" {% if delivery_filter == 'all' %}selected{% endif %}>All Delivery Methods</option>
                     <option value="pickup" {% if delivery_filter == 'pickup' %}selected{% endif %}>Pickup</option>
-                    <option value="delivery" {% if delivery_filter == 'delivery' %}selected{% endif %}>Home Delivery</option>
+                    <option value="home delivery" {% if delivery_filter == 'home delivery' %}selected{% endif %}>Home Delivery</option>
                 </select>
 
                 <!-- Sort By -->
-                <select name="sort_by" class="filter-select" id="sortBy">
+                <select name="sort_by" class="form-select" id="sortBy">
                     <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Latest Orders</option>
                     <option value="amount" {% if sort_by == 'amount' %}selected{% endif %}>By Amount</option>
                     <option value="status" {% if sort_by == 'status' %}selected{% endif %}>By Status</option>
                 </select>
 
-                <button type="submit" class="filter-btn-submit">Search</button>
-                <a href="{{ url_for('admin.manage_orders') }}" class="filter-btn-reset">Reset</a>
+                <button type="submit" class="adm-btn cta"><i class="bi bi-search"></i> Search</button>
+                <a href="{{ url_for('admin.manage_orders') }}" class="adm-btn ghost">Reset</a>
             </div>
         </form>
 
         <!-- Quick Status Buttons -->
-        <div class="filter-buttons">
-            <a href="{{ url_for('admin.manage_orders', status='all') }}" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">
-                All Orders ({{ total_orders }})
-            </a>
-            <a href="{{ url_for('admin.manage_orders', status='Pending') }}" class="filter-btn {% if status_filter == 'Pending' %}active{% endif %}">
-                ⏳ Pending ({{ pending_count }})
-            </a>
-            <a href="{{ url_for('admin.manage_orders', status='Shipped') }}" class="filter-btn {% if status_filter == 'Shipped' %}active{% endif %}">
-                🚛 Shipped ({{ shipped_count }})
-            </a>
-            <a href="{{ url_for('admin.manage_orders', status='Delivered') }}" class="filter-btn {% if status_filter == 'Delivered' %}active{% endif %}">
-                ✅ Delivered ({{ delivered_count }})
-            </a>
+        <div class="adm-toolbar filter-buttons">
+            <div class="adm-tabs">
+                <a href="{{ url_for('admin.manage_orders', status='all') }}" class="adm-tab filter-btn {% if status_filter == 'all' %}active{% endif %}">
+                    <span class="mo-tab-label">All Orders</span> <span class="adm-count">{{ total_orders }}</span>
+                </a>
+                <a href="{{ url_for('admin.manage_orders', status='Pending') }}" class="adm-tab filter-btn {% if status_filter == 'Pending' %}active{% endif %}">
+                    <span class="mo-tab-label"><i class="bi bi-hourglass-split"></i> Pending</span> <span class="adm-count">{{ pending_count }}</span>
+                </a>
+                <a href="{{ url_for('admin.manage_orders', status='Shipped') }}" class="adm-tab filter-btn {% if status_filter == 'Shipped' %}active{% endif %}">
+                    <span class="mo-tab-label"><i class="bi bi-truck"></i> Shipped</span> <span class="adm-count">{{ shipped_count }}</span>
+                </a>
+                <a href="{{ url_for('admin.manage_orders', status='Delivered') }}" class="adm-tab filter-btn {% if status_filter == 'Delivered' %}active{% endif %}">
+                    <span class="mo-tab-label"><i class="bi bi-check-circle"></i> Delivered</span> <span class="adm-count">{{ delivered_count }}</span>
+                </a>
+            </div>
         </div>
-    </div>
 
-    <!-- Orders Table -->
-    <div class="table-container">
-        <div class="table-wrapper">
-            <table class="orders-table">
+        <!-- Orders Table -->
+        <div class="table-wrapper adm-table-wrap">
+            <table class="adm-table orders-table">
                 <thead>
                     <tr>
                         <th class="sortable" data-sort="id">
@@ -108,13 +136,13 @@
                 {% for order in orders %}
                 <tr class="order-row" data-status="{{ order.status }}" data-order-id="{{ order.id }}">
                     <td class="order-id">
-                    <div class="id-wrapper">
+                    <div class="id-wrapper mo-order-id">
                         <span class="id-hash">#</span>{{ order.id }}
                     </div>
                     </td>
                     <td class="item-details">
                     <div class="item-info">
-                        <ul>
+                        <ul class="mo-items">
                         {% for order_item in order.items %}
                             <li>{{ order_item.item.item_number }} × {{ order_item.item.name }}</li>
                         {% endfor %}
@@ -128,54 +156,65 @@
                     </td>
                     <td class="delivery-info">
                     <div class="delivery-method">
-                        <span class="method-badge method-{{ order.delivery_method }}">
-                        {% if order.delivery_method == 'pickup' %}🏪{% else %}🚚{% endif %}
+                        <span class="adm-pill info method-badge method-{{ order.delivery_method }}">
+                        {% if order.delivery_method == 'pickup' %}<i class="bi bi-shop"></i>{% else %}<i class="bi bi-truck"></i>{% endif %}
                         {{ order.delivery_method|title }}
                         </span>
                     </div>
-                    <div class="delivery-details">
+                    <div class="delivery-details mo-delivery-details">
                         {% if order.delivery_method == 'pickup' %}
-                        <span class="pickup-location">{{ order.pickup_station.name }}</span>
-                        <span class="pickup-state">({{ order.pickup_station.state }})</span>
+                        <span class="pickup-location">{{ order.pickup_station.name if order.pickup_station else 'Station not assigned' }}</span>
+                        {% if order.pickup_station %}<span class="pickup-state">({{ order.pickup_station.state }})</span>{% endif %}
                         {% else %}
                         <span class="delivery-address">{{ order.delivery_address }}</span>
                         {% endif %}
                     </div>
                     </td>
                     <td class="status-cell">
-                    <span class="status-badge status-{{ order.status|lower }}">
-                        {% if order.status == 'Pending' %}⏳
-                        {% elif order.status == 'Shipped' %}🚛
-                        {% elif order.status == 'Out for Delivery' %}🚚
-                        {% elif order.status == 'Delivered' %}✅
-                        {% elif order.status == 'Cancelled' %}❌
+                    <span class="adm-pill status-badge status-{{ order.status|lower|replace(' ', '-') }}
+                        {% if order.status == 'Pending' %}warn
+                        {% elif order.status == 'Delivered' %}ok
+                        {% elif order.status == 'Cancelled' %}bad
+                        {% else %}info{% endif %}">
+                        {% if order.status == 'Pending' %}<i class="bi bi-hourglass-split"></i>
+                        {% elif order.status == 'Ready for Pickup' %}<i class="bi bi-shop"></i>
+                        {% elif order.status == 'Shipped' %}<i class="bi bi-truck"></i>
+                        {% elif order.status == 'Out for Delivery' %}<i class="bi bi-geo-alt"></i>
+                        {% elif order.status == 'Delivered' %}<i class="bi bi-check-circle"></i>
+                        {% elif order.status == 'Cancelled' %}<i class="bi bi-x-circle"></i>
                         {% endif %}
                         {{ order.status }}
                     </span>
                     {% if order.status == 'Cancelled' and order.cancellation_reason %}
-                    <div style="margin-top: 8px; font-size: 0.85rem; color: #666; font-style: italic; padding: 8px; background: rgba(0,0,0,0.02); border-radius: 4px; border-left: 3px solid #e74c3c;">
-                        <strong style="display: block; color: #333; margin-bottom: 4px;">Reason:</strong>
+                    <div class="mo-reason">
+                        <strong>Reason:</strong>
                         {{ order.cancellation_reason }}
                     </div>
                     {% endif %}
                     </td>
                     <td class="actions-cell">
                     {% if order.status != 'Delivered' and order.status != 'Cancelled' %}
+                      {% if order.reservation and order.delivery_method == 'home delivery' and order.reservation.delivery_fee_status != 'paid' %}
+                        <span class="adm-pill warn status-complete">Waiting for delivery-fee payment</span>
+                      {% else %}
                         <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="action-btn">
-                            {% if order.status == 'Pending' %} Mark as Shipped 🚚
-                            {% elif order.status == 'Shipped' %} Mark as Out for Delivery 🚚
-                            {% elif order.status == 'Out for Delivery' %} Mark as Delivered ✅
+                        <button type="submit" class="adm-btn cta sm action-btn">
+                            {% if order.reservation and order.delivery_method == 'pickup' and order.status == 'Pending' %}<i class="bi bi-shop"></i> Mark Ready for Pickup
+                            {% elif order.status == 'Ready for Pickup' %}<i class="bi bi-check-circle"></i> Mark as Collected
+                            {% elif order.status == 'Pending' %}<i class="bi bi-truck"></i> Mark as Shipped
+                            {% elif order.status == 'Shipped' %}<i class="bi bi-geo-alt"></i> Mark as Out for Delivery
+                            {% elif order.status == 'Out for Delivery' %}<i class="bi bi-check-circle"></i> Mark as Delivered
                             {% endif %}
                         </button>
                         </form>
+                      {% endif %}
                     {% else %}
-                        <span class="status-complete">✔</span>
+                        <span class="mo-done status-complete"><i class="bi bi-check-lg"></i></span>
                     {% endif %}
                     </td>
                     <td class="date-cell">
-                    <div class="date-info">
+                    <div class="date-info mo-date">
                         <span class="date">{{ order.date_ordered.strftime('%b %d, %Y') }}</span>
                         <span class="time">{{ order.date_ordered.strftime('%H:%M') }}</span>
                     </div>
@@ -186,20 +225,27 @@
             </table>
         </div>
 
+        <!-- Empty State (hidden by default) -->
+        <div class="empty-state adm-empty" id="emptyState" style="display: none;">
+            <i class="bi bi-inbox"></i>
+            <h6>No orders found</h6>
+            <p class="mb-0">Try adjusting your search or filter criteria</p>
+        </div>
+
         <!-- Pagination Controls -->
         {% if pagination.pages > 1 %}
-        <nav aria-label="Order pagination" class="pagination-section">
+        <nav aria-label="Order pagination" class="adm-panel-foot mo-foot pagination-section">
             <div class="pagination-info">
                 Showing <strong>{{ pagination.start }} - {{ pagination.end }}</strong> of <strong>{{ pagination.total }}</strong> orders
             </div>
-            
-            <ul class="pagination-list">
+
+            <ul class="pagination pagination-list flex-wrap">
                 <!-- Previous Page -->
                 {% if pagination.has_prev %}
-                    <li>
-                        <a href="{{ url_for('admin.manage_orders', page=pagination.prev_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}" 
-                           class="pagination-link">
-                            ← Previous
+                    <li class="page-item">
+                        <a href="{{ url_for('admin.manage_orders', page=pagination.prev_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}"
+                           class="page-link pagination-link">
+                            <i class="bi bi-chevron-left"></i> Previous
                         </a>
                     </li>
                 {% endif %}
@@ -208,26 +254,26 @@
                 {% for page_num in pagination.iter_pages(left_margin=1, right_margin=1) %}
                     {% if page_num %}
                         {% if page_num == pagination.page %}
-                            <li><span class="pagination-link active">{{ page_num }}</span></li>
+                            <li class="page-item active"><span class="page-link pagination-link active">{{ page_num }}</span></li>
                         {% else %}
-                            <li>
-                                <a href="{{ url_for('admin.manage_orders', page=page_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}" 
-                                   class="pagination-link">
+                            <li class="page-item">
+                                <a href="{{ url_for('admin.manage_orders', page=page_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}"
+                                   class="page-link pagination-link">
                                     {{ page_num }}
                                 </a>
                             </li>
                         {% endif %}
                     {% else %}
-                        <li><span class="pagination-link">...</span></li>
+                        <li class="page-item disabled"><span class="page-link pagination-link">...</span></li>
                     {% endif %}
                 {% endfor %}
 
                 <!-- Next Page -->
                 {% if pagination.has_next %}
-                    <li>
-                        <a href="{{ url_for('admin.manage_orders', page=pagination.next_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}" 
-                           class="pagination-link">
-                            Next →
+                    <li class="page-item">
+                        <a href="{{ url_for('admin.manage_orders', page=pagination.next_num, search=search, status=status_filter, delivery=delivery_filter, sort_by=sort_by) }}"
+                           class="page-link pagination-link">
+                            Next <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>
                 {% endif %}
@@ -235,931 +281,7 @@
         </nav>
         {% endif %}
     </div>
-
-    <!-- Empty State (hidden by default) -->
-    <div class="empty-state" id="emptyState" style="display: none;">
-        <div class="empty-icon">📭</div>
-        <h3>No orders found</h3>
-        <p>Try adjusting your search or filter criteria</p>
-    </div>
 </div>
-
-<style>
-* {
-    box-sizing: border-box;
-}
-
-.order-management-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: linear-gradient(135deg, #f0f4f8 0%, #f9fafb 100%);
-    min-height: 100vh;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-/* Header Section */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 2.5rem;
-    background: white;
-    padding: 2.5rem;
-    border-radius: 20px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(255, 122, 0, 0.1);
-}
-
-.header-content {
-    flex: 1;
-}
-
-.page-title {
-    margin: 0 0 0.5rem 0;
-    color: #1a1a1a;
-    font-size: 2.2rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.title-icon {
-    font-size: 2rem;
-    background: none;
-    -webkit-text-fill-color: unset;
-}
-
-.page-subtitle {
-    color: #666;
-    font-size: 1rem;
-    margin: 0;
-    font-weight: 500;
-}
-
-.header-stats {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-    color: white;
-    padding: 1.75rem 2rem;
-    border-radius: 16px;
-    text-align: center;
-    min-width: 140px;
-    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.25);
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(255, 122, 0, 0.35);
-}
-
-.stat-number {
-    font-size: 2rem;
-    font-weight: 800;
-    margin-bottom: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.85rem;
-    opacity: 0.95;
-    font-weight: 500;
-}
-
-/* Filters Section */
-.filters-section {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-}
-
-.filter-form {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-end;
-    flex: 1;
-    flex-wrap: wrap;
-}
-
-.search-box {
-    position: relative;
-    flex: 1;
-    min-width: 320px;
-}
-
-.filter-controls {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    flex: 1;
-    align-items: flex-end;
-}
-
-.filter-select {
-    padding: 0.9rem 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 14px;
-    background: white;
-    color: #333;
-}
-
-.filter-select:focus {
-    outline: none;
-    border-color: #ff7a00;
-    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.1);
-}
-
-.filter-select:hover {
-    border-color: #ff7a00;
-}
-
-.filter-btn-submit {
-    padding: 0.9rem 1.5rem;
-    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-}
-
-.filter-btn-submit:hover {
-    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.25);
-    transform: translateY(-2px);
-}
-
-.filter-btn-reset {
-    padding: 0.9rem 1.2rem;
-    background: white;
-    color: #666;
-    border: 2px solid #e5e7eb;
-    border-radius: 14px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    display: inline-block;
-}
-
-.filter-btn-reset:hover {
-    border-color: #ff7a00;
-    color: #ff7a00;
-    background: #fff5f0;
-}
-
-.search-input {
-    width: 100%;
-    padding: 0.9rem 3rem 0.9rem 1.2rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 14px;
-    font-size: 0.95rem;
-    background: white;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    color: #1a1a1a;
-}
-
-.search-input::placeholder {
-    color: #9ca3af;
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: #ff7a00;
-    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.1);
-}
-
-.search-icon {
-    position: absolute;
-    right: 1.2rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    pointer-events: none;
-}
-
-.filter-buttons {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.filter-btn {
-    padding: 0.8rem 1.2rem;
-    border: 2px solid #e5e7eb;
-    background: white;
-    color: #666;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-}
-
-.filter-btn:hover {
-    border-color: #ff7a00;
-    background: #fff5f0;
-    color: #ff7a00;
-}
-
-.filter-btn.active {
-    background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-    border-color: transparent;
-    color: white;
-    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.25);
-}
-
-/* Table Container */
-.table-container {
-    background: white;
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid #f0f0f0;
-}
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-.orders-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.orders-table thead th {
-    background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
-    padding: 1.25rem 1.25rem;
-    text-align: left;
-    font-weight: 700;
-    color: #1a1a1a;
-    border-bottom: 2px solid #f0f0f0;
-    white-space: nowrap;
-    font-size: 0.9rem;
-}
-
-.sortable {
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.sortable:hover {
-    background: linear-gradient(180deg, #f0f0f0 0%, #efefef 100%);
-    color: #ff7a00;
-}
-
-.sort-indicator {
-    margin-left: 0.5rem;
-    opacity: 0.4;
-    font-size: 0.75rem;
-}
-
-.order-row {
-    transition: all 0.2s ease;
-    border-bottom: 1px solid #f9fafb;
-}
-
-.order-row:hover {
-    background: #fafafa;
-    box-shadow: inset 0 0 8px rgba(255, 122, 0, 0.05);
-}
-
-.order-row:last-child {
-    border-bottom: none;
-}
-
-.orders-table td {
-    padding: 1.1rem 1.25rem;
-    vertical-align: middle;
-}
-
-/* Order ID */
-.order-id {
-    font-weight: 800;
-    color: #ff7a00;
-    font-size: 1rem;
-}
-
-.id-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.id-hash {
-    color: #999;
-    font-weight: 400;
-}
-
-/* Item Details */
-.item-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.item-info ul {
-    margin: 0;
-    padding-left: 1.2rem;
-}
-
-.item-info li {
-    color: #374151;
-    font-weight: 500;
-    line-height: 1.5;
-}
-
-.item-name {
-    font-weight: 600;
-    color: #1a1a1a;
-    line-height: 1.4;
-}
-
-/* Buyer Info */
-.buyer-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.buyer-name {
-    font-weight: 700;
-    color: #1a1a1a;
-    font-size: 0.95rem;
-}
-
-/* Delivery Info */
-.delivery-info {
-    min-width: 200px;
-}
-
-.delivery-method {
-    margin-bottom: 0.75rem;
-}
-
-.method-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.9rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 700;
-}
-
-.method-pickup {
-    background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
-    color: #92400e;
-}
-
-.method-delivery {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #1e40af;
-}
-
-.delivery-details {
-    color: #666;
-    font-size: 0.85rem;
-    line-height: 1.5;
-    font-weight: 500;
-}
-
-.pickup-location {
-    font-weight: 700;
-    color: #1a1a1a;
-}
-
-.pickup-state {
-    color: #999;
-}
-
-/* Status */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.6rem 1rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.status-pending {
-    background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
-    color: #92400e;
-}
-
-.status-shipped {
-    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-    color: #1e40af;
-}
-
-.status-delivered {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    color: #065f46;
-}
-
-.status-cancelled {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    color: #991b1b;
-}
-
-/* Date */
-.date-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-
-.date {
-    font-weight: 700;
-    color: #1a1a1a;
-    font-size: 0.95rem;
-}
-
-.time {
-    font-size: 0.8rem;
-    color: #999;
-}
-
-/* Actions */
-.actions-cell {
-    min-width: 140px;
-}
-
-.action-btn {
-    padding: 0.7rem 1rem;
-    border: none;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-    width: 100%;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
-}
-
-.action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.status-complete {
-    display: inline-block;
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    color: #065f46;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: #999;
-    background: white;
-    border-radius: 18px;
-    border: 2px dashed #e5e7eb;
-}
-
-.empty-icon {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-    margin: 0 0 0.5rem 0;
-    color: #1a1a1a;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.empty-state p {
-    margin: 0;
-    color: #666;
-    font-weight: 500;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    .order-management-container {
-        padding: 1.5rem;
-    }
-    
-    .page-header {
-        padding: 1.5rem;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-    
-    .page-title {
-        font-size: 1.75rem;
-    }
-    
-    .title-icon {
-        font-size: 1.5rem;
-    }
-    
-    .header-stats {
-        gap: 1rem;
-    }
-    
-    .stat-card {
-        min-width: 110px;
-        padding: 1.25rem 1.5rem;
-    }
-    
-    .stat-number {
-        font-size: 1.5rem;
-    }
-    
-    .search-box {
-        min-width: 250px;
-    }
-}
-
-@media (max-width: 768px) {
-    .order-management-container {
-        padding: 1rem;
-    }
-    
-    .page-header {
-        flex-direction: column;
-        gap: 1.25rem;
-        padding: 1.25rem;
-        margin-bottom: 1.5rem;
-        border-radius: 16px;
-    }
-    
-    .page-title {
-        font-size: 1.5rem;
-        gap: 0.5rem;
-    }
-    
-    .title-icon {
-        font-size: 1.3rem;
-    }
-    
-    .page-subtitle {
-        font-size: 0.9rem;
-    }
-    
-    .header-stats {
-        justify-content: center;
-        gap: 1rem;
-        width: 100%;
-    }
-    
-    .stat-card {
-        min-width: 90px;
-        padding: 1rem 1.25rem;
-        border-radius: 12px;
-    }
-    
-    .stat-number {
-        font-size: 1.3rem;
-        margin-bottom: 0.2rem;
-    }
-    
-    .stat-label {
-        font-size: 0.75rem;
-    }
-    
-    .filters-section {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .search-box {
-        min-width: unset;
-    }
-    
-    .search-input {
-        padding: 0.8rem 2.5rem 0.8rem 1rem;
-        font-size: 0.9rem;
-        border-radius: 10px;
-    }
-    
-    .filter-buttons {
-        justify-content: flex-start;
-        gap: 0.5rem;
-    }
-    
-    .filter-btn {
-        padding: 0.7rem 1rem;
-        font-size: 0.85rem;
-        border-radius: 10px;
-    }
-    
-    .orders-table {
-        font-size: 0.85rem;
-    }
-    
-    .orders-table thead th {
-        padding: 1rem 0.75rem;
-        font-size: 0.8rem;
-    }
-    
-    .orders-table td {
-        padding: 0.9rem 0.75rem;
-    }
-    
-    .delivery-info {
-        min-width: 140px;
-    }
-    
-    .method-badge {
-        font-size: 0.75rem;
-        padding: 0.4rem 0.7rem;
-    }
-    
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 0.8rem;
-    }
-    
-    .action-btn {
-        padding: 0.6rem 0.9rem;
-        font-size: 0.8rem;
-    }
-    
-    .table-container {
-        border-radius: 14px;
-    }
-    
-    .empty-state {
-        padding: 3rem 1.5rem;
-        border-radius: 14px;
-    }
-    
-    .empty-icon {
-        font-size: 2.5rem;
-    }
-
-    /* Pagination styles */
-    .pagination-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1.5rem;
-        border-top: 1px solid #f0f0f0;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .pagination-info {
-        color: #666;
-        font-size: 0.9rem;
-        white-space: nowrap;
-    }
-
-    .pagination-list {
-        display: flex;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .pagination-link {
-        display: inline-block;
-        padding: 0.6rem 1rem;
-        border: 2px solid #e5e7eb;
-        background: white;
-        color: #666;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .pagination-link:hover {
-        border-color: #ff7a00;
-        color: #ff7a00;
-        background: #fff5f0;
-    }
-
-    .pagination-link.active {
-        background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-        border-color: transparent;
-        color: white;
-    }
-}
-
-@media (max-width: 480px) {
-    .order-management-container {
-        padding: 0.75rem;
-    }
-    
-    .page-header {
-        padding: 1rem;
-        border-radius: 12px;
-        margin-bottom: 1.25rem;
-    }
-    
-    .page-title {
-        font-size: 1.3rem;
-        gap: 0.4rem;
-    }
-    
-    .title-icon {
-        font-size: 1.1rem;
-    }
-    
-    .page-subtitle {
-        font-size: 0.8rem;
-    }
-    
-    .header-stats {
-        gap: 0.75rem;
-    }
-    
-    .stat-card {
-        min-width: 70px;
-        padding: 0.9rem 1rem;
-        border-radius: 10px;
-    }
-    
-    .stat-number {
-        font-size: 1.1rem;
-    }
-    
-    .stat-label {
-        font-size: 0.7rem;
-    }
-    
-    .filters-section {
-        gap: 0.75rem;
-        margin-bottom: 1.25rem;
-    }
-    
-    .search-input {
-        padding: 0.75rem 2.2rem 0.75rem 0.9rem;
-        font-size: 0.9rem;
-        border-radius: 8px;
-    }
-    
-    .search-icon {
-        right: 0.8rem;
-        font-size: 0.85rem;
-    }
-    
-    .filter-btn {
-        padding: 0.6rem 0.9rem;
-        font-size: 0.8rem;
-        border-radius: 8px;
-    }
-    
-    .table-container {
-        border-radius: 12px;
-    }
-    
-    .orders-table {
-        font-size: 0.8rem;
-    }
-    
-    .orders-table thead th {
-        padding: 0.8rem 0.6rem;
-        font-size: 0.7rem;
-    }
-    
-    .orders-table td {
-        padding: 0.75rem 0.6rem;
-    }
-    
-    .order-id {
-        font-size: 0.8rem;
-    }
-    
-    .delivery-info {
-        min-width: 100px;
-    }
-    
-    .delivery-details {
-        font-size: 0.75rem;
-    }
-    
-    .method-badge, .status-badge {
-        font-size: 0.65rem;
-        padding: 0.3rem 0.6rem;
-        gap: 0.3rem;
-    }
-    
-    .action-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
-        border-radius: 8px;
-    }
-    
-    .date-info .date {
-        font-size: 0.8rem;
-    }
-    
-    .date-info .time {
-        font-size: 0.7rem;
-    }
-    
-    .empty-state {
-        padding: 2.5rem 1rem;
-        border-radius: 12px;
-    }
-    
-    .empty-icon {
-        font-size: 2.5rem;
-        margin-bottom: 0.8rem;
-    }
-    
-    .empty-state h3 {
-        font-size: 1rem;
-    }
-    
-    .empty-state p {
-        font-size: 0.85rem;
-    }
-}
-
-/* Extra small screens */
-@media (max-width: 360px) {
-    .page-title {
-        font-size: 1.1rem;
-    }
-    
-    .title-icon {
-        font-size: 1rem;
-    }
-    
-    .stat-card {
-        min-width: 65px;
-        padding: 0.8rem 0.9rem;
-    }
-    
-    .stat-number {
-        font-size: 1rem;
-    }
-    
-    .stat-label {
-        font-size: 0.65rem;
-    }
-    
-    .filter-btn {
-        padding: 0.55rem 0.85rem;
-        font-size: 0.75rem;
-    }
-    
-    .orders-table thead th {
-        padding: 0.7rem 0.5rem;
-        font-size: 0.65rem;
-    }
-    
-    .orders-table td {
-        padding: 0.6rem 0.4rem;
-    }
-    
-    .method-badge, .status-badge {
-        font-size: 0.6rem;
-        padding: 0.25rem 0.5rem;
-    }
-    
-    .action-btn {
-        padding: 0.5rem 0.65rem;
-        font-size: 0.7rem;
-    }
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1277,15 +399,15 @@ document.addEventListener('DOMContentLoaded', function() {
             updateIndicator.id = 'realtimeIndicator';
             updateIndicator.style.cssText = `
                 position: fixed;
-                top: 20px;
+                bottom: 20px;
                 right: 20px;
-                padding: 12px 16px;
-                background: #10b981;
+                padding: 8px 14px;
+                background: #198754;
                 color: white;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 500;
-                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                border-radius: 999px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                box-shadow: 0 4px 12px rgba(15, 42, 71, 0.2);
                 z-index: 1000;
                 display: flex;
                 align-items: center;
@@ -1297,8 +419,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         eventSource.onopen = function() {
             console.log('[SSE] Connection established');
-            updateIndicator.innerHTML = '🟢 Live Updates Active';
-            updateIndicator.style.background = '#10b981';
+            updateIndicator.innerHTML = '<i class="bi bi-broadcast"></i> Live Updates Active';
+            updateIndicator.style.background = '#198754';
         };
 
         eventSource.onmessage = function(event) {
@@ -1321,8 +443,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         eventSource.onerror = function(error) {
             console.error('[SSE] Connection error:', error);
-            updateIndicator.innerHTML = '🔴 Live Updates Offline - Fallback to polling';
-            updateIndicator.style.background = '#ef4444';
+            updateIndicator.innerHTML = '<i class="bi bi-exclamation-circle"></i> Live Updates Offline - Fallback to polling';
+            updateIndicator.style.background = '#dc2626';
             
             // Close the connection and switch to polling
             eventSource.close();
@@ -1346,23 +468,23 @@ document.addEventListener('DOMContentLoaded', function() {
             'Delivered': data.delivered_count
         };
 
-        // Update quick filter buttons
+        // Update quick filter tabs (the count lives in its own .adm-count badge)
         const buttons = document.querySelectorAll('.filter-btn');
         buttons.forEach(btn => {
-            const text = btn.textContent;
+            const labelEl = btn.querySelector('.mo-tab-label');
+            const countEl = btn.querySelector('.adm-count');
+            if (!labelEl || !countEl) return;
+            const text = labelEl.textContent;
+
+            if (text.includes('All Orders')) {
+                countEl.textContent = data.total_orders;
+                return;
+            }
             for (const [status, count] of Object.entries(filterButtons)) {
                 if (text.includes(status)) {
-                    const countMatch = text.match(/\((\d+)\)/);
-                    if (countMatch) {
-                        btn.textContent = btn.textContent.replace(/\(\d+\)/, `(${count})`);
-                    }
+                    countEl.textContent = count;
                     break;
                 }
-            }
-            
-            // Update "All Orders" count
-            if (text.includes('All Orders')) {
-                btn.textContent = btn.textContent.replace(/\(\d+\)/, `(${data.total_orders})`);
             }
         });
 
@@ -1425,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const indicator = document.getElementById('realtimeIndicator');
                     if (indicator) {
                         const updateTime = new Date().toLocaleTimeString();
-                        indicator.textContent = `📊 Last update: ${updateTime}`;
+                        indicator.innerHTML = `<i class="bi bi-clock-history"></i> Last update: ${updateTime}`;
                     }
                 }
             } catch (error) {
@@ -1470,27 +592,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @keyframes statusPulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.6);
     }
     70% {
-        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 10px rgba(25, 135, 84, 0);
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
-}
-
-@keyframes updateBlink {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
+        box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
     }
 }
 
 #realtimeIndicator {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: inherit;
 }
 </style>
 

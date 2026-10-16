@@ -83,21 +83,44 @@
 
   .confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  .surrender-consent {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #334155;
+    font-size: 0.85rem;
+    line-height: 1.45;
+  }
+
+  .surrender-consent input { margin-right: 8px; }
+
   .empty-state { background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 30px 20px; text-align: center; color: #6b7280; }
 </style>
 
 <div class="page-container">
   <div class="main-content">
     <div class="page-header">
-      <h1 class="page-title">🧺 Choose Items to Back This Purchase</h1>
-      <p class="page-subtitle">Select one or more of your own activated items worth enough to cover "{{ item.name }}".</p>
+      <h1 class="page-title">🧺 Reserve This Purchase</h1>
+      <p class="page-subtitle">Choose how to fund "{{ item.name }}" and where you want it routed.</p>
     </div>
 
     <div class="target-banner">Target: ᗸ{{ '{:,.0f}'.format(item.value) }} for "{{ item.name }}"</div>
 
-    {% if eligible_items %}
-      <form method="POST" action="{{ url_for('marketplace.reserve_item', item_id=item.id) }}" id="backingForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <form method="POST" action="{{ url_for('marketplace.reserve_item', item_id=item.id) }}" id="backingForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <fieldset class="surrender-consent">
+        <legend>Funding</legend>
+        {% if eligible_items %}
+          <label><input type="radio" name="funding_mode" value="item_backed" checked> Use provisional BXC backed by my items</label>
+        {% endif %}
+        <label><input type="radio" name="funding_mode" value="spendable" {% if not eligible_items %}checked{% endif %}>
+          Use spendable BXC (available: ᗸ{{ '{:,.0f}'.format(current_user.credits or 0) }})
+        </label>
+      </fieldset>
+
+      <div id="backingAssets" {% if not eligible_items %}hidden{% endif %}>
+        {% if eligible_items %}
         <div class="asset-list">
           {% for asset in eligible_items %}
             <label class="asset-card">
@@ -116,15 +139,51 @@
           {% endfor %}
         </div>
 
-        <div class="running-total insufficient" id="runningTotal">
-          Selected: ᗸ0 / ᗸ{{ '{:,.0f}'.format(item.value) }}
-          <button type="submit" class="confirm-btn" id="confirmBtn" disabled>Confirm &amp; Reserve</button>
+        <label class="surrender-consent" id="surrenderConsentLabel">
+          <input type="checkbox" name="surrender_consent" value="yes" id="surrenderConsent">
+          I agree that each selected backing item that passes physical verification will become Barter Express
+          property for resale if "{{ item.name }}" also passes inspection. Its verified BXC value will be credited
+          to me; ᗸ{{ '{:,.0f}'.format(item.value) }} for the displayed purchase price will be held until this
+          reservation resolves. If "{{ item.name }}" fails inspection, you will ask me again before transferring
+          title. If I decline or do not respond within 24 hours, my verified backing item(s) remain mine and their
+          original provisional BXC is restored.
+        </label>
+        {% endif %}
+      </div>
+
+      <fieldset class="surrender-consent">
+        <legend>Delivery or pickup</legend>
+        <label><input type="radio" name="delivery_method" value="pickup" {% if stations %}checked{% else %}disabled{% endif %}> Pickup station</label>
+        <label><input type="radio" name="delivery_method" value="home delivery" {% if not stations %}checked{% endif %}> Home service</label>
+        <div id="pickupStationFields">
+          {% if stations %}
+            <label for="pickupStation">Pickup station</label>
+            <select name="pickup_station_id" id="pickupStation">
+              <option value="">Choose a station</option>
+              {% for station in stations %}
+                <option value="{{ station.id }}">{{ station.name }} — {{ station.city }}, {{ station.state }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <p>No pickup stations are available in your state; choose home service.</p>
+          {% endif %}
         </div>
-      </form>
-    {% else %}
+        <div id="homeAddressFields" hidden>
+          <label for="deliveryAddress">Home delivery address</label>
+          <input type="text" name="delivery_address" id="deliveryAddress" value="{{ current_user.address or '' }}" maxlength="200">
+          <p>Barter Express will quote the non-refundable home-service fee after you submit this address. You must accept and pay the quote through Paystack before pickup or dispatch.</p>
+        </div>
+      </fieldset>
+
+      <div class="running-total insufficient" id="runningTotal" {% if not eligible_items %}hidden{% endif %}>
+          Selected: ᗸ0 / ᗸ{{ '{:,.0f}'.format(item.value) }}
+      </div>
+      <button type="submit" class="confirm-btn" id="confirmBtn"
+              data-spendable-balance="{{ current_user.credits or 0 }}">Confirm &amp; Reserve</button>
+    </form>
+    {% if not eligible_items and (current_user.credits or 0) < (item.value or 0) %}
       <div class="empty-state">
-        <p>You don't have any activated items available right now.</p>
-        <p>Upload and activate an item first to earn purchasing power.</p>
+        <p>You don't have eligible provisional backing items or enough spendable BXC for this purchase.</p>
       </div>
     {% endif %}
   </div>
@@ -135,18 +194,48 @@
   const checkboxes = document.querySelectorAll('.asset-checkbox');
   const runningTotal = document.getElementById('runningTotal');
   const confirmBtn = document.getElementById('confirmBtn');
+  const spendableBalance = parseFloat(confirmBtn.dataset.spendableBalance || '0');
+  const surrenderConsent = document.getElementById('surrenderConsent');
+  const fundingInputs = document.querySelectorAll('input[name="funding_mode"]');
+  const deliveryInputs = document.querySelectorAll('input[name="delivery_method"]');
+  const stationSelect = document.getElementById('pickupStation');
+  const deliveryAddress = document.getElementById('deliveryAddress');
+
+  function selectedValue(inputs) {
+    return Array.from(inputs).find(input => input.checked)?.value;
+  }
 
   function updateTotal() {
     let total = 0;
     checkboxes.forEach(cb => { if (cb.checked) total += parseFloat(cb.dataset.value || '0'); });
-    const sufficient = total >= target;
+    const itemBacked = selectedValue(fundingInputs) === 'item_backed';
+    const deliveryMethod = selectedValue(deliveryInputs);
+    const sufficient = itemBacked ? total >= target : spendableBalance >= target;
+    const consented = !itemBacked || (surrenderConsent && surrenderConsent.checked);
+    const stationSelected = deliveryMethod !== 'pickup' || !stationSelect || stationSelect.value !== '';
+    const addressEntered = deliveryMethod !== 'home delivery' || (deliveryAddress && deliveryAddress.value.trim() !== '');
+    document.getElementById('backingAssets').hidden = !itemBacked;
+    checkboxes.forEach(checkbox => { checkbox.disabled = !itemBacked; });
+    if (surrenderConsent) surrenderConsent.disabled = !itemBacked;
+    runningTotal.hidden = !itemBacked;
+    document.getElementById('pickupStationFields').hidden = deliveryMethod !== 'pickup';
+    document.getElementById('homeAddressFields').hidden = deliveryMethod !== 'home delivery';
+    if (stationSelect) stationSelect.required = deliveryMethod === 'pickup';
+    if (deliveryAddress) deliveryAddress.required = deliveryMethod === 'home delivery';
     runningTotal.classList.toggle('sufficient', sufficient);
     runningTotal.classList.toggle('insufficient', !sufficient);
-    confirmBtn.disabled = !sufficient;
-    runningTotal.childNodes[0].textContent = `Selected: ᗸ${total.toLocaleString()} / ᗸ${target.toLocaleString()} `;
+    confirmBtn.disabled = !sufficient || !consented || !stationSelected || !addressEntered;
+    if (itemBacked) {
+      runningTotal.childNodes[0].textContent = `Selected: ᗸ${total.toLocaleString()} / ᗸ${target.toLocaleString()} `;
+    }
   }
 
   checkboxes.forEach(cb => cb.addEventListener('change', updateTotal));
+  fundingInputs.forEach(input => input.addEventListener('change', updateTotal));
+  deliveryInputs.forEach(input => input.addEventListener('change', updateTotal));
+  if (surrenderConsent) surrenderConsent.addEventListener('change', updateTotal);
+  if (stationSelect) stationSelect.addEventListener('change', updateTotal);
+  if (deliveryAddress) deliveryAddress.addEventListener('input', updateTotal);
   updateTotal();
 </script>
 {% endblock %}

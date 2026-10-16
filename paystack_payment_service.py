@@ -10,7 +10,7 @@ import hashlib
 import hmac
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from models import Payment, User, CreditTransaction
+from models import Notification, Payment, Reservation, User, CreditTransaction
 from app import db
 
 load_dotenv()
@@ -35,6 +35,181 @@ class PaystackPaymentService:
     # Minimum and maximum amounts (in Naira)
     MIN_AMOUNT = 100  # Minimum ₦100
     MAX_AMOUNT = 1000000  # Maximum ₦1,000,000
+
+    @staticmethod
+    def initiate_delivery_fee_payment(reservation, user):
+        """Create a Paystack charge for a quoted reservation delivery fee, not account credits."""
+        if reservation.user_id != user.id:
+            return {'success': False, 'error': 'You can only pay delivery fees for your own reservation.'}
+        if reservation.delivery_method != 'home delivery':
+            return {'success': False, 'error': 'This reservation does not require a home-service fee.'}
+        if reservation.delivery_fee_status not in ('awaiting_payment', 'paid'):
+            return {'success': False, 'error': 'There is no accepted delivery quote to pay.'}
+        if reservation.delivery_fee_status == 'paid':
+            return {'success': False, 'error': 'The delivery fee has already been paid.'}
+
+        amount_naira = float(reservation.delivery_quote_naira or 0)
+        if not PaystackPaymentService.MIN_AMOUNT <= amount_naira <= PaystackPaymentService.MAX_AMOUNT:
+            return {'success': False, 'error': 'The delivery quote is outside Paystack payment limits.'}
+
+        existing = Payment.query.filter_by(
+            reservation_id=reservation.id,
+            purpose='reservation_delivery_fee',
+        ).filter(Payment.status.in_(('pending', 'test_pending'))).order_by(
+            Payment.created_at.desc()
+        ).first()
+        if existing:
+            payment_link = None
+            if existing.status == 'test_pending':
+                payment_link = f'/payments/verify-payment/{existing.paystack_reference}?test=true'
+            else:
+                payment_link = (
+                    (existing.payment_metadata or {}).get('paystack_response', {}).get('authorization_url')
+                )
+            if payment_link:
+                return {
+                    'success': True,
+                    'payment_link': payment_link,
+                    'reference': existing.paystack_reference,
+                    'payment_id': existing.id,
+                }
+            return {'success': False, 'error': 'The pending Paystack payment link is unavailable.'}
+
+        payment = Payment(
+            user_id=user.id,
+            amount_naira=amount_naira,
+            credits_purchased=0,
+            status='pending',
+            purpose='reservation_delivery_fee',
+            reservation_id=reservation.id,
+            customer_email=user.email,
+            customer_phone=user.phone_number,
+            expires_at=datetime.utcnow() + timedelta(hours=24),
+        )
+        metadata = {
+            'purpose': 'reservation_delivery_fee',
+            'reservation_id': reservation.id,
+        }
+
+        if PaystackPaymentService.TEST_MODE:
+            import uuid
+            reference = f'TEST_{uuid.uuid4().hex[:12].upper()}'
+            payment.paystack_reference = reference
+            payment.status = 'test_pending'
+            payment.payment_metadata = {'mode': 'test', **metadata}
+            db.session.add(payment)
+            db.session.commit()
+            return {
+                'success': True,
+                'payment_link': f'/payments/verify-payment/{reference}?test=true',
+                'reference': reference,
+                'payment_id': payment.id,
+                'test_mode': True,
+            }
+
+        import uuid
+        reference = f'barterex_delivery_{reservation.id}_{uuid.uuid4().hex[:12]}'
+        payment.paystack_reference = reference
+        db.session.add(payment)
+        db.session.commit()
+        payload = {
+            'email': user.email,
+            'amount': int(round(amount_naira * 100)),
+            'currency': 'NGN',
+            'reference': reference,
+            'callback_url': PaystackPaymentService.CALLBACK_URL,
+            'metadata': metadata,
+        }
+        try:
+            response = requests.post(
+                f'{PaystackPaymentService.BASE_URL}/transaction/initialize',
+                json=payload,
+                headers=PaystackPaymentService.get_auth_header(),
+                timeout=30,
+            )
+        except requests.RequestException as error:
+            payment.error_message = f'Paystack initialization outcome is unknown: {error}'
+            db.session.commit()
+            return {
+                'success': False,
+                'error': 'Paystack could not confirm payment initialization. Contact support before retrying.',
+            }
+
+        try:
+            data = response.json() if response.text else {}
+        except ValueError as error:
+            payment.error_message = f'Paystack returned an invalid initialization response: {error}'
+            db.session.commit()
+            return {
+                'success': False,
+                'error': 'Paystack returned an invalid response. Contact support before retrying.',
+            }
+        if response.status_code != 200 or not data.get('status'):
+            payment.status = 'failed'
+            payment.error_message = data.get(
+                'message',
+                f'Payment initialization failed (HTTP {response.status_code})',
+            )
+            db.session.commit()
+            return {
+                'success': False,
+                'error': payment.error_message,
+            }
+
+        response_data = data.get('data', {})
+        authorization_url = response_data.get('authorization_url')
+        if not authorization_url:
+            payment.error_message = 'Paystack did not return an authorization URL.'
+            db.session.commit()
+            return {
+                'success': False,
+                'error': 'Paystack did not return a payment link. Contact support before retrying.',
+            }
+        payment.paystack_reference = response_data.get('reference', reference)
+        payment.payment_metadata = {
+            **metadata,
+            'paystack_response': response_data,
+        }
+        db.session.add(payment)
+        db.session.commit()
+        return {
+            'success': True,
+            'payment_link': authorization_url,
+            'reference': payment.paystack_reference,
+            'payment_id': payment.id,
+        }
+
+    @staticmethod
+    def _complete_delivery_fee_payment(payment, payment_method):
+        reservation = Reservation.query.filter_by(
+            id=payment.reservation_id,
+            user_id=payment.user_id,
+        ).with_for_update().first()
+        if not reservation:
+            raise ValueError('The reservation linked to this delivery payment no longer exists.')
+        if (
+            round(float(reservation.delivery_quote_naira or 0) * 100)
+            != round(float(payment.amount_naira) * 100)
+        ):
+            raise ValueError('The accepted delivery quote does not match this payment.')
+        if reservation.delivery_fee_status == 'paid':
+            payment.status = 'completed'
+            payment.paid_at = payment.paid_at or datetime.utcnow()
+            payment.payment_method = payment_method
+            return
+        if reservation.delivery_fee_status != 'awaiting_payment':
+            raise ValueError('This reservation is not waiting for delivery-fee payment.')
+        payment.status = 'completed'
+        payment.paid_at = datetime.utcnow()
+        payment.payment_method = payment_method
+        reservation.delivery_fee_status = 'paid'
+        db.session.add(Notification(
+            user_id=reservation.user_id,
+            message=(
+                f"Your non-refundable home-service fee for reservation {reservation.id} is paid. "
+                "Dispatch may proceed after verification succeeds."
+            ),
+        ))
     
     @staticmethod
     def get_auth_header():
@@ -218,10 +393,32 @@ class PaystackPaymentService:
             
             if not payment:
                 return {'success': False, 'error': 'Payment record not found'}
+
+            if payment.purpose == 'reservation_delivery_fee' and payment.status == 'completed':
+                return {
+                    'success': True,
+                    'message': 'Delivery fee payment already verified',
+                    'credits_added': 0,
+                    'new_balance': User.query.get(payment.user_id).credits,
+                }
             
             # TEST MODE: Auto-complete test payments
             if PaystackPaymentService.TEST_MODE and reference.startswith('TEST_'):
                 if payment.status == 'test_pending':
+                    if payment.purpose == 'reservation_delivery_fee':
+                        PaystackPaymentService._complete_delivery_fee_payment(payment, 'test_card')
+                        payment.payment_metadata = {
+                            **(payment.payment_metadata or {}),
+                            'verified': True,
+                        }
+                        db.session.commit()
+                        user = User.query.get(payment.user_id)
+                        return {
+                            'success': True,
+                            'message': 'Delivery fee payment verified',
+                            'credits_added': 0,
+                            'new_balance': user.credits,
+                        }
                     payment.status = 'completed'
                     payment.paid_at = datetime.utcnow()
                     payment.payment_method = 'test_card'
@@ -296,6 +493,32 @@ class PaystackPaymentService:
                     
                     # Check if payment was successful
                     if pay_status == 'success':
+                        if payment.purpose == 'reservation_delivery_fee':
+                            expected_amount = int(round(float(payment.amount_naira) * 100))
+                            if (
+                                response_data.get('currency') != 'NGN'
+                                or int(response_data.get('amount') or 0) != expected_amount
+                            ):
+                                payment.status = 'failed'
+                                payment.error_message = 'Verified transaction amount or currency does not match the delivery quote.'
+                                db.session.commit()
+                                return {
+                                    'success': False,
+                                    'error': payment.error_message,
+                                }
+                            PaystackPaymentService._complete_delivery_fee_payment(
+                                payment,
+                                response_data.get('channel', 'card'),
+                            )
+                            db.session.commit()
+                            user = User.query.get(payment.user_id)
+                            return {
+                                'success': True,
+                                'message': 'Delivery fee payment verified',
+                                'credits_added': 0,
+                                'new_balance': user.credits,
+                            }
+
                         payment.status = 'completed'
                         payment.paid_at = datetime.utcnow()
                         payment.payment_method = response_data.get('channel', 'card')  # card, bank_transfer, etc.
@@ -412,6 +635,7 @@ class PaystackPaymentService:
             'id': payment.id,
             'amount': payment.amount_naira,
             'credits': payment.credits_purchased,
+            'purpose': payment.purpose,
             'status': payment.status,
             'created_at': payment.created_at.isoformat(),
             'paid_at': payment.paid_at.isoformat() if payment.paid_at else None,
@@ -431,7 +655,8 @@ class PaystackPaymentService:
             list: Payment records
         """
         payments = Payment.query.filter_by(
-            user_id=user_id
+            user_id=user_id,
+            purpose='credit_purchase',
         ).order_by(
             Payment.created_at.desc()
         ).limit(limit).all()

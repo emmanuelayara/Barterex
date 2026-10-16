@@ -8,7 +8,19 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db, app
-from models import Item, Trade, Notification, CreditTransaction, User, ItemImage, Order, OrderItem
+from models import (
+    CreditTransaction,
+    Item,
+    ItemImage,
+    Notification,
+    Order,
+    OrderItem,
+    Reservation,
+    ReservationCreditEntry,
+    ReservationRevaluation,
+    Trade,
+    User,
+)
 from forms import UploadItemForm, ProfileUpdateForm, ChangePasswordForm, DeleteAccountForm
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, ValidationError, AuthorizationError, FileUploadError
@@ -141,7 +153,7 @@ def dashboard() -> Union[str, Response]:
 def user_items() -> Union[str, Response]:
     try:
         from services.freshness_service import deactivate_stale_items
-        deactivate_stale_items()  # hide any items overdue for their 30-day reconfirmation
+        deactivate_stale_items()
 
         page = request.args.get('page', 1, type=int)
         # Get items uploaded by the user, excluding items that were purchased (in OrderItem)
@@ -247,9 +259,54 @@ def my_trades():
 @handle_errors
 def credit_history():
     try:
+        from sqlalchemy import func
+        from models import ClearingInventoryItem, Payment, Reservation, ReservationAsset
+
         history = CreditTransaction.query.filter_by(user_id=current_user.id).order_by(CreditTransaction.timestamp.desc()).all()
-        logger.info(f"Credit history accessed - User: {current_user.username}, Transactions: {len(history)}")
-        return render_template('transaction_history.html', history=history)
+        reservation_credit_history = ReservationCreditEntry.query.filter_by(
+            user_id=current_user.id
+        ).order_by(ReservationCreditEntry.created_at.desc()).all()
+        reservations = Reservation.query.filter_by(user_id=current_user.id).options(
+            joinedload(Reservation.order),
+            joinedload(Reservation.pickup_station),
+        ).order_by(Reservation.created_at.desc()).all()
+        reservations_by_id = {reservation.id: reservation for reservation in reservations}
+        payments = Payment.query.filter_by(user_id=current_user.id).order_by(
+            Payment.created_at.desc()
+        ).all()
+        held_spendable = db.session.query(
+            func.coalesce(func.sum(Reservation.spendable_credits_held), 0)
+        ).filter(
+            Reservation.user_id == current_user.id,
+            Reservation.status.in_(('active', 'awaiting_consent')),
+        ).scalar()
+        provisional_backing_held = db.session.query(
+            func.coalesce(func.sum(ReservationAsset.reserved_provisional_amount), 0)
+        ).join(
+            Reservation, ReservationAsset.reservation_id == Reservation.id
+        ).filter(
+            Reservation.user_id == current_user.id,
+            Reservation.status.in_(('active', 'awaiting_consent')),
+            ReservationAsset.verification_status.in_(('not_submitted', 'submitted', 'passed')),
+            ReservationAsset.excluded_from_settlement.is_(False),
+            ~ReservationAsset.id.in_(
+                db.session.query(ClearingInventoryItem.reservation_asset_id)
+            ),
+        ).scalar()
+        logger.info(
+            f"Credit history accessed - User: {current_user.username}, "
+            f"Spendable transactions: {len(history)}, provisional entries: {len(reservation_credit_history)}, "
+            f"payments: {len(payments)}"
+        )
+        return render_template(
+            'transaction_history.html',
+            history=history,
+            reservation_credit_history=reservation_credit_history,
+            reservations_by_id=reservations_by_id,
+            payments=payments,
+            held_spendable=int(held_spendable or 0),
+            provisional_backing_held=int(provisional_backing_held or 0),
+        )
     except Exception as e:
         logger.error(f"Error loading credit history for user {current_user.username}: {str(e)}", exc_info=True)
         flash('An error occurred while loading your credit history.', 'danger')
@@ -465,8 +522,18 @@ def my_valuations():
             Item.user_id == current_user.id,
             Item.status.in_(Item.LIFECYCLE_STATUSES)
         ).options(joinedload(Item.images)).order_by(Item.id.desc()).paginate(page=page, per_page=10)
+        from services.video_service import (
+            MAX_VIDEO_DURATION_SECONDS,
+            MAX_VIDEO_SIZE_BYTES,
+        )
+
         logger.info(f"My Valuations accessed - User: {current_user.username}, Count: {items.total}")
-        return render_template('my_valuations.html', items=items)
+        return render_template(
+            'my_valuations.html',
+            items=items,
+            max_video_duration_seconds=MAX_VIDEO_DURATION_SECONDS,
+            max_video_size_bytes=MAX_VIDEO_SIZE_BYTES,
+        )
     except Exception as e:
         logger.error(f"Error loading valuations for user {current_user.username}: {str(e)}", exc_info=True)
         flash('An error occurred while loading your valuations.', 'danger')
@@ -480,19 +547,175 @@ def my_reservations():
     try:
         from models import Reservation
         from services.reservation_service import release_expired_reservations
-
         release_expired_reservations()  # clear any stale holds before listing
 
         page = request.args.get('page', 1, type=int)
         reservations = Reservation.query.filter_by(user_id=current_user.id).options(
             joinedload(Reservation.item), joinedload(Reservation.backing_assets)
         ).order_by(Reservation.created_at.desc()).paginate(page=page, per_page=10)
+        from services.reservation_service import (
+            get_eligible_backing_items,
+            get_reservation_shortfall,
+        )
+
+        eligible_backing_items = get_eligible_backing_items(current_user)
+        eligible_backing_items_by_reservation = {
+            reservation.id: [
+                item for item in eligible_backing_items
+                if item.id not in {asset.item_id for asset in reservation.backing_assets}
+            ]
+            for reservation in reservations.items
+        }
+        reservation_shortfalls = {
+            reservation.id: get_reservation_shortfall(reservation)
+            for reservation in reservations.items
+        }
         logger.info(f"User reservations accessed - User: {current_user.username}, Reservations: {reservations.total}")
-        return render_template('my_reservations.html', reservations=reservations)
+        return render_template(
+            'my_reservations.html',
+            reservations=reservations,
+            eligible_backing_items_by_reservation=eligible_backing_items_by_reservation,
+            reservation_shortfalls=reservation_shortfalls,
+        )
     except Exception as e:
         logger.error(f"Error loading reservations for user {current_user.username}: {str(e)}", exc_info=True)
         flash('An error occurred while loading your reservations.', 'danger')
         return redirect(url_for('user.dashboard'))
+
+
+@user_bp.route('/my-revaluations')
+@login_required
+@handle_errors
+def my_revaluations():
+    from services.reservation_service import release_expired_reservations
+
+    release_expired_reservations()
+    proposals = ReservationRevaluation.query.join(Reservation).filter(
+        ReservationRevaluation.status == 'pending',
+        db.or_(
+            Reservation.user_id == current_user.id,
+            Reservation.item.has(Item.user_id == current_user.id),
+        ),
+    ).options(
+        joinedload(ReservationRevaluation.item),
+        joinedload(ReservationRevaluation.reservation).joinedload(Reservation.user),
+    ).order_by(ReservationRevaluation.decision_expires_at.asc()).all()
+    return render_template('my_revaluations.html', proposals=proposals)
+
+
+@user_bp.route('/reservation/<int:reservation_id>/revaluation/<int:revaluation_id>', methods=['POST'])
+@login_required
+@handle_errors
+def respond_to_reservation_revaluation(reservation_id, revaluation_id):
+    proposal = ReservationRevaluation.query.filter_by(
+        id=revaluation_id,
+        reservation_id=reservation_id,
+    ).first_or_404()
+    decision = request.form.get('decision')
+    if decision not in ('accept', 'decline'):
+        flash('Choose whether to accept or decline the revised value.', 'danger')
+        return redirect(url_for('user.my_revaluations'))
+
+    from services.reservation_service import respond_to_reservation_revaluation as respond
+
+    ok, error = respond(revaluation_id, current_user, accepted=(decision == 'accept'))
+    if error:
+        flash(error, 'danger')
+    else:
+        flash(
+            'Your decision was recorded. The reservation will update after both parties respond.'
+            if decision == 'accept'
+            else 'You declined the revised value; the reservation will be resolved using that decision.',
+            'success' if decision == 'accept' else 'info',
+        )
+    return redirect(url_for('user.my_revaluations'))
+
+
+@user_bp.route('/reservation/<int:reservation_id>/revaluation/cover-shortfall', methods=['POST'])
+@login_required
+@handle_errors
+def cover_reservation_revaluation_shortfall(reservation_id):
+    reservation = Reservation.query.filter_by(
+        id=reservation_id,
+        user_id=current_user.id,
+    ).first_or_404()
+    from services.reservation_service import cover_reservation_shortfall
+
+    ok, error = cover_reservation_shortfall(
+        reservation,
+        current_user,
+        request.form.get('amount', ''),
+    )
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Spendable BXC was held for this reservation.', 'success')
+    return redirect(url_for('user.my_reservations'))
+
+
+@user_bp.route('/reservation/<int:reservation_id>/revaluation/add-backing', methods=['POST'])
+@login_required
+@handle_errors
+def add_reservation_revaluation_backing(reservation_id):
+    reservation = Reservation.query.filter_by(
+        id=reservation_id,
+        user_id=current_user.id,
+    ).first_or_404()
+    from services.reservation_service import add_reservation_backing_assets
+
+    ok, error = add_reservation_backing_assets(
+        reservation,
+        current_user,
+        request.form.getlist('item_ids'),
+        consent_confirmed=request.form.get('consent_confirmed') == 'yes',
+    )
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Your additional items are held for the reservation and await physical verification.', 'success')
+    return redirect(url_for('user.my_reservations'))
+
+
+@user_bp.route('/reservation/<int:reservation_id>/title-transfer-consent', methods=['POST'])
+@login_required
+@handle_errors
+def respond_to_title_transfer(reservation_id):
+    reservation = Reservation.query.filter_by(
+        id=reservation_id, user_id=current_user.id
+    ).first_or_404()
+    decision = request.form.get('decision')
+    if decision not in ('accept', 'decline'):
+        flash('Choose whether or not to transfer title to your verified backing item(s).', 'danger')
+        return redirect(url_for('user.my_reservations'))
+
+    from services.reservation_service import respond_to_failed_seller_title_transfer
+
+    accepted = decision == 'accept'
+    ok, error = respond_to_failed_seller_title_transfer(reservation, current_user, accepted)
+    if error:
+        flash(error, 'danger')
+    elif accepted:
+        flash('Your verified backing item(s) were transferred to Barter Express and credited as spendable BXC.', 'success')
+    else:
+        flash('Your verified backing item(s) remain yours and their original provisional BXC was restored.', 'info')
+    return redirect(url_for('user.my_reservations'))
+
+
+@user_bp.route('/reservation/<int:reservation_id>/delivery-fee', methods=['POST'])
+@login_required
+@handle_errors
+def pay_reservation_delivery_fee(reservation_id):
+    reservation = Reservation.query.filter_by(
+        id=reservation_id,
+        user_id=current_user.id,
+    ).first_or_404()
+    from paystack_payment_service import PaystackPaymentService
+
+    result = PaystackPaymentService.initiate_delivery_fee_payment(reservation, current_user)
+    if not result.get('success'):
+        flash(result.get('error', 'Could not initialize the delivery-fee payment.'), 'danger')
+        return redirect(url_for('user.my_reservations'))
+    return redirect(result['payment_link'])
 
 
 @user_bp.route('/order/<int:order_id>')
@@ -579,6 +802,13 @@ def cancel_order(order_id):
             logger.warning(f"Unauthorized order cancellation attempt - User: {current_user.username}, Order: {order_id}")
             flash("You don't have access to cancel this order", 'danger')
             return redirect(url_for('user.user_orders'))
+
+        if order.reservation_id is not None:
+            flash(
+                'Reservation purchases cannot use standard order cancellation because their ownership and BXC were settled during verification. Contact support for help.',
+                'warning',
+            )
+            return redirect(url_for('user.view_order_details', order_id=order_id))
         
         # Verify order can be cancelled (must be pending and not shipped)
         if order.status.lower() not in ['pending', 'processing']:

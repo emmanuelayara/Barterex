@@ -1,480 +1,443 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
-<div class="container py-5">
-    <!-- Enhanced Header Section -->
-    <div class="header-section text-center mb-5">
-        <div class="header-icon mb-3">
-            <i class="bi bi-people-fill"></i>
+<div class="adm-page">
+    <div class="adm-head">
+        <div>
+            <h1>User Management</h1>
+            <p>Manage user accounts, permissions, and account status</p>
         </div>
-        <h1 class="display-5 fw-bold mb-3" style="color: #054e97;">User Management</h1>
-        <p class="lead text-muted">Manage user accounts, permissions, and account status</p>
-        
-        <!-- Quick Stats -->
-        <div class="row g-3 mt-4">
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-primary">
-                        <i class="bi bi-people"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">{{ total_users }}</h3>
-                        <p class="stat-label">Total Users</p>
-                    </div>
-                </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="adm-stat-grid">
+        <div class="adm-stat">
+            <div class="adm-stat-icon"><i class="bi bi-people"></i></div>
+            <div>
+                <div class="adm-stat-value stat-number">{{ total_users }}</div>
+                <div class="adm-stat-label">Total Users</div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-success">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">{{ total_users - banned_users }}</h3>
-                        <p class="stat-label">Active Users</p>
-                    </div>
-                </div>
+        </div>
+        <div class="adm-stat">
+            <div class="adm-stat-icon"><i class="bi bi-check-circle"></i></div>
+            <div>
+                <div class="adm-stat-value stat-number">{{ total_users - banned_users }}</div>
+                <div class="adm-stat-label">Active Users</div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-danger">
-                        <i class="bi bi-ban"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">{{ banned_users }}</h3>
-                        <p class="stat-label">Banned Users</p>
-                    </div>
-                </div>
+        </div>
+        <div class="adm-stat">
+            <div class="adm-stat-icon"><i class="bi bi-ban"></i></div>
+            <div>
+                <div class="adm-stat-value stat-number">{{ banned_users }}</div>
+                <div class="adm-stat-label">Banned Users</div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-warning">
-                        <i class="bi bi-exclamation-circle"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">{{ unverified_users }}</h3>
-                        <p class="stat-label">Unverified</p>
-                    </div>
-                </div>
+        </div>
+        <div class="adm-stat is-highlight">
+            <div class="adm-stat-icon"><i class="bi bi-exclamation-circle"></i></div>
+            <div>
+                <div class="adm-stat-value stat-number">{{ unverified_users }}</div>
+                <div class="adm-stat-label">Unverified</div>
             </div>
         </div>
     </div>
 
     <!-- Search and Filter Section -->
-    <div class="search-filter-section mb-5">
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-4">
-                <form method="GET" action="{{ url_for('admin.manage_users') }}" class="search-filter-form">
-                    <div class="row align-items-end g-3">
-                        <!-- Search Box -->
-                        <div class="col-md-5">
-                            <label for="searchInput" class="form-label text-muted small fw-600">Search</label>
-                            <div class="search-box">
-                                <i class="bi bi-search search-icon"></i>
-                                <input type="text" id="searchInput" name="search" class="form-control ps-5" 
-                                       placeholder="Username, email, or ID..." value="{{ search }}">
-                            </div>
-                        </div>
-
-                        <!-- Status Filter -->
-                        <div class="col-md-3">
-                            <label for="statusFilter" class="form-label text-muted small fw-600">Status</label>
-                            <select name="status" id="statusFilter" class="form-select">
-                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Users</option>
-                                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
-                                <option value="banned" {% if status_filter == 'banned' %}selected{% endif %}>Banned</option>
-                                <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>Unverified Email</option>
-                                <option value="appeal_pending" {% if status_filter == 'appeal_pending' %}selected{% endif %}>Appeal Pending</option>
-                            </select>
-                        </div>
-
-                        <!-- Sort Options -->
-                        <div class="col-md-2">
-                            <label for="sortBy" class="form-label text-muted small fw-600">Sort by</label>
-                            <select name="sort_by" id="sortBy" class="form-select">
-                                <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
-                                <option value="username" {% if sort_by == 'username' %}selected{% endif %}>Username</option>
-                                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Date Joined</option>
-                                <option value="credits" {% if sort_by == 'credits' %}selected{% endif %}>BXC</option>
-                            </select>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="col-md-2 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary flex-fill">
-                                <i class="bi bi-search me-1"></i>Search
-                            </button>
-                            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-secondary flex-fill">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Reset
-                            </a>
+    <div class="adm-panel">
+        <div class="adm-toolbar">
+            <!-- Quick Filter Buttons -->
+            <div class="adm-tabs">
+                <a href="{{ url_for('admin.manage_users', status='all') }}" class="adm-tab btn-filter {% if status_filter == 'all' %}active{% endif %}">
+                    <i class="bi bi-grid-3x3-gap"></i>All ({{ total_users }})
+                </a>
+                <a href="{{ url_for('admin.manage_users', status='active') }}" class="adm-tab btn-filter {% if status_filter == 'active' %}active{% endif %}">
+                    <i class="bi bi-check-circle"></i>Active ({{ total_users - banned_users }})
+                </a>
+                <a href="{{ url_for('admin.manage_users', status='banned') }}" class="adm-tab btn-filter {% if status_filter == 'banned' %}active{% endif %}">
+                    <i class="bi bi-ban"></i>Banned ({{ banned_users }})
+                </a>
+                <a href="{{ url_for('admin.manage_users', status='unverified') }}" class="adm-tab btn-filter {% if status_filter == 'unverified' %}active{% endif %}">
+                    <i class="bi bi-exclamation-circle"></i>Unverified ({{ unverified_users }})
+                </a>
+                <a href="{{ url_for('admin.manage_users', status='appeal_pending') }}" class="adm-tab btn-filter {% if status_filter == 'appeal_pending' %}active{% endif %}">
+                    <i class="bi bi-question-circle"></i>Appeals ({{ appeal_pending }})
+                </a>
+            </div>
+        </div>
+        <div class="adm-panel-body">
+            <form method="GET" action="{{ url_for('admin.manage_users') }}" class="search-filter-form">
+                <div class="um-filter-grid">
+                    <!-- Search Box -->
+                    <div class="adm-field">
+                        <label for="searchInput">Search</label>
+                        <div class="adm-search um-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="searchInput" name="search" class="form-control"
+                                   placeholder="Username, email, or ID..." value="{{ search }}">
                         </div>
                     </div>
-                </form>
 
-                <!-- Quick Filter Buttons -->
-                <div class="filter-buttons d-flex gap-2 justify-content-start mt-3 flex-wrap">
-                    <a href="{{ url_for('admin.manage_users', status='all') }}" class="btn btn-filter {% if status_filter == 'all' %}active{% endif %}">
-                        <i class="bi bi-grid-3x3-gap me-1"></i>All ({{ total_users }})
-                    </a>
-                    <a href="{{ url_for('admin.manage_users', status='active') }}" class="btn btn-filter {% if status_filter == 'active' %}active{% endif %}">
-                        <i class="bi bi-check-circle me-1"></i>Active ({{ total_users - banned_users }})
-                    </a>
-                    <a href="{{ url_for('admin.manage_users', status='banned') }}" class="btn btn-filter {% if status_filter == 'banned' %}active{% endif %}">
-                        <i class="bi bi-ban me-1"></i>Banned ({{ banned_users }})
-                    </a>
-                    <a href="{{ url_for('admin.manage_users', status='unverified') }}" class="btn btn-filter {% if status_filter == 'unverified' %}active{% endif %}">
-                        <i class="bi bi-exclamation-circle me-1"></i>Unverified ({{ unverified_users }})
-                    </a>
-                    <a href="{{ url_for('admin.manage_users', status='appeal_pending') }}" class="btn btn-filter {% if status_filter == 'appeal_pending' %}active{% endif %}">
-                        <i class="bi bi-question-circle me-1"></i>Appeals ({{ appeal_pending }})
-                    </a>
+                    <!-- Status Filter -->
+                    <div class="adm-field">
+                        <label for="statusFilter">Status</label>
+                        <select name="status" id="statusFilter" class="form-select">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Users</option>
+                            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                            <option value="banned" {% if status_filter == 'banned' %}selected{% endif %}>Banned</option>
+                            <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>Unverified Email</option>
+                            <option value="appeal_pending" {% if status_filter == 'appeal_pending' %}selected{% endif %}>Appeal Pending</option>
+                        </select>
+                    </div>
+
+                    <!-- Sort Options -->
+                    <div class="adm-field">
+                        <label for="sortBy">Sort by</label>
+                        <select name="sort_by" id="sortBy" class="form-select">
+                            <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
+                            <option value="username" {% if sort_by == 'username' %}selected{% endif %}>Username</option>
+                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Date Joined</option>
+                            <option value="credits" {% if sort_by == 'credits' %}selected{% endif %}>BXC</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="adm-field um-filter-actions">
+                        <button type="submit" class="adm-btn primary">
+                            <i class="bi bi-search"></i>Search
+                        </button>
+                        <a href="{{ url_for('admin.manage_users') }}" class="adm-btn ghost">
+                            <i class="bi bi-arrow-clockwise"></i>Reset
+                        </a>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
     <!-- All Users Section -->
-    <div class="users-section mb-5" id="allUsersSection">
-        <div class="section-header mb-4">
-            <h2 class="section-title">
-                <i class="bi bi-people me-2"></i>All Users
-                <span class="section-badge">{{ users|length }}</span>
-            </h2>
-        </div>
-        
-        <div class="enhanced-card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">User Directory</h5>
-                    <div class="header-actions">
-                        <button class="btn btn-sm btn-outline-primary" onclick="exportUsers()">
-                            <i class="bi bi-download me-1"></i>Export
-                        </button>
-                    </div>
-                </div>
+    <div class="adm-panel" id="allUsersSection">
+        <div class="adm-panel-head">
+            <div class="adm-panel-icon"><i class="bi bi-people"></i></div>
+            <div>
+                <h2>All Users <span class="adm-count">{{ users|length }}</span></h2>
+                <p>User Directory</p>
             </div>
-            <div class="card-body p-0">
-                <div class="table-container">
-                    <table class="table table-hover align-middle mb-0" id="usersTable">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="sortable" data-sort="id">
-                                    <div class="th-content">
-                                        <i class="bi bi-hash me-1"></i>ID
-                                        <i class="bi bi-chevron-expand sort-icon"></i>
-                                    </div>
-                                </th>
-                                <th class="sortable" data-sort="username">
-                                    <div class="th-content">
-                                        <i class="bi bi-person me-1"></i>Username
-                                        <i class="bi bi-chevron-expand sort-icon"></i>
-                                    </div>
-                                </th>
-                                <th class="sortable" data-sort="email">
-                                    <div class="th-content">
-                                        <i class="bi bi-envelope me-1"></i>Email
-                                        <i class="bi bi-chevron-expand sort-icon"></i>
-                                    </div>
-                                </th>
-                                <th class="sortable" data-sort="credits">
-                                    <div class="th-content">
-                                        <i class="bi bi-currency-exchange me-1"></i>BXC
-                                        <i class="bi bi-chevron-expand sort-icon"></i>
-                                    </div>
-                                </th>
-                                <th>
-                                    <div class="th-content">
-                                        <i class="bi bi-shield-check me-1"></i>Status
-                                    </div>
-                                </th>
-                                <th>
-                                    <div class="th-content">
-                                        <i class="bi bi-gear me-1"></i>Actions
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            <tr class="user-row" data-status="{{ 'banned' if user.is_banned else 'active' }}">
-                                <td>
-                                    <span class="user-id">#{{ user.id }}</span>
-                                </td>
-                                <td>
-                                    <div class="user-info">
-                                        <div class="user-avatar">
-                                            {% if user.profile_picture %}
-                                                <img src="{{ user.profile_picture | image_url }}" alt="{{ user.username }}" class="profile-img" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                                            {% else %}
-                                                {{ user.username[0].upper() }}
-                                            {% endif %}
-                                        </div>
-                                        <div class="user-details">
-                                            <div class="user-name">{{ user.username }}</div>
-                                            <div class="user-meta">ID: {{ user.id }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="email-container">
-                                        <i class="bi bi-envelope-fill me-2 text-muted"></i>
-                                        <span class="user-email">{{ user.email }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="credit-display">
-                                        <i class="bi bi-currency-exchange me-1 text-warning"></i>
-                                        <span class="credit-amount">ᗸ{{ "{:,.2f}".format(user.credits) }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if user.is_banned %}
-                                        <span class="status-badge status-banned">
-                                            <i class="bi bi-ban me-1"></i>Banned
-                                        </span>
+            <div class="adm-panel-actions">
+                <button class="adm-btn sm ghost" onclick="exportUsers()">
+                    <i class="bi bi-download"></i>Export
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container adm-table-wrap">
+            <table class="adm-table um-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="id">
+                            <div class="th-content">
+                                <i class="bi bi-hash me-1"></i>ID
+                                <i class="bi bi-chevron-expand sort-icon"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-sort="username">
+                            <div class="th-content">
+                                <i class="bi bi-person me-1"></i>Username
+                                <i class="bi bi-chevron-expand sort-icon"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-sort="email">
+                            <div class="th-content">
+                                <i class="bi bi-envelope me-1"></i>Email
+                                <i class="bi bi-chevron-expand sort-icon"></i>
+                            </div>
+                        </th>
+                        <th class="sortable" data-sort="credits">
+                            <div class="th-content">
+                                <i class="bi bi-currency-exchange me-1"></i>BXC
+                                <i class="bi bi-chevron-expand sort-icon"></i>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="th-content">
+                                <i class="bi bi-shield-check me-1"></i>Status
+                            </div>
+                        </th>
+                        <th>
+                            <div class="th-content">
+                                <i class="bi bi-gear me-1"></i>Actions
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="user-row" data-status="{{ 'banned' if user.is_banned else 'active' }}">
+                        <td>
+                            <span class="user-id adm-mono">#{{ user.id }}</span>
+                        </td>
+                        <td>
+                            <div class="user-info um-user">
+                                <div class="user-avatar um-avatar">
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture | image_url }}" alt="{{ user.username }}" class="profile-img">
                                     {% else %}
-                                        <span class="status-badge status-active">
-                                            <i class="bi bi-check-circle me-1"></i>Active
-                                        </span>
+                                        {{ user.username[0].upper() }}
                                     {% endif %}
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <!-- View Button -->
-                                        <button class="action-btn btn-view" 
-                                                onclick="location.href='{{ url_for('admin.view_user', user_id=user.id) }}'"
-                                                data-bs-toggle="tooltip" title="View User">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-
-                                        <!-- Edit Button -->
-                                        <button class="action-btn btn-edit" 
-                                                onclick="location.href='{{ url_for('admin.edit_user', user_id=user.id) }}'"
-                                                data-bs-toggle="tooltip" title="Edit User">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-
-                                        <!-- Export Data Button (GDPR) -->
-                                        <button class="action-btn btn-export" 
-                                                onclick="location.href='{{ url_for('admin.export_user_data', user_id=user.id) }}'"
-                                                data-bs-toggle="tooltip" title="Export User Data (GDPR)">
-                                            <i class="bi bi-download"></i>
-                                        </button>
-
-                                        {% if not user.is_banned %}
-                                            <!-- Ban Button -->
-                                            <button class="action-btn btn-ban" 
-                                                    onclick="showBanModal('{{ user.id }}', '{{ user.username }}')"
-                                                    data-bs-toggle="tooltip" title="Ban User">
-                                                <i class="bi bi-ban"></i>
-                                            </button>
-                                        {% else %}
-                                            <!-- Unban Button -->
-                                            <button class="action-btn btn-unban" 
-                                                    onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
-                                                    data-bs-toggle="tooltip" title="Unban User">
-                                                <i class="bi bi-check-circle"></i>
-                                            </button>
-                                        {% endif %}
-
-                                        <!-- Delete Button -->
-                                        <button class="action-btn btn-delete" 
-                                                onclick="showDeleteModal('{{ user.id }}', '{{ user.username }}')"
-                                                data-bs-toggle="tooltip" title="Delete User Account">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-
-                                    <!-- Hidden Ban Form -->
-                                    <form id="ban-form-{{ user.id }}" 
-                                          action="{{ url_for('admin.ban_user', user_id=user.id) }}" 
-                                          method="POST" style="display:none;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                        <input type="text" name="ban_reason" id="ban-reason-{{ user.id }}">
-                                    </form>
-
-                                    <!-- Hidden Unban Form -->
-                                    <form id="unban-form-{{ user.id }}" 
-                                          action="{{ url_for('admin.unban_user', user_id=user.id) }}" 
-                                          method="POST" style="display:none;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    </form>
-
-                                    <!-- Hidden Delete Form -->
-                                    <form id="delete-form-{{ user.id }}" 
-                                          action="{{ url_for('admin.delete_user', user_id=user.id) }}" 
-                                          method="POST" style="display:none;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination Controls -->
-                {% if pagination.pages > 1 %}
-                <nav aria-label="Page navigation" class="d-flex justify-content-between align-items-center p-3 border-top">
-                    <div class="pagination-info text-muted small">
-                        Showing <strong>{{ pagination.start }} - {{ pagination.end }}</strong> of <strong>{{ pagination.total }}</strong> users
-                    </div>
-                    
-                    <ul class="pagination mb-0">
-                        <!-- Previous Page -->
-                        {% if pagination.has_prev %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('admin.manage_users', page=pagination.prev_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
-                                    <i class="bi bi-chevron-left"></i> Previous
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link"><i class="bi bi-chevron-left"></i> Previous</span>
-                            </li>
-                        {% endif %}
-
-                        <!-- Page Numbers -->
-                        {% for page_num in pagination.iter_pages(left_margin=1, right_margin=1) %}
-                            {% if page_num %}
-                                {% if page_num == pagination.page %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ page_num }}</span>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('admin.manage_users', page=page_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
-                                            {{ page_num }}
-                                        </a>
-                                    </li>
-                                {% endif %}
+                                </div>
+                                <div class="user-details">
+                                    <div class="user-name adm-row-title">{{ user.username }}</div>
+                                    <div class="user-meta um-meta">ID: {{ user.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="email-container um-email">
+                                <i class="bi bi-envelope"></i>
+                                <span class="user-email">{{ user.email }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="credit-display um-credit">
+                                <i class="bi bi-currency-exchange"></i>
+                                <span class="credit-amount">ᗸ{{ "{:,.2f}".format(user.credits) }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if user.is_banned %}
+                                <span class="status-badge status-banned adm-pill bad">
+                                    <i class="bi bi-ban"></i>Banned
+                                </span>
                             {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link">...</span>
-                                </li>
+                                <span class="status-badge status-active adm-pill ok">
+                                    <i class="bi bi-check-circle"></i>Active
+                                </span>
                             {% endif %}
-                        {% endfor %}
+                        </td>
+                        <td>
+                            <div class="action-buttons um-actions">
+                                <!-- View Button -->
+                                <button class="action-btn btn-view adm-btn sm ghost"
+                                        onclick="location.href='{{ url_for('admin.view_user', user_id=user.id) }}'"
+                                        data-bs-toggle="tooltip" title="View User">
+                                    <i class="bi bi-eye"></i>
+                                </button>
 
-                        <!-- Next Page -->
-                        {% if pagination.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('admin.manage_users', page=pagination.next_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
-                                    Next <i class="bi bi-chevron-right"></i>
-                                </a>
+                                <!-- Edit Button -->
+                                <button class="action-btn btn-edit adm-btn sm ghost"
+                                        onclick="location.href='{{ url_for('admin.edit_user', user_id=user.id) }}'"
+                                        data-bs-toggle="tooltip" title="Edit User">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+
+                                <!-- Export Data Button (GDPR) -->
+                                <button class="action-btn btn-export adm-btn sm ghost"
+                                        onclick="location.href='{{ url_for('admin.export_user_data', user_id=user.id) }}'"
+                                        data-bs-toggle="tooltip" title="Export User Data (GDPR)">
+                                    <i class="bi bi-download"></i>
+                                </button>
+
+                                {% if not user.is_banned %}
+                                    <!-- Ban Button -->
+                                    <button class="action-btn btn-ban adm-btn sm danger"
+                                            onclick="showBanModal('{{ user.id }}', '{{ user.username }}')"
+                                            data-bs-toggle="tooltip" title="Ban User">
+                                        <i class="bi bi-ban"></i>
+                                    </button>
+                                {% else %}
+                                    <!-- Unban Button -->
+                                    <button class="action-btn btn-unban adm-btn sm success"
+                                            onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
+                                            data-bs-toggle="tooltip" title="Unban User">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                {% endif %}
+
+                                <!-- Delete Button -->
+                                <button class="action-btn btn-delete adm-btn sm danger"
+                                        onclick="showDeleteModal('{{ user.id }}', '{{ user.username }}')"
+                                        data-bs-toggle="tooltip" title="Delete User Account">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+
+                            <!-- Hidden Ban Form -->
+                            <form id="ban-form-{{ user.id }}"
+                                  action="{{ url_for('admin.ban_user', user_id=user.id) }}"
+                                  method="POST" style="display:none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="text" name="ban_reason" id="ban-reason-{{ user.id }}">
+                            </form>
+
+                            <!-- Hidden Unban Form -->
+                            <form id="unban-form-{{ user.id }}"
+                                  action="{{ url_for('admin.unban_user', user_id=user.id) }}"
+                                  method="POST" style="display:none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            </form>
+
+                            <!-- Hidden Delete Form -->
+                            <form id="delete-form-{{ user.id }}"
+                                  action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+                                  method="POST" style="display:none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Page navigation" class="adm-panel-foot um-pager">
+            <div class="adm-hint m-0">
+                Showing <strong>{{ pagination.start }} - {{ pagination.end }}</strong> of <strong>{{ pagination.total }}</strong> users
+            </div>
+
+            <ul class="pagination mb-0 flex-wrap">
+                <!-- Previous Page -->
+                {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.manage_users', page=pagination.prev_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="bi bi-chevron-left"></i> Previous</span>
+                    </li>
+                {% endif %}
+
+                <!-- Page Numbers -->
+                {% for page_num in pagination.iter_pages(left_margin=1, right_margin=1) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
                             </li>
                         {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">Next <i class="bi bi-chevron-right"></i></span>
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.manage_users', page=page_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
+                                    {{ page_num }}
+                                </a>
                             </li>
                         {% endif %}
-                    </ul>
-                </nav>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next Page -->
+                {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.manage_users', page=pagination.next_num, search=search, status=status_filter, sort_by=sort_by, sort_order=sort_order) }}">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next <i class="bi bi-chevron-right"></i></span>
+                    </li>
                 {% endif %}
-            </div>
-        </div>
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 
     <!-- Banned Users Section -->
-    <div class="banned-section" id="bannedUsersSection">
-        <div class="section-header mb-4">
-            <h2 class="section-title text-danger">
-                <i class="bi bi-ban me-2"></i>Banned Users
-                <span class="section-badge bg-danger">{{ banned_users }}</span>
-            </h2>
+    <div class="adm-panel banned-section" id="bannedUsersSection">
+        <div class="adm-panel-head">
+            <div class="adm-panel-icon um-bad"><i class="bi bi-ban"></i></div>
+            <div>
+                <h2>Banned Users <span class="adm-count is-alert">{{ banned_users }}</span></h2>
+                {% if banned_users > 0 %}<p>Restricted Accounts</p>{% endif %}
+            </div>
         </div>
-        
+
         {% if banned_users > 0 %}
-        <div class="enhanced-card border-danger">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-exclamation-triangle me-2"></i>Restricted Accounts
-                </h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-container">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-header">
-                            <tr>
-                                <th><i class="bi bi-hash me-1"></i>ID</th>
-                                <th><i class="bi bi-person me-1"></i>Username</th>
-                                <th><i class="bi bi-envelope me-1"></i>Email</th>
-                                <th><i class="bi bi-exclamation-circle me-1"></i>Ban Reason</th>
-                                <th><i class="bi bi-gear me-1"></i>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            {% if user.is_banned %}
-                            <tr class="banned-user-row">
-                                <td><span class="user-id">#{{ user.id }}</span></td>
-                                <td>
-                                    <div class="user-info">
-                                        <div class="user-avatar banned">
-                                            {{ user.username[0].upper() }}
-                                        </div>
-                                        <div class="user-details">
-                                            <div class="user-name">{{ user.username }}</div>
-                                            <div class="user-meta text-danger">Banned Account</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="email-container">
-                                        <i class="bi bi-envelope-fill me-2 text-muted"></i>
-                                        <span class="user-email">{{ user.email }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="ban-reason">
-                                        {% if user.ban_reason %}
-                                            <i class="bi bi-chat-quote me-2 text-danger"></i>
-                                            <span>{{ user.ban_reason }}</span>
-                                        {% else %}
-                                            <span class="text-muted">
-                                                <i class="bi bi-dash-circle me-2"></i>No reason provided
-                                            </span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="action-btn btn-view" 
-                                                onclick="location.href='{{ url_for('admin.view_user', user_id=user.id) }}'"
-                                                data-bs-toggle="tooltip" title="View User">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="action-btn btn-edit" 
-                                                onclick="location.href='{{ url_for('admin.edit_user', user_id=user.id) }}'"
-                                                data-bs-toggle="tooltip" title="Edit User">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="action-btn btn-unban" 
-                                                onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
-                                                data-bs-toggle="tooltip" title="Unban User">
-                                            <i class="bi bi-check-circle"></i>
-                                        </button>
-                                    </div>
-                                    
-                                    <form id="unban-form-banned-{{ user.id }}" 
-                                          action="{{ url_for('admin.unban_user', user_id=user.id) }}" 
-                                          method="POST" style="display:none;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="table-container adm-table-wrap">
+            <table class="adm-table um-table">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-hash me-1"></i>ID</th>
+                        <th><i class="bi bi-person me-1"></i>Username</th>
+                        <th><i class="bi bi-envelope me-1"></i>Email</th>
+                        <th><i class="bi bi-exclamation-circle me-1"></i>Ban Reason</th>
+                        <th><i class="bi bi-gear me-1"></i>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    {% if user.is_banned %}
+                    <tr class="banned-user-row">
+                        <td><span class="user-id adm-mono">#{{ user.id }}</span></td>
+                        <td>
+                            <div class="user-info um-user">
+                                <div class="user-avatar um-avatar banned">
+                                    {{ user.username[0].upper() }}
+                                </div>
+                                <div class="user-details">
+                                    <div class="user-name adm-row-title">{{ user.username }}</div>
+                                    <div class="user-meta um-meta um-bad-text">Banned Account</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="email-container um-email">
+                                <i class="bi bi-envelope"></i>
+                                <span class="user-email">{{ user.email }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="ban-reason um-email">
+                                {% if user.ban_reason %}
+                                    <i class="bi bi-chat-quote um-bad-text"></i>
+                                    <span>{{ user.ban_reason }}</span>
+                                {% else %}
+                                    <span>
+                                        <i class="bi bi-dash-circle me-2"></i>No reason provided
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons um-actions">
+                                <button class="action-btn btn-view adm-btn sm ghost"
+                                        onclick="location.href='{{ url_for('admin.view_user', user_id=user.id) }}'"
+                                        data-bs-toggle="tooltip" title="View User">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="action-btn btn-edit adm-btn sm ghost"
+                                        onclick="location.href='{{ url_for('admin.edit_user', user_id=user.id) }}'"
+                                        data-bs-toggle="tooltip" title="Edit User">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="action-btn btn-unban adm-btn sm success"
+                                        onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
+                                        data-bs-toggle="tooltip" title="Unban User">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            </div>
+
+                            <form id="unban-form-banned-{{ user.id }}"
+                                  action="{{ url_for('admin.unban_user', user_id=user.id) }}"
+                                  method="POST" style="display:none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="bi bi-shield-check"></i>
-            </div>
-            <h4>No Banned Users</h4>
-            <p class="text-muted">All users are currently in good standing.</p>
+        <div class="adm-empty">
+            <i class="bi bi-shield-check"></i>
+            <h6>No Banned Users</h6>
+            <p class="mb-0">All users are currently in good standing.</p>
         </div>
         {% endif %}
     </div>
@@ -484,11 +447,11 @@
 <div class="modal fade" id="banModal" tabindex="-1" aria-labelledby="banModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header">
                 <h5 class="modal-title" id="banModalLabel">
-                    <i class="bi bi-ban me-2"></i>Ban User Confirmation
+                    <i class="bi bi-ban me-2 um-bad-text"></i>Ban User Confirmation
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="ban-warning mb-3">
@@ -497,10 +460,10 @@
                 </div>
                 <div class="mb-3">
                     <label for="banReasonInput" class="form-label">Ban Reason *</label>
-                    <textarea class="form-control" id="banReasonInput" rows="3" 
+                    <textarea class="form-control" id="banReasonInput" rows="3"
                              placeholder="Please provide a reason for banning this user..." required></textarea>
                 </div>
-                <div class="alert alert-warning">
+                <div class="alert alert-warning mb-0">
                     <i class="bi bi-info-circle me-2"></i>
                     This action will immediately restrict the user's access to the platform.
                 </div>
@@ -518,12 +481,12 @@
 <!-- Delete User Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-danger">
-            <div class="modal-header bg-danger text-white">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalLabel">
-                    <i class="bi bi-trash me-2"></i>Delete User Account
+                    <i class="bi bi-trash me-2 um-bad-text"></i>Delete User Account
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger">
@@ -544,7 +507,7 @@
                     <li>Notifications</li>
                     <li>All associated data</li>
                 </ul>
-                <div class="alert alert-warning">
+                <div class="alert alert-warning mb-0">
                     <i class="bi bi-info-circle me-2"></i>
                     This is a permanent deletion. Please make sure you really want to delete this user.
                 </div>
@@ -559,438 +522,29 @@
     </div>
 </div>
 
-<!-- Enhanced Styles -->
 <style>
-    :root {
-        --primary-blue: #054e97;
-        --accent-orange: #ff7a00;
-        --light-gray: #f8f9fa;
-        --border-color: #e2e8f0;
-        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-        --border-radius: 12px;
-        --transition: all 0.3s ease;
-    }
-
-    /* Header Section */
-    .header-section {
-        background: linear-gradient(135deg, rgba(5, 78, 151, 0.05) 0%, rgba(255, 122, 0, 0.05) 100%);
-        border-radius: var(--border-radius);
-        padding: 40px 20px;
-        margin-bottom: 30px;
-    }
-
-    .header-icon i {
-        font-size: 3rem;
-        color: var(--primary-blue);
-        opacity: 0.8;
-    }
-
-    /* Stats Cards */
-    .stat-card {
-        background: white;
-        border-radius: var(--border-radius);
-        padding: 20px;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-color);
-        transition: var(--transition);
-        height: 100%;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-md);
-    }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 15px;
-        color: white;
-        font-size: 1.5rem;
-    }
-
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-        color: var(--primary-blue);
-    }
-
-    .stat-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin: 0;
-    }
-
-    /* Search and Filter Section */
-    .search-filter-section .card {
-        border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
-    }
-
-    .search-box {
-        position: relative;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-        z-index: 3;
-    }
-
-    .search-box .form-control {
-        border-radius: 10px;
-        border: 2px solid var(--border-color);
-        padding: 12px 20px 12px 45px;
-        transition: var(--transition);
-    }
-
-    .search-box .form-control:focus {
-        border-color: var(--primary-blue);
-        box-shadow: 0 0 0 0.2rem rgba(5, 78, 151, 0.25);
-    }
-
-    .btn-filter {
-        border: 2px solid var(--border-color);
-        color: #6c757d;
-        border-radius: 8px;
-        padding: 8px 16px;
-        font-weight: 500;
-        transition: var(--transition);
-        background: white;
-    }
-
-    .btn-filter:hover, .btn-filter.active {
-        border-color: var(--primary-blue);
-        color: white;
-        background: var(--primary-blue);
-        transform: translateY(-1px);
-    }
-
-    /* Section Headers */
-    .section-header {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .section-title {
-        color: var(--primary-blue);
-        font-weight: 600;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .section-badge {
-        background: var(--primary-blue);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    /* Enhanced Cards */
-    .enhanced-card {
-        background: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-color);
-        overflow: hidden;
-        transition: var(--transition);
-    }
-
-    .enhanced-card:hover {
-        box-shadow: var(--shadow-md);
-    }
-
-    .enhanced-card .card-header {
-        background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
-        color: white;
-        padding: 20px;
-        border-bottom: none;
-    }
-
-    .enhanced-card .card-header h5 {
-        margin: 0;
-        font-weight: 600;
-    }
-
-    .header-actions .btn {
-        border-radius: 8px;
-        font-weight: 500;
-    }
-
-    /* Table Enhancements */
-    .table-container {
-        overflow-x: auto;
-    }
-
-    .table-header th {
-        background: #f8f9fa;
-        border: none;
-        padding: 18px 15px;
-        font-weight: 600;
-        color: var(--primary-blue);
-        white-space: nowrap;
-    }
-
-    .th-content {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .sortable {
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .sortable:hover {
-        background: #e9ecef;
-    }
-
-    .sort-icon {
-        opacity: 0.5;
-        font-size: 0.8rem;
-        transition: var(--transition);
-    }
-
-    .sortable:hover .sort-icon {
-        opacity: 1;
-    }
-
-    /* User Info */
-    .user-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-orange) 100%);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-
-    .user-avatar.banned {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    }
-
-    .user-name {
-        font-weight: 600;
-        color: var(--primary-blue);
-    }
-
-    .user-meta {
-        font-size: 0.8rem;
-        color: #6c757d;
-    }
-
-    .user-id {
-        font-family: 'Courier New', monospace;
-        background: rgba(5, 78, 151, 0.1);
-        color: var(--primary-blue);
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-weight: 600;
-    }
-
-    .email-container, .credit-display {
-        display: flex;
-        align-items: center;
-    }
-
-    .credit-amount {
-        font-weight: 600;
-        color: var(--primary-blue);
-    }
-
-    /* Status Badges */
-    .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .status-active {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-    }
-
-    .status-banned {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 8px;
-    }
-
-    .action-btn {
-        width: 35px;
-        height: 35px;
-        border-radius: 8px;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: var(--transition);
-        font-size: 0.9rem;
-    }
-
-    .btn-view {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        color: white;
-    }
-
-    .btn-edit {
-        background: linear-gradient(135deg, var(--accent-orange) 0%, #e55a00 100%);
-        color: white;
-    }
-
-    .btn-ban {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-    }
-
-    .btn-unban {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-    }
-
-    .btn-export {
-        background: linear-gradient(135deg, #0dcaf0 0%, #0bb5d4 100%);
-        color: white;
-    }
-
-    .btn-delete {
-        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
-        color: white;
-    }
-
-    .action-btn:hover {
-        transform: translateY(-2px) scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Table Rows */
-    .user-row {
-        transition: var(--transition);
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .user-row:hover {
-        background: rgba(5, 78, 151, 0.02);
-        transform: translateX(2px);
-    }
-
-    .banned-user-row {
-        background: rgba(220, 53, 69, 0.05);
-        border-left: 4px solid #dc3545;
-    }
-
-    /* Ban Reason */
-    .ban-reason {
-        max-width: 200px;
-    }
-
-    .ban-reason span {
-        display: block;
-        font-style: italic;
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6c757d;
-    }
-
-    .empty-icon i {
-        font-size: 4rem;
-        color: #28a745;
-        margin-bottom: 20px;
-        opacity: 0.7;
-    }
-
-    .empty-state h4 {
-        color: var(--primary-blue);
-        margin-bottom: 10px;
-    }
-
-    /* Modal Enhancements */
-    .modal-content {
-        border-radius: var(--border-radius);
-        border: none;
-        box-shadow: var(--shadow-md);
-    }
-
-    .modal-header {
-        border-radius: var(--border-radius) var(--border-radius) 0 0;
-    }
-
-    .ban-warning {
-        background: rgba(255, 193, 7, 0.1);
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #ffc107;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .header-section {
-            padding: 30px 15px;
-        }
-
-        .stat-card {
-            margin-bottom: 15px;
-        }
-
-        .action-buttons {
-            flex-wrap: wrap;
-        }
-
-        .table-container {
-            font-size: 0.9rem;
-        }
-
-        .user-info {
-            flex-direction: column;
-            text-align: left;
-            gap: 5px;
-        }
-    }
-
-    /* Hide sections initially for filtering */
-    .users-section.d-none, .banned-section.d-none {
-        display: none !important;
-    }
+    .um-filter-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 14px; align-items: end; }
+    .um-filter-grid .adm-field { margin-bottom: 0; }
+    .um-search { max-width: none; }
+    .um-filter-actions { display: flex; gap: 8px; }
+    .um-table th.sortable { cursor: pointer; user-select: none; }
+    .um-table th.sortable:hover, .um-table th.sort-asc, .um-table th.sort-desc { color: var(--primary-blue); }
+    .um-table .sort-icon { margin-left: 4px; opacity: 0.6; }
+    .um-user { display: flex; align-items: center; gap: 10px; }
+    .um-avatar { width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 50%; background: var(--tint); color: var(--primary-blue); font-weight: 700; font-size: 0.9rem; }
+    .um-avatar.banned { background: rgba(220, 38, 38, 0.1); color: #b91c1c; }
+    .um-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .um-meta { font-size: 0.76rem; color: var(--muted); }
+    .um-email { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+    .um-credit { display: flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; }
+    .um-credit i { color: var(--accent-orange); }
+    .um-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .um-actions .adm-btn { padding: 6px 9px; }
+    .um-bad { background: rgba(220, 38, 38, 0.1); color: #b91c1c; }
+    .um-bad-text { color: #b91c1c; }
+    .um-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    @media (max-width: 991.98px) { .um-filter-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .um-filter-grid { grid-template-columns: 1fr; } .um-filter-actions .adm-btn { flex: 1; } }
 </style>
 
 <script>

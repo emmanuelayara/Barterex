@@ -1,0 +1,17 @@
+{% extends 'admin_base.html' %}
+{% block title %}Access Denied{% endblock %}
+{% block content %}
+<div class="adm-page narrow">
+  <section class="adm-panel">
+    <div class="adm-empty" style="padding: 64px 20px;">
+      <i class="bi bi-shield-lock" style="color:#dc3545;"></i>
+      <h6 style="color: var(--ink); font-size: 1.15rem;">Access denied</h6>
+      <p class="mb-3">
+        Your admin account doesn't have permission to do this{% if required %} ({{ required }}){% endif %}.<br>
+        If you need it, ask a super admin to update your access.
+      </p>
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="adm-btn cta"><i class="bi bi-speedometer2"></i>Back to dashboard</a>
+    </div>
+  </section>
+</div>
+{% endblock %}
