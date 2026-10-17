@@ -1,6 +1,6 @@
 """Record the version of the backing-asset surrender consent.
 
-Revision ID: add_backing_asset_consent_version
+Revision ID: backing_asset_consent_version
 Revises: add_clearing_inventory_ownership
 """
 
@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = 'add_backing_asset_consent_version'
+revision = 'backing_asset_consent_version'
 down_revision = 'add_clearing_inventory_ownership'
 branch_labels = None
 depends_on = None

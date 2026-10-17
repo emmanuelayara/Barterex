@@ -1,7 +1,7 @@
 """Add renewed title-transfer consent for failed requested items.
 
 Revision ID: failed_seller_title_consent
-Revises: add_backing_asset_consent_version
+Revises: backing_asset_consent_version
 """
 
 from alembic import op
@@ -9,7 +9,7 @@ import sqlalchemy as sa
 
 
 revision = 'failed_seller_title_consent'
-down_revision = 'add_backing_asset_consent_version'
+down_revision = 'backing_asset_consent_version'
 branch_labels = None
 depends_on = None
 

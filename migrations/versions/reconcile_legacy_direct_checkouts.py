@@ -1,6 +1,6 @@
 """Track legacy direct-checkout reversals.
 
-Revision ID: reconcile_legacy_direct_checkouts
+Revision ID: legacy_direct_checkouts
 Revises: reservation_delivery_fulfillment
 """
 
@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "reconcile_legacy_direct_checkouts"
+revision = "legacy_direct_checkouts"
 down_revision = "reservation_delivery_fulfillment"
 branch_labels = None
 depends_on = None

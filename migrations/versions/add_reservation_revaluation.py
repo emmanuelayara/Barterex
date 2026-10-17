@@ -1,7 +1,7 @@
 """Add reservation revaluation proposals and additional backing support.
 
 Revision ID: reservation_revaluation
-Revises: reconcile_legacy_direct_checkouts
+Revises: legacy_direct_checkouts
 """
 
 from alembic import op
@@ -9,7 +9,7 @@ import sqlalchemy as sa
 
 
 revision = 'reservation_revaluation'
-down_revision = 'reconcile_legacy_direct_checkouts'
+down_revision = 'legacy_direct_checkouts'
 branch_labels = None
 depends_on = None
 
