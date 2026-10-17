@@ -754,28 +754,241 @@
 
   .ai-valuation-loading {
     text-align: center;
-    padding: 20px 8px 8px;
+    padding: 16px 4px 4px;
     color: var(--aiv-text);
-    font-size: 0.9rem;
-  }
-
-  .ai-valuation-loading p {
-    margin: 8px 0 0;
   }
 
   .ai-valuation-loading .ai-valuation-hint {
+    margin: 12px 0 0;
+    font-size: 0.75rem;
+    color: var(--aiv-muted);
+  }
+
+  .aiv-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* Animated orb: spinning ring + pulse + a phase icon that swaps with each phrase */
+  .aiv-orb {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--aiv-tint);
+    color: var(--aiv-text);
+  }
+
+  .aiv-orb::before,
+  .aiv-orb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+  }
+
+  .aiv-orb::before {
+    border: 2px solid var(--aiv-border);
+    border-top-color: var(--aiv-orange);
+    animation: spin 1.1s linear infinite;
+  }
+
+  .aiv-orb::after {
+    border: 1px solid var(--aiv-orange);
+    opacity: 0;
+    animation: aivPulse 2s ease-out infinite;
+  }
+
+  .ai-valuation-loading.is-done .aiv-orb::before {
+    animation: none;
+    border-color: var(--aiv-orange);
+  }
+
+  .aiv-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .aiv-icon.pop {
+    animation: aivPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .aiv-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .aiv-ico-scan svg {
+    animation: aivScan 1.8s linear infinite;
+  }
+
+  .aiv-ico-chart path {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: aivBar 1.2s ease-in-out infinite;
+  }
+
+  .aiv-ico-chart path:nth-child(2) { animation-delay: 0.2s; }
+  .aiv-ico-chart path:nth-child(3) { animation-delay: 0.4s; }
+
+  .aiv-ico-coin svg {
+    animation: aivCoin 1.8s ease-in-out infinite;
+  }
+
+  .aiv-ico-sparkle path {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: aivTwinkle 1.4s ease-in-out infinite;
+  }
+
+  .aiv-ico-sparkle path:nth-child(2) { animation-delay: 0.5s; }
+
+  .aiv-ico-bolt svg {
+    animation: aivFlash 1s ease-in-out infinite;
+  }
+
+  .aiv-ico-check svg {
+    color: var(--aiv-orange);
+  }
+
+  .aiv-ico-check path {
+    stroke-dasharray: 22;
+    stroke-dashoffset: 22;
+    animation: aivDraw 0.45s ease forwards;
+  }
+
+  .aiv-phrase-wrap {
+    min-height: 1.6em;
+    overflow: hidden;
+  }
+
+  .aiv-phrase {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--aiv-text);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+
+  .aiv-phrase.is-out {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  .aiv-phrase.is-in {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: none;
+  }
+
+  .aiv-timer {
+    margin-top: 10px;
     font-size: 0.78rem;
     color: var(--aiv-muted);
   }
 
-  .loading-spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid var(--aiv-border);
-    border-top-color: var(--aiv-orange);
-    border-radius: 50%;
-    margin: 0 auto;
-    animation: spin 1s linear infinite;
+  .aiv-timer strong {
+    margin-left: 4px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--aiv-text);
+  }
+
+  .aiv-bar {
+    height: 4px;
+    margin-top: 14px;
+    border-radius: 999px;
+    background: var(--aiv-tint);
+    overflow: hidden;
+  }
+
+  .aiv-bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--aiv-orange);
+    transition: width 1s linear;
+  }
+
+  @keyframes aivPulse {
+    0% { transform: scale(1); opacity: 0.45; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+
+  @keyframes aivPop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes aivScan {
+    0% { transform: translate(0, -2px); }
+    25% { transform: translate(2px, 0); }
+    50% { transform: translate(0, 2px); }
+    75% { transform: translate(-2px, 0); }
+    100% { transform: translate(0, -2px); }
+  }
+
+  @keyframes aivBar {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
+  }
+
+  @keyframes aivCoin {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+  }
+
+  @keyframes aivTwinkle {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+
+  @keyframes aivFlash {
+    0%, 100% { transform: scale(1); opacity: 0.65; }
+    50% { transform: scale(1.12); opacity: 1; }
+  }
+
+  @keyframes aivDraw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aiv-orb::before,
+    .aiv-orb::after,
+    .aiv-icon,
+    .aiv-icon svg,
+    .aiv-icon path {
+      animation: none !important;
+    }
+
+    .aiv-ico-check path {
+      stroke-dashoffset: 0;
+    }
+
+    .aiv-phrase.is-out,
+    .aiv-phrase.is-in {
+      transform: none;
+    }
+
+    .aiv-bar span {
+      transition: none;
+    }
   }
 
   .ai-valuation-value {
@@ -1480,10 +1693,15 @@
       <button type="button" class="ai-valuation-close" id="aiValuationClose" title="Close" aria-label="Close">✕</button>
     </div>
 
-    <div class="ai-valuation-loading" id="aiValuationLoading">
-      <div class="loading-spinner"></div>
-      <p>Checking market prices for your item…</p>
-      <p class="ai-valuation-hint">This usually takes 30-45 seconds.</p>
+    <div class="ai-valuation-loading" id="aiValuationLoading" role="status">
+      <span class="aiv-sr">Estimating the value of your item. Please wait.</span>
+      <div aria-hidden="true">
+        <div class="aiv-orb"><div class="aiv-icon" id="aiLoaderIcon"></div></div>
+        <div class="aiv-phrase-wrap"><p class="aiv-phrase" id="aiLoaderPhrase">Initializing Valuation Engine…</p></div>
+        <div class="aiv-timer">Elapsed<strong id="aiLoaderTimer">0:00</strong></div>
+        <div class="aiv-bar"><span id="aiLoaderBar"></span></div>
+      </div>
+      <p class="ai-valuation-hint">This usually takes 30-45 seconds. Please keep this page open.</p>
     </div>
 
     <div id="aiValuationResult" style="display:none;">
@@ -1943,6 +2161,221 @@
     return 'ᗸ' + Math.round(value).toLocaleString();
   }
 
+  // ---- Loading experience: elapsed timer + rotating phrases with animated icons ----
+  const AI_ICONS = {
+    scan: '<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>',
+    chart: '<svg viewBox="0 0 24 24"><path d="M5 20V13"/><path d="M12 20V5"/><path d="M19 20V9"/></svg>',
+    coin: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/></svg>',
+    sparkle: '<svg viewBox="0 0 24 24"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>',
+    bolt: '<svg viewBox="0 0 24 24"><path d="M13 2L5 13h6l-1 9 8-11h-6z"/></svg>',
+    check: '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+  };
+
+  // [text, icon]
+  const AI_TECHNICAL_PHRASES = [
+    ['Initializing Valuation Engine…', 'bolt'],
+    ['Analyzing Item Details…', 'scan'],
+    ['Processing Visual Data…', 'scan'],
+    ['Identifying Product Features…', 'scan'],
+    ['Cross-Referencing Specifications…', 'chart'],
+    ['Running Predictive Analysis…', 'chart'],
+    ['Evaluating Market Signals…', 'chart'],
+    ['Calibrating Price Estimates…', 'coin'],
+    ['Validating Product Information…', 'scan'],
+    ['Optimizing Valuation Accuracy…', 'bolt'],
+    ['Examining Market Patterns…', 'chart'],
+    ['Calculating Depreciation…', 'coin'],
+    ['Comparing Similar Products…', 'scan'],
+    ['Assessing Item Condition…', 'scan'],
+    ['Generating Value Predictions…', 'chart']
+  ];
+
+  const AI_WORKING_PHRASES = [
+    ['Decoding Your Item\u2019s Worth…', 'sparkle'],
+    ['Crunching the Numbers…', 'coin'],
+    ['Connecting the Dots…', 'sparkle'],
+    ['Measuring Market Demand…', 'chart'],
+    ['Uncovering Hidden Value…', 'sparkle'],
+    ['Scanning the Value Universe…', 'scan'],
+    ['Putting Our Algorithms to Work…', 'bolt'],
+    ['Fine-Tuning the Figures…', 'coin'],
+    ['Balancing the Equation…', 'coin'],
+    ['Hunting for the Best Estimate…', 'scan'],
+    ['Turning Data Into Value…', 'coin'],
+    ['Checking Every Detail…', 'scan'],
+    ['Consulting the Digital Brain…', 'bolt'],
+    ['Solving the Value Puzzle…', 'sparkle'],
+    ['Preparing Your BXC Estimate…', 'coin']
+  ];
+
+  const AI_PLAYFUL_PHRASES = [
+    ['Waking Up the AI Brain…', 'bolt'],
+    ['Asking the Algorithms Nicely…', 'sparkle'],
+    ['Searching for Hidden Treasure…', 'sparkle'],
+    ['Giving Our Robots Some Coffee…', 'bolt'],
+    ['Teaching Numbers to Behave…', 'coin'],
+    ['Doing Some Digital Detective Work…', 'scan'],
+    ['Convincing the Calculator…', 'coin'],
+    ['Checking If It\u2019s Secretly Gold…', 'coin'],
+    ['Making the Math Make Sense…', 'chart'],
+    ['Finding Your Item\u2019s Superpower…', 'bolt'],
+    ['Negotiating With the Numbers…', 'coin'],
+    ['Running on Pure Intelligence…', 'bolt']
+  ];
+
+  const AI_NEARLY_THERE_PHRASES = [
+    ['Almost Done Being a Genius…', 'sparkle'],
+    ['Making Your Item Feel Important…', 'sparkle'],
+    ['Getting Your BXC Ready…', 'coin']
+  ];
+
+  // Shown quickly once the real result has arrived
+  const AI_FINALE_PHRASES = [
+    ['Finalizing Your Estimate…', 'check'],
+    ['Preparing Your Results…', 'check'],
+    ['Valuation Complete!', 'check']
+  ];
+
+  // Technical first, then working/playful phrases alternating, then the "almost done" lines.
+  // The last phrase is held if the request runs longer than the sequence.
+  const AI_PHRASE_QUEUE = (function() {
+    const queue = AI_TECHNICAL_PHRASES.map(p => ({ phrase: p, phase: 'technical' }));
+    const max = Math.max(AI_WORKING_PHRASES.length, AI_PLAYFUL_PHRASES.length);
+    for (let i = 0; i < max; i++) {
+      if (AI_WORKING_PHRASES[i]) queue.push({ phrase: AI_WORKING_PHRASES[i], phase: 'middle' });
+      if (AI_PLAYFUL_PHRASES[i]) queue.push({ phrase: AI_PLAYFUL_PHRASES[i], phase: 'middle' });
+    }
+    AI_NEARLY_THERE_PHRASES.forEach(p => queue.push({ phrase: p, phase: 'middle' }));
+    return queue;
+  })();
+
+  const aiLoaderIcon = document.getElementById('aiLoaderIcon');
+  const aiLoaderPhrase = document.getElementById('aiLoaderPhrase');
+  const aiLoaderTimer = document.getElementById('aiLoaderTimer');
+  const aiLoaderBar = document.getElementById('aiLoaderBar');
+
+  const aiLoader = (function() {
+    const TRANSITION_MS = 220;
+    const EXPECTED_SECONDS = 40;
+    let phraseTimer = null;
+    let tickTimer = null;
+    let swapTimer = null;
+    let startedAt = 0;
+    let index = 0;
+    let running = false;
+
+    function formatElapsed(seconds) {
+      return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+    }
+
+    function setIcon(name) {
+      aiLoaderIcon.className = 'aiv-icon aiv-ico-' + name;
+      aiLoaderIcon.innerHTML = AI_ICONS[name];
+      // Restart the pop-in animation on every swap
+      void aiLoaderIcon.offsetWidth;
+      aiLoaderIcon.classList.add('pop');
+    }
+
+    function showPhrase(entry, animate) {
+      clearTimeout(swapTimer);
+      const apply = function() {
+        aiLoaderPhrase.textContent = entry[0];
+        setIcon(entry[1]);
+      };
+      if (!animate) {
+        aiLoaderPhrase.className = 'aiv-phrase';
+        apply();
+        return;
+      }
+      // Slide the old phrase up and fade out, then bring the new one up from below
+      aiLoaderPhrase.classList.add('is-out');
+      swapTimer = setTimeout(function() {
+        apply();
+        aiLoaderPhrase.classList.remove('is-out');
+        aiLoaderPhrase.classList.add('is-in');
+        void aiLoaderPhrase.offsetWidth;
+        aiLoaderPhrase.classList.remove('is-in');
+      }, TRANSITION_MS);
+    }
+
+    function durationFor(phase) {
+      return phase === 'technical'
+        ? 1500 + Math.random() * 400
+        : 2000 + Math.random() * 500;
+    }
+
+    function scheduleNext() {
+      const current = AI_PHRASE_QUEUE[index];
+      phraseTimer = setTimeout(function() {
+        if (!running || index >= AI_PHRASE_QUEUE.length - 1) return;
+        index += 1;
+        showPhrase(AI_PHRASE_QUEUE[index].phrase, true);
+        scheduleNext();
+      }, durationFor(current.phase));
+    }
+
+    function tick() {
+      const seconds = Math.floor((Date.now() - startedAt) / 1000);
+      aiLoaderTimer.textContent = formatElapsed(seconds);
+      // Eases toward 95% so it keeps moving without promising a finish time
+      aiLoaderBar.style.width = (95 * (1 - Math.exp(-seconds / (EXPECTED_SECONDS / 2)))) + '%';
+    }
+
+    function clearTimers() {
+      clearTimeout(phraseTimer);
+      clearTimeout(swapTimer);
+      clearInterval(tickTimer);
+      phraseTimer = swapTimer = tickTimer = null;
+    }
+
+    function start() {
+      clearTimers();
+      running = true;
+      index = 0;
+      startedAt = Date.now();
+      aiLoading.classList.remove('is-done');
+      aiLoaderTimer.textContent = '0:00';
+      aiLoaderBar.style.transition = 'none';
+      aiLoaderBar.style.width = '0%';
+      void aiLoaderBar.offsetWidth;
+      aiLoaderBar.style.transition = '';
+      showPhrase(AI_PHRASE_QUEUE[0].phrase, false);
+      tickTimer = setInterval(tick, 1000);
+      scheduleNext();
+    }
+
+    function stop() {
+      running = false;
+      clearTimers();
+    }
+
+    // Plays the short "result ready" messages, then calls done()
+    function finish(done) {
+      if (!running) {
+        done();
+        return;
+      }
+      running = false;
+      clearTimers();
+      tick();
+      aiLoaderBar.style.width = '100%';
+      let step = 0;
+      const playStep = function() {
+        showPhrase(AI_FINALE_PHRASES[step], true);
+        if (step === AI_FINALE_PHRASES.length - 1) aiLoading.classList.add('is-done');
+        step += 1;
+        if (step < AI_FINALE_PHRASES.length) {
+          phraseTimer = setTimeout(playStep, 650);
+        } else {
+          phraseTimer = setTimeout(done, 800);
+        }
+      };
+      playStep();
+    }
+
+    return { start: start, stop: stop, finish: finish };
+  })();
+
   function openAiValuationModal() {
     aiOverlay.hidden = false;
     aiSubtitle.textContent = 'Analyzing your item…';
@@ -1952,9 +2385,11 @@
     aiActions.style.display = 'none';
     aiFallbackActions.style.display = 'none';
     aiValuationClose.style.visibility = 'hidden';
+    aiLoader.start();
   }
 
   function closeAiValuationModal() {
+    aiLoader.stop();
     aiOverlay.hidden = true;
   }
 
@@ -2007,7 +2442,14 @@
           showAiValuationFallback((data && data.error) || 'AI valuation is unavailable right now.');
           return;
         }
-        showAiValuationResult(data);
+        aiLoader.finish(function() {
+          try {
+            showAiValuationResult(data);
+          } catch (err) {
+            console.error('Could not display AI valuation result:', err);
+            showAiValuationFallback('Could not display the AI valuation result.');
+          }
+        });
       })
       .catch(err => {
         console.error('AI valuation preview failed:', err);
@@ -2071,6 +2513,7 @@
   }
 
   function showAiValuationFallback(message) {
+    aiLoader.stop();
     aiValuationToken = null;
     aiLoading.style.display = 'none';
     aiResult.style.display = 'none';
