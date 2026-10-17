@@ -70,6 +70,7 @@ def main():
         admin = Admin(
             username=username,
             email=email,
+            is_super_admin=True,
             password=generate_password_hash(password)
         )
         db.session.add(admin)

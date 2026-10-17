@@ -249,7 +249,7 @@
     margin-top: auto;
   }
 
-  .view-btn, .add-to-cart-btn {
+  .view-btn, .reserve-item-btn {
     flex: 1;
     padding: 10px 12px;
     border: none;
@@ -282,18 +282,18 @@
     color: white;
   }
 
-  .add-to-cart-btn {
+  .reserve-item-btn {
     background: var(--primary-gradient);
     color: white;
     border: none;
   }
 
-  .add-to-cart-btn:hover {
+  .reserve-item-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
   }
 
-  .add-to-cart-btn:active {
+  .reserve-item-btn:active {
     transform: translateY(0);
   }
 
@@ -404,7 +404,7 @@
       flex-direction: column;
     }
 
-    .view-btn, .add-to-cart-btn {
+    .view-btn, .reserve-item-btn {
       width: 100%;
     }
   }
@@ -486,12 +486,9 @@
                   <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}" class="view-btn">
                     <i class="fas fa-eye"></i> View
                   </a>
-                  <form method="POST" action="{{ url_for('items.add_to_cart', item_id=item.id) }}" style="flex: 1;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="add-to-cart-btn" style="width: 100%;">
-                      <i class="fas fa-shopping-cart"></i> Add to Cart
-                    </button>
-                  </form>
+                  <a href="{{ url_for('marketplace.choose_backing_assets', item_id=item.id) }}" class="reserve-item-btn" style="flex: 1; text-align: center; text-decoration: none;">
+                    <i class="fas fa-handshake"></i> Get with BXC
+                  </a>
                 </div>
               </div>
             </div>
@@ -575,15 +572,4 @@
   </div>
 </div>
 
-<script>
-  // Handle add to cart action with notifications
-  document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      const itemName = this.closest('.favorite-card').querySelector('.favorite-name').textContent.trim();
-      setTimeout(() => {
-        window.successToast(`✓ "${itemName}" added to your cart`, 3000);
-      }, 300);
-    });
-  });
-</script>
 {% endblock %}

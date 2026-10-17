@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Revaluation Proposals{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1>Reservation revaluation proposals</h1>
+  <p>Both the buyer and the requested item's owner must accept a revised value within 24 hours.</p>
+  {% if proposals %}
+    {% for proposal in proposals %}
+      {% set reservation = proposal.reservation %}
+      {% set is_buyer = current_user.id == reservation.user_id %}
+      {% set my_decision = proposal.buyer_decision if is_buyer else proposal.seller_decision %}
+      <section class="card mb-3 p-3">
+        <h2 class="h5">{{ proposal.item.name if proposal.item else 'Item removed' }}</h2>
+        <p>
+          Reservation #{{ reservation.id }} · {{ 'Buyer' if is_buyer else 'Requested-item owner' }}
+          · ᗸ{{ '{:,.0f}'.format(proposal.original_value) }} → ᗸ{{ '{:,.0f}'.format(proposal.proposed_value) }}
+        </p>
+        {% if proposal.reservation_asset_id %}
+          <p>Declining keeps this backing item yours and gives it zero BXC value in this reservation; any shortfall must be covered for the reservation to proceed.</p>
+        {% else %}
+          <p>Declining this requested-item price cancels the reservation; the buyer will be asked again before any passed backing items transfer.</p>
+        {% endif %}
+        <p>
+          Your decision: {{ my_decision }} · Other party:
+          {{ proposal.seller_decision if is_buyer else proposal.buyer_decision }}
+          · Respond by {{ proposal.decision_expires_at.strftime('%b %d, %Y %I:%M %p') }}
+        </p>
+        {% if my_decision == 'pending' %}
+          <form method="POST" action="{{ url_for('user.respond_to_reservation_revaluation', reservation_id=reservation.id, revaluation_id=proposal.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" name="decision" value="accept" class="btn btn-success">Accept revised value</button>
+            <button type="submit" name="decision" value="decline" class="btn btn-outline-danger">Decline</button>
+          </form>
+        {% endif %}
+      </section>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info">You have no pending reservation revaluation proposals.</div>
+  {% endif %}
+  <a href="{{ url_for('user.my_reservations') }}">View my reservations</a>
+</div>
+{% endblock %}

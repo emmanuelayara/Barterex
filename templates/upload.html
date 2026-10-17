@@ -666,305 +666,31 @@
     color: white;
   }
 
-  /* AI Price Estimator Styles */
-  .ai-estimator-section {
-    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-    border: 2px solid #8b5cf6;
-    border-radius: 16px;
-    padding: 20px;
-    margin: 25px 0;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ai-estimator-section::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-    animation: float 8s ease-in-out infinite;
-  }
-
-  .estimator-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .estimator-icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    box-shadow: 0 6px 25px rgba(139, 92, 246, 0.3);
-  }
-
-  .estimator-title {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #5b21b6;
-    margin: 0;
-  }
-
-  .estimator-subtitle {
-    font-size: 0.85rem;
-    color: #7c3aed;
-    margin: 4px 0 0 0;
-  }
-
-  .estimate-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-    color: white;
-    padding: 14px 20px;
-    border: none;
-    border-radius: 12px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 25px rgba(139, 92, 246, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .estimate-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
-  }
-
-  .estimate-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .estimate-btn.loading .btn-text {
-    opacity: 0;
-  }
-
-  .estimate-btn.loading::after {
-    content: '';
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    border: 2px solid transparent;
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  .btn-icon {
-    font-size: 1.1rem;
-  }
-
-  .estimator-result {
-    margin-top: 15px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .result-loading {
-    text-align: center;
-    padding: 30px 20px;
-  }
-
-  .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid rgba(139, 92, 246, 0.2);
-    border-top: 4px solid #8b5cf6;
-    border-radius: 50%;
-    margin: 0 auto 15px;
-    animation: spin 1s linear infinite;
-  }
-
-  .result-loading p {
-    font-weight: 600;
-    color: #5b21b6;
-    margin: 10px 0;
-  }
-
-  .loading-subtext {
-    font-size: 0.85rem;
-    color: #7c3aed;
-    font-weight: 400 !important;
-  }
-
-  .result-content {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  }
-
-  html.dark-mode .result-content {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  }
-
-  .price-display {
-    text-align: center;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #f3f4f6;
-    margin-bottom: 20px;
-  }
-
-  .price-label {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-
-  .price-amount {
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 5px 0;
-  }
-
-  .price-range {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin: 8px 0;
-  }
-
-  .confidence-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border: 1px solid #10b981;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #065f46;
-    margin-top: 10px;
-  }
-
-  .confidence-badge.medium {
-    background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%);
-    border-color: #f59e0b;
-    color: #92400e;
-  }
-
-  .confidence-badge.low {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    border-color: #ef4444;
-    color: #991b1b;
-  }
-
-  .credit-display {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
-    border: 2px solid #ff7a00;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 20px;
-  }
-
-  .credit-icon {
-    font-size: 2rem;
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
-  }
-
-  .credit-info {
-    flex: 1;
-  }
-
-  .credit-label {
-    font-size: 0.8rem;
-    color: #9a3412;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .credit-amount {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #ff7a00;
-  }
-
-  .credit-note {
-    font-size: 0.75rem;
-    color: #ea580c;
-    margin-top: 2px;
-  }
-
-  .estimate-details {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-
-  .detail-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    padding: 8px;
-    background: #f9fafb;
-    border-radius: 8px;
-  }
-
-  .detail-icon {
-    font-size: 1rem;
-  }
-
-  .estimate-disclaimer {
-    background: #fef3c7;
-    border-left: 4px solid #f59e0b;
-    padding: 12px 15px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    color: #92400e;
-    line-height: 1.5;
-  }
-
   /* AI Valuation Modal (shown on submit, before the item is actually sent) */
   .ai-valuation-overlay {
+    --aiv-blue: #054e97;
+    --aiv-orange: #ff7a00;
+    --aiv-text: #054e97;
+    --aiv-muted: #64748b;
+    --aiv-border: rgba(5, 78, 151, 0.14);
+    --aiv-tint: rgba(5, 78, 151, 0.06);
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(4px);
+    background: rgba(5, 30, 60, 0.55);
+    backdrop-filter: blur(3px);
     z-index: 2000;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px;
+  }
+
+  html.dark-mode .ai-valuation-overlay {
+    --aiv-text: #f1f5f9;
+    --aiv-muted: #94a3b8;
+    --aiv-border: rgba(255, 255, 255, 0.12);
+    --aiv-tint: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.65);
   }
 
   .ai-valuation-overlay[hidden] {
@@ -973,58 +699,226 @@
 
   .ai-valuation-modal {
     background: var(--surface);
-    border-radius: 20px;
-    max-width: 480px;
+    border: 1px solid var(--aiv-border);
+    border-radius: 16px;
+    max-width: 400px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    padding: 24px;
-    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
-    position: relative;
-    animation: scaleIn 0.3s ease-out;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    animation: scaleIn 0.25s ease-out;
   }
 
   .ai-valuation-header {
     display: flex;
     align-items: flex-start;
-    gap: 15px;
-    margin-bottom: 18px;
+    gap: 12px;
+    margin-bottom: 14px;
   }
 
-  .ai-valuation-header h3 {
+  .ai-valuation-title {
     margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--aiv-text);
+  }
+
+  .ai-valuation-subtitle {
+    margin: 2px 0 0;
+    font-size: 0.8rem;
+    color: var(--aiv-muted);
   }
 
   .ai-valuation-close {
     margin-left: auto;
+    flex-shrink: 0;
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1rem;
     cursor: pointer;
-    color: var(--text-secondary);
-    width: 32px;
-    height: 32px;
+    color: var(--aiv-muted);
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
   .ai-valuation-close:hover {
-    background: rgba(0, 0, 0, 0.08);
+    background: var(--aiv-tint);
+    color: var(--aiv-text);
+  }
+
+  .ai-valuation-loading {
+    text-align: center;
+    padding: 20px 8px 8px;
+    color: var(--aiv-text);
+    font-size: 0.9rem;
+  }
+
+  .ai-valuation-loading p {
+    margin: 8px 0 0;
+  }
+
+  .ai-valuation-loading .ai-valuation-hint {
+    font-size: 0.78rem;
+    color: var(--aiv-muted);
+  }
+
+  .loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--aiv-border);
+    border-top-color: var(--aiv-orange);
+    border-radius: 50%;
+    margin: 0 auto;
+    animation: spin 1s linear infinite;
+  }
+
+  .ai-valuation-value {
+    text-align: center;
+    padding: 14px 12px;
+    background: var(--aiv-tint);
+    border-radius: 12px;
+  }
+
+  .ai-valuation-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--aiv-muted);
+  }
+
+  .ai-valuation-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--aiv-text);
+    margin: 2px 0;
+  }
+
+  .ai-valuation-range {
+    font-size: 0.8rem;
+    color: var(--aiv-muted);
+  }
+
+  .ai-valuation-confidence {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 10px;
+    border: 1px solid var(--aiv-border);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--aiv-text);
+  }
+
+  .ai-valuation-confidence.low {
+    border-color: var(--aiv-orange);
+    color: var(--aiv-orange);
+  }
+
+  .ai-valuation-meta {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--aiv-muted);
+  }
+
+  .ai-valuation-meta:empty {
+    display: none;
+  }
+
+  .ai-valuation-meta strong {
+    color: var(--aiv-text);
+    font-weight: 600;
+  }
+
+  .ai-valuation-meta .is-warning strong {
+    color: var(--aiv-orange);
+  }
+
+  .ai-valuation-credit {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border-left: 3px solid var(--aiv-orange);
+    background: var(--aiv-tint);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--aiv-text);
+  }
+
+  .ai-valuation-credit strong {
+    color: var(--aiv-orange);
+  }
+
+  .ai-valuation-disclaimer {
+    margin: 10px 0 0;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    color: var(--aiv-muted);
+  }
+
+  .ai-valuation-error {
+    margin: 0;
+    padding: 10px 0 0;
+    font-size: 0.88rem;
+    color: var(--aiv-text);
   }
 
   .ai-valuation-actions {
     display: flex;
     gap: 10px;
-    margin-top: 18px;
+    margin-top: 16px;
   }
 
-  .ai-valuation-actions .submit-btn,
-  .ai-valuation-actions .upload-action-btn {
+  .ai-valuation-btn {
     flex: 1;
     min-width: 0;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .ai-valuation-btn.secondary {
+    background: transparent;
+    color: var(--aiv-text);
+    border: 1px solid var(--aiv-border);
+  }
+
+  .ai-valuation-btn.secondary:hover {
+    border-color: var(--aiv-orange);
+    color: var(--aiv-orange);
+  }
+
+  .ai-valuation-btn.primary {
+    background: var(--aiv-orange);
+    color: #fff;
+    border: 1px solid var(--aiv-orange);
+  }
+
+  .ai-valuation-btn.primary:hover {
+    background: #e66e00;
+    border-color: #e66e00;
+  }
+
+  .ai-valuation-btn:focus-visible,
+  .ai-valuation-close:focus-visible {
+    outline: 2px solid var(--aiv-orange);
+    outline-offset: 2px;
   }
 
   /* Submit button */
@@ -1579,59 +1473,46 @@
 <div class="ai-valuation-overlay" id="aiValuationOverlay" hidden>
   <div class="ai-valuation-modal" role="dialog" aria-modal="true" aria-labelledby="aiValuationTitle">
     <div class="ai-valuation-header">
-      <div class="estimator-icon">🤖</div>
       <div>
-        <h3 class="estimator-title" id="aiValuationTitle">AI Value Estimate</h3>
-        <p class="estimator-subtitle" id="aiValuationSubtitle">Analyzing your item…</p>
+        <h3 class="ai-valuation-title" id="aiValuationTitle">AI Value Estimate</h3>
+        <p class="ai-valuation-subtitle" id="aiValuationSubtitle">Analyzing your item…</p>
       </div>
       <button type="button" class="ai-valuation-close" id="aiValuationClose" title="Close" aria-label="Close">✕</button>
     </div>
 
-    <div class="estimator-result">
-      <div class="result-loading" id="aiValuationLoading">
-        <div class="loading-spinner"></div>
-        <p>Checking market prices for your item…</p>
-        <p class="loading-subtext">This usually takes 30-45 seconds. Please don't close this page.</p>
-      </div>
-
-      <div class="result-content" id="aiValuationResult" style="display:none;">
-        <div class="price-display">
-          <div class="price-label">Suggested Value</div>
-          <div class="price-amount" id="aiValueAmount">ᗸ0</div>
-          <div class="price-range" id="aiValueRange"></div>
-          <span class="confidence-badge" id="aiConfidenceBadge"></span>
-        </div>
-
-        <div class="credit-display">
-          <div class="credit-icon">💰</div>
-          <div class="credit-info">
-            <div class="credit-label">Provisional Credits (if you accept)</div>
-            <div class="credit-amount" id="aiProvisionalCredits">ᗸ0</div>
-            <div class="credit-note">Usable to reserve marketplace items while your item awaits physical verification.</div>
-          </div>
-        </div>
-
-        <div class="estimate-details" id="aiValuationDetails"></div>
-
-        <div class="estimate-disclaimer" id="aiValuationNotes" style="display:none;"></div>
-
-        <div class="estimate-disclaimer">
-          This is an AI estimate, not a final price. An admin will confirm the real value when you bring the item in for physical verification.
-        </div>
-      </div>
-
-      <div class="result-content" id="aiValuationError" style="display:none;">
-        <p id="aiValuationErrorText"></p>
-      </div>
+    <div class="ai-valuation-loading" id="aiValuationLoading">
+      <div class="loading-spinner"></div>
+      <p>Checking market prices for your item…</p>
+      <p class="ai-valuation-hint">This usually takes 30-45 seconds.</p>
     </div>
+
+    <div id="aiValuationResult" style="display:none;">
+      <div class="ai-valuation-value">
+        <div class="ai-valuation-label">Suggested value</div>
+        <div class="ai-valuation-amount" id="aiValueAmount">ᗸ0</div>
+        <div class="ai-valuation-range" id="aiValueRange"></div>
+        <span class="ai-valuation-confidence" id="aiConfidenceBadge"></span>
+      </div>
+
+      <ul class="ai-valuation-meta" id="aiValuationDetails"></ul>
+
+      <p class="ai-valuation-credit">
+        Accepting gives you <strong id="aiProvisionalCredits">ᗸ0</strong> in provisional credits to reserve marketplace items while your item awaits verification.
+      </p>
+
+      <p class="ai-valuation-disclaimer" id="aiValuationNotes" style="display:none;"></p>
+      <p class="ai-valuation-disclaimer">AI estimate only. An admin confirms the final value at physical verification.</p>
+    </div>
+
+    <p class="ai-valuation-error" id="aiValuationError" style="display:none;"></p>
 
     <div class="ai-valuation-actions" id="aiValuationActions" style="display:none;">
-      <button type="button" class="upload-action-btn clear-all-btn" id="aiValuationReject">✏️ Edit Details</button>
-      <button type="button" class="submit-btn" id="aiValuationAccept">✅ Accept &amp; Submit</button>
+      <button type="button" class="ai-valuation-btn secondary" id="aiValuationReject">Edit details</button>
+      <button type="button" class="ai-valuation-btn primary" id="aiValuationAccept">Accept &amp; submit</button>
     </div>
     <div class="ai-valuation-actions" id="aiValuationFallbackActions" style="display:none;">
-      <button type="button" class="upload-action-btn clear-all-btn" id="aiValuationCancel">Cancel</button>
-      <button type="button" class="submit-btn" id="aiValuationSubmitAnyway">Submit for Manual Review</button>
+      <button type="button" class="ai-valuation-btn secondary" id="aiValuationCancel">Cancel</button>
+      <button type="button" class="ai-valuation-btn primary" id="aiValuationSubmitAnyway">Submit for manual review</button>
     </div>
   </div>
 </div>
@@ -2045,7 +1926,6 @@
   const aiLoading = document.getElementById('aiValuationLoading');
   const aiResult = document.getElementById('aiValuationResult');
   const aiError = document.getElementById('aiValuationError');
-  const aiErrorText = document.getElementById('aiValuationErrorText');
   const aiActions = document.getElementById('aiValuationActions');
   const aiFallbackActions = document.getElementById('aiValuationFallbackActions');
   const aiValueAmount = document.getElementById('aiValueAmount');
@@ -2156,22 +2036,29 @@
 
     const confidence = (data.confidence || 'n/a').replace('_', ' ');
     aiConfidenceBadge.textContent = `Confidence: ${confidence.charAt(0).toUpperCase() + confidence.slice(1)}`;
-    aiConfidenceBadge.className = 'confidence-badge' +
-      (confidence.includes('low') ? ' low' : confidence.includes('medium') ? ' medium' : '');
+    aiConfidenceBadge.className = 'ai-valuation-confidence' + (confidence.includes('low') ? ' low' : '');
+
+    const escapeHtml = (text) => String(text).replace(/[&<>"']/g, ch => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+    ));
 
     let detailsHtml = '';
-    if (data.market_listings) {
-      detailsHtml += `<div class="detail-item"><span class="detail-icon">📊</span> ${data.market_listings} comparable listing(s) found</div>`;
+    const listingCount = data.market_listings;
+    const sources = (data.sources_used || []).map(escapeHtml).join(', ');
+    if (listingCount || sources) {
+      const parts = [];
+      if (listingCount) parts.push(`<strong>${listingCount}</strong> comparable listing${listingCount === 1 ? '' : 's'}`);
+      if (sources) parts.push(sources);
+      detailsHtml += `<li>${parts.join(' · ')}</li>`;
     }
-    if (data.sources_used && data.sources_used.length) {
-      detailsHtml += `<div class="detail-item"><span class="detail-icon">🔎</span> Sources: ${data.sources_used.join(', ')}</div>`;
-    }
-    if (data.risk && data.risk.level) {
-      const riskColor = data.risk.level === 'HIGH' ? '#dc2626' : data.risk.level === 'MEDIUM' ? '#d97706' : '#16a34a';
-      detailsHtml += `<div class="detail-item"><span class="detail-icon">⚠️</span> <span style="color:${riskColor};font-weight:700;">Risk: ${data.risk.level}</span></div>`;
-      if (data.risk.flags && data.risk.flags.length) {
-        detailsHtml += `<div class="detail-item"><span class="detail-icon">🚩</span> Flags: ${data.risk.flags.join(', ')}</div>`;
-      }
+    // Low risk is the expected case, so only surface medium/high risk to the user.
+    if (data.risk && (data.risk.level === 'HIGH' || data.risk.level === 'MEDIUM')) {
+      const flagMessages = (data.risk.flags || [])
+        .map(flag => (flag && typeof flag === 'object') ? (flag.message || flag.check) : flag)
+        .filter(Boolean)
+        .map(escapeHtml);
+      detailsHtml += `<li class="is-warning"><strong>${data.risk.level === 'HIGH' ? 'High' : 'Medium'} risk</strong>` +
+        (flagMessages.length ? ` · ${flagMessages.join('; ')}` : '') + '</li>';
     }
     aiValuationDetails.innerHTML = detailsHtml;
 
@@ -2188,7 +2075,7 @@
     aiLoading.style.display = 'none';
     aiResult.style.display = 'none';
     aiError.style.display = 'block';
-    aiErrorText.textContent = message;
+    aiError.textContent = message;
     aiActions.style.display = 'none';
     aiFallbackActions.style.display = 'flex';
     aiValuationClose.style.visibility = 'visible';

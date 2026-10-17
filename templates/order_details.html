@@ -85,13 +85,17 @@
 
   .status-pending { background: #fff3cd; color: #856404; }
   .status-processing { background: #d1ecf1; color: #0c5460; }
+  .status-ready-for-pickup { background: #ffedd5; color: #9a3412; }
   .status-shipped { background: #cfe2ff; color: #084298; }
+  .status-out-for-delivery { background: #cfe2ff; color: #084298; }
   .status-delivered { background: #d1e7dd; color: #0f5132; }
   .status-cancelled { background: #f8d7da; color: #842029; }
 
   html.dark-mode .status-pending { background: rgba(255, 193, 7, 0.25); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.5); }
   html.dark-mode .status-processing { background: rgba(33, 150, 243, 0.25); color: #64b5f6; border: 1px solid rgba(100, 181, 246, 0.5); }
+  html.dark-mode .status-ready-for-pickup { background: rgba(255, 152, 0, 0.25); color: #ffb74d; border: 1px solid rgba(255, 183, 77, 0.5); }
   html.dark-mode .status-shipped { background: rgba(76, 175, 80, 0.25); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.5); }
+  html.dark-mode .status-out-for-delivery { background: rgba(33, 150, 243, 0.25); color: #64b5f6; border: 1px solid rgba(100, 181, 246, 0.5); }
   html.dark-mode .status-delivered { background: rgba(76, 175, 80, 0.25); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.5); }
   html.dark-mode .status-cancelled { background: rgba(244, 67, 54, 0.25); color: #ef5350; border: 1px solid rgba(239, 68, 68, 0.5); }
 
@@ -1045,7 +1049,7 @@
     <div class="order-status">
       {{ transaction_exp['status_explanation']['icon'] }} 
       {{ transaction_exp['status_explanation']['title'] }}
-      <span class="status-badge status-{{ order.status.lower() }}">{{ order.status }}</span>
+      <span class="status-badge status-{{ order.status.lower().replace(' ', '-') }}">{{ order.status }}</span>
     </div>
   </div>
 
@@ -1079,7 +1083,7 @@
       <div class="info-row">
         <span class="info-label">Order Status:</span>
         <span class="info-value">
-          <span class="status-badge status-{{ order.status.lower() }}">{{ order.status }}</span>
+          <span class="status-badge status-{{ order.status.lower().replace(' ', '-') }}">{{ order.status }}</span>
         </span>
       </div>
     </div>
@@ -1103,6 +1107,22 @@
       <div class="info-row">
         <span class="info-label">Address:</span>
         <span class="info-value">{{ order.delivery_address }}</span>
+      </div>
+      {% endif %}
+      {% if order.pickup_station %}
+      <div class="info-row">
+        <span class="info-label">Pickup station:</span>
+        <span class="info-value">{{ order.pickup_station.name }} — {{ order.pickup_station.address }}</span>
+      </div>
+      {% endif %}
+      {% if order.reservation and order.delivery_method == 'home delivery' %}
+      <div class="info-row">
+        <span class="info-label">Home-service fee:</span>
+        <span class="info-value">
+          {% if order.logistics_fee_naira %}₦{{ '{:,.2f}'.format(order.logistics_fee_naira) }}{% endif %}
+          · {{ order.reservation.delivery_fee_status|replace('_', ' ')|title }}
+          · Non-refundable
+        </span>
       </div>
       {% endif %}
     </div>
@@ -1172,10 +1192,13 @@
     </a>
     
     <!-- Cancel Button - Only show for pending/processing orders -->
-    {% if order.status.lower() in ['pending', 'processing'] and not order.cancelled %}
+    {% if order.status.lower() in ['pending', 'processing'] and not order.cancelled and not order.reservation_id %}
     <button class="btn-danger" onclick="openCancelModal()">
       ✕ Cancel Order
     </button>
+    {% endif %}
+    {% if order.reservation_id and order.status.lower() in ['pending', 'processing'] %}
+    <p class="text-muted">Reservation purchases are settled during physical verification and cannot be cancelled through standard order cancellation. Contact support if you need help.</p>
     {% endif %}
     
     <a href="{{ url_for('user.user_orders') }}" class="btn-secondary">

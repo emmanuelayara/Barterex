@@ -94,9 +94,15 @@ def verify_payment(reference):
         if is_test and reference.startswith('TEST_'):
             print(f'Verifying TEST payment: {reference}')
         
+        payment = Payment.query.filter_by(paystack_reference=reference).first()
+        if payment and payment.purpose == 'reservation_delivery_fee' and payment.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         result = PaystackPaymentService.verify_payment(reference)
         
         if result['success']:
+            if payment and payment.purpose == 'reservation_delivery_fee':
+                flash('Home-service fee paid. Fulfillment can proceed after verification passes.', 'success')
+                return redirect(url_for('user.my_reservations'))
             return render_template(
                 'payments/payment_success.html',
                 credits_added=result['credits_added'],
@@ -171,6 +177,14 @@ def webhook():
             result = PaystackPaymentService.verify_payment(reference)
             
             if result['success']:
+                payment = Payment.query.filter_by(paystack_reference=reference).first()
+                if payment and payment.purpose == 'reservation_delivery_fee':
+                    return render_template(
+                        'payments/delivery_fee_result.html',
+                        success=True,
+                        reference=reference,
+                        error=None,
+                    )
                 return render_template(
                     'payments/payment_success.html',
                     credits_added=result['credits_added'],

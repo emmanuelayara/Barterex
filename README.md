@@ -1,6 +1,14 @@
 # Barterex
 Trade by Barter
 
+## Saving and acquiring items
+
+Favorites is the user-facing saved-items list; saving does not hold an item.
+Users acquire items through individual funded reservations, verification,
+settlement, and fulfillment, not a cart or combined checkout. Legacy cart and
+checkout URLs redirect to Favorites or the relevant item without purchasing
+or deleting historical cart records. Cart notification controls are retired.
+
 ## Project Structure
 
 ```
@@ -14,7 +22,7 @@ Barterex/
 │   ├── auth.py              # Authentication routes (login, register, password reset)
 │   ├── marketplace.py        # Marketplace browse routes
 │   ├── user.py              # User dashboard and profile routes
-│   ├── items.py             # Item upload, cart, and checkout routes
+│   ├── items.py             # Item upload, activation, and legacy route redirects
 │   └── admin.py             # Admin panel routes
 ├── templates/               # Jinja2 HTML templates
 ├── static/                  # CSS, JS, and uploaded files
@@ -78,7 +86,7 @@ Each blueprint encapsulates related routes:
 - **auth_bp**: User authentication and session management
 - **marketplace_bp**: Public marketplace viewing
 - **user_bp**: Authenticated user features
-- **items_bp**: Item and cart management
+- **items_bp**: Item upload, activation, and legacy route redirects
 - **admin_bp**: Admin-only features (with `/admin` prefix)
 
 ### Database Models
@@ -122,4 +130,3 @@ Each blueprint encapsulates related routes:
 - `/admin/dashboard` → admin.admin_dashboard
 - `/admin/users` → admin.manage_users
 - `/admin/approvals` → admin.approve_items
-

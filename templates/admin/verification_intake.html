@@ -1,0 +1,121 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Verification Intake &amp; Custody{% endblock %}
+
+{% block content %}
+<style>
+  .vi-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 20px; font-size: 0.86rem; color: var(--ink); }
+  .vi-details strong { display: block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .vi-subhead { margin: 18px 0 10px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .vi-custody { list-style: none; padding: 0; margin: 0; }
+  .vi-custody li { margin-bottom: 8px; padding: 2px 0 4px 12px; border-left: 3px solid var(--accent-orange); font-size: 0.84rem; color: var(--ink); }
+  .vi-custody li > div { margin-top: 2px; color: var(--muted); }
+  .vi-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end; }
+  .vi-form .vi-wide { grid-column: 1 / -1; }
+  .vi-form button { justify-self: start; }
+</style>
+
+<div class="adm-page">
+  <a class="adm-back" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i> Admin dashboard</a>
+  <div class="adm-head">
+    <div>
+      <h1>Verification intake &amp; custody</h1>
+      <p>Physical receipt snapshots and append-only handoff records, including the staff member who logged each event.</p>
+    </div>
+  </div>
+
+  {% if intakes.items %}
+    {% for intake in intakes.items %}
+      {% set current_custody = intake.custody_events[-1] if intake.custody_events else none %}
+      <article class="adm-panel">
+        <div class="adm-panel-head">
+          <div class="adm-panel-icon"><i class="bi bi-clipboard-check"></i></div>
+          <div>
+            <h2>
+              {{ intake.item.name if intake.item else 'Item removed' }}
+              · #{{ intake.item.item_number if intake.item else intake.item_id }}
+            </h2>
+            <p>{{ intake.workflow_type|replace('_', ' ') }} · {{ intake.received_at.strftime('%b %d, %Y %I:%M %p') }}</p>
+          </div>
+          <div class="adm-panel-actions">
+            <span class="adm-pill {% if intake.outcome == 'passed' %}ok{% else %}bad{% endif %}">
+              {{ intake.outcome }}
+            </span>
+          </div>
+        </div>
+
+        <div class="adm-panel-body">
+          <div class="vi-details">
+            <div><strong>Received at</strong> {{ intake.received_location }}</div>
+            <div><strong>Received/logged by</strong> {{ intake.received_by.username if intake.received_by else 'Staff record unavailable' }}</div>
+            <div><strong>Observed condition</strong> {{ intake.observed_condition }}</div>
+            <div><strong>Identity confirmed</strong> {{ 'Yes' if intake.identity_confirmed else 'No' }}</div>
+            <div><strong>Serial check</strong> {{ intake.serial_check|replace('_', ' ') }}</div>
+            <div><strong>Observed serial</strong> {{ intake.observed_serial_number or 'Not recorded' }}</div>
+            <div><strong>Accessories received</strong> {{ intake.accessories_received or 'Not recorded' }}</div>
+            <div><strong>Inspection notes</strong> {{ intake.inspection_notes or 'None' }}</div>
+            {% if current_custody %}
+              <div><strong>Current recorded custodian</strong> {{ current_custody.custodian_name }} · {{ current_custody.to_location }}</div>
+            {% endif %}
+          </div>
+
+          <h3 class="vi-subhead">Custody history</h3>
+          <ol class="vi-custody">
+            {% for event in intake.custody_events %}
+              <li>
+                <strong>{{ event.event_type|replace('_', ' ')|title }}</strong> ·
+                {% if event.from_location %}{{ event.from_location }} → {% endif %}{{ event.to_location }} ·
+                Custodian: {{ event.custodian_name }} ·
+                Recorded by {{ event.recorded_by.username if event.recorded_by else 'Staff record unavailable' }}
+                on {{ event.recorded_at.strftime('%b %d, %Y %I:%M %p') }}
+                {% if event.notes %}<div>{{ event.notes }}</div>{% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin.record_verification_custody', intake_id=intake.id) }}" class="adm-panel-foot vi-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <div class="adm-field mb-0">
+            <label>
+              New location
+              <input type="text" name="to_location" maxlength="200" class="form-control" required>
+            </label>
+          </div>
+          <div class="adm-field mb-0">
+            <label>
+              Receiving custodian
+              <input type="text" name="custodian_name" maxlength="120" class="form-control" required>
+            </label>
+          </div>
+          <div class="adm-field mb-0 vi-wide">
+            <label>
+              Handoff notes
+              <textarea name="notes" rows="2" maxlength="2000" class="form-control"></textarea>
+            </label>
+          </div>
+          <button type="submit" class="adm-btn primary"><i class="bi bi-arrow-left-right"></i> Record movement / handoff</button>
+        </form>
+      </article>
+    {% endfor %}
+    {% if intakes.pages > 1 %}
+      <nav aria-label="Verification intake pages" class="d-flex justify-content-center flex-wrap gap-1 my-3">
+        {% for page_number in range(1, intakes.pages + 1) %}
+          <a class="adm-btn sm {% if page_number == intakes.page %}primary{% else %}ghost{% endif %}"
+             href="{{ url_for('admin.verification_intake_log', page=page_number) }}">
+            {{ page_number }}
+          </a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="adm-panel">
+      <div class="adm-empty">
+        <i class="bi bi-clipboard-check"></i>
+        <h6>No intakes yet</h6>
+        <p class="mb-0">No physical verification intakes have been recorded yet.</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

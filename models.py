@@ -179,6 +179,30 @@ class Admin(db.Model):
     failed_login_attempts = db.Column(db.Integer, default=0)
     account_locked_until = db.Column(db.DateTime, nullable=True)
 
+    # Access control: super admins can do everything; sub-admins only what is in `permissions`
+    is_super_admin = db.Column(db.Boolean, nullable=False, default=False)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    permissions = db.Column(db.Text, nullable=True)  # JSON list of permission keys
+    # Deleted admins keep a scrubbed row so audit/custody records that reference them stay valid
+    deleted_at = db.Column(db.DateTime, nullable=True)
+
+    @property
+    def permission_list(self):
+        try:
+            value = json.loads(self.permissions) if self.permissions else []
+        except (TypeError, ValueError):
+            return []
+        return value if isinstance(value, list) else []
+
+    @permission_list.setter
+    def permission_list(self, keys):
+        self.permissions = json.dumps(list(keys or []))
+
+    def has_permission(self, key):
+        if not self.is_active:
+            return False
+        return bool(self.is_super_admin) or key in self.permission_list
+
 
 class ActivityLog(db.Model):
     """Track user account activity for security and GDPR compliance"""
@@ -292,6 +316,18 @@ class SecuritySettings(db.Model):
 
 
 class Item(db.Model):
+    def activation_credit_amount(self):
+        """Use the saved AI estimate for listing and provisional-credit activation."""
+        import math
+
+        value = self.ai_estimated_value
+        if value is None or not math.isfinite(value) or value <= 0:
+            raise ValueError('A valid AI valuation is required before this item can be activated.')
+        amount = int(round(value))
+        if amount <= 0:
+            raise ValueError('The AI valuation must round to at least 1 BXC before activation.')
+        return amount
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -301,8 +337,9 @@ class Item(db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(50), default='pending') 
     rejection_reason = db.Column(db.Text, nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_user'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_user'), nullable=True)
     user = db.relationship('User', back_populates='items', foreign_keys='[Item.user_id]')
+    owner_type = db.Column(db.String(20), nullable=False, default='user')
     uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_item_uploader'), nullable=True)
     condition = db.Column(db.String(20))  # e.g., "Brand New" or "Fairly Used"
     usage_duration = db.Column(db.String(100), nullable=True)  # How long a "Fairly Used" item has been used
@@ -374,6 +411,10 @@ class Item(db.Model):
 
     # --- Seller-submitted verification video (see ItemVideo) ---
     videos = db.relationship('ItemVideo', back_populates='item', lazy=True, cascade='all, delete-orphan')
+    clearing_inventory = db.relationship(
+        'ClearingInventoryItem', back_populates='item', uselist=False
+    )
+    verification_intakes = db.relationship('VerificationIntake', back_populates='item')
 
     images = db.relationship('ItemImage', back_populates='item', cascade="all, delete-orphan")
     
@@ -511,19 +552,36 @@ class ItemVideo(db.Model):
 
 class Reservation(db.Model):
     """
-    A buyer's "Get with BXC" request on a marketplace item, backed by one or
-    more of the buyer's own activated items (see ReservationAsset). Both the
-    seller's item and every backing asset must pass a final, parallel physical
-    verification within the settlement window before the purchase settles -
-    see services/reservation_service.py.
+    A buyer's "Get with BXC" request funded by spendable BXC or by one or more
+    of the buyer's own activated items (see ReservationAsset). Verified backing
+    assets enter Barter Express inventory after verification if the requested
+    item also passes. Home-service delivery is quoted and paid separately.
     """
-    VALID_STATUSES = {'active', 'completed', 'expired', 'cancelled'}
+    VALID_STATUSES = {'active', 'awaiting_consent', 'completed', 'expired', 'cancelled'}
     VERIFICATION_STATUSES = {'not_submitted', 'submitted', 'passed', 'failed'}
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_reservation_user'), nullable=False)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_reservation_item'), nullable=False)
     provisional_credits_used = db.Column(db.Integer, nullable=False)
+    purchase_value = db.Column(db.Integer, nullable=True)
+    spendable_credits_held = db.Column(db.Integer, nullable=False, default=0)
+    spendable_funding_held = db.Column(db.Integer, nullable=False, default=0)
+    clearing_mode = db.Column(db.String(30), nullable=False, default='legacy_swap')
+    funding_mode = db.Column(db.String(20), nullable=False, default='item_backed')
+    delivery_method = db.Column(db.String(20), nullable=False, default='pickup')
+    delivery_address = db.Column(db.String(255), nullable=True)
+    pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
+    delivery_quote_naira = db.Column(db.Float, nullable=True)
+    delivery_fee_status = db.Column(db.String(20), nullable=False, default='not_required')
+    backing_return_status = db.Column(db.String(20), nullable=False, default='not_required')
+    backing_asset_consent_at = db.Column(db.DateTime, nullable=True)
+    backing_asset_consent_version = db.Column(db.String(40), nullable=True)
+    title_transfer_decision = db.Column(db.String(10), nullable=True)
+    title_transfer_decision_at = db.Column(db.DateTime, nullable=True)
+    title_transfer_decision_expires_at = db.Column(db.DateTime, nullable=True)
+    seller_item_revaluation_failed = db.Column(db.Boolean, nullable=False, default=False)
+    revaluation_shortfall_expires_at = db.Column(db.DateTime, nullable=True)
     status = db.Column(db.String(20), default='active', nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
@@ -539,6 +597,13 @@ class Reservation(db.Model):
     user = db.relationship('User', back_populates='reservations', foreign_keys=[user_id])
     item = db.relationship('Item', back_populates='reservations', foreign_keys=[item_id])
     backing_assets = db.relationship('ReservationAsset', back_populates='reservation', cascade='all, delete-orphan')
+    revaluations = db.relationship(
+        'ReservationRevaluation',
+        back_populates='reservation',
+        cascade='all, delete-orphan',
+    )
+    pickup_station = db.relationship('PickupStation')
+    order = db.relationship('Order', back_populates='reservation', uselist=False)
 
     __table_args__ = (
         db.Index('idx_reservation_user_id', 'user_id'),
@@ -551,15 +616,22 @@ class Reservation(db.Model):
 
     def is_expired(self):
         """True if still marked active but past its expiry time."""
-        return self.status == 'active' and datetime.utcnow() > self.expires_at
+        now = datetime.utcnow()
+        return self.status == 'active' and (
+            now > self.expires_at
+            or (
+                self.revaluation_shortfall_expires_at is not None
+                and now > self.revaluation_shortfall_expires_at
+            )
+        )
 
 
 class ReservationAsset(db.Model):
     """
     One of the BUYER's own activated items, selected as collateral backing a
-    Reservation (a buyer may combine several items to cover the price). Each
-    asset needs its own pass/fail final verification, parallel to the seller's
-    item - see services/reservation_service.py.
+    Reservation (a buyer may combine several items to cover the price). Recorded
+    consent allows each passing asset to transfer to Barter Express independently
+    of the requested item's verification outcome.
     """
     VALID_STATUSES = Reservation.VERIFICATION_STATUSES
 
@@ -567,6 +639,9 @@ class ReservationAsset(db.Model):
     reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id', name='fk_reservationasset_reservation'), nullable=False)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_reservationasset_item'), nullable=False)
     amount = db.Column(db.Integer, nullable=False)  # value this item contributes toward the purchase
+    reserved_provisional_amount = db.Column(db.Integer, nullable=False, default=0)
+    excluded_from_settlement = db.Column(db.Boolean, nullable=False, default=False)
+    consent_confirmed_at = db.Column(db.DateTime, nullable=True)
 
     verification_status = db.Column(db.String(20), default='not_submitted', nullable=False)
     verified_at = db.Column(db.DateTime, nullable=True)
@@ -582,6 +657,156 @@ class ReservationAsset(db.Model):
 
     def __repr__(self):
         return f'<ReservationAsset {self.id} reservation={self.reservation_id} item={self.item_id} status={self.verification_status}>'
+
+
+class ReservationRevaluation(db.Model):
+    """A physically verified revised value awaiting both reservation parties' decisions."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    reservation_id = db.Column(
+        db.Integer,
+        db.ForeignKey('reservation.id', name='fk_reservation_revaluation_reservation'),
+        nullable=False,
+    )
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
+    reservation_asset_id = db.Column(
+        db.Integer, db.ForeignKey('reservation_asset.id'), nullable=True
+    )
+    original_value = db.Column(db.Integer, nullable=False)
+    proposed_value = db.Column(db.Integer, nullable=False)
+    proposed_by_admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    buyer_decision = db.Column(db.String(10), nullable=False, default='pending')
+    seller_decision = db.Column(db.String(10), nullable=False, default='pending')
+    buyer_decision_at = db.Column(db.DateTime, nullable=True)
+    seller_decision_at = db.Column(db.DateTime, nullable=True)
+    proposed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    decision_expires_at = db.Column(db.DateTime, nullable=False)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+
+    reservation = db.relationship('Reservation', back_populates='revaluations')
+    item = db.relationship('Item')
+    reservation_asset = db.relationship('ReservationAsset')
+    proposed_by_admin = db.relationship('Admin')
+
+    __table_args__ = (
+        db.Index('idx_reservation_revaluation_reservation', 'reservation_id'),
+        db.Index('idx_reservation_revaluation_status_deadline', 'status', 'decision_expires_at'),
+        db.Index('idx_reservation_revaluation_item', 'item_id'),
+    )
+
+
+class ClearingInventoryItem(db.Model):
+    """An item Barter Express acquired and is holding for later resale."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False, unique=True)
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=False)
+    reservation_asset_id = db.Column(
+        db.Integer, db.ForeignKey('reservation_asset.id'), nullable=False, unique=True
+    )
+    source_user_id = db.Column(
+        db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True
+    )
+    acquisition_value = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(30), nullable=False, default='held_for_resale')
+    acquired_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    item = db.relationship('Item', back_populates='clearing_inventory')
+    reservation = db.relationship('Reservation')
+    reservation_asset = db.relationship('ReservationAsset')
+    source_user = db.relationship('User')
+
+    __table_args__ = (
+        db.Index('idx_clearing_inventory_status', 'status'),
+        db.Index('idx_clearing_inventory_acquired_at', 'acquired_at'),
+    )
+
+
+class VerificationIntake(db.Model):
+    """Immutable snapshot of an item's physical receipt and verification checks."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False, index=True)
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=True, index=True)
+    reservation_asset_id = db.Column(
+        db.Integer, db.ForeignKey('reservation_asset.id'), nullable=True, index=True
+    )
+    workflow_type = db.Column(db.String(40), nullable=False)
+    outcome = db.Column(db.String(20), nullable=False)
+    received_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    received_location = db.Column(db.String(200), nullable=False)
+    received_by_admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
+    observed_condition = db.Column(db.String(20), nullable=False)
+    observed_serial_number = db.Column(db.String(100), nullable=True)
+    serial_check = db.Column(db.String(20), nullable=False)
+    identity_confirmed = db.Column(db.Boolean, nullable=False)
+    accessories_received = db.Column(db.Text, nullable=True)
+    inspection_notes = db.Column(db.Text, nullable=True)
+    inspected_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    inspected_by_admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
+
+    item = db.relationship('Item', back_populates='verification_intakes')
+    reservation = db.relationship('Reservation')
+    reservation_asset = db.relationship('ReservationAsset')
+    received_by = db.relationship('Admin', foreign_keys=[received_by_admin_id])
+    inspected_by = db.relationship('Admin', foreign_keys=[inspected_by_admin_id])
+    custody_events = db.relationship(
+        'CustodyEvent', back_populates='intake', order_by='CustodyEvent.recorded_at'
+    )
+
+    __table_args__ = (
+        db.Index('idx_verification_intake_received_at', 'received_at'),
+        db.Index('idx_verification_intake_workflow', 'workflow_type', 'outcome'),
+    )
+
+
+class CustodyEvent(db.Model):
+    """Append-only record of the responsible custodian and location of an item."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False, index=True)
+    intake_id = db.Column(db.Integer, db.ForeignKey('verification_intake.id'), nullable=False, index=True)
+    event_type = db.Column(db.String(20), nullable=False)
+    from_location = db.Column(db.String(200), nullable=True)
+    to_location = db.Column(db.String(200), nullable=False)
+    custodian_name = db.Column(db.String(120), nullable=False)
+    recorded_by_admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    notes = db.Column(db.Text, nullable=True)
+
+    intake = db.relationship('VerificationIntake', back_populates='custody_events')
+    item = db.relationship('Item')
+    recorded_by = db.relationship('Admin')
+
+    __table_args__ = (
+        db.Index('idx_custody_event_recorded_at', 'recorded_at'),
+        db.Index('idx_custody_event_item', 'item_id', 'recorded_at'),
+    )
+
+
+class ReservationCreditEntry(db.Model):
+    """Append-only audit of provisional and spendable BXC across item trade lifecycles."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    reservation_id = db.Column(
+        db.Integer,
+        db.ForeignKey('reservation.id', name='fk_reservation_credit_entry_reservation'),
+        nullable=True,
+    )
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=True)
+    balance_type = db.Column(db.String(20), nullable=False)  # provisional, spendable, or spendable_held
+    entry_type = db.Column(db.String(30), nullable=False)  # hold, release, settlement, change, purchase
+    amount = db.Column(db.Integer, nullable=False)  # signed movement
+    balance_before = db.Column(db.Integer, nullable=False)
+    balance_after = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.Index('idx_reservation_credit_entry_reservation', 'reservation_id'),
+        db.Index('idx_reservation_credit_entry_user', 'user_id'),
+    )
 
 
 class Trade(db.Model):
@@ -641,12 +866,15 @@ class Order(db.Model):
     credits_balance_after = db.Column(db.Float, default=0)  # User balance after order
     estimated_delivery_date = db.Column(db.DateTime, nullable=True)  # Estimated delivery date
     actual_delivery_date = db.Column(db.DateTime, nullable=True)  # Actual delivery date
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=True, unique=True)
+    logistics_fee_naira = db.Column(db.Float, nullable=True)
     receipt_downloaded = db.Column(db.Boolean, default=False)  # Track if receipt was downloaded
     transaction_notes = db.Column(db.Text, nullable=True)  # Additional notes about the transaction
     
     user = db.relationship('User', back_populates='orders')
     pickup_station = db.relationship('PickupStation', backref='orders')
     items = db.relationship('OrderItem', back_populates='order', cascade="all, delete-orphan")
+    reservation = db.relationship('Reservation', back_populates='order')
 
 
 class OrderItem(db.Model):
@@ -656,6 +884,19 @@ class OrderItem(db.Model):
 
     order = db.relationship('Order', back_populates='items')
     item = db.relationship('Item')
+
+
+class LegacyCheckoutReconciliation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False, unique=True)
+    buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    status = db.Column(db.String(20), nullable=False)
+    credits_refunded = db.Column(db.Integer, nullable=False, default=0)
+    details = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    order = db.relationship('Order')
+    buyer = db.relationship('User')
 
 
 
@@ -709,17 +950,17 @@ class CreditTransaction(db.Model):
         
         # Default descriptions based on transaction type
         if self.transaction_type == 'purchase':
-            return f"Paid ₦{self.amount:,.0f} for item purchase"
+            return f"Paid ᗸ{self.amount:,.0f} BXC for item purchase"
         elif self.transaction_type == 'referral_signup_bonus':
-            return f"Earned ₦{self.amount:,.0f} referral bonus from new signup"
+            return f"Earned ᗸ{self.amount:,.0f} BXC referral bonus from new signup"
         elif self.transaction_type == 'referral_purchase_bonus':
-            return f"Earned ₦{self.amount:,.0f} referral bonus from purchase"
+            return f"Earned ᗸ{self.amount:,.0f} BXC referral bonus from purchase"
         elif self.transaction_type == 'admin_credit':
-            return f"Received ₦{self.amount:,.0f} from admin"
+            return f"Received ᗸ{self.amount:,.0f} BXC from admin"
         elif self.transaction_type == 'refund':
-            return f"Refunded ₦{self.amount:,.0f}"
+            return f"Refunded ᗸ{self.amount:,.0f} BXC"
         else:
-            return f"{self.transaction_type.replace('_', ' ').title()}: ₦{self.amount:,.0f}"
+            return f"{self.transaction_type.replace('_', ' ').title()}: ᗸ{self.amount:,.0f} BXC"
     
 
 
@@ -1039,7 +1280,7 @@ class ContactMessage(db.Model):
 # Payment Processing Model for Payment Gateway Integration
 class Payment(db.Model):
     """
-    Tracks all payment transactions for credit purchases.
+    Tracks wallet-credit purchases and separately identified reservation fees.
     Supports multiple payment gateways: Monnify and Paystack.
     """
     id = db.Column(db.Integer, primary_key=True)
@@ -1070,6 +1311,8 @@ class Payment(db.Model):
     customer_phone = db.Column(db.String(15), nullable=True)
     payment_metadata = db.Column(db.JSON, nullable=True)  # Additional data from Monnify
     error_message = db.Column(db.Text, nullable=True)  # If payment failed
+    purpose = db.Column(db.String(30), nullable=False, default='credit_purchase')
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=True, index=True)
     
     # Relationship
     user = db.relationship('User', backref=db.backref('payments', lazy=True))

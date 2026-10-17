@@ -7,152 +7,19 @@
     --accent-orange: #ff7a00;
     --light-gray: #f8f9fa;
     --bg-color: #f1f5f9;
-    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --card-shadow-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
-    --border-radius: 12px;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --ink: #0f2a47;
+    --muted: #64748b;
+    --line: #e5eaf1;
+    --tint: rgba(5, 78, 151, 0.06);
+    --card-shadow: 0 1px 2px rgba(15, 42, 71, 0.05), 0 2px 8px rgba(15, 42, 71, 0.04);
+    --border-radius: 14px;
+    --transition: all 0.2s ease;
   }
 
-  /* Enhanced Admin Header - Mobile Optimized */
-  .admin-header {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
-    padding: 5px 8px;
-    color: white;
-    border-bottom: 4px solid var(--accent-orange);
-    border-radius: 0 0 16px 16px;
-    margin-bottom: 20px;
-    box-shadow: var(--card-shadow-hover);
-    position: relative;
-    overflow: hidden;
+  body {
+    background-color: var(--bg-color);
   }
 
-  .admin-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
-    pointer-events: none;
-  }
-
-  .admin-header h1 {
-    font-size: 1rem;
-    margin-bottom: 2px;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    position: relative;
-    z-index: 2;
-  }
-
-  .admin-header .lead {
-    font-size: 0.7rem;
-    opacity: 0.9;
-    margin-bottom: 4px;
-    position: relative;
-    z-index: 2;
-  }
-
-  /* Enhanced Navigation Buttons - Mobile Optimized */
-  .admin-nav-groups {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    max-width: 980px;
-    margin: 0 auto;
-  }
-
-  .nav-group {
-    width: 100%;
-    padding-top: 2px;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-  }
-
-  .nav-group:first-child {
-    padding-top: 0;
-    border-top: none;
-  }
-
-  .nav-group-label {
-    display: block;
-    text-align: center;
-    font-size: 0.6rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.6;
-    margin-bottom: 2px;
-  }
-
-  .admin-nav-btns {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .admin-nav-btns a {
-    margin: 1px;
-    padding: 2px 6px;
-    border-radius: 5px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    text-decoration: none;
-    transition: var(--transition);
-    backdrop-filter: blur(10px);
-    border: 2px solid transparent;
-    position: relative;
-    overflow: hidden;
-    font-size: 0.7rem;
-    min-height: 20px;
-  }
-
-  .admin-nav-btns a::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-  }
-
-  .admin-nav-btns a:hover::before {
-    left: 100%;
-  }
-
-  .admin-nav-btns a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Enhanced Count Badge - Mobile Optimized */
-  .count-badge {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    color: var(--primary-blue);
-    border-radius: 8px;
-    padding: 1px 5px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    animation: pulse-badge 2s infinite;
-    min-width: 16px;
-    text-align: center;
-  }
-
-  @keyframes pulse-badge {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  /* Modal Image Rotating Animation */
   @keyframes modalImageRotateIn {
     0% {
       transform: rotateY(90deg) scale(0.7);
@@ -171,513 +38,592 @@
     animation: modalImageRotateIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 
-  /* Modal Image Rotating Animation */
-  @keyframes modalImageRotateIn {
-    0% {
-      transform: rotateY(90deg) scale(0.7);
-      opacity: 0;
-    }
-    50% {
-      opacity: 1;
-    }
-    100% {
-      transform: rotateY(0deg) scale(1);
-      opacity: 1;
-    }
-  }
-
-  #modalItemImage.image-rotate {
-    animation: modalImageRotateIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-
-  /* Pending button pulse animation */
-  .animate-pending {
-    animation: button-pulse 2s infinite;
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
-  }
-
-  @keyframes button-pulse {
-    0% {
-      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
-    }
-    70% {
-      box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
-    }
-    100% {
-      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
-    }
-  }
-
-  /* Dashboard Container */
+  /* Page layout */
   .dashboard-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 15px;
+    padding: 24px 20px 40px;
   }
 
-  /* Enhanced Search Section */
-  .search-section {
-    background: white;
-    border-radius: var(--border-radius);
-    padding: 20px;
+  .dash-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
     margin-bottom: 20px;
-    box-shadow: var(--card-shadow);
-    border: 1px solid #e2e8f0;
+  }
+
+  .dash-head h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+  }
+
+  .dash-head p {
+    margin: 2px 0 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .dash-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: var(--accent-orange);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
     transition: var(--transition);
   }
 
-  .search-section:hover {
-    box-shadow: var(--card-shadow-hover);
-    transform: translateY(-2px);
+  .dash-cta:hover {
+    background: #e66e00;
+    color: #fff;
   }
 
-  .search-section h5 {
-    color: var(--primary-blue);
-    font-weight: 600;
-    margin-bottom: 15px;
+  /* Overview stats */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 1.1rem;
+    gap: 14px;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    color: inherit;
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  a.stat-card:hover {
+    border-color: var(--accent-orange);
+    color: inherit;
+  }
+
+  .stat-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: var(--tint);
+    color: var(--primary-blue);
+    font-size: 1.15rem;
+  }
+
+  .stat-card.is-highlight .stat-icon {
+    background: rgba(255, 122, 0, 0.12);
+    color: var(--accent-orange);
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .stat-label {
+    margin-top: 2px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* Grouped shortcuts */
+  .link-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .link-card {
+    padding: 14px 8px 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+  }
+
+  .link-card-title {
+    padding: 0 10px 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .link-row i {
+    width: 18px;
+    text-align: center;
+    font-size: 1rem;
+    color: var(--primary-blue);
+  }
+
+  .link-row:hover {
+    background: var(--tint);
+    color: var(--primary-blue);
+  }
+
+  .link-row .count-badge {
+    margin-left: auto;
+  }
+
+  .count-badge {
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--tint);
+    color: var(--primary-blue);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .count-badge.is-alert {
+    background: var(--accent-orange);
+    color: #fff;
+  }
+
+  /* Panels */
+  .panel {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+
+  .items-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .status-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    background: var(--tint);
+    border-radius: 10px;
+  }
+
+  .status-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .status-tab:hover {
+    color: var(--primary-blue);
+  }
+
+  .status-tab.active {
+    background: #fff;
+    color: var(--primary-blue);
+    box-shadow: 0 1px 3px rgba(15, 42, 71, 0.12);
+  }
+
+  .status-tab.active .count-badge {
+    background: var(--primary-blue);
+    color: #fff;
+  }
+
+  .status-tab .count-badge.is-alert {
+    background: var(--accent-orange);
+    color: #fff;
+  }
+
+  .search-form {
+    position: relative;
+    flex: 1 1 260px;
+    max-width: 360px;
+  }
+
+  .search-form > i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .search-form .form-control {
+    padding-left: 36px;
   }
 
   .form-control {
-    border-radius: 8px;
-    border: 2px solid #e2e8f0;
-    padding: 10px 14px;
-    transition: var(--transition);
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
     font-size: 0.9rem;
+    transition: var(--transition);
   }
 
   .form-control:focus {
     border-color: var(--primary-blue);
-    box-shadow: 0 0 0 0.2rem rgba(5, 78, 151, 0.25);
-    transform: translateY(-1px);
+    box-shadow: 0 0 0 3px rgba(5, 78, 151, 0.12);
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
-    border: none;
+    background: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
     border-radius: 8px;
-    padding: 10px 20px;
     font-weight: 600;
-    transition: var(--transition);
-    font-size: 0.9rem;
   }
 
   .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(5, 78, 151, 0.3);
+    background: #043a73;
+    border-color: #043a73;
   }
 
-  /* Items Section */
-  .items-section {
-    background: white;
-    border-radius: var(--border-radius);
-    padding: 20px;
-    box-shadow: var(--card-shadow);
-    border: 1px solid #e2e8f0;
+  /* Item rows */
+  .item-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
-  .items-section h5 {
-    color: var(--primary-blue);
-    font-weight: 600;
-    margin-bottom: 15px;
+  .item-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 1.1rem;
-  }
-
-  /* Enhanced List Items */
-  .list-group {
-    border: none;
-  }
-
-  .list-group-item {
-    background: #fafbfc;
-    border: 2px solid #e2e8f0;
-    border-radius: var(--border-radius);
-    margin-bottom: 12px;
-    padding: 16px;
+    gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line);
     transition: var(--transition);
-    position: relative;
+  }
+
+  .item-row:last-child {
+    border-bottom: none;
+  }
+
+  .item-row:hover {
+    background: #fafcff;
+  }
+
+  .item-thumb {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .item-thumb.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--tint);
+    color: var(--muted);
+    cursor: default;
+  }
+
+  .item-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .item-name {
+    margin: 0;
     overflow: hidden;
-  }
-
-  .list-group-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 4px;
-    background: linear-gradient(135deg, var(--accent-orange) 0%, #ff9533 100%);
-    transform: scaleY(0);
-    transition: var(--transition);
-  }
-
-  .list-group-item:hover {
-    background: white;
-    border-color: var(--primary-blue);
-    transform: translateY(-3px);
-    box-shadow: var(--card-shadow-hover);
-  }
-
-  .list-group-item:hover::before {
-    transform: scaleY(1);
-  }
-
-  .item-content h5 {
-    color: var(--primary-blue);
-    margin-bottom: 8px;
+    font-size: 0.95rem;
     font-weight: 600;
-    font-size: 1rem;
-  }
-
-  .item-number {
-    color: var(--accent-orange);
-    font-weight: 600;
-    font-family: 'Courier New', monospace;
-    background: rgba(255, 122, 0, 0.1);
-    padding: 2px 8px;
-    border-radius: 6px;
-    display: inline-block;
-    margin-bottom: 8px;
-    font-size: 0.8rem;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .item-meta {
-    color: #64748b;
-    font-size: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    margin-top: 2px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .item-number {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--accent-orange);
+  }
+
+  .item-desc {
+    max-width: 520px;
+    margin-top: 4px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .item-side {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 12px;
+    flex-shrink: 0;
   }
 
-  /* Enhanced Status Badges */
-  .badge {
-    font-size: 0.75rem;
-    padding: 4px 10px;
-    border-radius: 16px;
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--tint);
+    color: var(--muted);
+    font-size: 0.72rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
   }
 
-  .bg-warning {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
-    color: #92400e !important;
+  .status-pill.status-pending {
+    background: rgba(255, 122, 0, 0.12);
+    color: #b45300;
   }
 
-  .bg-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  .status-pill.status-approved {
+    background: rgba(5, 78, 151, 0.1);
+    color: var(--primary-blue);
   }
 
-  .bg-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  .status-pill.status-rejected {
+    background: rgba(220, 38, 38, 0.1);
+    color: #b91c1c;
   }
 
   .item-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
-  .btn-outline-primary {
-    border-color: var(--primary-blue);
-    color: var(--primary-blue);
-    border-radius: 6px;
+  .act-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 6px 12px;
-    font-weight: 600;
-    transition: var(--transition);
+    border: 1px solid transparent;
+    border-radius: 8px;
     font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
   }
 
-  .btn-outline-primary:hover {
+  .act-approve {
     background: var(--primary-blue);
-    border-color: var(--primary-blue);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(5, 78, 151, 0.3);
+    color: #fff;
   }
 
-  /* Enhanced Pagination */
+  .act-approve:hover {
+    background: #043a73;
+  }
+
+  .act-reject {
+    background: transparent;
+    border-color: rgba(220, 38, 38, 0.35);
+    color: #b91c1c;
+  }
+
+  .act-reject:hover {
+    background: rgba(220, 38, 38, 0.08);
+  }
+
+  .act-delete {
+    background: transparent;
+    border-color: var(--line);
+    color: var(--muted);
+  }
+
+  .act-delete:hover {
+    border-color: rgba(220, 38, 38, 0.35);
+    color: #b91c1c;
+  }
+
+  /* Pagination */
   .pagination {
-    margin-top: 20px;
+    margin: 0;
   }
 
   .page-link {
-    border-radius: 6px;
     margin: 0 2px;
-    border: 2px solid #e2e8f0;
-    color: var(--primary-blue);
-    padding: 8px 12px;
-    font-weight: 600;
-    transition: var(--transition);
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
     font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    transition: var(--transition);
   }
 
   .page-link:hover {
     background: var(--primary-blue);
     border-color: var(--primary-blue);
-    color: white;
-    transform: translateY(-1px);
+    color: #fff;
   }
 
   .page-item.active .page-link {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, #043a73 100%);
+    background: var(--primary-blue);
     border-color: var(--primary-blue);
   }
 
   .page-item.disabled .page-link {
-    background: #f8f9fa;
-    border-color: #e2e8f0;
-    color: #6c757d;
+    background: var(--light-gray);
+    border-color: var(--line);
+    color: var(--muted);
+  }
+
+  .panel-foot {
+    padding: 14px 20px 16px;
+    border-top: 1px solid var(--line);
   }
 
   /* Empty State */
   .empty-state {
+    padding: 48px 20px;
     text-align: center;
-    padding: 40px 20px;
-    color: #64748b;
+    color: var(--muted);
   }
 
   .empty-state i {
-    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+    font-size: 2.5rem;
     color: #cbd5e1;
-    margin-bottom: 15px;
   }
 
   .empty-state h6 {
-    color: var(--primary-blue);
-    font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-blue);
   }
 
-  /* Mobile-Specific Responsive Design */
-  @media (max-width: 575.98px) {
-    .admin-header {
-      padding: 15px 10px;
-      margin-bottom: 15px;
-      border-radius: 0 0 12px 12px;
+  /* Responsive */
+  @media (max-width: 991.98px) {
+    .stat-grid,
+    .link-grid {
+      grid-template-columns: repeat(2, 1fr);
     }
+  }
 
-    .admin-header h1 {
-      font-size: 1.5rem;
-      margin-bottom: 8px;
-    }
-
-    .admin-header .lead {
-      font-size: 0.875rem;
-      margin-bottom: 12px;
-    }
-
-    .admin-nav-btns a {
-      margin: 2px;
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      gap: 4px;
-      min-height: 32px;
-    }
-
-    .admin-nav-btns a i {
-      font-size: 0.8rem;
-    }
-
-    .count-badge {
-      padding: 1px 6px;
-      font-size: 0.65rem;
-      border-radius: 10px;
-      min-width: 18px;
-    }
-
+  @media (max-width: 640px) {
     .dashboard-container {
-      padding: 0 10px;
+      padding: 16px 12px 32px;
     }
 
-    .search-section, .items-section {
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 10px;
+    .dash-head h1 {
+      font-size: 1.35rem;
     }
 
-    .search-section h5, .items-section h5 {
-      font-size: 1rem;
-      margin-bottom: 12px;
+    .dash-cta {
+      width: 100%;
+      justify-content: center;
     }
 
-    .form-control {
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      border-radius: 6px;
-    }
-
-    .btn-primary {
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      border-radius: 6px;
-    }
-
-    .list-group-item {
-      padding: 12px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-    }
-
-    .item-content h5 {
-      font-size: 0.95rem;
-      margin-bottom: 6px;
-    }
-
-    .item-number {
-      font-size: 0.75rem;
-      padding: 1px 6px;
-      margin-bottom: 6px;
-    }
-
-    .item-meta {
-      font-size: 0.8rem;
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      padding: 3px 8px;
-      border-radius: 12px;
-    }
-
-    .item-actions {
-      flex-direction: column;
-      gap: 6px;
-      align-items: stretch;
-    }
-
-    .btn-outline-primary {
-      padding: 5px 10px;
-      font-size: 0.75rem;
-      text-align: center;
-    }
-
-    .page-link {
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      margin: 0 1px;
-    }
-
-    .empty-state {
-      padding: 30px 15px;
-    }
-
-    .empty-state i {
-      font-size: 2.5rem;
-      margin-bottom: 12px;
-    }
-
-    .empty-state h6 {
-      font-size: 0.95rem;
-      margin-bottom: 6px;
-    }
-
-    .empty-state p {
-      font-size: 0.85rem;
-    }
-  }
-
-  @media (min-width: 576px) and (max-width: 767.98px) {
-    .admin-header {
-      padding: 18px 12px;
-    }
-
-    .admin-header h1 {
-      font-size: 1.6rem;
-    }
-
-    .admin-nav-btns a {
-      margin: 2px;
-      padding: 7px 11px;
-      font-size: 0.82rem;
-    }
-
-    .dashboard-container {
-      padding: 0 12px;
-    }
-
-    .search-section, .items-section {
-      padding: 18px;
-    }
-  }
-
-  @media (min-width: 768px) and (max-width: 991.98px) {
-    .admin-header {
-      padding: 25px 18px;
-      margin-bottom: 25px;
-    }
-
-    .admin-header h1 {
-      font-size: 2rem;
-      margin-bottom: 15px;
-    }
-
-    .admin-nav-btns a {
-      padding: 9px 14px;
-      font-size: 0.9rem;
-    }
-
-    .dashboard-container {
-      padding: 0 18px;
-    }
-
-    .search-section, .items-section {
-      padding: 22px;
-      margin-bottom: 25px;
-    }
-  }
-
-  /* Desktop styles remain the same */
-  @media (min-width: 992px) {
-    .admin-header {
-      padding: 30px 20px;
-      margin-bottom: 30px;
-      border-radius: 0 0 24px 24px;
-    }
-
-    .admin-header h1 {
-      font-size: 2.2rem;
-      margin-bottom: 20px;
-    }
-
-    .admin-header .lead {
-      font-size: 1.1rem;
-      margin-bottom: 25px;
-    }
-
-    .admin-nav-btns a {
-      margin: 5px;
-      padding: 12px 20px;
-      border-radius: var(--border-radius);
-      font-size: 1rem;
+    .stat-grid {
       gap: 10px;
     }
 
-    .count-badge {
-      padding: 4px 12px;
-      font-size: 0.8rem;
-      border-radius: 20px;
+    .stat-card {
+      padding: 12px;
+      gap: 10px;
     }
 
-    .dashboard-container {
-      padding: 0 20px;
+    .stat-icon {
+      width: 36px;
+      height: 36px;
     }
 
-    .search-section, .items-section {
-      padding: 25px;
-      margin-bottom: 30px;
+    .stat-value {
+      font-size: 1.15rem;
     }
 
-    .list-group-item {
-      padding: 20px;
-      margin-bottom: 15px;
+    .link-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .items-toolbar {
+      padding: 12px;
+    }
+
+    .status-tabs {
+      width: 100%;
+    }
+
+    .status-tab {
+      flex: 1 1 auto;
+      justify-content: center;
+      padding: 6px 8px;
+    }
+
+    .search-form {
+      max-width: none;
+    }
+
+    .item-row {
+      flex-wrap: wrap;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .item-main {
+      flex-basis: calc(100% - 72px);
+    }
+
+    .item-side {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .panel-foot {
+      padding: 12px;
     }
   }
 
@@ -706,163 +652,151 @@
   }
 </style>
 
-<div class="admin-header text-center">
-  <h1><i class="bi bi-speedometer2 me-2 d-none d-sm-inline"></i>Admin Dashboard</h1>
-  <p class="lead">Manage your platform with ease and efficiency</p>
-  
-  <div class="admin-nav-groups">
-    <div class="nav-group">
-      <span class="nav-group-label">Item Moderation</span>
-      <div class="admin-nav-btns">
-        <a href="{{ url_for('admin.admin_dashboard', status='all') }}" class="btn {{ 'btn-primary' if status == 'all' else 'btn-outline-primary' }}">
-          <i class="bi bi-list-ul"></i>
-          <span class="d-none d-sm-inline">All Items</span>
-          <span class="d-inline d-sm-none">All</span>
-          <span class="count-badge">{{ total_items }}</span>
-        </a>
-        <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="btn {{ 'btn-warning' if status == 'pending' else 'btn-outline-warning' }} {% if pending_items > 0 %}animate-pending{% endif %}">
-          <i class="bi bi-clock-history"></i>
-          <span class="d-none d-sm-inline">Pending</span>
-          <span class="d-inline d-sm-none">Pending</span>
-          <span class="count-badge {% if pending_items > 0 %}pulse-badge{% endif %}">{{ pending_items }}</span>
-        </a>
-        <a href="{{ url_for('admin.admin_dashboard', status='approved') }}" class="btn {{ 'btn-success' if status == 'approved' else 'btn-outline-success' }}">
-          <i class="bi bi-check-circle"></i>
-          <span class="d-none d-sm-inline">Approved</span>
-          <span class="d-inline d-sm-none">OK</span>
-          <span class="count-badge">{{ approved_items }}</span>
-        </a>
-        <a href="{{ url_for('admin.admin_dashboard', status='rejected') }}" class="btn {{ 'btn-danger' if status == 'rejected' else 'btn-outline-danger' }}">
-          <i class="bi bi-x-circle"></i>
-          <span class="d-none d-sm-inline">Rejected</span>
-          <span class="d-inline d-sm-none">X</span>
-          <span class="count-badge">{{ rejected_items }}</span>
-        </a>
-        <a href="{{ url_for('admin.preverification_queue') }}" class="btn btn-outline-primary">
-          <i class="bi bi-search"></i>
-          <span class="d-none d-sm-inline">Pre-Verification</span>
-          <span class="d-inline d-sm-none">Pre-Verify</span>
-        </a>
-        <a href="{{ url_for('admin.video_review_queue') }}" class="btn btn-outline-primary">
-          <i class="bi bi-camera-video"></i>
-          <span class="d-none d-sm-inline">Video Review</span>
-          <span class="d-inline d-sm-none">Videos</span>
-        </a>
-        <a href="{{ url_for('admin.reconfirmation_review_queue') }}" class="btn btn-outline-primary">
-          <i class="bi bi-arrow-repeat"></i>
-          <span class="d-none d-sm-inline">Reconfirmations</span>
-          <span class="d-inline d-sm-none">Reconfirm</span>
-        </a>
-        <a href="{{ url_for('admin.settlement_queue') }}" class="btn btn-outline-primary">
-          <i class="bi bi-arrow-left-right"></i>
-          <span class="d-none d-sm-inline">Settlement Queue</span>
-          <span class="d-inline d-sm-none">Settlements</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="nav-group">
-      <span class="nav-group-label">Management</span>
-      <div class="admin-nav-btns">
-        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-light">
-          <i class="bi bi-people"></i>
-          <span class="d-none d-sm-inline">Manage Users</span>
-          <span class="d-inline d-sm-none">Users</span>
-        </a>
-        <a href="{{ url_for('admin.manage_orders') }}" class="btn btn-outline-light">
-          <i class="bi bi-box-seam"></i>
-          <span class="d-none d-sm-inline">Manage Orders</span>
-          <span class="d-inline d-sm-none">Orders</span>
-        </a>
-        <a href="{{ url_for('admin.manage_pickup_stations') }}" class="btn btn-outline-light">
-          <i class="bi bi-geo-alt"></i>
-          <span class="d-none d-sm-inline">Manage Pickup Stations</span>
-          <span class="d-inline d-sm-none">Stations</span>
-        </a>
-        <a href="{{ url_for('admin.admin_register') }}" class="btn btn-outline-light">
-          <i class="bi bi-person-plus"></i>
-          <span class="d-none d-sm-inline">Create Admin</span>
-          <span class="d-inline d-sm-none">New Admin</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="nav-group">
-      <span class="nav-group-label">System</span>
-      <div class="admin-nav-btns">
-        <a href="{{ url_for('admin.maintenance_mode') }}" class="btn btn-outline-light">
-          <i class="bi bi-tools"></i>
-          <span class="d-none d-sm-inline">Maintenance Mode</span>
-          <span class="d-inline d-sm-none">Maint.</span>
-        </a>
-        <a href="{{ url_for('admin.system_settings') }}" class="btn btn-outline-light">
-          <i class="bi bi-sliders"></i>
-          <span class="d-none d-sm-inline">System Settings</span>
-          <span class="d-inline d-sm-none">Settings</span>
-        </a>
-        <a href="{{ url_for('admin.audit_log') }}" class="btn btn-outline-light">
-          <i class="bi bi-file-earmark-text"></i>
-          <span class="d-none d-sm-inline">Audit Log</span>
-          <span class="d-inline d-sm-none">Log</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="nav-group">
-      <span class="nav-group-label">Support</span>
-      <div class="admin-nav-btns">
-        <a href="{{ url_for('admin.pending_appeals') }}" class="btn btn-outline-light">
-          <i class="bi bi-chat-left-quote"></i>
-          <span class="d-none d-sm-inline">Unban Appeals</span>
-          <span class="d-inline d-sm-none">Appeals</span>
-          <span class="count-badge {% if pending_appeals > 0 %}pulse-badge{% endif %}">{{ pending_appeals }}</span>
-        </a>
-        <a href="{{ url_for('admin.view_messages') }}" class="btn btn-outline-light">
-          <i class="bi bi-envelope"></i>
-          <span class="d-none d-sm-inline">Messages</span>
-          <span class="d-inline d-sm-none">Msgs</span>
-          <span class="count-badge {% if pending_messages_count > 0 %}pulse-badge{% endif %}">{{ pending_messages_count }}</span>
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="dashboard-container">
-  <!-- Enhanced Search Section -->
-  <div class="search-section">
-    <h5><i class="bi bi-search"></i>Search & Filter</h5>
-    <form method="get" action="{{ url_for('admin.admin_dashboard') }}" class="row g-3 align-items-center">
-      <div class="col-md-8">
-        <div class="position-relative">
-          <i class="bi bi-search position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
-          <input type="text" name="search" class="form-control ps-5" placeholder="Search by item name, number or uploader username..." value="{{ search }}">
-        </div>
+  <header class="dash-head">
+    <div>
+      <h1>Admin Dashboard</h1>
+      <p>Welcome back{% if session.get('admin_username') %}, {{ session.get('admin_username') }}{% endif %}. Here's what needs your attention.</p>
+    </div>
+    {% if pending_items > 0 and can('items.review') %}
+    <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="dash-cta">
+      <i class="bi bi-clock-history"></i>Review {{ pending_items }} pending item{{ '' if pending_items == 1 else 's' }}
+    </a>
+    {% endif %}
+  </header>
+
+  <section class="stat-grid" aria-label="Overview">
+    {% if can('items.review') %}
+    <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="stat-card {% if pending_items > 0 %}is-highlight{% endif %}">
+      <span class="stat-icon"><i class="bi bi-clock-history"></i></span>
+      <div>
+        <div class="stat-value">{{ pending_items }}</div>
+        <div class="stat-label">Pending review</div>
       </div>
-      <input type="hidden" name="status" value="{{ status }}">
-      <div class="col-md-4">
-        <button type="submit" class="btn btn-primary w-100">
-          <i class="bi bi-search me-2"></i>Search
-        </button>
+    </a>
+    {% endif %}
+    {% if can('users.view') %}
+    <a href="{{ url_for('admin.manage_users') }}" class="stat-card">
+      <span class="stat-icon"><i class="bi bi-people"></i></span>
+      <div>
+        <div class="stat-value">{{ '{:,}'.format(total_users) }}</div>
+        <div class="stat-label">Total users</div>
       </div>
-    </form>
+    </a>
+    {% endif %}
+    {% if can('orders.manage') or can('items.review') %}
+    <div class="stat-card">
+      <span class="stat-icon"><i class="bi bi-arrow-left-right"></i></span>
+      <div>
+        <div class="stat-value">{{ '{:,}'.format(traded_items) }}</div>
+        <div class="stat-label">Items traded</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon"><i class="bi bi-coin"></i></span>
+      <div>
+        <div class="stat-value">ᗸ{{ '{:,.0f}'.format(total_credits_traded) }}</div>
+        <div class="stat-label">Credits traded</div>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  {% set show_review = can('items.preverification') or can('items.video_review') or can('items.reconfirmation') or can('settlement.manage') or can('verification.intake') or can('inventory.view') %}
+  {% set show_mgmt = can('users.view') or can('orders.manage') or can('pickup.manage') or current_admin.is_super_admin %}
+  {% set show_system = can('system.settings') or can('audit.view') %}
+  {% set show_support = can('users.appeals') or can('messages.manage') %}
+
+  {% if not (show_review or show_mgmt or show_system or show_support or can('items.review')) %}
+  <div class="alert alert-info">
+    No actions have been assigned to your account yet. Please ask a super admin to grant you access.
   </div>
+  {% endif %}
 
-  <!-- Enhanced Items Section -->
-  <div class="items-section">
-    <h5>
-      <i class="bi bi-grid-3x3-gap"></i>
-      Item Submissions 
-      <span class="badge bg-primary ms-2">{{ items.total }} total</span>
-    </h5>
+  <section class="link-grid" aria-label="Admin shortcuts">
+    {% if show_review %}
+    <nav class="link-card" aria-label="Review queues">
+      <div class="link-card-title">Review queues</div>
+      {% if can('items.preverification') %}<a href="{{ url_for('admin.preverification_queue') }}" class="link-row"><i class="bi bi-search"></i>Pre-Verification</a>{% endif %}
+      {% if can('items.video_review') %}<a href="{{ url_for('admin.video_review_queue') }}" class="link-row"><i class="bi bi-camera-video"></i>Video Review</a>{% endif %}
+      {% if can('items.reconfirmation') %}<a href="{{ url_for('admin.reconfirmation_review_queue') }}" class="link-row"><i class="bi bi-arrow-repeat"></i>Reconfirmations</a>{% endif %}
+      {% if can('settlement.manage') %}<a href="{{ url_for('admin.settlement_queue') }}" class="link-row"><i class="bi bi-arrow-left-right"></i>Settlement Queue</a>{% endif %}
+      {% if can('verification.intake') %}<a href="{{ url_for('admin.verification_intake_log') }}" class="link-row"><i class="bi bi-clipboard-check"></i>Verification Intake</a>{% endif %}
+      {% if can('inventory.view') %}<a href="{{ url_for('admin.clearing_inventory') }}" class="link-row"><i class="bi bi-box-seam"></i>Clearing Inventory</a>{% endif %}
+    </nav>
+    {% endif %}
 
-    <div class="list-group">
+    {% if show_mgmt %}
+    <nav class="link-card" aria-label="Management">
+      <div class="link-card-title">Management</div>
+      {% if can('users.view') %}<a href="{{ url_for('admin.manage_users') }}" class="link-row"><i class="bi bi-people"></i>Manage Users</a>{% endif %}
+      {% if can('orders.manage') %}<a href="{{ url_for('admin.manage_orders') }}" class="link-row"><i class="bi bi-box-seam"></i>Manage Orders</a>{% endif %}
+      {% if can('pickup.manage') %}<a href="{{ url_for('admin.manage_pickup_stations') }}" class="link-row"><i class="bi bi-geo-alt"></i>Pickup Stations</a>{% endif %}
+      {% if current_admin.is_super_admin %}
+      <a href="{{ url_for('admin.manage_admins') }}" class="link-row"><i class="bi bi-shield-lock"></i>Manage Admins</a>
+      <a href="{{ url_for('admin.admin_register') }}" class="link-row"><i class="bi bi-person-plus"></i>Create Admin</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+    {% if show_system %}
+    <nav class="link-card" aria-label="System">
+      <div class="link-card-title">System</div>
+      {% if can('system.settings') %}
+      <a href="{{ url_for('admin.maintenance_mode') }}" class="link-row"><i class="bi bi-tools"></i>Maintenance Mode</a>
+      <a href="{{ url_for('admin.system_settings') }}" class="link-row"><i class="bi bi-sliders"></i>System Settings</a>
+      {% endif %}
+      {% if can('audit.view') %}<a href="{{ url_for('admin.audit_log') }}" class="link-row"><i class="bi bi-file-earmark-text"></i>Audit Log</a>{% endif %}
+    </nav>
+    {% endif %}
+
+    {% if show_support %}
+    <nav class="link-card" aria-label="Support">
+      <div class="link-card-title">Support</div>
+      {% if can('users.appeals') %}
+      <a href="{{ url_for('admin.pending_appeals') }}" class="link-row">
+        <i class="bi bi-chat-left-quote"></i>Unban Appeals
+        <span class="count-badge {% if pending_appeals > 0 %}is-alert{% endif %}">{{ pending_appeals }}</span>
+      </a>
+      {% endif %}
+      {% if can('messages.manage') %}
+      <a href="{{ url_for('admin.view_messages') }}" class="link-row">
+        <i class="bi bi-envelope"></i>Messages
+        <span class="count-badge {% if pending_messages_count > 0 %}is-alert{% endif %}">{{ pending_messages_count }}</span>
+      </a>
+      {% endif %}
+    </nav>
+    {% endif %}
+  </section>
+
+  {% if can('items.review') %}
+  <section class="panel">
+    <div class="items-toolbar">
+      <div class="status-tabs" role="tablist" aria-label="Filter items by status">
+        <a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="status-tab {% if status == 'pending' %}active{% endif %}">
+          Pending <span class="count-badge {% if pending_items > 0 and status != 'pending' %}is-alert{% endif %}">{{ pending_items }}</span>
+        </a>
+        <a href="{{ url_for('admin.admin_dashboard', status='approved') }}" class="status-tab {% if status == 'approved' %}active{% endif %}">
+          Approved <span class="count-badge">{{ approved_items }}</span>
+        </a>
+        <a href="{{ url_for('admin.admin_dashboard', status='rejected') }}" class="status-tab {% if status == 'rejected' %}active{% endif %}">
+          Rejected <span class="count-badge">{{ rejected_items }}</span>
+        </a>
+        <a href="{{ url_for('admin.admin_dashboard', status='all') }}" class="status-tab {% if status == 'all' %}active{% endif %}">
+          All <span class="count-badge">{{ total_items }}</span>
+        </a>
+      </div>
+
+      <form method="get" action="{{ url_for('admin.admin_dashboard') }}" class="search-form" role="search">
+        <i class="bi bi-search"></i>
+        <input type="text" name="search" class="form-control" placeholder="Search name, number or uploader" aria-label="Search items" value="{{ search }}">
+        <input type="hidden" name="status" value="{{ status }}">
+      </form>
+    </div>
+
+    <div class="item-list">
       {% for item in items.items %}
-      <div class="list-group-item">
-        <div class="d-flex justify-content-between align-items-start">
-          <div class="item-content flex-grow-1">
-            <div class="d-flex align-items-start gap-3 mb-2">
-              <!-- Build images array using namespace pattern (same as marketplace) -->
+      <div class="item-row">
               {% set ns = namespace(images=[]) %}
               {% if item.image_url %}
                 {% set _ = ns.images.append(item.image_url) %}
@@ -872,57 +806,34 @@
                   {% set _ = ns.images.append(img.image_url) %}
                 {% endfor %}
               {% endif %}
-              
+
               {% if ns.images|length > 0 %}
                 {% set img_src = ns.images[0] | image_url %}
-                <img src="{{ img_src }}" alt="{{ item.name }}" 
-                     class="dashboard-item-image" 
+                <img src="{{ img_src }}" alt="{{ item.name }}"
+                     class="item-thumb dashboard-item-image"
                      data-item-images='{{ ns.images|tojson|safe }}'
-                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6; cursor: pointer;"
                      title="Click to view images"
                      onerror="this.src='/static/placeholder.png'">
               {% else %}
-                <div style="width: 60px; height: 60px; background: #e9ecef; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
-                  <i class="bi bi-image"></i>
-                </div>
+                <div class="item-thumb placeholder"><i class="bi bi-image"></i></div>
               {% endif %}
-              
-              <div class="flex-grow-1">
-                <h5 class="mb-1"><i class="bi bi-box me-2"></i>{{ item.name }}</h5>
-                <div class="item-number mb-1">
-                  <i class="bi bi-hash"></i>{{ item.item_number }}
-                </div>
-                <div class="item-meta mb-2">
-                  <i class="bi bi-person-circle"></i>
-                  <span>by <strong>{{ item.user.username }}</strong></span>
+
+              <div class="item-main">
+                <h5 class="item-name" title="{{ item.name }}">{{ item.name }}</h5>
+                <div class="item-meta">
+                  <span class="item-number">#{{ item.item_number }}</span>
+                  <span><i class="bi bi-person-circle"></i> {{ item.user.username if item.user else 'Barter Express' }}</span>
                 </div>
                 {% if item.description %}
-                <div style="font-size: 0.875rem; color: #6c757d; max-width: 300px; line-height: 1.4;">
-                  {{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}
-                </div>
+                <div class="item-desc">{{ item.description }}</div>
                 {% endif %}
               </div>
-            </div>
-          </div>
-          
-          <div class="item-actions d-flex flex-column gap-2" style="min-width: 180px;">
-            <span class="badge text-center
-                {% if item.status == 'pending' %} bg-warning text-dark
-                {% elif item.status == 'approved' %} bg-success
-                {% elif item.status == 'rejected' %} bg-danger
-                {% endif %}">
-              {% if item.status == 'pending' %}
-                <i class="bi bi-clock me-1"></i>
-              {% elif item.status == 'approved' %}
-                <i class="bi bi-check-lg me-1"></i>
-              {% elif item.status == 'rejected' %}
-                <i class="bi bi-x-lg me-1"></i>
-              {% endif %}
-              {{ item.status|capitalize }}
-            </span>
-            
+
+          <div class="item-side">
+            <span class="status-pill status-{{ item.status }}">{{ item.status|replace('_', ' ')|capitalize }}</span>
+
             {% if item.status == 'pending' %}
-            <div class="btn-group btn-group-sm gap-2" role="group">
+            <div class="item-actions" role="group">
               {% set item_images = item.images|map(attribute='image_url')|list if item.images else ([item.image_url] if item.image_url else []) %}
               {% set image_metadata = [] %}
               {% if item.images %}
@@ -937,49 +848,46 @@
                   {% set _ = image_metadata.append(meta) %}
                 {% endfor %}
               {% endif %}
-              <button type="button" class="btn btn-success btn-sm approve-btn" 
-                      data-item-id="{{ item.id }}" 
+              <button type="button" class="act-btn act-approve approve-btn"
+                      data-item-id="{{ item.id }}"
                       data-item-name="{{ item.name }}"
                       data-item-description="{{ item.description or '' }}"
                       data-item-images="{{ item_images|tojson }}"
                       data-image-metadata="{{ image_metadata|tojson|safe }}">
-                <i class="bi bi-check-lg"></i>
-                <span class="d-none d-md-inline ms-1">Approve</span>
+                <i class="bi bi-check-lg"></i>Approve
               </button>
-              <button type="button" class="btn btn-danger btn-sm reject-btn" 
-                      data-item-id="{{ item.id }}" 
+              <button type="button" class="act-btn act-reject reject-btn"
+                      data-item-id="{{ item.id }}"
                       data-item-name="{{ item.name }}"
                       data-item-description="{{ item.description or '' }}"
                       data-item-images="{{ item_images|tojson }}"
                       data-image-metadata="{{ image_metadata|tojson|safe }}">
-                <i class="bi bi-x-lg"></i>
-                <span class="d-none d-md-inline ms-1">Reject</span>
+                <i class="bi bi-x-lg"></i>Reject
               </button>
             </div>
-            {% elif item.status == 'approved' %}
-            <button type="button" class="btn btn-dark btn-sm delete-item-btn" 
-                    data-item-id="{{ item.id }}" 
-                    data-item-name="{{ item.name }}"
-                    title="Remove item from marketplace">
-              <i class="bi bi-trash"></i>
-              <span class="d-none d-md-inline ms-1">Delete</span>
-            </button>
+            {% elif item.status == 'approved' and can('items.manage') %}
+            <div class="item-actions">
+              <button type="button" class="act-btn act-delete delete-item-btn"
+                      data-item-id="{{ item.id }}"
+                      data-item-name="{{ item.name }}"
+                      title="Remove item from marketplace">
+                <i class="bi bi-trash"></i>Delete
+              </button>
+            </div>
             {% endif %}
           </div>
-        </div>
       </div>
       {% else %}
       <div class="empty-state">
         <i class="bi bi-inbox"></i>
         <h6>No items found</h6>
-        <p>Try adjusting your search criteria or check back later.</p>
+        <p class="mb-0">Try adjusting your search or filter.</p>
       </div>
       {% endfor %}
     </div>
 
-    <!-- Enhanced Pagination -->
     {% if items.pages > 1 %}
-    <nav class="mt-4" aria-label="Page navigation">
+    <nav class="panel-foot" aria-label="Page navigation">
       <ul class="pagination justify-content-center">
         <li class="page-item {% if not items.has_prev %}disabled{% endif %}">
           <a class="page-link" href="{{ url_for('admin.admin_dashboard', page=items.prev_num, status=status, search=search) }}">
@@ -1017,7 +925,8 @@
       </div>
     </nav>
     {% endif %}
-  </div>
+  </section>
+  {% endif %}
 </div>
 
 <!-- Image Lightbox Modal with Slideshow -->
@@ -1191,7 +1100,7 @@
         if (this.value.length > 0) {
           this.style.borderColor = 'var(--accent-orange)';
         } else {
-          this.style.borderColor = '#e2e8f0';
+          this.style.borderColor = '';
         }
       });
     }

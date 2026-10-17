@@ -1,0 +1,12 @@
+[Unit]
+Description=Barterex reservation expiry and listing freshness sweep
+After=network-online.target barterex.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=barterex
+Group=www-data
+WorkingDirectory=/var/www/barterex/app
+EnvironmentFile=/etc/barterex/barterex.env
+ExecStart=/var/www/barterex/venv/bin/flask --app app:app maintenance-sweep

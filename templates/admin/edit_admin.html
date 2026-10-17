@@ -1,0 +1,33 @@
+{% extends 'admin_base.html' %}
+{% block title %}Edit Admin Access{% endblock %}
+{% block content %}
+<div class="adm-page narrow">
+  <a href="{{ url_for('admin.manage_admins') }}" class="adm-back"><i class="bi bi-arrow-left"></i>All admins</a>
+  <header class="adm-head">
+    <div>
+      <h1>Edit access: {{ target.username }}</h1>
+      <p>{{ target.email }}</p>
+    </div>
+  </header>
+
+  <form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <section class="adm-panel">
+      <div class="adm-panel-head">
+        <span class="adm-panel-icon"><i class="bi bi-shield-lock"></i></span>
+        <div>
+          <h2>What can this admin do?</h2>
+          <p>Changes apply the next time they load a page</p>
+        </div>
+      </div>
+      <div class="adm-panel-body">
+        {% include 'admin/_permission_picker.html' %}
+      </div>
+    </section>
+    <div class="d-flex justify-content-end align-items-center gap-2">
+      <a href="{{ url_for('admin.manage_admins') }}" class="adm-btn ghost">Cancel</a>
+      {{ form.submit(class="adm-btn cta") }}
+    </div>
+  </form>
+</div>
+{% endblock %}

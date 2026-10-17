@@ -264,6 +264,29 @@
     color: #dc2626;
   }
 
+  .stat-caption {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 0.82rem;
+  }
+
+  .transaction-status {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .transaction-status.pending { background: #fef3c7; color: #92400e; }
+  .transaction-status.completed { background: #dcfce7; color: #166534; }
+  .transaction-status.failed,
+  .transaction-status.cancelled { background: #fee2e2; color: #991b1b; }
+  .transaction-status.held { background: #ede9fe; color: #5b21b6; }
+
   .filter-section {
     background: white;
     border-radius: 12px;
@@ -317,32 +340,35 @@
   <!-- Header -->
   <div class="transaction-header">
     <h1 class="transaction-title">BXC Transaction History</h1>
-    <p class="transaction-subtitle">Track all your BXC transactions and understand how your balance changes</p>
+    <p class="transaction-subtitle">See available and held BXC separately, and follow each payment, reservation, and order through its current status.</p>
   </div>
 
-  <!-- Statistics -->
-  {% if history %}
+  <!-- Current account balances -->
   <div class="stats-grid">
     <div class="stat-box">
-      <div class="stat-label">Total Transactions</div>
-      <div class="stat-value">{{ history|length }}</div>
+      <div class="stat-label">Spendable BXC available</div>
+      <div class="stat-value">ᗸ{{ "{:,.0f}".format(current_user.credits or 0) }}</div>
+      <div class="stat-caption">Available to spend now</div>
     </div>
     <div class="stat-box">
-      <div class="stat-label">Current Balance</div>
-      <div class="stat-value">ᗸ{{ "{:,.0f}".format(current_user.credits) }}</div>
+      <div class="stat-label">Provisional BXC available</div>
+      <div class="stat-value">ᗸ{{ "{:,.0f}".format(current_user.provisional_credits or 0) }}</div>
+      <div class="stat-caption">Earned from accepted valuations; subject to physical verification</div>
     </div>
-    {% set total_earned = history|selectattr('transaction_type', 'in', ['referral_signup_bonus', 'referral_purchase_bonus', 'admin_credit'])|map(attribute='amount')|sum %}
     <div class="stat-box">
-      <div class="stat-label">Total Earned</div>
-      <div class="stat-value positive">+ᗸ{{ "{:,.0f}".format(total_earned) }}</div>
+      <div class="stat-label">Spendable BXC on hold</div>
+      <div class="stat-value">ᗸ{{ "{:,.0f}".format(held_spendable) }}</div>
+      <div class="stat-caption">Reserved against active purchases; not available to spend</div>
     </div>
-    {% set total_spent = history|selectattr('transaction_type', 'in', ['purchase', 'debit'])|map(attribute='amount')|sum %}
     <div class="stat-box">
-      <div class="stat-label">Total Spent</div>
-      <div class="stat-value negative">-ᗸ{{ "{:,.0f}".format(total_spent) }}</div>
+      <div class="stat-label">Provisional backing BXC committed</div>
+      <div class="stat-value">ᗸ{{ "{:,.0f}".format(provisional_backing_held) }}</div>
+      <div class="stat-caption">Buyer-owned backing assets tied to active or decision-pending reservations</div>
     </div>
   </div>
-  {% endif %}
+  <p class="transaction-subtitle" style="margin: -20px 0 30px; text-align: center;">
+    These balances are separate: provisional BXC and reserved BXC are not part of your spendable balance.
+  </p>
 
   <!-- Transactions List -->
   {% if history %}
@@ -368,6 +394,7 @@
             <div class="transaction-type">
               <span class="transaction-type-label">{{ transaction.reason or transaction.transaction_type }}</span>
               <span class="transaction-type-name">{{ transaction.get_human_readable_description() }}</span>
+              <span class="transaction-status completed">Posted to BXC ledger</span>
             </div>
           </div>
           <div class="transaction-amount">
@@ -394,7 +421,9 @@
           <div class="detail-row balance-before">
             <span class="detail-label">Your Balance Before:</span>
             <span class="detail-value">
-              {% if transaction.balance_before %}
+              {% if transaction.reason == 'reservation_purchase' %}
+                <em>Shown in reservation-held BXC activity below</em>
+              {% elif transaction.balance_before is not none %}
                 ᗸ{{ "{:,.0f}".format(transaction.balance_before) }}
               {% else %}
                 <em>Not recorded</em>
@@ -424,7 +453,9 @@
           <div class="balance-after">
             <span class="detail-label">Your Balance After:</span>
             <span class="detail-value">
-              {% if transaction.balance_after %}
+              {% if transaction.reason == 'reservation_purchase' %}
+                <em>Shown in reservation-held BXC activity below</em>
+              {% elif transaction.balance_after is not none %}
                 ᗸ{{ "{:,.0f}".format(transaction.balance_after) }}
               {% else %}
                 <em>Not recorded</em>
@@ -455,19 +486,158 @@
         <div class="transaction-footer">
           <span>Transaction ID: #{{ transaction.id }}</span>
           {% if transaction.related_order_id %}
-            <a href="{{ url_for('user.order_details', order_id=transaction.related_order_id) }}" style="color: #667eea; text-decoration: none;">View Order →</a>
+            <a href="{{ url_for('user.view_order_details', order_id=transaction.related_order_id) }}" style="color: #667eea; text-decoration: none;">View Order →</a>
           {% endif %}
         </div>
       </div>
       {% endfor %}
     </div>
-  {% else %}
+  {% elif not reservation_credit_history %}
     <!-- Empty State -->
     <div class="empty-state">
       <div class="empty-icon">📊</div>
-      <h3 class="empty-title">No Transactions Yet</h3>
-      <p class="empty-description">You haven't made any transactions. Start trading to see your transaction history here!</p>
+      <h3 class="empty-title">No BXC Ledger Activity Yet</h3>
+      <p class="empty-description">Posted BXC movements and reservation holds will appear here.</p>
     </div>
+  {% endif %}
+
+  {% if payments %}
+    <section class="transaction-list" style="margin-top: 28px;">
+      <div class="transaction-header">
+        <h2 class="transaction-title">Payment Status</h2>
+        <p class="transaction-subtitle">External payments are shown separately from BXC. A delivery-fee payment never adds credits to your wallet.</p>
+      </div>
+      {% for payment in payments %}
+        <div class="transaction-card">
+          <div class="transaction-header-row">
+            <div class="transaction-type-section">
+              <div class="transaction-icon">💳</div>
+              <div class="transaction-type">
+                <span class="transaction-type-label">
+                  {% if payment.purpose == 'reservation_delivery_fee' %}Home-service delivery fee{% else %}BXC purchase payment{% endif %}
+                </span>
+                <span class="transaction-type-name">
+                  {% if payment.purpose == 'reservation_delivery_fee' %}
+                    Non-refundable logistics charge{% if payment.reservation_id %} · Reservation #{{ payment.reservation_id }}{% endif %}
+                  {% else %}
+                    ₦{{ "{:,.2f}".format(payment.amount_naira) }} payment for {{ "{:,.0f}".format(payment.credits_purchased) }} BXC
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+            <div class="transaction-amount">
+              <span class="transaction-amount-badge amount-debit">₦{{ "{:,.2f}".format(payment.amount_naira) }}</span>
+              <br>
+              {% if payment.status in ['pending', 'test_pending'] %}
+                <span class="transaction-status pending">{% if payment.status == 'test_pending' %}Test payment awaiting verification{% else %}Awaiting payment{% endif %}</span>
+              {% elif payment.status == 'completed' %}
+                <span class="transaction-status completed">Payment confirmed</span>
+              {% elif payment.status == 'failed' %}
+                <span class="transaction-status failed">Payment failed</span>
+              {% elif payment.status == 'cancelled' %}
+                <span class="transaction-status cancelled">Payment cancelled</span>
+              {% else %}
+                <span class="transaction-status">{{ payment.status|replace('_', ' ')|title }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="transaction-footer">
+            <span>{{ payment.created_at.strftime('%d %b %Y, %I:%M %p') }} · Reference: {{ payment.paystack_reference or payment.monnify_reference or 'Not assigned' }}</span>
+            {% if payment.purpose == 'reservation_delivery_fee' %}
+              <a href="{{ url_for('user.my_reservations') }}" style="color: #667eea; text-decoration: none;">View reservation →</a>
+            {% elif payment.status == 'completed' %}
+              <span>{{ "{:,.0f}".format(payment.credits_purchased) }} BXC credited</span>
+            {% endif %}
+          </div>
+          {% if payment.error_message %}
+            <div class="explanation-box"><strong>Payment update:</strong> {{ payment.error_message }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if reservation_credit_history %}
+    <section class="transaction-list" style="margin-top: 28px;">
+      <div class="transaction-header">
+        <h2 class="transaction-title">Reservation BXC Activity</h2>
+        <p class="transaction-subtitle">Provisional, spendable, and reservation-held BXC movements are shown here, including holds, releases, item settlement, and purchase spending.</p>
+      </div>
+      {% for entry in reservation_credit_history %}
+        <div class="transaction-card">
+          <div class="transaction-header-row">
+            <div class="transaction-type-section">
+              <div class="transaction-icon">🔒</div>
+              <div class="transaction-type">
+                <span class="transaction-type-label">{{ entry.entry_type|replace('_', ' ')|title }}</span>
+                <span class="transaction-type-name">
+                  {{ entry.balance_type|title }} balance{% if entry.reservation_id %} · Reservation #{{ entry.reservation_id }}{% endif %}{% if entry.item_id %} · Item #{{ entry.item_id }}{% endif %}
+                </span>
+                {% set reservation = reservations_by_id.get(entry.reservation_id) if entry.reservation_id else None %}
+                {% if reservation %}
+                  {% if reservation.status == 'active' %}
+                    <span class="transaction-status held">Reservation active · verification pending</span>
+                  {% elif reservation.status == 'awaiting_consent' %}
+                    <span class="transaction-status pending">Awaiting your title-transfer decision</span>
+                  {% elif reservation.status == 'completed' %}
+                    <span class="transaction-status completed">Purchase settled</span>
+                  {% elif reservation.status == 'expired' %}
+                    <span class="transaction-status cancelled">Reservation expired · holds released</span>
+                  {% elif reservation.status == 'cancelled' %}
+                    <span class="transaction-status cancelled">Reservation cancelled · see movement below</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+            <div class="transaction-amount">
+              <span class="transaction-amount-badge {% if entry.amount < 0 %}amount-debit{% else %}amount-credit{% endif %}">
+                {% if entry.amount < 0 %}-{% else %}+{% endif %}ᗸ{{ "{:,.0f}".format(entry.amount|abs) }}
+              </span>
+            </div>
+          </div>
+          <div class="transaction-details">
+            <h4>{{ entry.entry_type|replace('_', ' ')|title }} · {{ entry.balance_type|title }} BXC</h4>
+            <div class="detail-row balance-before">
+              <span class="detail-label">{{ entry.balance_type|title }} balance before:</span>
+              <span class="detail-value">ᗸ{{ "{:,.0f}".format(entry.balance_before) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">BXC movement:</span>
+              <span class="detail-value">
+                {% if entry.amount < 0 %}-{% else %}+{% endif %}ᗸ{{ "{:,.0f}".format(entry.amount|abs) }}
+              </span>
+            </div>
+            <div class="balance-after">
+              <span class="detail-label">{{ entry.balance_type|title }} balance after:</span>
+              <span class="detail-value">ᗸ{{ "{:,.0f}".format(entry.balance_after) }}</span>
+            </div>
+          </div>
+          {% if reservation %}
+            <div class="explanation-box">
+              <strong>Reservation status:</strong> {{ reservation.status|replace('_', ' ')|title }}
+              · Funding: {{ reservation.funding_mode|replace('_', ' ')|title }}
+              {% if reservation.order %}
+                · Order {{ reservation.order.order_number }}: {{ reservation.order.status }}
+              {% elif reservation.status == 'completed' %}
+                · Order is being prepared
+              {% endif %}
+              {% if reservation.delivery_method == 'home delivery' %}
+                · Home fee: {{ reservation.delivery_fee_status|replace('_', ' ')|title }}
+                {% if reservation.delivery_quote_naira %} (₦{{ "{:,.2f}".format(reservation.delivery_quote_naira) }}){% endif %}
+              {% elif reservation.pickup_station %}
+                · Pickup: {{ reservation.pickup_station.name }}
+              {% endif %}
+            </div>
+          {% endif %}
+          <div style="text-align: right; margin-top: 12px;">
+            <span class="transaction-date">{{ entry.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+          </div>
+        </div>
+      {% endfor %}
+      <p class="transaction-subtitle" style="text-align: center;">
+        <a href="{{ url_for('user.my_reservations') }}">View all reservations and fulfillment details →</a>
+      </p>
+    </section>
   {% endif %}
 </div>
 

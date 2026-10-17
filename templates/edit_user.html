@@ -1,42 +1,44 @@
 {% extends 'admin_base.html' %}
 {% block content %}
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <!-- Card -->
-            <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Edit User: {{ user.username }}</h4>
-                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-light btn-sm">
-                        ← Back to User list
-                    </a>
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        <!-- Credits Input -->
-                        <div class="form-group mb-4">
-                            <label for="credits" class="form-label fw-bold">BXC</label>
-                            <input 
-                                type="number" 
-                                class="form-control form-control-lg" 
-                                id="credits" 
-                                name="credits" 
-                                value="{{ user.credits }}" 
-                                required
-                            >
-                        </div>
-                        <!-- Submit -->
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-lg">
-                                💾 Update
-                            </button>
-                        </div>
-                    </form>
+<div class="adm-page narrow">
+    <div class="adm-head">
+        <div>
+            <a href="{{ url_for('admin.manage_users') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Back to User list</a>
+            <h1>Edit User: {{ user.username }}</h1>
+            <p>Adjust this user's BXC balance</p>
+        </div>
+    </div>
+
+    <div class="adm-panel">
+        <div class="adm-panel-head">
+            <div class="adm-panel-icon"><i class="bi bi-person-gear"></i></div>
+            <div>
+                <h2>Account details</h2>
+                <p>Changes apply immediately</p>
+            </div>
+        </div>
+        <form method="POST">
+            <div class="adm-panel-body">
+                <div class="adm-field mb-0">
+                    <label for="credits">BXC</label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="credits"
+                        name="credits"
+                        value="{{ user.credits }}"
+                        required
+                    >
                 </div>
             </div>
-            <!-- /Card -->
-        </div>
+            <div class="adm-panel-foot d-flex justify-content-end gap-2">
+                <a href="{{ url_for('admin.manage_users') }}" class="adm-btn ghost">Cancel</a>
+                <button type="submit" class="adm-btn cta">
+                    <i class="bi bi-check-lg"></i> Update
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

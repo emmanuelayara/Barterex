@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Barterex reservation and freshness maintenance every five minutes
+
+[Timer]
+OnBootSec=2min
+OnCalendar=*-*-* *:0/5:00
+Persistent=true
+Unit=barterex-maintenance.service
+
+[Install]
+WantedBy=timers.target

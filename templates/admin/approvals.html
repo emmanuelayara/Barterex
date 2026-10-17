@@ -4,937 +4,231 @@
 
 {% block content %}
 <style>
-  :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --orange-gradient: linear-gradient(135deg, #ff7b00 0%, #ff9500 100%);
-    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-    --warning-gradient: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
-    --glass-bg: rgba(255, 255, 255, 0.1);
-    --glass-border: rgba(255, 255, 255, 0.2);
-    --text-primary: #1a1a1a;
-    --text-secondary: #6b7280;
-    --surface: #ffffff;
-    --surface-hover: #f8fafc;
-    --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.06);
-    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.1);
-    --border-radius: 10px;
-  }
-
-  /* Page Background */
-  .approval-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    position: relative;
-    padding: 15px 0;
-  }
-
-  .approval-page::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 40% 80%, rgba(79, 172, 254, 0.03) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .container {
-    position: relative;
-    z-index: 1;
-    padding-left: 15px;
-    padding-right: 15px;
-    max-width: 1400px;
-  }
-
-  /* Compact Header */
-  .approval-header {
-    text-align: center;
-    margin-bottom: 18px;
-    padding: 18px 15px;
-    background: var(--surface);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-soft);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .approval-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--orange-gradient);
-  }
-
-  .approval-header h2 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 6px;
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .approval-icon {
-    width: 30px;
-    height: 30px;
-    background: var(--orange-gradient);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    color: white;
-    box-shadow: 0 3px 12px rgba(255, 123, 0, 0.25);
-    flex-shrink: 0;
-  }
-
-  .approval-subtitle {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.2;
-  }
-
-  /* Compact Statistics Bar */
-  .stats-bar {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 18px;
-    padding: 12px 8px;
-    background: var(--surface);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-soft);
-    flex-wrap: wrap;
-  }
-
-  .stat-item {
-    text-align: center;
-    padding: 6px 10px;
-    border-radius: 6px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 0.9));
-    border: 1px solid rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
-    min-width: 50px;
-  }
-
-  .stat-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  }
-
-  .stat-number {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    background: var(--orange-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 1px;
-  }
-
-  .stat-label {
-    color: var(--text-secondary);
-    font-size: 0.65rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    line-height: 1;
-  }
-
-  /* Ultra Compact Card */
-  .approval-card {
-    background: var(--surface);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-soft);
-    border: 1px solid rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
-    overflow: hidden;
-    position: relative;
-    height: 100%;
-    max-height: 350px;
-  }
-
-  .approval-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
-  }
-
-  .approval-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--orange-gradient);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-  }
-
-  .approval-card:hover::before {
-    transform: scaleX(1);
-  }
-
-  /* Ultra Compact Image */
-  .card-image-container {
-    height: 90px;
-    overflow: hidden;
-    position: relative;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  }
-
-  .card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .approval-card:hover .card-image {
-    transform: scale(1.02);
-  }
-
-  .image-overlay {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    padding: 2px 4px;
-    border-radius: 6px;
-    font-size: 0.6rem;
-    font-weight: 600;
-  }
-
-  /* Ultra Compact Card Content */
-  .enhanced-card-body {
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .item-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-    line-height: 1.1;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .item-description {
-    color: var(--text-secondary);
-    font-size: 0.7rem;
-    line-height: 1.2;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin: 0;
-  }
-
-  /* Ultra Compact Info Row */
-  .item-info-row {
-    display: flex;
-    gap: 4px;
-    margin: 6px 0;
-  }
-
-  .info-chip {
-    padding: 3px 6px;
-    background: rgba(102, 126, 234, 0.06);
-    border-radius: 4px;
-    border-left: 2px solid;
-    transition: all 0.3s ease;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .info-chip.uploader {
-    border-left-color: #667eea;
-  }
-
-  .info-chip.category {
-    border-left-color: #ff7b00;
-  }
-
-  .info-chip:hover {
-    background: rgba(102, 126, 234, 0.1);
-  }
-
-  .chip-label {
-    font-size: 0.6rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.2px;
-    margin-bottom: 1px;
-  }
-
-  .chip-value {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.65rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .condition-badge {
-    display: inline-block;
-    padding: 3px 6px;
-    background: var(--success-gradient);
-    color: white;
-    border-radius: 8px;
-    font-size: 0.6rem;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(17, 153, 142, 0.2);
-    margin: 4px 0;
-  }
-
-  /* Compact Form */
-  .appraisal-section {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03), rgba(255, 123, 0, 0.03));
-    border-radius: 6px;
-    padding: 8px;
-    margin-top: 6px;
-    border: 1px solid rgba(102, 126, 234, 0.08);
-  }
-
-  .appraisal-label {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.7rem;
-  }
-
-  .credit-icon {
-    width: 14px;
-    height: 14px;
-    background: var(--orange-gradient);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 0.55rem;
-  }
-
-  .value-input {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #e5e7eb;
-    border-radius: 5px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    background: var(--surface);
-    color: var(--text-primary);
-  }
-
-  .value-input:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.08);
-  }
-
-  .video-url-input {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #e5e7eb;
-    border-radius: 5px;
-    font-size: 0.7rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    background: var(--surface);
-    color: var(--text-primary);
-    margin-top: 6px;
-  }
-
-  .video-url-input:focus {
-    outline: none;
-    border-color: #ff0000;
-    box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.08);
-  }
-
-  /* Collapsible Rejection Form */
-  .rejection-section {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
-    opacity: 0;
-    margin-top: 6px;
-  }
-
-  .rejection-section.active {
-    max-height: 120px;
-    opacity: 1;
-  }
-
-  .rejection-textarea {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #e5e7eb;
-    border-radius: 5px;
-    font-size: 0.7rem;
-    resize: vertical;
-    min-height: 40px;
-    font-family: inherit;
-    transition: all 0.3s ease;
-  }
-
-  .rejection-textarea:focus {
-    outline: none;
-    border-color: #ff6b6b;
-    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.08);
-  }
-
-  /* Compact Action Buttons */
-  .action-buttons {
-    display: flex;
-    gap: 4px;
-    margin-top: 6px;
-  }
-
-  .action-btn {
-    flex: 1;
-    padding: 6px 8px;
-    border: none;
-    border-radius: 5px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 600;
-    font-size: 0.65rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    text-transform: uppercase;
-    letter-spacing: 0.2px;
-    position: relative;
-    overflow: hidden;
-    min-height: 26px;
-  }
-
-  .approve-btn {
-    background: var(--success-gradient);
-    color: white;
-    box-shadow: 0 3px 12px rgba(17, 153, 142, 0.25);
-  }
-
-  .approve-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 18px rgba(17, 153, 142, 0.35);
-  }
-
-  .reject-btn {
-    background: var(--danger-gradient);
-    color: white;
-    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.25);
-  }
-
-  .reject-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 18px rgba(255, 107, 107, 0.35);
-  }
-
-  .reject-btn.active {
-    background: #6b7280;
-    transform: none;
-    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
-  }
-
-  .submit-rejection-btn {
-    background: var(--danger-gradient);
-    color: white;
-    margin-top: 6px;
-    width: 100%;
-  }
-
-  .cancel-rejection-btn {
-    background: #6b7280;
-    color: white;
-    margin-top: 4px;
-    width: 100%;
-  }
-
-  /* Loading States */
-  .action-btn.loading {
-    position: relative;
-    color: transparent;
-  }
-
-  .action-btn.loading::after {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border: 1.5px solid transparent;
-    border-top: 1.5px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-  /* Compact Empty State */
-  .empty-state {
-    text-align: center;
-    padding: 30px 15px;
-    background: var(--surface);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-soft);
-    margin: 15px 0;
-  }
-
-  .empty-icon {
-    width: 50px;
-    height: 50px;
-    background: var(--accent-gradient);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: white;
-    margin: 0 auto 15px;
-    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.25);
-  }
-
-  .empty-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 6px;
-  }
-
-  .empty-subtitle {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    line-height: 1.3;
-  }
-
-  /* Mobile Responsive */
-  @media (max-width: 575.98px) {
-    .approval-page {
-      padding: 10px 0;
-    }
-
-    .container {
-      padding-left: 10px;
-      padding-right: 10px;
-    }
-
-    .approval-header {
-      margin-bottom: 12px;
-      padding: 12px 10px;
-    }
-
-    .approval-header h2 {
-      font-size: 1.1rem;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .approval-icon {
-      width: 26px;
-      height: 26px;
-      font-size: 0.8rem;
-    }
-
-    .approval-subtitle {
-      font-size: 0.75rem;
-    }
-
-    .stats-bar {
-      gap: 6px;
-      padding: 10px 6px;
-      margin-bottom: 12px;
-    }
-
-    .stat-item {
-      padding: 4px 8px;
-      min-width: 40px;
-    }
-
-    .stat-number {
-      font-size: 0.9rem;
-    }
-
-    .stat-label {
-      font-size: 0.6rem;
-    }
-
-    .card-image-container {
-      height: 70px;
-    }
-
-    .enhanced-card-body {
-      padding: 8px;
-      gap: 4px;
-    }
-
-    .item-title {
-      font-size: 0.75rem;
-    }
-
-    .item-description {
-      font-size: 0.65rem;
-    }
-
-    .chip-label {
-      font-size: 0.55rem;
-    }
-
-    .chip-value {
-      font-size: 0.6rem;
-    }
-
-    .condition-badge {
-      padding: 2px 5px;
-      font-size: 0.55rem;
-    }
-
-    .appraisal-section {
-      padding: 6px;
-    }
-
-    .appraisal-label {
-      font-size: 0.65rem;
-    }
-
-    .credit-icon {
-      width: 12px;
-      height: 12px;
-      font-size: 0.5rem;
-    }
-
-    .value-input {
-      padding: 5px 6px;
-      font-size: 0.7rem;
-    }
-
-    .rejection-textarea {
-      padding: 5px 6px;
-      font-size: 0.65rem;
-      min-height: 35px;
-    }
-
-    .action-btn {
-      padding: 5px 6px;
-      font-size: 0.6rem;
-      min-height: 24px;
-    }
-
-    .empty-state {
-      padding: 20px 10px;
-    }
-
-    .empty-icon {
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
-      margin-bottom: 10px;
-    }
-
-    .empty-title {
-      font-size: 1rem;
-    }
-
-    .empty-subtitle {
-      font-size: 0.8rem;
-    }
-  }
-
-  @media (min-width: 576px) and (max-width: 767.98px) {
-    .card-image-container {
-      height: 80px;
-    }
-
-    .enhanced-card-body {
-      padding: 9px;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .approval-page {
-      padding: 18px 0;
-    }
-
-    .approval-header {
-      padding: 20px 18px;
-      margin-bottom: 20px;
-    }
-
-    .approval-header h2 {
-      font-size: 1.4rem;
-    }
-
-    .approval-icon {
-      width: 32px;
-      height: 32px;
-      font-size: 1rem;
-    }
-
-    .stats-bar {
-      padding: 14px 12px;
-      margin-bottom: 20px;
-    }
-
-    .card-image-container {
-      height: 95px;
-    }
-
-    .enhanced-card-body {
-      padding: 11px;
-      gap: 7px;
-    }
-
-    .approval-card {
-      max-height: 370px;
-    }
-  }
-
-  /* Grid optimization */
-  .row {
-    --bs-gutter-x: 12px;
-    --bs-gutter-y: 12px;
-  }
-
-  @media (max-width: 575.98px) {
-    .row {
-      --bs-gutter-x: 8px;
-      --bs-gutter-y: 8px;
-    }
-  }
-
-  /* Animation Classes */
-  .fade-in {
-    opacity: 0;
-    transform: translateY(15px);
-    transition: all 0.4s ease;
-  }
-
-  .fade-in.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  .apv-stats { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 640px) { .apv-stats { grid-template-columns: 1fr; } }
+
+  .apv-row { flex-wrap: wrap; align-items: flex-start; }
+  .apv-thumb { width: 72px; height: 72px; }
+  .apv-desc { margin: 4px 0 0; font-size: 0.82rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .apv-review { flex: 1 0 100%; display: grid; gap: 12px; padding: 14px; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; }
+
+  .apv-note { padding: 10px 12px; border-radius: 10px; background: var(--tint); border: 1px solid var(--line); font-size: 0.82rem; line-height: 1.55; color: var(--ink); }
+  .apv-note.is-ok { background: rgba(25, 135, 84, 0.08); border-color: rgba(25, 135, 84, 0.3); }
+  .apv-note.is-info { border-color: rgba(5, 78, 151, 0.25); }
+  .apv-note.is-muted { color: var(--muted); }
+  .apv-risk { font-weight: 700; }
+  .apv-risk.high { color: #b91c1c; }
+  .apv-risk.medium { color: #b45300; }
+  .apv-risk.low { color: #146c43; }
+
+  .apv-page .intake-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; min-width: 0; margin: 0 0 14px; padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+  .apv-page .intake-fields legend { float: none; width: auto; margin: 0; padding: 0 6px; font-size: 0.8rem; font-weight: 700; color: var(--ink); }
+  .apv-page .intake-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+  .apv-page .intake-fields input, .apv-page .intake-fields select, .apv-page .intake-fields textarea { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 0.86rem; font-weight: 400; color: var(--ink); }
+  .apv-page .intake-fields input:focus, .apv-page .intake-fields select:focus, .apv-page .intake-fields textarea:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(5, 78, 151, 0.12); }
+  .apv-page .intake-fields .intake-wide { grid-column: 1 / -1; }
+
+  .apv-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .apv-fields .adm-field { margin-bottom: 0; }
+  @media (max-width: 640px) { .apv-fields { grid-template-columns: 1fr; } }
+
+  .apv-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .apv-actions .adm-btn { flex: 1 1 140px; }
+  .apv-page .reject-btn.active { background: #fff; border-color: var(--line); color: var(--ink); }
+  .apv-page .approve-btn.loading { position: relative; color: transparent; }
+  .apv-page .approve-btn.loading::after { content: ''; position: absolute; width: 16px; height: 16px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: apv-spin 0.8s linear infinite; }
+  @keyframes apv-spin { to { transform: rotate(360deg); } }
+
+  .rejection-section { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .rejection-section.active { display: block; }
+  .rejection-section .adm-btn { width: 100%; margin-top: 8px; }
+  .apv-submit-reject { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .apv-submit-reject:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
 </style>
 
-<div class="approval-page">
-  <div class="container">
-    <!-- Compact Header -->
-    <div class="approval-header fade-in">
-      <h2>
-        <div class="approval-icon">📝</div>
-        Pending Item Approvals
-      </h2>
-      <p class="approval-subtitle">Review and approve items submitted by users</p>
+<div class="adm-page apv-page">
+  <a href="{{ url_for('admin.admin_dashboard') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+  <div class="adm-head">
+    <div>
+      <h1>Pending Item Approvals</h1>
+      <p>Record physical receipt, observed condition, serial/IMEI and identity before approving or rejecting a submitted item.</p>
     </div>
+  </div>
 
-    {% if items %}
-      <!-- Compact Statistics -->
-      <div class="stats-bar fade-in">
-        <div class="stat-item">
-          <div class="stat-number">{{ items|length }}</div>
-          <div class="stat-label">Pending</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">{{ items|selectattr("category", "equalto", "Electronics")|list|length }}</div>
-          <div class="stat-label">Electronics</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">{{ items|selectattr("condition", "equalto", "Excellent")|list|length }}</div>
-          <div class="stat-label">Excellent</div>
+  {% if items %}
+    <div class="adm-stat-grid apv-stats">
+      <div class="adm-stat is-highlight">
+        <div class="adm-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+          <div class="adm-stat-value">{{ items|length }}</div>
+          <div class="adm-stat-label">Pending</div>
         </div>
       </div>
+      <div class="adm-stat">
+        <div class="adm-stat-icon"><i class="bi bi-cpu"></i></div>
+        <div>
+          <div class="adm-stat-value">{{ items|selectattr("category", "equalto", "Electronics")|list|length }}</div>
+          <div class="adm-stat-label">Electronics</div>
+        </div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat-icon"><i class="bi bi-star"></i></div>
+        <div>
+          <div class="adm-stat-value">{{ items|selectattr("condition", "equalto", "Excellent")|list|length }}</div>
+          <div class="adm-stat-label">Excellent</div>
+        </div>
+      </div>
+    </div>
 
-      <!-- Ultra Compact Items Grid -->
-      <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 row-cols-xl-6 g-2">
+    <div class="adm-panel">
+      <div class="adm-panel-head">
+        <div class="adm-panel-icon"><i class="bi bi-box-seam"></i></div>
+        <div>
+          <h2>Items awaiting approval</h2>
+          <p>Enter the BXC value and inspection record, then approve or reject.</p>
+        </div>
+        <div class="adm-panel-actions"><span class="adm-count is-alert">{{ items|length }}</span></div>
+      </div>
+
+      <ul class="adm-list">
         {% for item in items %}
-        <div class="col fade-in" style="transition-delay: {{ loop.index0 * 0.03 }}s;">
-          <div class="approval-card">
-            <!-- Ultra Compact Image -->
-            <!-- ✅ FIX: Try item.image_url first, fallback to first image in images relationship -->
-            {% set primary_image = item.image_url or (item.images[0].image_url if item.images else None) %}
-            {% if primary_image %}
-            <div class="card-image-container">
-              <img src="{{ primary_image | image_url }}" class="card-image" alt="{{ item.name }}" onerror="this.src='/static/placeholder.png'">
-              <div class="image-overlay">📷</div>
+        <li class="adm-row apv-row">
+          {% set primary_image = item.image_url or (item.images[0].image_url if item.images else None) %}
+          {% if primary_image %}
+            <img src="{{ primary_image | image_url }}" class="adm-thumb apv-thumb" alt="{{ item.name }}" onerror="this.src='/static/placeholder.png'">
+          {% else %}
+            <img src="/static/placeholder.png" class="adm-thumb apv-thumb" alt="{{ item.name }}">
+          {% endif %}
+
+          <div class="adm-row-main">
+            <h3 class="adm-row-title">{{ item.name }}</h3>
+            <div class="adm-row-meta">
+              <span><i class="bi bi-person-circle"></i> {{ item.user.username }}</span>
+              <span><i class="bi bi-tag"></i> {{ item.category }}</span>
             </div>
-            {% else %}
-            <div class="card-image-container">
-              <img src="/static/placeholder.png" class="card-image" alt="{{ item.name }}">
-              <div class="image-overlay">📷</div>
+            <p class="apv-desc">{{ item.description }}</p>
+          </div>
+
+          <div class="adm-row-side">
+            <span class="adm-pill info"><i class="bi bi-star"></i> {{ item.condition }}</span>
+          </div>
+
+          <div class="apv-review">
+            {% if item.provisional_credit_amount and not item.provisional_credit_settled %}
+            <div class="apv-note is-ok ai-suggestion">
+              <strong><i class="bi bi-credit-card"></i> Seller already holds ᗸ{{ '{:,.0f}'.format(item.provisional_credit_amount) }} provisional credit</strong> for this item.
+              Approving converts it to real credit at the value you enter below; rejecting removes the hold.
             </div>
             {% endif %}
 
-            <div class="enhanced-card-body">
-              <!-- Compact Item Header -->
-              <h5 class="item-title">{{ item.name }}</h5>
-              <p class="item-description">{{ item.description }}</p>
-
-              <!-- Ultra Compact Info Row -->
-              <div class="item-info-row">
-                <div class="info-chip uploader">
-                  <div class="chip-label">👤 User</div>
-                  <div class="chip-value">{{ item.user.username }}</div>
-                </div>
-                <div class="info-chip category">
-                  <div class="chip-label">📂 Cat</div>
-                  <div class="chip-value">{{ item.category }}</div>
-                </div>
-              </div>
-
-              <div style="text-align: center;">
-                <span class="condition-badge">⭐ {{ item.condition }}</span>
-              </div>
-
-              {% if item.provisional_credit_amount and not item.provisional_credit_settled %}
-              <div class="ai-suggestion" style="margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.4);font-size:0.75rem;line-height:1.5;">
-                <strong>💳 Seller already holds ᗸ{{ '{:,.0f}'.format(item.provisional_credit_amount) }} provisional credit</strong> for this item.
-                Approving converts it to real credit at the value you enter below; rejecting removes the hold.
-              </div>
+            {# AI valuation suggestion (advice only - the admin's value decides the credits) #}
+            {% if item.ai_estimated_value %}
+            <div class="apv-note is-info ai-suggestion">
+              <strong><i class="bi bi-stars"></i> AI suggests ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</strong>
+              {% if item.ai_value_range_low and item.ai_value_range_high %}
+                <span>(range ᗸ{{ '{:,.0f}'.format(item.ai_value_range_low) }} – ᗸ{{ '{:,.0f}'.format(item.ai_value_range_high) }})</span>
               {% endif %}
-
-              <!-- AI valuation suggestion (advice only - the admin's value decides the credits) -->
-              {% if item.ai_estimated_value %}
-              <div class="ai-suggestion" style="margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(102,126,234,0.10);border:1px solid rgba(102,126,234,0.35);font-size:0.75rem;line-height:1.5;">
-                <strong>🤖 AI suggests ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</strong>
-                {% if item.ai_value_range_low and item.ai_value_range_high %}
-                  <span>(range ᗸ{{ '{:,.0f}'.format(item.ai_value_range_low) }} – ᗸ{{ '{:,.0f}'.format(item.ai_value_range_high) }})</span>
-                {% endif %}
+              <br>
+              <span>Confidence: {{ (item.ai_confidence or 'n/a')|replace('_', ' ')|capitalize }}</span>
+              {% if item.ai_market_listings %}<span> · {{ item.ai_market_listings }} comparable listings</span>{% endif %}
+              {% if item.ai_risk_level %}
                 <br>
-                <span>Confidence: {{ (item.ai_confidence or 'n/a')|replace('_', ' ')|capitalize }}</span>
-                {% if item.ai_market_listings %}<span> · {{ item.ai_market_listings }} comparable listings</span>{% endif %}
-                {% if item.ai_risk_level %}
-                  <br>
-                  <span style="font-weight:700;color:{% if item.ai_risk_level == 'HIGH' %}#dc2626{% elif item.ai_risk_level == 'MEDIUM' %}#d97706{% else %}#16a34a{% endif %};">
-                    Risk: {{ item.ai_risk_level }}{% if item.ai_risk_score is not none %} ({{ '%.0f'|format(item.ai_risk_score) }}){% endif %}
-                  </span>
-                {% endif %}
-                {% if item.ai_risk_level == 'HIGH' %}<br><span style="color:#dc2626;">⚠️ High risk - check this item carefully and enter the value yourself.</span>{% endif %}
-              </div>
-              {% elif not item.ai_valuated_at and item.verification_status == 'pending_valuation' %}
-              <div class="ai-suggestion" style="margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(148,163,184,0.15);font-size:0.75rem;">
-                🤖 AI valuation running… refresh in a minute (or enter the value yourself).
-              </div>
-              {% else %}
-              <div class="ai-suggestion" style="margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(148,163,184,0.15);font-size:0.75rem;">
-                🤖 AI valuation unavailable - please enter the value manually.
-              </div>
+                <span class="apv-risk {% if item.ai_risk_level == 'HIGH' %}high{% elif item.ai_risk_level == 'MEDIUM' %}medium{% else %}low{% endif %}">
+                  Risk: {{ item.ai_risk_level }}{% if item.ai_risk_score is not none %} ({{ '%.0f'|format(item.ai_risk_score) }}){% endif %}
+                </span>
               {% endif %}
+              {% if item.ai_risk_level == 'HIGH' %}<br><span class="apv-risk high"><i class="bi bi-exclamation-triangle"></i> High risk - check this item carefully and enter the value yourself.</span>{% endif %}
+            </div>
+            {% elif not item.ai_valuated_at and item.verification_status == 'pending_valuation' %}
+            <div class="apv-note is-muted ai-suggestion">
+              <i class="bi bi-stars"></i> AI valuation running… refresh in a minute (or enter the value yourself).
+            </div>
+            {% else %}
+            <div class="apv-note is-muted ai-suggestion">
+              <i class="bi bi-stars"></i> AI valuation unavailable - please enter the value manually.
+            </div>
+            {% endif %}
 
-              <!-- Compact Form -->
-              <div class="appraisal-section">
-                <form method="POST" action="{{ url_for('admin.approve_item', item_id=item.id) }}" class="approval-form">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                  <label for="value_{{ item.id }}" class="appraisal-label">
-                    <span class="credit-icon">💰</span>
-                    BXC
-                  </label>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    name="value" 
-                    id="value_{{ item.id }}"
-                    class="value-input" 
-                    placeholder="Value"
-                    min="0.1"
-                    {% if item.ai_estimated_value and item.ai_risk_level != 'HIGH' %}value="{{ item.ai_estimated_value|round|int }}"{% endif %}
-                    required
-                  >
-
-                  <label for="video_url_{{ item.id }}" class="appraisal-label">
-                    <span class="credit-icon">📹</span>
-                    Video (optional)
-                  </label>
-                  <input
-                    type="url"
-                    name="video_url"
-                    id="video_url_{{ item.id }}"
-                    class="video-url-input"
-                    placeholder="https://youtube.com/watch?v=..."
-                  >
-
-                  <div class="action-buttons">
-                    <button type="submit" class="action-btn approve-btn">
-                      ✅ Approve
-                    </button>
-                    <button type="button" class="action-btn reject-btn" onclick="toggleRejectForm({{ item.id }})">
-                      ❌ Reject
-                    </button>
-                  </div>
-                </form>
-
-                <!-- Collapsible Rejection Form -->
-                <div class="rejection-section" id="rejection_{{ item.id }}">
-                  <form method="POST" action="{{ url_for('admin.reject_item', item_id=item.id) }}" class="rejection-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <textarea 
-                      name="rejection_reason" 
-                      placeholder="Enter rejection reason..."
-                      rows="2"
-                      class="rejection-textarea"
+            <div class="appraisal-section">
+              <form method="POST" action="{{ url_for('admin.approve_item', item_id=item.id) }}" class="approval-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                {% with inspection_item=item %}
+                  {% include 'admin/_verification_intake_fields.html' %}
+                {% endwith %}
+                <div class="apv-fields">
+                  <div class="adm-field">
+                    <label for="value_{{ item.id }}" class="appraisal-label">BXC value</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      name="value"
+                      id="value_{{ item.id }}"
+                      class="form-control value-input"
+                      placeholder="Value"
+                      min="0.1"
+                      {% if item.ai_estimated_value and item.ai_risk_level != 'HIGH' %}value="{{ item.ai_estimated_value|round|int }}"{% endif %}
                       required
-                    ></textarea>
-                    <button type="submit" class="action-btn submit-rejection-btn">
-                      Submit Rejection
-                    </button>
-                    <button type="button" class="action-btn cancel-rejection-btn" onclick="toggleRejectForm({{ item.id }})">
-                      Cancel
-                    </button>
-                  </form>
+                    >
+                  </div>
+                  <div class="adm-field">
+                    <label for="video_url_{{ item.id }}" class="appraisal-label">Video (optional)</label>
+                    <input
+                      type="url"
+                      name="video_url"
+                      id="video_url_{{ item.id }}"
+                      class="form-control video-url-input"
+                      placeholder="https://youtube.com/watch?v=..."
+                    >
+                  </div>
                 </div>
+
+                <div class="apv-actions">
+                  <button type="submit" class="adm-btn success approve-btn">
+                    <i class="bi bi-check-lg"></i> Approve
+                  </button>
+                  <button type="button" class="adm-btn danger reject-btn" onclick="toggleRejectForm({{ item.id }})">
+                    <i class="bi bi-x-circle"></i> Reject
+                  </button>
+                </div>
+              </form>
+
+              <div class="rejection-section" id="rejection_{{ item.id }}">
+                <form method="POST" action="{{ url_for('admin.reject_item', item_id=item.id) }}" class="rejection-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  {% with inspection_item=item %}
+                    {% include 'admin/_verification_intake_fields.html' %}
+                  {% endwith %}
+                  <textarea
+                    name="rejection_reason"
+                    placeholder="Enter rejection reason..."
+                    rows="2"
+                    class="form-control rejection-textarea"
+                    required
+                  ></textarea>
+                  <button type="submit" class="adm-btn apv-submit-reject submit-rejection-btn">
+                    <i class="bi bi-x-circle"></i> Submit Rejection
+                  </button>
+                  <button type="button" class="adm-btn ghost cancel-rejection-btn" onclick="toggleRejectForm({{ item.id }})">
+                    Cancel
+                  </button>
+                </form>
               </div>
             </div>
           </div>
-        </div>
+        </li>
         {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="adm-panel">
+      <div class="adm-empty">
+        <i class="bi bi-check2-circle"></i>
+        <h6>All caught up!</h6>
+        <p class="mb-0">No pending items for approval at the moment.</p>
       </div>
-    {% else %}
-      <!-- Compact Empty State -->
-      <div class="empty-state fade-in">
-        <div class="empty-icon">🎉</div>
-        <h3 class="empty-title">All Caught Up!</h3>
-        <p class="empty-subtitle">No pending items for approval at the moment.<br>Take a well-deserved break!</p>
-      </div>
-    {% endif %}
-  </div>
+    </div>
+  {% endif %}
 </div>
 
 <script>
@@ -942,63 +236,38 @@
   function toggleRejectForm(itemId) {
     const rejectionSection = document.getElementById(`rejection_${itemId}`);
     const rejectBtn = document.querySelector(`[onclick="toggleRejectForm(${itemId})"]`);
-    
+
     if (rejectionSection.classList.contains('active')) {
-      // Hide rejection form
       rejectionSection.classList.remove('active');
       rejectBtn.classList.remove('active');
-      rejectBtn.innerHTML = '❌ Reject';
-      
-      // Clear textarea
+      rejectBtn.innerHTML = '<i class="bi bi-x-circle"></i> Reject';
+
       const textarea = rejectionSection.querySelector('textarea');
       textarea.value = '';
     } else {
-      // Show rejection form
       rejectionSection.classList.add('active');
       rejectBtn.classList.add('active');
-      rejectBtn.innerHTML = '↩️ Cancel';
-      
-      // Focus textarea after animation
+      rejectBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Cancel';
+
       setTimeout(() => {
         const textarea = rejectionSection.querySelector('textarea');
         textarea.focus();
-      }, 300);
+      }, 100);
     }
   }
 
-  // Enhanced form interactions
   document.addEventListener('DOMContentLoaded', function() {
-    // Scroll animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -20px 0px'
-    };
-
-    const observer = new IntersectionObserver(function(entries) {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, observerOptions);
-
-    // Observe all fade-in elements
-    document.querySelectorAll('.fade-in').forEach(el => {
-      observer.observe(el);
-    });
-
-    // Enhanced approval form submissions
     document.querySelectorAll('.approval-form').forEach(form => {
       form.addEventListener('submit', function(e) {
         const submitBtn = form.querySelector('.approve-btn');
         const valueInput = form.querySelector('.value-input');
-        
+
         if (!valueInput.value || parseFloat(valueInput.value) <= 0) {
           e.preventDefault();
           valueInput.focus();
-          valueInput.style.borderColor = '#ff6b6b';
+          valueInput.style.borderColor = '#dc3545';
           setTimeout(() => {
-            valueInput.style.borderColor = '#e5e7eb';
+            valueInput.style.borderColor = '';
           }, 3000);
           return;
         }

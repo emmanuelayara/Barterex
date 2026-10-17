@@ -284,7 +284,7 @@
                   <div class="valuation-estimate pending">No AI estimate available for this item</div>
                 {% endif %}
                 <div class="stage-pill stage-{{ item.status }}">
-                  {{ {'valuation_only': 'Not yet submitted', 'trade_requested': 'Awaiting pre-verification',
+                  {{ {'valuation_only': 'Not yet submitted', 'trade_requested': 'Video submitted · awaiting pre-verification',
                       'preverification_approved': 'Ready to Activate for Trade',
                       'pending_activation': 'Video submitted - awaiting review'}[item.status] }}
                 </div>
@@ -293,22 +293,35 @@
                 {% if item.status == 'valuation_only' %}
                   <details class="trade-details">
                     <summary class="trade-this-btn">Trade This Item</summary>
-                    <form method="POST" action="{{ url_for('items.trade_this_item', item_id=item.id) }}" class="trade-form">
+                    <form method="POST" action="{{ url_for('items.trade_this_item', item_id=item.id) }}"
+                          class="trade-form video-submit-form no-loading" data-item-id="{{ item.id }}" data-upload-mode="trade"
+                          data-max-video-size="{{ max_video_size_bytes }}"
+                          data-max-video-duration="{{ max_video_duration_seconds }}">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                      <p class="activate-help">
+                        Upload a video showing the item's condition and functionality (up to
+                        {{ max_video_duration_seconds }} seconds). Use your camera or choose a video from your device.
+                      </p>
+                      <input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
+                             capture="environment" class="activate-file-input" required>
+                      <div class="activate-progress" hidden>Uploading… <span class="activate-progress-pct">0%</span></div>
+                      <div class="activate-error" role="alert" hidden></div>
                       <label class="trade-checkbox">
                         <input type="checkbox" name="ownership_confirmed" value="1" required>
                         I confirm I own this item and it matches the description/photos
                       </label>
                       <input type="text" name="serial_number" placeholder="Serial number / IMEI (optional)" class="trade-input">
-                      <button type="submit" class="trade-submit-btn">Submit for Pre-Verification</button>
+                      <button type="submit" class="trade-submit-btn activate-upload-btn">Upload video &amp; submit for Pre-Verification</button>
                     </form>
                   </details>
                 {% elif item.status == 'preverification_approved' %}
                   <div class="final-value">Final Value: ᗸ{{ '{:,.0f}'.format(item.value) if item.value else '—' }}</div>
                   <details class="trade-details">
                     <summary class="trade-this-btn activate-btn">🎬 Activate for Trade</summary>
-                    <div class="trade-form activate-form" data-item-id="{{ item.id }}">
-                      <p class="activate-help">Record or select a short video showing this item's condition and functionality.</p>
+                    <div class="trade-form video-submit-form" data-item-id="{{ item.id }}" data-upload-mode="activation"
+                         data-max-video-size="{{ max_video_size_bytes }}"
+                         data-max-video-duration="{{ max_video_duration_seconds }}">
+                      <p class="activate-help">Record or select a video showing this item's condition and functionality (up to {{ max_video_duration_seconds }} seconds).</p>
                       <input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" capture="environment" class="activate-file-input">
                       <button type="button" class="trade-submit-btn activate-upload-btn">Upload &amp; Submit Video</button>
                       <div class="activate-progress" hidden>Uploading… <span class="activate-progress-pct">0%</span></div>
@@ -342,24 +355,61 @@
 </div>
 
 <script>
-  // "Activate for Trade" - upload the verification video straight to cloud storage,
-  // then confirm with the server. See routes/items.py request_activation_upload_url /
-  // confirm_activation_upload and services/video_service.py.
-  document.querySelectorAll('.activate-form').forEach(function (form) {
+  // Upload verification video directly to cloud storage before either trade request
+  // submission or activation submission. See routes/items.py and services/video_service.py.
+  document.querySelectorAll('.video-submit-form').forEach(function (form) {
     const itemId = form.dataset.itemId;
     const fileInput = form.querySelector('.activate-file-input');
     const uploadBtn = form.querySelector('.activate-upload-btn');
-    const progress = form.querySelector('.activate-progress');
-    const progressPct = form.querySelector('.activate-progress-pct');
+    const progress = form.querySelector('.activate-progress') ||
+      form.parentElement.querySelector('.activate-progress');
+    const progressPct = progress.querySelector('.activate-progress-pct');
     const errorBox = form.querySelector('.activate-error');
     const csrfToken = document.getElementById('globalCsrfToken');
 
-    uploadBtn.addEventListener('click', function () {
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.hidden = false;
+      uploadBtn.disabled = false;
+      progress.hidden = true;
+    }
+
+    function getDuration(file) {
+      return new Promise(function (resolve, reject) {
+        const video = document.createElement('video');
+        const objectUrl = URL.createObjectURL(file);
+        video.preload = 'metadata';
+        video.onloadedmetadata = function () {
+          const duration = video.duration;
+          URL.revokeObjectURL(objectUrl);
+          if (!Number.isFinite(duration) || duration <= 0) {
+            reject(new Error('Could not read the video duration. Please choose another video.'));
+          } else {
+            resolve(duration);
+          }
+        };
+        video.onerror = function () {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Could not read this video. Choose an MP4, MOV, WEBM or M4V file.'));
+        };
+        video.src = objectUrl;
+      });
+    }
+
+    function submitVideo() {
       const file = fileInput.files[0];
       errorBox.hidden = true;
       if (!file) {
-        errorBox.textContent = 'Please choose or record a video first.';
-        errorBox.hidden = false;
+        showError('Please record a video or choose one from your device.');
+        return;
+      }
+      const allowedTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'];
+      if (file.type && !allowedTypes.includes(file.type)) {
+        showError('Please choose an MP4, MOV, WEBM or M4V video.');
+        return;
+      }
+      if (file.size > Number(form.dataset.maxVideoSize)) {
+        showError('The video must be smaller than 200 MB.');
         return;
       }
 
@@ -367,10 +417,15 @@
       progress.hidden = false;
       progressPct.textContent = '0%';
 
-      fetch(`/items/${itemId}/activate/request-upload-url`, {
-        method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, csrfToken ? { 'X-CSRFToken': csrfToken.value } : {}),
-        body: JSON.stringify({ content_type: file.type || 'video/mp4' }),
+      getDuration(file).then(function (duration) {
+        if (duration > Number(form.dataset.maxVideoDuration)) {
+          throw new Error('The verification video must be no longer than 60 seconds.');
+        }
+        return fetch(`/items/${itemId}/activate/request-upload-url`, {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, csrfToken ? { 'X-CSRFToken': csrfToken.value } : {}),
+          body: JSON.stringify({ content_type: file.type || 'video/mp4' }),
+        });
       })
         .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
         .then(function (result) {
@@ -390,10 +445,17 @@
 
           xhr.addEventListener('load', function () {
             if (xhr.status < 200 || xhr.status >= 300) {
-              errorBox.textContent = 'The upload failed. Please try again.';
-              errorBox.hidden = false;
-              uploadBtn.disabled = false;
-              progress.hidden = true;
+              showError('The video upload failed. Please try again.');
+              return;
+            }
+
+            if (form.dataset.uploadMode === 'trade') {
+              const objectNameInput = document.createElement('input');
+              objectNameInput.type = 'hidden';
+              objectNameInput.name = 'object_name';
+              objectNameInput.value = result.data.object_name;
+              form.appendChild(objectNameInput);
+              form.submit();
               return;
             }
 
@@ -401,26 +463,43 @@
             confirmData.append('object_name', result.data.object_name);
             if (csrfToken) confirmData.append('csrf_token', csrfToken.value);
 
-            fetch(`/items/${itemId}/activate/confirm-upload`, { method: 'POST', body: confirmData })
-              .then(function () { window.location.reload(); });
+            fetch(`/items/${itemId}/activate/confirm-upload`, {
+              method: 'POST',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              body: confirmData,
+            })
+              .then(function (response) {
+                return response.json().then(function (data) {
+                  if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'The video was uploaded but could not be submitted.');
+                  }
+                  window.location.reload();
+                });
+              })
+              .catch(function (err) { showError(err.message); });
           });
 
           xhr.addEventListener('error', function () {
-            errorBox.textContent = 'Network error while uploading the video.';
-            errorBox.hidden = false;
-            uploadBtn.disabled = false;
-            progress.hidden = true;
+            showError('Network error while uploading the video.');
           });
 
           xhr.send(file);
         })
         .catch(function (err) {
-          errorBox.textContent = err.message;
-          errorBox.hidden = false;
-          uploadBtn.disabled = false;
-          progress.hidden = true;
+          showError(err.message);
         });
-    });
+    }
+
+    if (form.tagName === 'FORM') {
+      form.addEventListener('submit', function (event) {
+        if (!form.querySelector('input[name="object_name"]')) {
+          event.preventDefault();
+          submitVideo();
+        }
+      });
+    } else {
+      uploadBtn.addEventListener('click', submitVideo);
+    }
   });
 </script>
 {% endblock %}

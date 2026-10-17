@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash, send_file
+from flask import Blueprint, render_template, redirect, url_for, request, session, flash, send_file, jsonify, abort
 from flask_wtf.csrf import generate_csrf
 from functools import wraps
 from datetime import datetime
@@ -6,13 +6,37 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy import func
 import json
+import secrets
 import csv
 import io
 import zipfile
 
 from app import db
-from models import Admin, User, Item, Order, OrderItem, PickupStation, Notification, SystemSettings, ActivityLog, ContactMessage
-from forms import AdminRegisterForm, AdminLoginForm, PickupStationForm
+from models import (
+    Admin,
+    ClearingInventoryItem,
+    CustodyEvent,
+    VerificationIntake,
+    User,
+    Item,
+    Order,
+    OrderItem,
+    PickupStation,
+    Notification,
+    SystemSettings,
+    ActivityLog,
+    ContactMessage,
+)
+from forms import AdminRegisterForm, AdminLoginForm, AdminPermissionsForm, PickupStationForm
+from permissions import (
+    PERMISSION_GROUPS,
+    PERMISSION_LABELS,
+    ENDPOINT_PERMISSIONS,
+    PUBLIC_ENDPOINTS,
+    AUTHENTICATED_ENDPOINTS,
+    SUPER_ADMIN_ONLY,
+    clean_permissions,
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from logger_config import setup_logger
 from exceptions import ValidationError, DatabaseError, AuthenticationError, AuthorizationError
@@ -27,7 +51,39 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 # provisional credit from an accepted AI value, still awaiting physical verification.
 PENDING_ITEM_STATUSES = ('pending', 'pending_physical_verification')
 
-# ==================== DECORATORS ====================
+
+def _verification_intake_details_from_form():
+    return {
+        'received_location': request.form.get('received_location'),
+        'observed_condition': request.form.get('observed_condition'),
+        'observed_serial_number': request.form.get('observed_serial_number'),
+        'serial_check': request.form.get('serial_check'),
+        'identity_confirmed': request.form.get('identity_confirmed'),
+        'accessories_received': request.form.get('accessories_received'),
+        'intake_notes': request.form.get('intake_notes'),
+    }
+
+
+# ==================== ACCESS CONTROL ====================
+
+def current_admin():
+    """The logged-in Admin (cached per request), or None."""
+    if 'admin_id' not in session:
+        return None
+    if 'barterex.admin' not in request.environ:
+        request.environ['barterex.admin'] = db.session.get(Admin, session['admin_id'])
+    return request.environ['barterex.admin']
+
+
+def admin_can(permission):
+    admin = current_admin()
+    return bool(admin and admin.has_permission(permission))
+
+
+def _clear_admin_session():
+    session.pop('admin_id', None)
+    session.pop('admin_username', None)
+
 
 def admin_login_required(f):
     @wraps(f)
@@ -38,23 +94,67 @@ def admin_login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+@admin_bp.before_request
+def enforce_admin_permissions():
+    """Gate every admin endpoint by the permission mapped in permissions.py.
+
+    Endpoints missing from the map are super-admin-only (fail closed). The admin
+    is reloaded from the database on every request, so revoking a permission or
+    deactivating an account takes effect immediately.
+    """
+    endpoint = request.endpoint
+    if endpoint is None or endpoint in PUBLIC_ENDPOINTS:
+        return None
+
+    admin = current_admin()
+    if admin is None or not admin.is_active:
+        if admin is not None:
+            flash('This admin account has been deactivated.', 'danger')
+        else:
+            flash('Please log in as admin.', 'warning')
+        _clear_admin_session()
+        return redirect(url_for('admin.admin_login'))
+
+    if endpoint in AUTHENTICATED_ENDPOINTS or admin.is_super_admin:
+        return None
+
+    required = ENDPOINT_PERMISSIONS.get(endpoint, SUPER_ADMIN_ONLY)
+    if required != SUPER_ADMIN_ONLY and admin.has_permission(required):
+        return None
+
+    logger.warning(f"Admin permission denied - Admin ID: {admin.id}, Endpoint: {endpoint}, Required: {required}")
+    from audit_logger import log_audit_action
+    log_audit_action(
+        action_type='permission_denied',
+        target_type='admin',
+        target_id=admin.id,
+        target_name=admin.username,
+        description=f'Admin {admin.username} was denied access to {request.path} (requires {required})'
+    )
+    if request.path.startswith('/admin/api/') or request.path.endswith('/stream'):
+        return jsonify({'error': 'You do not have permission to do this.'}), 403
+    return render_template('admin/forbidden.html', required=PERMISSION_LABELS.get(required)), 403
+
 # ==================== CONTEXT PROCESSOR ====================
 
 @admin_bp.context_processor
 def inject_admin_context():
     """Inject admin-wide context variables into all admin templates"""
+    context = dict(
+        can=admin_can,
+        current_admin=current_admin(),
+        pending_items_count=0,
+        pending_messages_count=0,
+    )
     try:
-        # Get count of pending items
-        pending_items_count = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).count()
-        # Get count of unread messages
-        pending_messages_count = ContactMessage.query.filter_by(is_read=False, status='pending').count()
-        return dict(
-            pending_items_count=pending_items_count,
-            pending_messages_count=pending_messages_count
-        )
+        if admin_can('items.review'):
+            context['pending_items_count'] = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).count()
+        if admin_can('messages.manage'):
+            context['pending_messages_count'] = ContactMessage.query.filter_by(is_read=False, status='pending').count()
     except Exception as e:
         logger.error(f"Error in admin context processor: {str(e)}")
-        return dict(pending_items_count=0, pending_messages_count=0)
+    return context
 
 # ==================== ROUTES ====================
 
@@ -79,19 +179,170 @@ def admin_register():
             hashed_password = generate_password_hash(password)
 
             new_admin = Admin(username=username, email=email, password=hashed_password)
+            selected = clean_permissions(request.form.getlist('permissions'))
+            if not form.is_super_admin.data and not selected:
+                raise ValidationError("Select at least one permission, or make this admin a super admin", field="permissions")
+            new_admin.is_super_admin = bool(form.is_super_admin.data)
+            new_admin.is_active = True
+            new_admin.permission_list = [] if new_admin.is_super_admin else selected
             db.session.add(new_admin)
             db.session.commit()
 
+            from audit_logger import log_audit_action
+            log_audit_action(
+                action_type='create_admin',
+                target_type='admin',
+                target_id=new_admin.id,
+                target_name=new_admin.username,
+                description=f'Created admin {new_admin.username}',
+                after_value={'is_super_admin': new_admin.is_super_admin, 'permissions': new_admin.permission_list}
+            )
+
             logger.info(f"New admin registered: {username}")
             flash('Admin registered successfully!', 'success')
-            return redirect(url_for('admin.admin_login'))
+            return redirect(url_for('admin.manage_admins'))
 
-        return render_template('admin/register.html', form=form)
+        return render_template('admin/register.html', form=form,
+                               permission_groups=PERMISSION_GROUPS,
+                               selected_permissions=request.form.getlist('permissions'))
         
     except ValidationError as e:
+        db.session.rollback()
         logger.warning(f"Admin registration error: {str(e)}")
         flash(str(e.message), 'danger')
-        return render_template('admin/register.html', form=form)
+        return render_template('admin/register.html', form=form,
+                               permission_groups=PERMISSION_GROUPS,
+                               selected_permissions=request.form.getlist('permissions'))
+
+
+def _active_super_admin_count():
+    return Admin.query.filter_by(is_super_admin=True, is_active=True).count()
+
+
+def _get_live_admin_or_404(admin_id):
+    target = db.get_or_404(Admin, admin_id)
+    if target.deleted_at is not None:
+        abort(404)
+    return target
+
+
+@admin_bp.route('/admins')
+@admin_login_required
+def manage_admins():
+    admins = Admin.query.filter(Admin.deleted_at.is_(None)).order_by(Admin.username).all()
+    return render_template('admin/manage_admins.html', admins=admins, permission_labels=PERMISSION_LABELS)
+
+
+@admin_bp.route('/admins/<int:admin_id>/edit', methods=['GET', 'POST'])
+@admin_login_required
+def edit_admin(admin_id):
+    target = _get_live_admin_or_404(admin_id)
+    form = AdminPermissionsForm()
+
+    if form.validate_on_submit():
+        make_super = bool(form.is_super_admin.data)
+        selected = [] if make_super else clean_permissions(request.form.getlist('permissions'))
+
+        if target.is_super_admin and not make_super and _active_super_admin_count() <= 1 and target.is_active:
+            flash('At least one active super admin is required.', 'danger')
+        elif not make_super and not selected:
+            flash('Select at least one permission, or make this admin a super admin.', 'danger')
+        else:
+            before = {'is_super_admin': target.is_super_admin, 'permissions': target.permission_list}
+            target.is_super_admin = make_super
+            target.permission_list = selected
+            db.session.commit()
+
+            from audit_logger import log_audit_action
+            log_audit_action(
+                action_type='edit_admin_permissions',
+                target_type='admin',
+                target_id=target.id,
+                target_name=target.username,
+                description=f'Updated access for admin {target.username}',
+                before_value=before,
+                after_value={'is_super_admin': target.is_super_admin, 'permissions': target.permission_list}
+            )
+            flash(f'Access updated for {target.username}.', 'success')
+            return redirect(url_for('admin.manage_admins'))
+
+        selected_permissions = request.form.getlist('permissions')
+    else:
+        form.is_super_admin.data = target.is_super_admin
+        selected_permissions = target.permission_list
+
+    return render_template('admin/edit_admin.html', form=form, target=target,
+                           permission_groups=PERMISSION_GROUPS,
+                           selected_permissions=selected_permissions)
+
+
+@admin_bp.route('/admins/<int:admin_id>/toggle-active', methods=['POST'])
+@admin_login_required
+def toggle_admin_active(admin_id):
+    target = _get_live_admin_or_404(admin_id)
+
+    if target.id == session.get('admin_id'):
+        flash('You cannot deactivate your own account.', 'danger')
+        return redirect(url_for('admin.manage_admins'))
+    if target.is_active and target.is_super_admin and _active_super_admin_count() <= 1:
+        flash('At least one active super admin is required.', 'danger')
+        return redirect(url_for('admin.manage_admins'))
+
+    target.is_active = not target.is_active
+    db.session.commit()
+
+    from audit_logger import log_audit_action
+    log_audit_action(
+        action_type='activate_admin' if target.is_active else 'deactivate_admin',
+        target_type='admin',
+        target_id=target.id,
+        target_name=target.username,
+        description=f"{'Reactivated' if target.is_active else 'Deactivated'} admin {target.username}"
+    )
+    flash(f"{target.username} {'reactivated' if target.is_active else 'deactivated'}.", 'success')
+    return redirect(url_for('admin.manage_admins'))
+
+
+@admin_bp.route('/admins/<int:admin_id>/delete', methods=['POST'])
+@admin_login_required
+def delete_admin(admin_id):
+    """Permanently remove an admin's access.
+
+    The row is kept but scrubbed (no login, no name/email, no permissions): audit,
+    intake and custody records reference admins by id and must stay attributable.
+    """
+    target = _get_live_admin_or_404(admin_id)
+
+    if target.id == session.get('admin_id'):
+        flash('You cannot delete your own account.', 'danger')
+        return redirect(url_for('admin.manage_admins'))
+    if target.is_active and target.is_super_admin and _active_super_admin_count() <= 1:
+        flash('At least one active super admin is required.', 'danger')
+        return redirect(url_for('admin.manage_admins'))
+
+    original_username, original_email = target.username, target.email
+    target.username = f'deleted-admin-{target.id}'
+    target.email = f'deleted-admin-{target.id}@deleted.invalid'
+    target.password = secrets.token_hex(32)
+    target.is_super_admin = False
+    target.is_active = False
+    target.permission_list = []
+    target.failed_login_attempts = 0
+    target.account_locked_until = None
+    target.deleted_at = datetime.utcnow()
+    db.session.commit()
+
+    from audit_logger import log_audit_action
+    log_audit_action(
+        action_type='delete_admin',
+        target_type='admin',
+        target_id=target.id,
+        target_name=original_username,
+        description=f'Deleted admin {original_username} ({original_email})'
+    )
+    logger.warning(f"Admin deleted - Admin ID: {target.id}, Username: {original_username}, By: {session.get('admin_id')}")
+    flash(f'{original_username} has been deleted.', 'success')
+    return redirect(url_for('admin.manage_admins'))
 
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
@@ -116,6 +367,11 @@ def admin_login():
                 return render_template('admin/login.html', form=form)
             
             if admin and check_password_hash(admin.password, password):
+                if not admin.is_active:
+                    logger.warning(f"Deactivated admin login attempt: {email}")
+                    flash('This admin account has been deactivated.', 'danger')
+                    return render_template('admin/login.html', form=form)
+
                 # Successful login - reset failed attempts
                 admin.failed_login_attempts = 0
                 admin.account_locked_until = None
@@ -226,7 +482,9 @@ def admin_dashboard():
                 (Item.name.ilike(search_term)) | (User.username.ilike(search_term)) | (Item.item_number == search)
             )
 
-        items = query.order_by(Item.id.desc()).paginate(page=page, per_page=10)
+        items = None
+        if admin_can('items.review'):
+            items = query.order_by(Item.id.desc()).paginate(page=page, per_page=10)
 
         total_users = User.query.count()
         total_items = Item.query.count()
@@ -851,6 +1109,10 @@ def approve_item(item_id):
     from referral_rewards import award_referral_bonus
     from audit_logger import log_item_approval
     from routes.auth import send_email_async
+    from services.verification_intake_service import (
+        IntakeValidationError,
+        create_verification_intake,
+    )
     
     try:
         item = Item.query.get_or_404(item_id)
@@ -869,6 +1131,14 @@ def approve_item(item_id):
         except ValueError:
             logger.warning(f"Invalid item value provided - Item ID: {item_id}, Value: {request.form.get('value')}, Admin ID: {session.get('admin_id')}")
             raise ValidationError("Item value must be a positive number", field="value")
+
+        create_verification_intake(
+            item,
+            session.get('admin_id'),
+            _verification_intake_details_from_form(),
+            workflow_type='standard_item_verification',
+            outcome='passed',
+        )
 
         # Optional YouTube video link recorded by staff during appraisal
         video_url = request.form.get('video_url', '').strip() or None
@@ -989,6 +1259,9 @@ def approve_item(item_id):
         logger.warning(f"Validation error approving item: {str(e)}")
         flash(str(e.message), 'danger')
         raise  # Re-raise so decorator knows to rollback
+    except IntakeValidationError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
 
     return redirect(url_for('admin.approve_items'))
 
@@ -998,6 +1271,11 @@ def approve_item(item_id):
 @handle_errors
 @safe_database_operation("reject_item")
 def reject_item(item_id):
+    from services.verification_intake_service import (
+        IntakeValidationError,
+        create_verification_intake,
+    )
+
     try:
         from audit_logger import log_item_rejection
         from routes.auth import send_email_async
@@ -1008,6 +1286,14 @@ def reject_item(item_id):
         if not reason:
             logger.warning(f"Item rejection without reason - Item ID: {item_id}, Admin ID: {session.get('admin_id')}")
             raise ValidationError("You must provide a rejection reason", field="rejection_reason")
+
+        create_verification_intake(
+            item,
+            session.get('admin_id'),
+            _verification_intake_details_from_form(),
+            workflow_type='standard_item_verification',
+            outcome='failed',
+        )
 
         item.is_approved = False
         item.is_available = False
@@ -1081,6 +1367,9 @@ def reject_item(item_id):
         logger.warning(f"Validation error rejecting item: {str(e)}")
         flash(str(e.message), 'danger')
         raise  # Re-raise so decorator knows to rollback
+    except IntakeValidationError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
 
     return redirect(url_for('admin.admin_dashboard'))
 
@@ -1107,6 +1396,10 @@ def preverification_queue():
 @safe_database_operation("approve_preverification")
 def approve_preverification(item_id):
     from audit_logger import log_audit_action
+    from services.verification_intake_service import (
+        IntakeValidationError,
+        create_verification_intake,
+    )
 
     try:
         item = Item.query.get_or_404(item_id)
@@ -1116,18 +1409,29 @@ def approve_preverification(item_id):
             return redirect(url_for('admin.preverification_queue'))
 
         try:
-            final_value = float(request.form['final_value'])
-            if final_value <= 0:
-                raise ValueError("Value must be positive")
-        except (ValueError, KeyError):
-            logger.warning(f"Invalid final value provided - Item ID: {item_id}, Value: {request.form.get('final_value')}, Admin ID: {session.get('admin_id')}")
-            raise ValidationError("Final value must be a positive number", field="final_value")
+            final_value = item.activation_credit_amount()
+        except ValueError as error:
+            logger.warning(f"Pre-verification blocked - Item ID: {item_id}: {error}")
+            flash(str(error), 'danger')
+            return redirect(url_for('admin.preverification_queue'))
 
+        create_verification_intake(
+            item,
+            session.get('admin_id'),
+            _verification_intake_details_from_form(),
+            workflow_type='trade_preverification',
+            outcome='passed',
+        )
         item.value = final_value
         item.preverification_notes = request.form.get('preverification_notes', '').strip() or None
         item.preverification_approved_at = datetime.utcnow()
         item.preverification_approved_by_id = session.get('admin_id')
-        item.status = 'preverification_approved'
+        from models import ItemVideo
+        has_pending_video = ItemVideo.query.filter_by(
+            item_id=item.id,
+            status='pending',
+        ).first() is not None
+        item.status = 'pending_activation' if has_pending_video else 'preverification_approved'
 
         log_audit_action(
             action_type='approve_preverification',
@@ -1135,13 +1439,22 @@ def approve_preverification(item_id):
             target_id=item_id,
             target_name=item.name,
             description=f"Pre-verification approved for '{item.name}', final value set to {final_value}",
-            after_value={'status': 'preverification_approved', 'value': final_value}
+            after_value={
+                'status': item.status,
+                'value': final_value,
+                'video_pending_review': has_pending_video,
+            }
         )
 
         db.session.add(Notification(
             user_id=item.user_id,
-            message=f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
-                    f"Open it from My Valuations and select \"Activate for Trade\" when you're ready."
+            message=(
+                f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
+                "Your verification video is now awaiting review."
+                if has_pending_video else
+                f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
+                "Open it from My Valuations and select \"Activate for Trade\" when you're ready."
+            )
         ))
 
         logger.info(f"Pre-verification approved - Item ID: {item_id}, Name: {item.name}, Final Value: {final_value}, Admin ID: {session.get('admin_id')}")
@@ -1151,6 +1464,9 @@ def approve_preverification(item_id):
         logger.warning(f"Validation error approving pre-verification: {str(e)}")
         flash(str(e.message), 'danger')
         raise  # Re-raise so decorator knows to rollback
+    except IntakeValidationError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
 
     return redirect(url_for('admin.preverification_queue'))
 
@@ -1161,6 +1477,10 @@ def approve_preverification(item_id):
 @safe_database_operation("reject_preverification")
 def reject_preverification(item_id):
     from audit_logger import log_audit_action
+    from services.verification_intake_service import (
+        IntakeValidationError,
+        create_verification_intake,
+    )
 
     try:
         item = Item.query.get_or_404(item_id)
@@ -1174,6 +1494,23 @@ def reject_preverification(item_id):
             flash(f"Item '{item.name}' is not awaiting pre-verification.", "info")
             return redirect(url_for('admin.preverification_queue'))
 
+        from models import ItemVideo
+        from services import video_service
+
+        for video in ItemVideo.query.filter_by(item_id=item.id, status='pending').all():
+            video.status = 'rejected'
+            video.rejection_reason = f"Pre-verification rejected: {reason}"
+            if video.temp_video_url and video_service.delete_object(video.temp_video_url):
+                video.temp_copy_deleted_at = datetime.utcnow()
+                video.temp_video_url = None
+
+        create_verification_intake(
+            item,
+            session.get('admin_id'),
+            _verification_intake_details_from_form(),
+            workflow_type='trade_preverification',
+            outcome='failed',
+        )
         # Not a terminal rejection - send it back to My Valuations so the owner can fix and retry.
         item.status = 'valuation_only'
         item.rejection_reason = reason
@@ -1202,6 +1539,9 @@ def reject_preverification(item_id):
         logger.warning(f"Validation error rejecting pre-verification: {str(e)}")
         flash(str(e.message), 'danger')
         raise  # Re-raise so decorator knows to rollback
+    except IntakeValidationError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
 
     return redirect(url_for('admin.preverification_queue'))
 
@@ -1238,10 +1578,11 @@ def approve_activation_video(video_id):
     video_service.py and services/youtube_publisher.py.
     """
     from models import ItemVideo
+    from services.item_activation_service import activate_item
     from audit_logger import log_audit_action
     from services import video_service, youtube_publisher
 
-    video = ItemVideo.query.get_or_404(video_id)
+    video = ItemVideo.query.filter_by(id=video_id).with_for_update().first_or_404()
     if video.status != 'pending':
         flash('This video has already been reviewed.', 'info')
         return redirect(url_for('admin.video_review_queue'))
@@ -1249,6 +1590,21 @@ def approve_activation_video(video_id):
     item = video.item
     if not item:
         flash('The item for this video no longer exists.', 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+
+    if item.status not in ('trade_requested', 'pending_activation'):
+        logger.warning(f"Activation blocked for item {item.id} in status {item.status}")
+        flash('This item is not awaiting activation.', 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+    try:
+        provisional_amount = item.activation_credit_amount()
+    except ValueError as error:
+        logger.warning(f"Activation blocked - Item ID: {item.id}: {error}")
+        flash(str(error), 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+    if item.provisional_credit_granted_at is not None:
+        logger.warning(f"Activation blocked: item {item.id} already has an activation credit")
+        flash('This item has already received provisional credits. Review its credit history before retrying.', 'danger')
         return redirect(url_for('admin.video_review_queue'))
 
     video_bytes = video_service.download_bytes(video.temp_video_url)
@@ -1272,20 +1628,7 @@ def approve_activation_video(video_id):
         video.temp_copy_deleted_at = datetime.utcnow()
         video.temp_video_url = None
 
-    item.video_url = result['url']
-    item.status = 'approved'
-    item.is_approved = True
-    item.is_available = True
-    item.activated_at = datetime.utcnow()
-    item.last_reconfirmed_at = item.activated_at  # starts the 30-day freshness clock
-
-    provisional_amount = None
-    if item.value:
-        provisional_amount = int(round(item.value))
-        item.user.provisional_credits = (item.user.provisional_credits or 0) + provisional_amount
-        item.provisional_credit_amount = provisional_amount
-        item.provisional_credit_granted_at = datetime.utcnow()
-        item.provisional_credit_settled = False
+    provisional_amount = activate_item(item.id, result['url'])
 
     log_audit_action(
         action_type='approve_activation_video',
@@ -1366,17 +1709,25 @@ def reject_activation_video(video_id):
 @handle_errors
 def settlement_queue():
     """
-    Active "Get with BXC" purchases awaiting final physical verification - both
-    the seller's item and every buyer backing asset must be checked in person
-    (at a Barter Express point / partner / pickup service) before the all-or-
-    nothing settlement in services/reservation_service.py can complete.
+    Active "Get with BXC" purchases awaiting final physical verification. Each
+    passing backing asset remains buyer-owned until the requested item passes.
+    If the requested item fails, the buyer must reconfirm title transfer before
+    any verified backing asset enters clearing inventory.
     """
     from models import Reservation
     from services.reservation_service import release_expired_reservations
 
     try:
         release_expired_reservations()
-        reservations = Reservation.query.filter_by(status='active').options(
+        reservations = Reservation.query.filter(db.or_(
+            Reservation.status == 'active',
+            db.and_(
+                Reservation.status == 'completed',
+                Reservation.delivery_method == 'home delivery',
+                Reservation.delivery_fee_status == 'quote_pending',
+            ),
+            Reservation.backing_return_status == 'return_required',
+        )).options(
             joinedload(Reservation.item), joinedload(Reservation.user), joinedload(Reservation.backing_assets)
         ).order_by(Reservation.created_at.asc()).all()
         return render_template('admin/settlement_queue.html', reservations=reservations)
@@ -1386,17 +1737,194 @@ def settlement_queue():
         return redirect(url_for('admin.admin_dashboard'))
 
 
+@admin_bp.route('/settlement-queue/<int:reservation_id>/delivery-quote', methods=['POST'])
+@admin_login_required
+@handle_errors
+def set_reservation_delivery_quote(reservation_id):
+    from models import Reservation
+
+    reservation = Reservation.query.get_or_404(reservation_id)
+    if reservation.delivery_method != 'home delivery':
+        flash('Only home-service reservations require a delivery quote.', 'danger')
+        return redirect(url_for('admin.settlement_queue'))
+    if reservation.status not in ('active', 'completed'):
+        flash('A delivery quote cannot be issued for this reservation status.', 'danger')
+        return redirect(url_for('admin.settlement_queue'))
+    if reservation.delivery_fee_status != 'quote_pending':
+        flash('This reservation already has a delivery quote or payment.', 'warning')
+        return redirect(url_for('admin.settlement_queue'))
+
+    try:
+        quote = float(request.form.get('amount_naira', '').strip())
+    except (TypeError, ValueError):
+        quote = 0
+    from paystack_payment_service import PaystackPaymentService
+    if not PaystackPaymentService.MIN_AMOUNT <= quote <= PaystackPaymentService.MAX_AMOUNT:
+        flash(
+            f"Enter a quote between ₦{PaystackPaymentService.MIN_AMOUNT:,.0f} "
+            f"and ₦{PaystackPaymentService.MAX_AMOUNT:,.0f}.",
+            'danger',
+        )
+        return redirect(url_for('admin.settlement_queue'))
+
+    reservation.delivery_quote_naira = round(quote, 2)
+    reservation.delivery_fee_status = 'awaiting_payment'
+    db.session.add(Notification(
+        user_id=reservation.user_id,
+        message=(
+            f"Barter Express quoted ₦{reservation.delivery_quote_naira:,.2f} for the non-refundable "
+            f"home service on reservation {reservation.id}. Accept and pay through Paystack before pickup or dispatch."
+        ),
+    ))
+    db.session.commit()
+    flash('Home-service quote sent to the buyer.', 'success')
+    return redirect(url_for('admin.settlement_queue'))
+
+
+@admin_bp.route('/settlement-queue/<int:reservation_id>/record-backing-return', methods=['POST'])
+@admin_login_required
+@handle_errors
+def record_reservation_backing_return(reservation_id):
+    from models import Reservation, VerificationIntake
+    from services.verification_intake_service import (
+        IntakeValidationError,
+        record_custody_handoff,
+    )
+
+    reservation = Reservation.query.get_or_404(reservation_id)
+    if reservation.backing_return_status != 'return_required':
+        flash('This reservation has no backing-item return waiting for completion.', 'warning')
+        return redirect(url_for('admin.settlement_queue'))
+    if reservation.status == 'awaiting_consent':
+        flash('Wait for the buyer’s title-transfer decision before returning the backing items.', 'warning')
+        return redirect(url_for('admin.settlement_queue'))
+    try:
+        for asset in reservation.backing_assets:
+            if (
+                asset.verification_status not in ('passed', 'failed')
+                or ClearingInventoryItem.query.filter_by(reservation_asset_id=asset.id).first()
+            ):
+                continue
+            intake = VerificationIntake.query.filter_by(
+                reservation_asset_id=asset.id
+            ).order_by(VerificationIntake.received_at.desc()).first()
+            if not intake:
+                raise IntakeValidationError(
+                    f"'{asset.item.name if asset.item else 'A backing item'}' has no recorded intake; "
+                    "record its custody before completing the return."
+                )
+            record_custody_handoff(
+                intake,
+                session.get('admin_id'),
+                reservation.delivery_address,
+                reservation.user.username,
+                'Returned to the buyer through the booked home-service route. The home-service fee remains non-refundable.',
+            )
+        reservation.backing_return_status = 'returned'
+        db.session.commit()
+    except IntakeValidationError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
+        return redirect(url_for('admin.settlement_queue'))
+
+    flash('Backing-item return and custody handoff recorded.', 'success')
+    return redirect(url_for('admin.settlement_queue'))
+
+
+@admin_bp.route('/clearing-inventory')
+@admin_login_required
+@handle_errors
+def clearing_inventory():
+    """Show items Barter Express acquired and is holding for later resale."""
+    entries = ClearingInventoryItem.query.options(
+        joinedload(ClearingInventoryItem.item),
+        joinedload(ClearingInventoryItem.source_user),
+        joinedload(ClearingInventoryItem.reservation),
+    ).order_by(ClearingInventoryItem.acquired_at.desc()).all()
+    return render_template('admin/clearing_inventory.html', entries=entries)
+
+
+@admin_bp.route('/verification-intake')
+@admin_login_required
+@handle_errors
+def verification_intake_log():
+    page = request.args.get('page', 1, type=int)
+    intakes = VerificationIntake.query.options(
+        joinedload(VerificationIntake.item),
+        joinedload(VerificationIntake.received_by),
+        joinedload(VerificationIntake.inspected_by),
+        joinedload(VerificationIntake.custody_events).joinedload(CustodyEvent.recorded_by),
+    ).order_by(VerificationIntake.received_at.desc()).paginate(
+        page=page, per_page=25, error_out=False
+    )
+    return render_template('admin/verification_intake.html', intakes=intakes)
+
+
+@admin_bp.route('/verification-intake/<int:intake_id>/custody', methods=['POST'])
+@admin_login_required
+@handle_errors
+def record_verification_custody(intake_id):
+    from services.verification_intake_service import (
+        IntakeValidationError,
+        record_custody_handoff,
+    )
+
+    intake = VerificationIntake.query.get_or_404(intake_id)
+    try:
+        record_custody_handoff(
+            intake,
+            session.get('admin_id'),
+            request.form.get('to_location'),
+            request.form.get('custodian_name'),
+            request.form.get('notes'),
+        )
+        db.session.commit()
+    except IntakeValidationError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
+        return redirect(url_for('admin.verification_intake_log'))
+
+    flash(f"Custody record added for '{intake.item.name}'.", 'success')
+    return redirect(url_for('admin.verification_intake_log'))
+
+
 @admin_bp.route('/settlement-queue/<int:reservation_id>/verify-seller-item', methods=['POST'])
 @admin_login_required
 @handle_errors
 def verify_seller_item_route(reservation_id):
     from models import Reservation
     from services.reservation_service import verify_seller_item
+    from services.verification_intake_service import IntakeValidationError
 
     reservation = Reservation.query.get_or_404(reservation_id)
-    passed = request.form.get('result') == 'pass'
+    result = request.form.get('result')
+    if result not in ('pass', 'fail'):
+        flash('Choose whether the item passed or failed physical verification.', 'danger')
+        return redirect(url_for('admin.settlement_queue'))
+    passed = result == 'pass'
     notes = request.form.get('notes', '').strip() or None
-    ok, error = verify_seller_item(reservation, passed, notes)
+    revised_value = None
+    raw_revised_value = request.form.get('revised_value', '').strip()
+    if passed and raw_revised_value:
+        try:
+            revised_value = int(raw_revised_value)
+            if revised_value <= 0:
+                raise ValueError
+        except ValueError:
+            flash('Enter a positive whole-number revised BXC value.', 'danger')
+            return redirect(url_for('admin.settlement_queue'))
+    try:
+        ok, error = verify_seller_item(
+            reservation,
+            passed,
+            notes,
+            intake_details=_verification_intake_details_from_form(),
+            admin_id=session.get('admin_id'),
+            revised_value=revised_value,
+        )
+    except IntakeValidationError as e:
+        flash(str(e), 'danger')
+        return redirect(url_for('admin.settlement_queue'))
     if error:
         flash(error, 'danger')
     else:
@@ -1410,11 +1938,37 @@ def verify_seller_item_route(reservation_id):
 def verify_backing_asset_route(asset_id):
     from models import ReservationAsset
     from services.reservation_service import verify_backing_asset
+    from services.verification_intake_service import IntakeValidationError
 
     asset = ReservationAsset.query.get_or_404(asset_id)
-    passed = request.form.get('result') == 'pass'
+    result = request.form.get('result')
+    if result not in ('pass', 'fail'):
+        flash('Choose whether the item passed or failed physical verification.', 'danger')
+        return redirect(url_for('admin.settlement_queue'))
+    passed = result == 'pass'
     notes = request.form.get('notes', '').strip() or None
-    ok, error = verify_backing_asset(asset, passed, notes)
+    revised_value = None
+    raw_revised_value = request.form.get('revised_value', '').strip()
+    if passed and raw_revised_value:
+        try:
+            revised_value = int(raw_revised_value)
+            if revised_value <= 0:
+                raise ValueError
+        except ValueError:
+            flash('Enter a positive whole-number revised BXC value.', 'danger')
+            return redirect(url_for('admin.settlement_queue'))
+    try:
+        ok, error = verify_backing_asset(
+            asset,
+            passed,
+            notes,
+            intake_details=_verification_intake_details_from_form(),
+            admin_id=session.get('admin_id'),
+            revised_value=revised_value,
+        )
+    except IntakeValidationError as e:
+        flash(str(e), 'danger')
+        return redirect(url_for('admin.settlement_queue'))
     if error:
         flash(error, 'danger')
     else:
@@ -1905,7 +2459,19 @@ def update_order_status(order_id):
         order = Order.query.get_or_404(order_id)
         old_status = order.status
         
-        if order.status == "Pending":
+        if order.reservation and (
+            order.reservation.delivery_method == 'home delivery'
+            and order.reservation.delivery_fee_status != 'paid'
+        ):
+            flash('This home-service order cannot be dispatched until the buyer pays the quoted fee.', 'danger')
+            return redirect(url_for('admin.manage_orders'))
+
+        if order.reservation and order.delivery_method == 'pickup':
+            if order.status == "Pending":
+                order.status = "Ready for Pickup"
+            elif order.status == "Ready for Pickup":
+                order.status = "Delivered"
+        elif order.status == "Pending":
             order.status = "Shipped"
         elif order.status == "Shipped":
             order.status = "Out for Delivery"
@@ -1916,6 +2482,7 @@ def update_order_status(order_id):
 
         status_messages = {
             "Shipped": f"Your order for {item_names} has been shipped.",
+            "Ready for Pickup": f"Your order for {item_names} is ready for collection at your selected pickup station.",
             "Out for Delivery": f"Your order for {item_names} is out for delivery.",
             "Delivered": f"Your order for {item_names} has been delivered. 🎉",
         }
@@ -2823,4 +3390,3 @@ def update_message_status(message_id):
         logger.error(f"Error updating message status: {str(e)}", exc_info=True)
         flash('Error updating message status.', 'danger')
         return redirect(request.referrer or url_for('admin.view_messages'))
-

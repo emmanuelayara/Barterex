@@ -1,0 +1,65 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Clearing Inventory{% endblock %}
+
+{% block content %}
+<div class="adm-page wide">
+  <a class="adm-back" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i> Admin dashboard</a>
+  <div class="adm-head">
+    <div>
+      <h1>Barter Express Clearing Inventory</h1>
+      <p>Verified items acquired by Barter Express and held for resale.</p>
+    </div>
+  </div>
+
+  <div class="adm-panel">
+    <div class="adm-panel-head">
+      <div class="adm-panel-icon"><i class="bi bi-box-seam"></i></div>
+      <div>
+        <h2>Held for resale</h2>
+      </div>
+    </div>
+    {% if entries %}
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Former owner</th>
+              <th>Acquisition value</th>
+              <th>Reservation</th>
+              <th>Acquired</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in entries %}
+              <tr>
+                <td>
+                  <strong>{{ entry.item.name if entry.item else 'Item removed' }}</strong>
+                  {% if entry.item and entry.item.item_number %}
+                    <div class="adm-row-meta"><span class="adm-mono">{{ entry.item.item_number }}</span></div>
+                  {% endif %}
+                </td>
+                <td>{{ entry.item.category if entry.item else '—' }}</td>
+                <td>{{ entry.source_user.username if entry.source_user else '—' }}</td>
+                <td>ᗸ{{ '{:,.0f}'.format(entry.acquisition_value) }}</td>
+                <td>#{{ entry.reservation_id }}</td>
+                <td>{{ entry.acquired_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                <td><span class="adm-pill info">{{ entry.status|replace('_', ' ')|title }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="adm-empty">
+        <i class="bi bi-box-seam"></i>
+        <h6>Nothing held yet</h6>
+        <p class="mb-0">No items have entered clearing inventory yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

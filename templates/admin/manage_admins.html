@@ -1,0 +1,138 @@
+{% extends 'admin_base.html' %}
+{% block title %}Manage Admins{% endblock %}
+{% block content %}
+<style>
+  .perm-chip { display: inline-block; margin: 0 4px 4px 0; padding: 3px 10px; border-radius: 999px; background: var(--tint); color: var(--primary-blue); font-size: 0.74rem; font-weight: 600; }
+  .perm-chip.super { background: rgba(255, 122, 0, 0.14); color: #c25e00; }
+  .status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; }
+  .status-dot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #198754; }
+  .status-dot.off { color: #b91c1c; }
+  .status-dot.off::before { background: #dc3545; }
+</style>
+
+{% set total = admins|length %}
+{% set supers = admins|selectattr('is_super_admin')|list|length %}
+{% set active = admins|selectattr('is_active')|list|length %}
+
+<div class="adm-page">
+  <header class="adm-head">
+    <div>
+      <h1>Manage Admins</h1>
+      <p>Control what each admin can access.</p>
+    </div>
+    <div class="adm-head-actions">
+      <a href="{{ url_for('admin.admin_register') }}" class="adm-btn cta"><i class="bi bi-person-plus"></i>Create Admin</a>
+    </div>
+  </header>
+
+  <section class="adm-stat-grid" aria-label="Overview">
+    <div class="adm-stat">
+      <span class="adm-stat-icon"><i class="bi bi-people"></i></span>
+      <div><div class="adm-stat-value">{{ total }}</div><div class="adm-stat-label">Total admins</div></div>
+    </div>
+    <div class="adm-stat">
+      <span class="adm-stat-icon"><i class="bi bi-stars"></i></span>
+      <div><div class="adm-stat-value">{{ supers }}</div><div class="adm-stat-label">Super admins</div></div>
+    </div>
+    <div class="adm-stat">
+      <span class="adm-stat-icon"><i class="bi bi-person-check"></i></span>
+      <div><div class="adm-stat-value">{{ active }}</div><div class="adm-stat-label">Active</div></div>
+    </div>
+    <div class="adm-stat {% if total - active > 0 %}is-highlight{% endif %}">
+      <span class="adm-stat-icon"><i class="bi bi-person-slash"></i></span>
+      <div><div class="adm-stat-value">{{ total - active }}</div><div class="adm-stat-label">Deactivated</div></div>
+    </div>
+  </section>
+
+  <section class="adm-panel">
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Admin</th>
+            <th>Access</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in admins %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ a.username }}{% if a.id == session.get('admin_id') %} <span class="adm-pill info ms-1">You</span>{% endif %}</div>
+              <div class="text-muted small">{{ a.email }}</div>
+            </td>
+            <td>
+              {% if a.is_super_admin %}
+                <span class="perm-chip super"><i class="bi bi-stars me-1"></i>Super admin</span>
+              {% else %}
+                {% for key in a.permission_list %}
+                  <span class="perm-chip">{{ permission_labels.get(key, key) }}</span>
+                {% else %}
+                  <span class="text-muted small">No permissions</span>
+                {% endfor %}
+              {% endif %}
+            </td>
+            <td>
+              {% if a.is_active %}<span class="status-dot">Active</span>{% else %}<span class="status-dot off">Deactivated</span>{% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              <a href="{{ url_for('admin.edit_admin', admin_id=a.id) }}" class="adm-btn sm ghost">
+                <i class="bi bi-pencil-square"></i>Edit access
+              </a>
+              {% if a.id != session.get('admin_id') %}
+              <form method="POST" action="{{ url_for('admin.toggle_admin_active', admin_id=a.id) }}" class="d-inline"
+                    onsubmit="return confirm('{{ 'Deactivate' if a.is_active else 'Reactivate' }} {{ a.username|e }}?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="adm-btn sm {{ 'ghost' if a.is_active else 'success' }}">
+                  {{ 'Deactivate' if a.is_active else 'Reactivate' }}
+                </button>
+              </form>
+              <button type="button" class="adm-btn sm danger delete-admin-btn"
+                      data-action="{{ url_for('admin.delete_admin', admin_id=a.id) }}"
+                      data-name="{{ a.username }}">
+                <i class="bi bi-trash"></i>Delete
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="modal fade" id="deleteAdminModal" tabindex="-1" aria-labelledby="deleteAdminTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="POST" action="" id="deleteAdminForm" class="modal-content">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="deleteAdminTitle"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Delete admin</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Permanently delete <strong id="deleteAdminName"></strong>?</p>
+        <p class="text-muted small mb-0">
+          They will lose all access immediately and their username and email will be freed up.
+          Their past actions stay in the audit log. This can't be undone; to pause access instead, use Deactivate.
+        </p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="adm-btn ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="adm-btn danger" style="background:#dc3545;color:#fff;">Delete admin</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.delete-admin-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('deleteAdminForm').action = btn.dataset.action;
+      document.getElementById('deleteAdminName').textContent = btn.dataset.name;
+      new bootstrap.Modal(document.getElementById('deleteAdminModal')).show();
+    });
+  });
+</script>
+{% endblock %}

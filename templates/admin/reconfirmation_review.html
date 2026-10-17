@@ -4,126 +4,109 @@
 
 {% block content %}
 <style>
-  .approval-page { min-height: 100vh; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 15px 0; }
-  .container { max-width: 1100px; padding-left: 15px; padding-right: 15px; }
+  .rcf-row { flex-wrap: wrap; align-items: flex-start; }
+  .rcf-thumb { width: 120px; height: 90px; }
+  .rcf-thumb-empty { display: flex; align-items: center; justify-content: center; background: var(--tint); color: var(--muted); font-size: 1.5rem; }
+  .rcf-code { display: inline-block; padding: 2px 10px; border-radius: 8px; background: rgba(255, 122, 0, 0.12); font-size: 0.95rem; letter-spacing: 1px; }
+  .rcf-code-line { margin-top: 8px; font-size: 0.85rem; color: var(--muted); }
 
-  .approval-header {
-    text-align: center;
-    margin-bottom: 18px;
-    padding: 18px 15px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  }
+  .rcf-actions { flex: 1 0 100%; padding: 14px; background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; }
+  .rcf-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rcf-buttons form { flex: 1 1 200px; display: flex; }
+  .rcf-buttons .adm-btn { flex: 1 1 200px; width: 100%; }
+  .rcf-page .reject-btn.active { background: #fff; border-color: var(--line); color: var(--ink); }
 
-  .approval-header h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
-  .approval-subtitle { font-size: 0.8rem; color: #6b7280; margin: 0; }
-
-  .recon-card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    padding: 14px;
-    margin-bottom: 14px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .recon-photo img {
-    width: 220px;
-    max-width: 100%;
-    border-radius: 8px;
-    object-fit: cover;
-  }
-
-  .recon-info { flex: 1; min-width: 200px; }
-  .recon-info h3 { font-size: 1rem; margin: 0 0 6px; }
-  .recon-meta { font-size: 0.78rem; color: #6b7280; margin-bottom: 8px; }
-
-  .recon-code {
-    display: inline-block;
-    background: rgba(124, 58, 237, 0.12);
-    color: #6d28d9;
-    font-weight: 800;
-    letter-spacing: 1px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-  }
-
-  .recon-actions { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
-
-  .rejection-textarea {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #e5e7eb;
-    border-radius: 5px;
-    font-size: 0.75rem;
-    min-height: 50px;
-    font-family: inherit;
-  }
-
-  .action-btn { border: none; border-radius: 5px; padding: 8px 10px; font-weight: 700; font-size: 0.72rem; cursor: pointer; }
-  .approve-btn { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
-  .reject-btn { background: linear-gradient(135deg, #ff6b6b, #ee5a24); color: white; }
-  .cancel-btn { background: #6b7280; color: white; }
-
-  .rejection-section { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; }
-  .rejection-section.active { max-height: 160px; opacity: 1; margin-top: 6px; }
-
-  .empty-state { text-align: center; padding: 30px 15px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
+  .rejection-section { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .rejection-section.active { display: block; }
+  .rejection-section .adm-btn { width: 100%; margin-top: 8px; }
+  .rcf-submit-reject { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .rcf-submit-reject:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
 </style>
 
-<div class="approval-page">
-  <div class="container">
-    <div class="approval-header">
-      <h2>🔁 Reconfirmation Review</h2>
-      <p class="approval-subtitle">High-value items whose owner submitted a fresh photo - confirm the code is visible before relisting.</p>
+<div class="adm-page narrow rcf-page">
+  <a href="{{ url_for('admin.admin_dashboard') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+  <div class="adm-head">
+    <div>
+      <h1>Reconfirmation Review</h1>
+      <p>High-value items whose owner submitted a fresh photo - confirm the code is visible before relisting.</p>
     </div>
-
-    {% if items %}
-      {% for item in items %}
-        {% set latest_image = item.images[-1] if item.images else None %}
-        <div class="recon-card">
-          <div class="recon-photo">
-            {% if latest_image %}
-              <img src="{{ latest_image.image_url | image_url }}" alt="{{ item.name }}">
-            {% else %}
-              <div style="width:220px;height:150px;background:#f1f5f9;border-radius:8px;"></div>
-            {% endif %}
-          </div>
-          <div class="recon-info">
-            <h3>{{ item.name }}</h3>
-            <div class="recon-meta">Owner: {{ item.user.username }} · Value: ᗸ{{ '{:,.0f}'.format(item.value) if item.value else '—' }}</div>
-            <div>Code to look for: <span class="recon-code">{{ item.reconfirmation_code or '—' }}</span></div>
-          </div>
-          <div class="recon-actions">
-            <form method="POST" action="{{ url_for('admin.approve_reconfirmation', item_id=item.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-              <button type="submit" class="action-btn approve-btn" style="width:100%;">✅ Code Visible - Relist</button>
-            </form>
-            <button type="button" class="action-btn reject-btn" onclick="toggleRejectForm({{ item.id }})">❌ Reject</button>
-            <div class="rejection-section" id="rejection_{{ item.id }}">
-              <form method="POST" action="{{ url_for('admin.reject_reconfirmation', item_id=item.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <textarea name="rejection_reason" class="rejection-textarea" placeholder="Why doesn't this pass?" required></textarea>
-                <button type="submit" class="action-btn reject-btn" style="width:100%;margin-top:6px;">Submit Rejection</button>
-                <button type="button" class="action-btn cancel-btn" style="width:100%;margin-top:4px;" onclick="toggleRejectForm({{ item.id }})">Cancel</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="empty-state"><p>No reconfirmations are awaiting review right now.</p></div>
-    {% endif %}
   </div>
+
+  {% if items %}
+    <div class="adm-panel">
+      <div class="adm-panel-head">
+        <div class="adm-panel-icon"><i class="bi bi-arrow-repeat"></i></div>
+        <div>
+          <h2>Awaiting reconfirmation review</h2>
+          <p>Check the photo shows the code before relisting.</p>
+        </div>
+        <div class="adm-panel-actions"><span class="adm-count is-alert">{{ items|length }}</span></div>
+      </div>
+
+      <ul class="adm-list">
+        {% for item in items %}
+          {% set latest_image = item.images[-1] if item.images else None %}
+          <li class="adm-row rcf-row">
+            {% if latest_image %}
+              <img src="{{ latest_image.image_url | image_url }}" class="adm-thumb rcf-thumb" alt="{{ item.name }}">
+            {% else %}
+              <div class="adm-thumb rcf-thumb rcf-thumb-empty"><i class="bi bi-image"></i></div>
+            {% endif %}
+
+            <div class="adm-row-main">
+              <h3 class="adm-row-title">{{ item.name }}</h3>
+              <div class="adm-row-meta">
+                <span><i class="bi bi-person-circle"></i> Owner: {{ item.user.username }}</span>
+                <span><i class="bi bi-coin"></i> Value: ᗸ{{ '{:,.0f}'.format(item.value) if item.value else '—' }}</span>
+              </div>
+              <div class="rcf-code-line">Code to look for: <span class="adm-mono rcf-code">{{ item.reconfirmation_code or '—' }}</span></div>
+            </div>
+
+            <div class="adm-row-side">
+              <span class="adm-pill warn"><i class="bi bi-hourglass-split"></i> Review</span>
+            </div>
+
+            <div class="rcf-actions">
+              <div class="rcf-buttons">
+                <form method="POST" action="{{ url_for('admin.approve_reconfirmation', item_id=item.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <button type="submit" class="adm-btn success approve-btn"><i class="bi bi-check-lg"></i> Code Visible - Relist</button>
+                </form>
+                <button type="button" class="adm-btn danger reject-btn" onclick="toggleRejectForm({{ item.id }})"><i class="bi bi-x-circle"></i> Reject</button>
+              </div>
+              <div class="rejection-section" id="rejection_{{ item.id }}">
+                <form method="POST" action="{{ url_for('admin.reject_reconfirmation', item_id=item.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <textarea name="rejection_reason" class="form-control rejection-textarea" rows="2" placeholder="Why doesn't this pass?" required></textarea>
+                  <button type="submit" class="adm-btn rcf-submit-reject"><i class="bi bi-x-circle"></i> Submit Rejection</button>
+                  <button type="button" class="adm-btn ghost cancel-btn" onclick="toggleRejectForm({{ item.id }})">Cancel</button>
+                </form>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="adm-panel">
+      <div class="adm-empty">
+        <i class="bi bi-check2-circle"></i>
+        <h6>Nothing to review</h6>
+        <p class="mb-0">No reconfirmations are awaiting review right now.</p>
+      </div>
+    </div>
+  {% endif %}
 </div>
 
 <script>
   function toggleRejectForm(itemId) {
-    document.getElementById(`rejection_${itemId}`).classList.toggle('active');
+    const section = document.getElementById(`rejection_${itemId}`);
+    const btn = document.querySelector(`[onclick="toggleRejectForm(${itemId})"]`);
+    const open = section.classList.toggle('active');
+    if (btn) {
+      btn.classList.toggle('active', open);
+      btn.innerHTML = open ? '<i class="bi bi-arrow-counterclockwise"></i> Cancel' : '<i class="bi bi-x-circle"></i> Reject';
+    }
   }
 </script>
 {% endblock %}

@@ -274,6 +274,21 @@
         .remove-btn-wrapper {
             flex-shrink: 0;
             margin-left: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .reserve-item-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 10px;
+            padding: 0.625rem 1rem;
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .remove-btn {
@@ -1145,6 +1160,9 @@
                             </div>
                             
                             <div class="remove-btn-wrapper">
+                                <a href="{{ url_for('marketplace.choose_backing_assets', item_id=cart_item.item.id) }}" class="reserve-item-btn">
+                                    <i class="fas fa-handshake"></i> Get with BXC
+                                </a>
                                 <button type="button" class="remove-btn save-option-trigger" data-item-id="{{ cart_item.item.id }}" data-item-name="{{ cart_item.item.name }}">
                                     <i class="fas fa-times"></i> Remove
                                 </button>
@@ -1161,42 +1179,12 @@
                         Order Summary
                     </h3>
 
-                    <div class="summary-row">
-                        <span class="summary-label">Items in cart</span>
-                        <span class="summary-value">{{ cart_items|length }} item{{ 's' if cart_items|length != 1 else '' }}</span>
-                    </div>
-
-                    <div class="summary-row total-row">
-                        <span class="total-label">Total Cost</span>
-                        <span class="total-cost">ᗸ{{ "{:,.2f}".format(total_cost) }} BXC</span>
-                    </div>
-
-                    <div class="credit-info">
-                        <div class="credit-label">Your BXC Balance</div>
-                        <div class="credit-value">ᗸ{{ "{:,.2f}".format(current_user.credits) }} BXC</div>
-                        {% if current_user.credits >= total_cost %}
-                            <div class="credit-status sufficient-credits">
-                                <i class="fas fa-check-circle"></i> Sufficient BXC available
-                            </div>
-                        {% else %}
-                            <div class="credit-status insufficient-credits">
-                                <i class="fas fa-exclamation-circle"></i> Need ᗸ{{ "{:,.2f}".format(total_cost - current_user.credits) }} more BXC
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    {% if current_user.credits >= total_cost %}
-                        <a href="{{ url_for('items.checkout') }}" class="checkout-btn">
-                            <i class="fas fa-lock"></i> Proceed to Checkout
-                        </a>
-                    {% else %}
-                        <button class="checkout-btn" disabled>
-                            <i class="fas fa-wallet"></i> Insufficient Credits
-                        </button>
-                    {% endif %}
+                    <p class="summary-label">
+                        Saved items are not purchased together. Start a verified reservation for each item and choose its funding and delivery options there.
+                    </p>
 
                     <a href="{{ url_for('marketplace.marketplace') }}" class="continue-shopping-btn">
-                        <i class="fas fa-arrow-left"></i> Continue Shopping
+                        <i class="fas fa-store"></i> Browse Marketplace
                     </a>
                 </div>
             </div>
