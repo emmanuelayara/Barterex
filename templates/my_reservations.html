@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}My Reservations{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">{% endblock %}
 {% block content %}
-<style>
+<style media="not all">
   .page-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
@@ -167,9 +169,10 @@
   }
 </style>
 
-<div class="page-container">
+<div class="page-container mp">
   <div class="main-content">
     <div class="page-header">
+      {{ fx.floaters('banner') }}
       <h1 class="page-title">🔖 My Reservations</h1>
       <a href="{{ url_for('user.my_revaluations') }}" class="trade-btn">Review revaluation proposals</a>
     </div>

@@ -1,380 +1,109 @@
 {% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
 {% block title %}FAQ - Barter Express{% endblock %}
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
 
 {% block content %}
-<head>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<div class="pp">
+    {% call pp.hero('fas fa-circle-question', 'Help centre', 'Frequently asked questions', 'Find answers to common questions about Barter Express.') %}{% endcall %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+    <main class="pp-main pp-narrow">
+        <div class="pp-search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input id="faq-search" type="search" placeholder="Search questions, e.g. BXC, delivery, fees" aria-label="Search frequently asked questions" autocomplete="off">
+        </div>
 
-        /* FAQ Page Container */
-        .faq-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
+        <div class="pp-faq-list">
+            <details class="pp-faq-item">
+                <summary>How do I create an account?</summary>
+                <div class="pp-faq-answer"><p>Creating an account is simple! Click the "Sign Up" button on the homepage, provide your email address, create a password, and fill out your profile information. You'll need to verify your email address before you can start using Barter Express.</p></div>
+            </details>
 
-        /* Hero Section */
-        .hero-section {
-            text-align: center;
-            margin-bottom: 5rem;
-            position: relative;
-        }
+            <details class="pp-faq-item">
+                <summary>How do I add items to my inventory?</summary>
+                <div class="pp-faq-answer"><p>Once logged in, go to your Dashboard and click "Add Item". Fill in the item details including name, description, category, and condition. Upload clear photos of your item - our AI valuation system analyzes the images and description to provide a market value estimate. Your item stays with you; it is only physically verified later, when you use it in an exchange. Your first valuation each day is free, and additional valuations cost ₦100 each.</p></div>
+            </details>
 
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: -2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 4px;
-            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-            border-radius: 2px;
-        }
+            <details class="pp-faq-item">
+                <summary>Why isn't my item showing up in the marketplace?</summary>
+                <div class="pp-faq-answer"><p>Items move through stages: valuation, trade request, pre-verification, and activation. Only activated items appear in the marketplace. Pre-verification and activation reviews usually take 24-48 hours. If your item hasn't progressed after this time, check that you've provided all required information and clear photos, or contact support.</p></div>
+            </details>
 
-        .hero-section h1 {
-            color: #054e97;
-            font-size: 3.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-            position: relative;
-        }
+            <details class="pp-faq-item">
+                <summary>How is the value of my item determined?</summary>
+                <div class="pp-faq-answer"><p>Our AI-powered valuation system analyzes your item's images and description to estimate its fair market value. The system considers factors like item condition, brand, age, and current market prices. Our professional appraisal team reviews the AI valuation and may adjust it if needed. Your credits are confirmed when your item passes physical verification during an exchange, so they reflect true market value.</p></div>
+            </details>
 
-        .hero-section .subtitle {
-            color: #666;
-            font-size: 1.3rem;
-            max-width: 700px;
-            margin: 0 auto;
-            font-weight: 300;
-        }
+            <details class="pp-faq-item">
+                <summary>How does the trading process work?</summary>
+                <div class="pp-faq-answer">
+                    <ol>
+                        <li>Add your item and get an AI valuation - your item stays with you</li>
+                        <li>Accept the valuation to receive provisional ᗸ BXC (Barter Express Credits)</li>
+                        <li>Request a trade and complete pre-verification so your item can be activated</li>
+                        <li>Browse the marketplace and reserve an item with your BXC, backed by your own items</li>
+                        <li>Within 72 hours, the items involved are physically verified at a pickup station (free) or through our home service (quoted fee)</li>
+                        <li>Once verification passes, the exchange completes and you collect or receive your item</li>
+                        <li>Confirm receipt and rate your exchange</li>
+                    </ol>
+                </div>
+            </details>
 
-        /* FAQ Section */
-        .faq-section {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
-            border: 1px solid rgba(255, 122, 0, 0.1);
-            position: relative;
-        }
+            <details class="pp-faq-item">
+                <summary>How safe is trading on Barter Express?</summary>
+                <div class="pp-faq-answer"><p>We take safety very seriously! All users are verified and identity-checked before participating. Items are physically verified by our team before any exchange is finalized, and your item stays with you until then. There is no direct contact between users - exchanges are coordinated through the platform, with built-in protection mechanisms. This eliminates common risks associated with informal trading. Report any suspicious activity to our support team immediately.</p></div>
+            </details>
 
-        .faq-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-        }
+            <details class="pp-faq-item">
+                <summary>How does the rating system work?</summary>
+                <div class="pp-faq-answer"><p>After completing a trade, both parties can leave a rating and review for each other. Ratings help build trust in the community. You can only rate after a trade is complete. Your rating history is visible on your profile to help others decide whether to trade with you.</p></div>
+            </details>
 
-        /* FAQ Items */
-        .faq-item {
-            border-bottom: 1px solid rgba(5, 78, 151, 0.1);
-            padding: 0;
-        }
+            <details class="pp-faq-item">
+                <summary>Do I have to pay to use Barter Express?</summary>
+                <div class="pp-faq-answer"><p>Creating an account and listing items is completely free, and your first AI valuation each day is free. Additional valuations cost ₦100 each. A transaction fee of 3% (minimum ₦500, maximum ₦5,000) applies only when an exchange successfully completes - not when you merely request or reserve an item. It is never deducted automatically from your BXC; you pay it directly to the company at our office by bank transfer or other available payment methods. Pickup at our stations is free; the optional home service has a fee quoted upfront, which is non-refundable. All fees are shown before you pay.</p></div>
+            </details>
 
-        .faq-item:last-child {
-            border-bottom: none;
-        }
+            <details class="pp-faq-item">
+                <summary>What if there's a problem with my transaction?</summary>
+                <div class="pp-faq-answer"><p>If you have an issue with a transaction, contact our support team immediately through the app. Document the problem with screenshots, photos, or other evidence and submit a support ticket. Our support team will investigate all issues, including delivery problems, item condition mismatches, or technical issues. We work toward a fair resolution for all parties involved.</p></div>
+            </details>
 
-        .faq-question {
-            padding: 2rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f9fafb;
-            transition: all 0.3s ease;
-            user-select: none;
-        }
+            <details class="pp-faq-item">
+                <summary>How is delivery handled?</summary>
+                <div class="pp-faq-answer"><p>Barter Express does not hold your items before an exchange. When a reservation requires verification, you choose between two options: hand over your item at one of our pickup stations (free), or use the home service, where the fee is quoted upfront, paid by you, and non-refundable. Where a courier partner carries an item, you can track it in the app, and items in courier transit are insured. You'll receive notifications at each stage.</p></div>
+            </details>
 
-        .faq-question:hover {
-            background: #f3f4f6;
-        }
+            <details class="pp-faq-item">
+                <summary>Can I cancel a trade offer?</summary>
+                <div class="pp-faq-answer"><p>You can cancel a trade request or reservation while it's still pending, before verification begins. Once verification is underway, cancellation policies apply, and the home-service fee is non-refundable. Failing to submit items for verification within the settlement window can lower your reliability score. Contact support if you need to cancel a completed exchange.</p></div>
+            </details>
 
-        .faq-question h3 {
-            color: #054e97;
-            font-size: 1.2rem;
-            margin: 0;
-            flex: 1;
-        }
+            <details class="pp-faq-item">
+                <summary>How do I delete my account?</summary>
+                <div class="pp-faq-answer"><p>You can request account deletion from your account settings. However, if you have active or pending trades, you'll need to complete or cancel them first. Your rating history will remain visible to the community even after account closure to maintain trading history integrity.</p></div>
+            </details>
 
-        .faq-toggle {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-            color: white;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-            margin-left: 1rem;
-        }
+            <details class="pp-faq-item">
+                <summary>Where can I get help if my question isn't answered here?</summary>
+                <div class="pp-faq-answer"><p>Visit our <a href="{{ url_for('marketplace.contact') }}">Contact Us</a> page to reach our support team. You can also check our <a href="{{ url_for('marketplace.about') }}">About Us</a> page for more information. We typically respond to inquiries within 24-48 business hours.</p></div>
+            </details>
+        </div>
 
-        .faq-item.active .faq-toggle {
-            transform: rotate(180deg);
-        }
+        <div class="pp-empty" role="status">
+            <p><strong>No matching questions.</strong></p>
+            <p>Try different keywords, or <a href="{{ url_for('marketplace.contact') }}">contact our support team</a>.</p>
+        </div>
 
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            padding: 0 2rem;
-            color: #666;
-            font-size: 1rem;
-            line-height: 1.8;
-        }
-
-        .faq-item.active .faq-answer {
-            max-height: 500px;
-            padding: 0 2rem 2rem 2rem;
-        }
-
-        .faq-answer p {
-            margin-bottom: 1rem;
-        }
-
-        .faq-answer a {
-            color: #ff7a00;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .faq-answer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .faq-container {
-                padding: 2rem 1rem;
-            }
-
-            .hero-section h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero-section .subtitle {
-                font-size: 1.1rem;
-            }
-
-            .faq-question {
-                padding: 1.5rem;
-            }
-
-            .faq-question h3 {
-                font-size: 1rem;
-            }
-
-            .faq-answer {
-                padding: 0 1.5rem;
-            }
-
-            .faq-item.active .faq-answer {
-                padding: 0 1.5rem 1.5rem 1.5rem;
-            }
-
-            .faq-toggle {
-                width: 28px;
-                height: 28px;
-                font-size: 1rem;
-                margin-left: 0.75rem;
-            }
-        }
-    </style>
-</head>
-
-<div class="faq-container">
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <h1>Frequently Asked Questions</h1>
-        <p class="subtitle">Find answers to common questions about Barter Express</p>
-    </div>
-
-    <!-- FAQ Section -->
-    <div class="faq-section">
-        <!-- Getting Started -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How do I create an account?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>Creating an account is simple! Click the "Sign Up" button on the homepage, provide your email address, create a password, and fill out your profile information. You'll need to verify your email address before you can start using Barter Express.</p>
+        <div class="pp-cta" style="margin-top:22px">
+            <h2>Still need help?</h2>
+            <p>Our team usually replies within 24-48 business hours.</p>
+            <div class="pp-actions">
+                <a href="{{ url_for('contact.contact_form') }}" class="pp-btn primary"><i class="fas fa-envelope"></i> Send us a message</a>
             </div>
         </div>
 
-        <!-- Adding Items -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How do I add items to my inventory?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>Once logged in, go to your Dashboard and click "Add Item". Fill in the item details including name, description, category, and condition. Upload clear photos of your item - our AI valuation system analyzes the images and description to provide a market value estimate. Your item stays with you; it is only physically verified later, when you use it in an exchange. Your first valuation each day is free, and additional valuations cost ₦100 each.</p>
-            </div>
-        </div>
-
-        <!-- Item Visibility -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>Why isn't my item showing up in the marketplace?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>Items move through stages: valuation, trade request, pre-verification, and activation. Only activated items appear in the marketplace. Pre-verification and activation reviews usually take 24-48 hours. If your item hasn't progressed after this time, check that you've provided all required information and clear photos, or contact support.</p>
-            </div>
-        </div>
-
-        <!-- Item Valuation -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How is the value of my item determined?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>Our AI-powered valuation system analyzes your item's images and description to estimate its fair market value. The system considers factors like item condition, brand, age, and current market prices. Our professional appraisal team reviews the AI valuation and may adjust it if needed. Your credits are confirmed when your item passes physical verification during an exchange, so they reflect true market value.</p>
-            </div>
-        </div>
-
-        <!-- Trading Process -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How does the trading process work?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>1. Add your item and get an AI valuation - your item stays with you<br>2. Accept the valuation to receive provisional ᗸ BXC (Barter Express Credits)<br>3. Request a trade and complete pre-verification so your item can be activated<br>4. Browse the marketplace and reserve an item with your BXC, backed by your own items<br>5. Within 72 hours, the items involved are physically verified at a pickup station (free) or through our home service (quoted fee)<br>6. Once verification passes, the exchange completes and you collect or receive your item<br>7. Confirm receipt and rate your exchange</p>
-            </div>
-        </div>
-
-        <!-- Safety & Security -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How safe is trading on Barter Express?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>We take safety very seriously! All users are verified and identity-checked before participating. Items are physically verified by our team before any exchange is finalized, and your item stays with you until then. There is no direct contact between users - exchanges are coordinated through the platform, with built-in protection mechanisms. This eliminates common risks associated with informal trading. Report any suspicious activity to our support team immediately.</p>
-            </div>
-        </div>
-
-        <!-- Ratings and Reviews -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How does the rating system work?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>After completing a trade, both parties can leave a rating and review for each other. Ratings help build trust in the community. You can only rate after a trade is complete. Your rating history is visible on your profile to help others decide whether to trade with you.</p>
-            </div>
-        </div>
-
-        <!-- Payment -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>Do I have to pay to use Barter Express?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>Creating an account and listing items is completely free, and your first AI valuation each day is free. Additional valuations cost ₦100 each. A transaction fee of 3% (minimum ₦500, maximum ₦5,000) applies only when an exchange successfully completes - not when you merely request or reserve an item. It is never deducted automatically from your BXC; you pay it directly to the company at our office by bank transfer or other available payment methods. Pickup at our stations is free; the optional home service has a fee quoted upfront, which is non-refundable. All fees are shown before you pay.</p>
-            </div>
-        </div>
-
-        <!-- Disputes -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>What if there's a problem with my transaction?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>If you have an issue with a transaction, contact our support team immediately through the app. Document the problem with screenshots, photos, or other evidence and submit a support ticket. Our support team will investigate all issues, including delivery problems, item condition mismatches, or technical issues. We work toward a fair resolution for all parties involved.</p>
-            </div>
-        </div>
-
-        <!-- Delivery -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How is delivery handled?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>Barter Express does not hold your items before an exchange. When a reservation requires verification, you choose between two options: hand over your item at one of our pickup stations (free), or use the home service, where the fee is quoted upfront, paid by you, and non-refundable. Where a courier partner carries an item, you can track it in the app, and items in courier transit are insured. You'll receive notifications at each stage.</p>
-            </div>
-        </div>
-
-        <!-- Cancellation -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>Can I cancel a trade offer?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>You can cancel a trade request or reservation while it's still pending, before verification begins. Once verification is underway, cancellation policies apply, and the home-service fee is non-refundable. Failing to submit items for verification within the settlement window can lower your reliability score. Contact support if you need to cancel a completed exchange.</p>
-            </div>
-        </div>
-
-        <!-- Account Closure -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>How do I delete my account?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>You can request account deletion from your account settings. However, if you have active or pending trades, you'll need to complete or cancel them first. Your rating history will remain visible to the community even after account closure to maintain trading history integrity.</p>
-            </div>
-        </div>
-
-        <!-- Contact Support -->
-        <div class="faq-item">
-            <div class="faq-question">
-                <h3>Where can I get help if my question isn't answered here?</h3>
-                <span class="faq-toggle"><i class="fas fa-chevron-down"></i></span>
-            </div>
-            <div class="faq-answer">
-                <p>Visit our <a href="{{ url_for('marketplace.contact') }}">Contact Us</a> page to reach our support team. You can also check our <a href="{{ url_for('marketplace.about') }}">About Us</a> page for more information. We typically respond to inquiries within 24-48 business hours.</p>
-            </div>
-        </div>
-    </div>
+        {{ pp.explore('faq') }}
+    </main>
 </div>
-
-<script>
-    // FAQ Accordion functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const faqItems = document.querySelectorAll('.faq-item');
-
-        faqItems.forEach(item => {
-            const question = item.querySelector('.faq-question');
-
-            question.addEventListener('click', function() {
-                // Close other open items
-                faqItems.forEach(otherItem => {
-                    if (otherItem !== item && otherItem.classList.contains('active')) {
-                        otherItem.classList.remove('active');
-                    }
-                });
-
-                // Toggle current item
-                item.classList.toggle('active');
-            });
-        });
-    });
-</script>
-
 {% endblock %}

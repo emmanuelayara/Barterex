@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}Upload Item{% endblock %}
 
 {% block content %}
@@ -1538,11 +1539,14 @@
   }
 </style>
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+
 <div class="upload-page">
   <div class="upload-container">
 
     <!-- Header -->
     <div class="upload-header fade-in">
+      {{ fx.floaters('banner') }}
       <h1>
         <div class="upload-icon">📤</div>
         Upload Your Item

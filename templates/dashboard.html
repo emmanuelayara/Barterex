@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}Dashboard{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">{% endblock %}
 
 {% block content %}
-<style>
+<style media="not all">
   * {
     box-sizing: border-box;
   }
@@ -1411,9 +1413,10 @@
 
 
   <!-- Main Content -->
-  <div class="main-content">
+  <div class="main-content dash">
     <!-- Welcome Section with Settings Button -->
     <div class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+      {{ fx.floaters('banner') }}
       <div>
         <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
       </div>
@@ -1490,8 +1493,8 @@
                   <stop offset="100%" style="stop-color:#ff8f1f;stop-opacity:1" />
                 </linearGradient>
               </defs>
-              <circle class="progress-ring-circle-bg" cx="18" cy="18" r="16"/>
-              <circle class="progress-ring-circle" cx="18" cy="18" r="16" style="stroke-dashoffset: {{ profile_offset }}"/>
+              <circle class="progress-ring-circle-bg" cx="18" cy="18" r="16" pathLength="163.36"/>
+              <circle class="progress-ring-circle" cx="18" cy="18" r="16" pathLength="163.36" style="stroke-dashoffset: {{ profile_offset }}"/>
             </svg>
           </div>
           <div class="progress-info">

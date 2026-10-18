@@ -1,0 +1,55 @@
+{# Decorative bouncing items (laptops, phones, shirts...). Pure CSS, see .bx-floaters in static/css/app-shell.css.
+   kind: 'hero' = full-screen home hero, 'panel' = auth side panel, 'banner' = page title banners.
+   Tuple: glyph, x%, y%, size(rem), motion, duration(s), delay(s), extra class. #}
+
+{% macro floaters(kind='hero') %}
+{% if kind == 'hero' %}
+  {% set items = [
+    ('💻', 6, 8, 3.0, 'bob', 6.0, 0.0, ''),
+    ('📱', 82, 7, 2.8, 'bounce', 5.0, 0.6, ''),
+    ('👟', 44, 5, 2.6, 'orbit', 9.0, 1.0, ''),
+    ('🎧', 24, 20, 2.4, 'bob', 7.0, 1.4, ''),
+    ('⌚', 66, 19, 2.4, 'orbit', 8.0, 0.3, ''),
+    ('🧥', 3, 38, 2.9, 'orbit', 7.5, 0.4, ''),
+    ('🎮', 90, 36, 2.7, 'bounce', 6.0, 1.5, ''),
+    ('📷', 11, 58, 2.5, 'bob', 6.5, 0.9, ''),
+    ('👜', 84, 57, 2.6, 'bob', 7.2, 2.0, ''),
+    ('👕', 6, 76, 3.0, 'bob', 7.0, 0.3, ''),
+    ('🛴', 88, 76, 2.8, 'bounce', 6.2, 0.8, ''),
+    ('⚽', 22, 88, 2.4, 'orbit', 8.5, 1.8, ''),
+    ('🎷', 40, 80, 2.5, 'bounce', 5.5, 0.2, 'hide-sm'),
+    ('📺', 58, 88, 2.6, 'bob', 6.8, 1.1, ''),
+    ('👗', 74, 86, 2.5, 'orbit', 9.5, 1.6, ''),
+    ('🍳', 33, 12, 2.3, 'bounce', 5.8, 2.2, 'hide-sm'),
+    ('⌨️', 56, 11, 2.3, 'bob', 7.4, 1.9, 'hide-sm'),
+    ('🕶️', 94, 90, 2.3, 'bob', 6.6, 0.5, 'hide-sm')
+  ] %}
+{% elif kind == 'banner' %}
+  {% set items = [
+    ('💻', 4, 12, 2.0, 'bob', 6.0, 0.0, ''),
+    ('📱', 22, 58, 1.8, 'bounce', 5.0, 0.6, 'hide-sm'),
+    ('👟', 38, 8, 1.8, 'orbit', 8.0, 1.2, 'hide-sm'),
+    ('👕', 56, 62, 2.0, 'bob', 7.0, 0.3, 'hide-sm'),
+    ('🎧', 70, 10, 1.8, 'orbit', 9.0, 0.9, ''),
+    ('⌚', 82, 56, 1.8, 'bounce', 6.0, 1.5, 'hide-sm'),
+    ('📷', 92, 14, 2.0, 'bob', 6.5, 0.4, ''),
+    ('🧥', 12, 66, 1.9, 'bounce', 5.6, 1.1, ''),
+    ('🎮', 88, 66, 1.9, 'orbit', 7.4, 0.7, '')
+  ] %}
+{% else %}
+  {% set items = [
+    ('💻', 8, 12, 2.2, 'bob', 6.0, 0.0, ''),
+    ('📱', 82, 10, 2.1, 'bounce', 5.0, 0.6, ''),
+    ('👕', 14, 72, 2.3, 'orbit', 8.0, 1.2, ''),
+    ('🎧', 78, 68, 2.1, 'bob', 7.0, 0.3, ''),
+    ('👟', 90, 40, 2.0, 'orbit', 7.5, 0.9, 'hide-sm'),
+    ('⌚', 4, 42, 2.0, 'bounce', 6.0, 1.5, 'hide-sm'),
+    ('📷', 48, 86, 2.0, 'bob', 6.5, 1.1, 'hide-sm')
+  ] %}
+{% endif %}
+<div class="bx-floaters is-{{ kind }}" aria-hidden="true">
+  {% for glyph, x, y, size, motion, dur, delay, extra in items %}
+  <span class="bx-floater {{ motion }} {{ extra }}" style="--x:{{ x }}%;--y:{{ y }}%;--s:{{ size }}rem;--d:{{ dur }}s;--delay:{{ delay }}s">{{ glyph }}</span>
+  {% endfor %}
+</div>
+{% endmacro %}

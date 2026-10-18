@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}My Items{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">{% endblock %}
 {% block content %}
-<style>
+<style media="not all">
   * {
     box-sizing: border-box;
   }
@@ -675,9 +677,11 @@
 
 
   <!-- Main Content -->
-  <div class="main-content">
+  <div class="main-content mp">
     <!-- Page Header -->
     <div class="page-header">
+      {{ fx.floaters('banner') }}
+      <h1 class="page-title">My Items</h1>
       <strong class="page-subtitle" style="color: #054e97;">Manage your uploaded items and track their status</strong>
     </div>
 

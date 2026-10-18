@@ -1,0 +1,94 @@
+/* ==========================================================================
+   Barter Express - Saved items (favorites). Restyles the existing markup.
+   ========================================================================== */
+
+.favorites-page {
+    /* legacy variable names still referenced by inline styles in the template */
+    --primary-color: var(--bx-orange);
+    --primary-light: var(--bx-accent-soft);
+    --text-primary: var(--bx-text);
+    --text-secondary: var(--bx-muted);
+
+    background: var(--bx-bg);
+    color: var(--bx-text);
+    min-height: calc(100vh - var(--bx-nav-h));
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: clip;
+}
+.favorites-page *, .favorites-page *::before, .favorites-page *::after { box-sizing: border-box; }
+:where(.favorites-page) :is(h1, h2, h3, p) { margin: 0; padding: 0; }
+.favorites-page a { text-decoration: none; }
+.favorites-page :focus-visible { outline: 3px solid var(--bx-orange); outline-offset: 2px; border-radius: 8px; }
+.favorites-container { max-width: 1200px; margin: 0 auto; padding: 0 14px 28px; }
+
+/* ---------- Header ---------- */
+.favorites-header {
+    position: relative; overflow: hidden; margin: 0 -14px 20px; padding: 26px 18px 30px; text-align: center; color: #fff;
+    background: linear-gradient(145deg, var(--bx-blue), var(--bx-blue-dark)); border-radius: 0 0 28px 28px;
+}
+.favorites-header::before {
+    content: ''; position: absolute; right: -90px; top: -110px; width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 122, 0, .45), rgba(255, 122, 0, 0) 70%); pointer-events: none;
+}
+.favorites-header > *:not(.bx-floaters) { position: relative; }
+.favorites-header h1 { font-size: clamp(1.5rem, 6vw, 2.2rem); font-weight: 800; letter-spacing: -.02em; color: #fff; }
+.favorites-header p { margin-top: 4px; color: rgba(255, 255, 255, .85); }
+.favorites-stats { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
+.stat-item { min-width: 96px; padding: 10px 16px; border-radius: 16px; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .24); }
+.stat-number { font-size: 1.5rem; font-weight: 800; line-height: 1.1; }
+.stat-label { font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255, 255, 255, .85); }
+
+.favorites-page .favorites-container > h2 { font-size: 1.15rem !important; font-weight: 800; margin: 24px 2px 14px !important; }
+
+/* ---------- Grid & cards ---------- */
+.favorites-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+.favorite-card {
+    display: flex; flex-direction: column; overflow: hidden;
+    background: var(--bx-surface); border: 1px solid var(--bx-border); border-radius: var(--bx-radius); box-shadow: var(--bx-shadow);
+    transition: transform .2s ease, border-color .2s ease;
+}
+.favorite-card:hover { transform: translateY(-3px); border-color: rgba(255, 122, 0, .5); }
+.favorite-image-container { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--bx-tint); }
+.favorite-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+.favorite-image-container > form { position: absolute; left: 10px; top: 10px; z-index: 2; }
+.favorite-remove-btn, .favorite-share-btn {
+    width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, .94); color: var(--bx-danger); font-size: 1rem; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .22); -webkit-tap-highlight-color: transparent;
+}
+.favorite-share-btn { position: absolute; right: 10px; top: 10px; z-index: 2; color: var(--bx-blue); }
+.favorite-remove-btn:active, .favorite-share-btn:active { transform: scale(.92); }
+.favorite-content { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 14px 16px 16px; }
+.favorite-name { font-size: 1.02rem; font-weight: 700; color: var(--bx-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.favorite-price { font-size: 1.15rem; font-weight: 800; color: var(--bx-orange-dark); }
+html.dark-mode .favorite-price { color: #ffb066; }
+.favorite-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.favorites-page .meta-tag { padding: 4px 10px; border-radius: 999px; background: var(--bx-tint); color: var(--bx-muted); font-size: .75rem; font-weight: 600; }
+.favorite-actions { display: flex; gap: 10px; margin-top: auto; padding-top: 6px; }
+.favorites-page .view-btn, .reserve-item-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px;
+    border-radius: 14px; font: inherit; font-size: .92rem; font-weight: 700; text-decoration: none !important; cursor: pointer;
+}
+.favorites-page .view-btn { flex: 0 0 auto; border: 2px solid var(--bx-border); background: var(--bx-surface); color: var(--bx-blue) !important; }
+html.dark-mode .favorites-page .view-btn { color: #9cc7f5 !important; }
+.reserve-item-btn { border: 0; background: var(--bx-orange); color: #fff !important; box-shadow: 0 8px 18px rgba(255, 122, 0, .3); }
+
+/* ---------- Empty state ---------- */
+.empty-favorites { margin-top: 8px; padding: 44px 20px; text-align: center; background: var(--bx-surface); border: 1px dashed var(--bx-border); border-radius: var(--bx-radius); }
+.empty-favorites .empty-icon { font-size: 2.8rem; margin-bottom: 8px; }
+.empty-favorites .empty-title { font-size: 1.25rem; font-weight: 800; }
+.empty-message { margin: 6px auto 20px; max-width: 380px; color: var(--bx-muted); }
+.back-to-marketplace-btn {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 24px; border-radius: 14px;
+    background: var(--bx-orange); color: #fff !important; font-weight: 700; box-shadow: 0 8px 18px rgba(255, 122, 0, .3);
+}
+
+@media (min-width: 640px) {
+    .favorites-container { padding: 0 24px 40px; }
+    .favorites-header { margin: 0 -24px 22px; padding: 34px 24px 36px; }
+    .favorites-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
+}
+@media (min-width: 960px) {
+    .favorites-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .favorite-card { transition: none; } }

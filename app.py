@@ -336,6 +336,7 @@ def inject_favorites_info():
     
     context = {
         'csrf_token': generate_csrf,
+        'current_year': datetime.utcnow().year,
     }
     
     if current_user.is_authenticated:

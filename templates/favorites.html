@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% import '_floaters.html' as fx %}
 {% block title %}Saved Items - Favorites{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/favorites.css') }}">{% endblock %}
 
 {% block content %}
-<style>
+<style media="not all">
   /* CSS for Favorites Page */
   :root {
     --primary-color: #ff7a00;
@@ -414,7 +416,7 @@
   <div class="favorites-container">
     <!-- Header -->
     <div class="favorites-header">
-      <h1>Saved Items</h1>
+      {{ fx.floaters('banner') }}      <h1>Saved Items</h1>
       <p>Items you've saved for later</p>
       
       {% if total_favorites > 0 %}

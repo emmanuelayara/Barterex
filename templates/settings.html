@@ -1,2204 +1,391 @@
 {% extends 'base.html' %}
 {% block title %}Settings{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+<script src="{{ url_for('static', filename='js/settings.js') }}" defer></script>
+{% endblock %}
+
 {% block content %}
-<style>
-  * {
-    box-sizing: border-box;
-  }
-
-  .page-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    padding-bottom: 80px;
-    transition: background 0.3s ease;
-  }
-
-  @media (max-width: 768px) {
-    .page-container {
-      padding-bottom: 80px;
-      min-height: 100vh;
-      height: auto;
-      overflow: visible;
-    }
-  }
-  
-  html.dark-mode .page-container {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  }
-
-  .settings-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px 16px;
-    display: flex;
-    gap: 24px;
-    flex-direction: column;
-  }
-
-  .settings-header {
-    text-align: center;
-    margin-bottom: 32px;
-    color: white;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-  }
-
-  .settings-header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-    margin-bottom: 8px;
-  }
-
-  .settings-header p {
-    font-size: 1rem;
-    opacity: 0.9;
-    margin: 0;
-  }
-
-  @media (max-width: 768px) {
-    .settings-header {
-      margin-bottom: 20px;
-    }
-
-    .settings-header h1 {
-      font-size: 1.5rem;
-    }
-
-    .settings-header p {
-      font-size: 0.9rem;
-    }
-  }
-
-  .settings-main {
-    display: flex;
-    gap: 28px;
-    width: 100%;
-    flex-direction: row;
-  }
-
-  .settings-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-width: 180px;
-    flex-shrink: 0;
-  }
-
-  .settings-tabs {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 0;
-    flex: 0;
-    width: 100%;
-  }
-
-  .tab-divider {
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    margin: 4px 0;
-  }
-
-  .settings-content-area {
-    flex: 1;
-    min-width: 0;
-  }
-  
-  .dark-mode-toggle-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .dark-mode-toggle {
-    padding: 12px 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-  }
-  
-  .dark-mode-toggle:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px) rotate(20deg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .dark-mode-toggle:active {
-    transform: translateY(0) rotate(20deg);
-  }
-  
-  html.dark-mode .dark-mode-toggle {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-  
-  html.dark-mode .dark-mode-toggle i {
-    color: #fbbf24;
-  }
-
-  .tab-button {
-    padding: 14px 16px;
-    border: none;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 0.95rem;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    text-align: left;
-  }
-
-  .tab-button i.icon-reserved-sign {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-style: normal;
-  }
-
-  .tab-button i.icon-reserved-sign svg {
-    width: 1.25em;
-    height: 1.25em;
-  }
-
-  .tab-button:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  html.dark-mode .tab-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  .tab-button.active {
-    background: white;
-    color: #ff7a00;
-    border-color: white;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-    transform: translateY(0);
-  }
-
-  html.dark-mode .tab-button.active {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #ff9500;
-    border-color: rgba(255, 149, 0, 0.4);
-  }
-
-  /* Fund Account Button */
-  .fund-account-button {
-    padding: 14px 16px;
-    border: none;
-    border-radius: 12px;
-    background: #ff7a00;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 0.95rem;
-    border: 2px solid #ff7a00;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    text-align: left;
-    text-decoration: none;
-  }
-
-  .fund-account-button:hover {
-    background: #e56a00;
-    border-color: #e56a00;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.3);
-  }
-
-  html.dark-mode .fund-account-button {
-    background: #ff9500;
-    border-color: #ff9500;
-  }
-
-  html.dark-mode .fund-account-button:hover {
-    background: #ffb347;
-    border-color: #ffb347;
-    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.4);
-  }
-
-  .tab-content {
-    display: none;
-    animation: fadeIn 0.3s ease;
-  }
-
-  .tab-content.active {
-    display: block;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .settings-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 32px 24px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-  }
-
-  #profile .settings-card {
-    max-width: 720px;
-    margin: 0 auto;
-  }
-
-  #profile form {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  #profile .form-group {
-    width: 100%;
-    text-align: left;
-  }
-
-  #profile .form-row {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  #profile .form-label {
-    display: block;
-    margin: 0 0 8px;
-  }
-
-  #profile .form-control {
-    width: 100%;
-  }
-
-  #profile .profile-picture-preview {
-    justify-content: center;
-    margin: 0 0 20px 0;
-  }
-
-  #profile .file-input-wrapper {
-    width: 100%;
-  }
-
-  #profile .form-buttons {
-    width: 100%;
-    justify-content: center;
-    gap: 12px;
-  }
-
-  #profile .form-buttons .btn {
-    min-width: 200px;
-  }
-  
-  html.dark-mode .settings-card {
-    background: rgba(30, 41, 59, 0.95);
-    border-color: rgba(71, 85, 105, 0.4);
-  }
-
-  .form-group {
-    margin-bottom: 24px;
-  }
-
-  .form-group.full {
-    grid-column: 1 / -1;
-  }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .form-label {
-    display: block;
-    font-weight: 600;
-    color: #054e97;
-    margin-bottom: 8px;
-    font-size: 0.95rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: color 0.3s ease;
-  }
-  
-  html.dark-mode .form-label {
-    color: #f1f5f9;
-  }
-
-  .form-control {
-    width: 100%;
-    padding: 12px 16px 12px 44px;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-family: inherit;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: #f8fafc;
-    color: #054e97;
-  }
-  
-  html.dark-mode .form-control {
-    background: #334155;
-    border-color: #475569;
-    color: #f1f5f9;
-  }
-  
-  html.dark-mode .form-control::placeholder {
-    color: #94a3b8;
-  }
-
-  .form-control:focus {
-    outline: none;
-    border-color: #ff7a00;
-    background: white;
-    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.15), 0 4px 12px rgba(255, 122, 0, 0.1);
-  }
-  
-  html.dark-mode .form-control:focus {
-    background: #1e293b;
-    border-color: #ff7a00;
-    box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.2), 0 4px 12px rgba(255, 122, 0, 0.15);
-  }
-
-  .form-control::placeholder {
-    color: #cbd5e1;
-  }
-
-  textarea.form-control {
-    resize: vertical;
-    min-height: 100px;
-    padding: 12px 16px 12px 44px;
-  }
-
-  .input-wrapper {
-    position: relative;
-    display: block;
-  }
-
-  .input-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.1rem;
-    color: #cbd5e0;
-    pointer-events: none;
-    z-index: 2;
-    transition: all 0.3s ease;
-  }
-  
-  html.dark-mode .input-icon {
-    color: #94a3b8;
-  }
-
-  .input-wrapper.focused .input-icon {
-    color: #ff7a00;
-    transform: translateY(-50%) scale(1.15);
-  }
-
-  .form-control:focus + .input-icon {
-    color: #ff7a00;
-    transform: translateY(-50%) scale(1.15);
-  }
-
-  .file-input-wrapper {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-  }
-
-  .file-input-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 24px;
-    border: 2px dashed #ff7a00;
-    border-radius: 12px;
-    background: rgba(255, 122, 0, 0.05);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    color: #ff7a00;
-  }
-
-  .file-input-label:hover {
-    background: rgba(255, 122, 0, 0.1);
-    border-color: #ff8f1f;
-  }
-
-  .file-input-label i {
-    font-size: 1.3rem;
-  }
-
-  .file-input-label.file-attached {
-    border-style: solid;
-    border-color: #22c55e;
-    background: rgba(34, 197, 94, 0.08);
-    color: #16a34a;
-  }
-
-  input[type="file"] {
-    display: none;
-  }
-
-  .profile-picture-preview {
-    width: 120px;
-    height: 120px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2rem;
-    margin-bottom: 16px;
-    overflow: hidden;
-    box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
-  }
-
-  .profile-picture-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .profile-form-shell {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .profile-header-banner {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 20px;
-    margin-bottom: 28px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(255, 122, 0, 0.1), rgba(255, 143, 31, 0.04));
-    border: 1px solid rgba(255, 122, 0, 0.15);
-  }
-
-  html.dark-mode .profile-header-banner {
-    background: linear-gradient(135deg, rgba(255, 122, 0, 0.15), rgba(255, 122, 0, 0.05));
-    border-color: rgba(255, 122, 0, 0.25);
-  }
-
-  .profile-avatar-badge {
-    flex-shrink: 0;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
-    color: white;
-    font-size: 1.6rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    box-shadow: 0 6px 18px rgba(255, 122, 0, 0.35);
-  }
-
-  .profile-avatar-badge img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .avatar-upload-form {
-    margin: 0;
-    flex-shrink: 0;
-  }
-
-  .profile-avatar-badge {
-    position: relative;
-    cursor: pointer;
-  }
-
-  /* Empty state: dashed plus button inviting the user to upload a photo */
-  .profile-avatar-badge.avatar-empty {
-    border: 2px dashed rgba(255, 255, 255, 0.85);
-    font-size: 1.4rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .profile-avatar-badge.avatar-empty:hover {
-    transform: scale(1.06);
-    box-shadow: 0 8px 22px rgba(255, 122, 0, 0.5);
-  }
-
-  /* Camera overlay shown on hover so users can replace an existing photo */
-  .avatar-edit-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.45);
-    color: white;
-    font-size: 1.1rem;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .profile-avatar-badge.has-photo:hover .avatar-edit-overlay,
-  .profile-avatar-badge.has-photo:focus-within .avatar-edit-overlay {
-    opacity: 1;
-  }
-
-  .profile-header-text p.avatar-upload-hint {
-    margin-top: 6px;
-    color: #ff7a00;
-    font-weight: 600;
-  }
-
-  .profile-header-text h2 {
-    margin: 0 0 4px 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #054e97;
-  }
-
-  html.dark-mode .profile-header-text h2 {
-    color: #f1f5f9;
-  }
-
-  .profile-header-text p {
-    margin: 0;
-    font-size: 0.88rem;
-    color: #64748b;
-  }
-
-  html.dark-mode .profile-header-text p {
-    color: #cbd5e1;
-  }
-
-  .input-wrapper textarea.form-control + .input-icon {
-    top: 22px;
-    transform: none;
-  }
-
-  .input-wrapper textarea.form-control:focus + .input-icon {
-    top: 22px;
-    transform: scale(1.15);
-  }
-
-  @media (max-width: 480px) {
-    .profile-header-banner {
-      flex-direction: column;
-      text-align: center;
-    }
-  }
-
-  .profile-section {
-    border: 1px solid rgba(255, 122, 0, 0.12);
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 16px;
-    padding: 20px 18px;
-  }
-
-  html.dark-mode .profile-section {
-    background: rgba(15, 23, 42, 0.5);
-    border-color: rgba(148, 163, 184, 0.2);
-  }
-
-  .section-title {
-    margin: 0 0 6px 0;
-    font-size: 1rem;
-    color: #054e97;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  html.dark-mode .section-title {
-    color: #f1f5f9;
-  }
-
-  .section-subtitle {
-    margin: 0 0 18px 0;
-    font-size: 0.86rem;
-    color: #64748b;
-  }
-
-  html.dark-mode .section-subtitle {
-    color: #cbd5e1;
-  }
-
-  .profile-field-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
-  }
-
-  .profile-view-value {
-    padding: 12px 16px;
-    border-radius: 12px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    color: #054e97;
-    font-size: 1rem;
-    min-height: 20px;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-
-  html.dark-mode .profile-view-value {
-    background: #334155;
-    border-color: #475569;
-    color: #f1f5f9;
-  }
-
-  .field-hint {
-    display: block;
-    margin-top: 8px;
-    font-size: 0.8rem;
-    color: #64748b;
-  }
-
-  html.dark-mode .field-hint {
-    color: #cbd5e1;
-  }
-
-  .verification-locked-box {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 122, 0, 0.18);
-    border-radius: 14px;
-    padding: 18px 16px;
-    margin-top: 8px;
-  }
-
-  html.dark-mode .verification-locked-box {
-    background: rgba(15, 23, 42, 0.7);
-    border-color: rgba(148, 163, 184, 0.2);
-  }
-
-  .verification-status {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 7px 12px;
-    border-radius: 999px;
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-
-  .verification-status.verified {
-    background: rgba(34, 197, 94, 0.12);
-    color: #166534;
-    border: 1px solid rgba(34, 197, 94, 0.2);
-  }
-
-  .verification-status.pending {
-    background: rgba(245, 158, 11, 0.12);
-    color: #92400e;
-    border: 1px solid rgba(245, 158, 11, 0.2);
-  }
-
-  html.dark-mode .verification-status.verified {
-    background: rgba(34, 197, 94, 0.16);
-    color: #bbf7d0;
-    border-color: rgba(34, 197, 94, 0.3);
-  }
-
-  html.dark-mode .verification-status.pending {
-    background: rgba(245, 158, 11, 0.16);
-    color: #fef3c7;
-    border-color: rgba(245, 158, 11, 0.3);
-  }
-
-  .verification-note {
-    margin: 0;
-    color: #475569;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  html.dark-mode .verification-note {
-    color: #cbd5e1;
-  }
-
-  @media (max-width: 768px) {
-    .profile-field-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-  }
-
-  .form-buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: 32px;
-    flex-wrap: wrap;
-  }
-
-  .btn {
-    padding: 12px 28px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    text-align: center;
-    flex: 1;
-    justify-content: center;
-    min-width: 140px;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, #ff7a00, #ff8f1f);
-    color: white;
-    box-shadow: 0 6px 20px rgba(255, 122, 0, 0.3);
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(255, 122, 0, 0.4);
-  }
-
-  .btn-primary:active {
-    transform: translateY(-1px);
-  }
-
-  .btn-secondary {
-    background: #e2e8f0;
-    color: #054e97;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-  
-  html.dark-mode .btn-secondary {
-    background: #475569;
-    color: #f1f5f9;
-  }
-
-  .btn-secondary:hover {
-    background: #cbd5e1;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  }
-  
-  html.dark-mode .btn-secondary:hover {
-    background: #64748b;
-  }
-
-  .btn-danger {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-    color: white;
-    flex: 0 1 auto;
-    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
-  }
-
-  .btn-danger:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(220, 38, 38, 0.4);
-  }
-
-  html.dark-mode .btn-danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-  }
-
-  html.dark-mode .btn-danger:hover {
-    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
-  }
-
-  .form-text {
-    font-size: 0.85rem;
-    color: #64748b;
-    margin-top: 6px;
-    display: block;
-  }
-
-  .alert {
-    padding: 16px 20px;
-    border-radius: 12px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    animation: slideIn 0.3s ease;
-  }
-
-  .alert-danger {
-    background: #fee2e2;
-    color: #991b1b;
-    border-left: 4px solid #dc2626;
-  }
-
-  html.dark-mode .alert-danger {
-    background: rgba(239, 68, 68, 0.15);
-    color: #fca5a5;
-    border-left-color: #ef4444;
-  }
-
-  .alert-success {
-    background: #f0fdf4;
-    color: #166534;
-    border-left: 4px solid #22c55e;
-  }
-
-  html.dark-mode .alert-success {
-    background: rgba(34, 197, 94, 0.15);
-    color: #86efac;
-    border-left-color: #22c55e;
-  }
-
-  .alert-info {
-    background: #eff6ff;
-    color: #1e40af;
-    border-left: 4px solid #3b82f6;
-  }
-
-  html.dark-mode .alert-info {
-    background: rgba(59, 130, 246, 0.15);
-    color: #93c5fd;
-    border-left-color: #3b82f6;
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  .danger-zone {
-    border: 2px solid #dc2626;
-    border-radius: 12px;
-    padding: 24px;
-    background: rgba(220, 38, 38, 0.05);
-    margin-top: 32px;
-  }
-
-  html.dark-mode .danger-zone {
-    border-color: #ff6b6b;
-    background: rgba(139, 0, 0, 0.25);
-  }
-
-  .danger-zone h3 {
-    color: #dc2626;
-    margin: 0 0 16px 0;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  html.dark-mode .danger-zone h3 {
-    color: #ff8787;
-  }
-
-  .danger-zone p {
-    color: #7f1d1d;
-    margin: 0 0 16px 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
-  }
-
-  html.dark-mode .danger-zone p {
-    color: #ffb3b3;
-  }
-
-  html.dark-mode .danger-zone ul {
-    color: #ffb3b3 !important;
-  }
-
-  html.dark-mode .danger-zone ul li {
-    color: #ffb3b3;
-  }
-
-  html.dark-mode .danger-zone strong {
-    color: #ff8787;
-    font-weight: 600;
-  }
-
-  .delete-account-title {
-    color: #dc2626;
-    margin: 0 0 28px 0;
-    font-size: 1.3rem;
-  }
-
-  html.dark-mode .delete-account-title {
-    color: #ff8787;
-  }
-
-  .danger-zone .info-box {
-    background: rgba(220, 38, 38, 0.1);
-    padding: 16px;
-    border-radius: 8px;
-    margin-top: 20px;
-  }
-
-  html.dark-mode .danger-zone .info-box {
-    background: rgba(255, 107, 107, 0.2);
-  }
-
-  .danger-zone .info-box p {
-    margin: 0;
-    color: #7f1d1d;
-    font-size: 0.9rem;
-  }
-
-  html.dark-mode .danger-zone .info-box p {
-    color: #ffb3b3;
-  }
-
-  .danger-zone-list {
-    margin: 12px 0;
-    padding-left: 20px;
-    color: #7f1d1d;
-  }
-
-  html.dark-mode .danger-zone-list {
-    color: #ffb3b3;
-  }
-
-  .danger-zone-list li {
-    margin-bottom: 8px;
-  }
-
-  .checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  html.dark-mode .checkbox-wrapper label {
-    color: #ffb3b3;
-  }
-
-  .checkbox-wrapper input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #ff7a00;
-  }
-
-  .checkbox-wrapper label {
-    margin: 0;
-    cursor: pointer;
-    color: #054e97;
-    font-weight: 500;
-  }
-
-  @media (max-width: 768px) {
-    .settings-header h1 {
-      font-size: 1.3rem;
-    }
-
-    .settings-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      flex-direction: row;
-    }
-
-    .settings-header > div {
-      flex: 1;
-      text-align: center;
-    }
-
-    .hamburger-menu {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 8px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .hamburger-menu:active {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .hamburger-menu span {
-      width: 24px;
-      height: 2px;
-      background: white;
-      transition: all 0.3s ease;
-      display: block;
-    }
-
-    .hamburger-menu.active span:nth-child(1) {
-      transform: rotate(45deg) translate(8px, 8px);
-    }
-
-    .hamburger-menu.active span:nth-child(2) {
-      opacity: 0;
-    }
-
-    .hamburger-menu.active span:nth-child(3) {
-      transform: rotate(-45deg) translate(8px, -8px);
-    }
-
-    .settings-card {
-      padding: 16px 12px;
-    }
-
-    #profile .settings-card {
-      max-width: 100%;
-      margin: 0;
-    }
-
-    #profile .form-buttons .btn {
-      width: 100%;
-      min-width: auto;
-    }
-
-    .form-row {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-
-    .form-buttons {
-      flex-direction: column;
-    }
-
-    .btn {
-      width: 100%;
-      flex: 1;
-    }
-
-    /* Mobile: Collapsible sidebar */
-    .settings-wrapper {
-      flex-direction: column;
-      gap: 12px;
-      padding: 16px 12px 20px 12px;
-      max-width: 100%;
-    }
-
-    .settings-main {
-      flex-direction: column;
-      gap: 12px;
-      width: 100%;
-      height: auto;
-      overflow: visible;
-      position: relative;
-    }
-
-    .settings-sidebar {
-      position: fixed;
-      left: -250px;
-      top: 80px;
-      min-width: 200px;
-      max-width: 200px;
-      width: 200px;
-      height: calc(100vh - 160px);
-      background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
-      padding: 20px 12px;
-      flex-shrink: 0;
-      overflow-y: auto;
-      z-index: 999;
-      transition: left 0.3s ease;
-      border-radius: 0;
-    }
-
-    .settings-sidebar.show {
-      left: 0;
-    }
-
-    html.dark-mode .settings-sidebar {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    }
-
-    .settings-sidebar.hidden {
-      display: none;
-    }
-
-    .settings-tabs {
-      flex-direction: column;
-      gap: 8px;
-      width: 100%;
-      display: flex;
-    }
-
-    .settings-tabs.hidden {
-      display: none;
-    }
-
-    .tab-button {
-      padding: 12px 12px;
-      font-size: 0.85rem;
-      white-space: normal;
-      flex: none;
-      width: 100%;
-      gap: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.15);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
-    }
-
-    .tab-button:active {
-      transform: scale(0.98);
-    }
-
-    .tab-button i {
-      font-size: 0.95rem;
-      flex-shrink: 0;
-      min-width: 20px;
-    }
-
-    .tab-button span {
-      display: block;
-      text-align: left;
-      line-height: 1.2;
-    }
-
-    .fund-account-button {
-      padding: 12px 12px;
-      font-size: 0.85rem;
-    }
-
-    .settings-content-area {
-      flex: 1;
-      min-width: 0;
-      width: 100%;
-      height: auto;
-      overflow-y: visible;
-      display: block;
-      position: relative;
-      padding: 0;
-      background: inherit;
-    }
-
-    .settings-content-area.show {
-      display: block;
-      position: relative;
-    }
-
-    .back-button-mobile {
-      display: none;
-    }
-
-    .footer-links-mobile {
-      margin-top: 12px;
-      padding-top: 12px;
-      gap: 8px;
-    }
-
-    .footer-link-mobile {
-      padding: 10px 12px;
-      font-size: 0.75rem;
-      gap: 8px;
-    }
-
-    .dark-mode-toggle-wrapper {
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .dark-mode-toggle {
-      padding: 10px 12px;
-      font-size: 1rem;
-    }
-
-    /* Overlay when sidebar is open */
-    .sidebar-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 998;
-    }
-
-    .sidebar-overlay.show {
-      display: block;
-    }
-  }
-
-  /* Medium screens - keep sidebar on left */
-  @media (min-width: 768px) {
-    .settings-wrapper {
-      flex-direction: column;
-    }
-
-    .settings-header {
-      width: 100%;
-    }
-
-    .back-button-mobile {
-      display: none;
-    }
-
-    .settings-main {
-      flex-direction: row;
-      width: 100%;
-      gap: 28px;
-    }
-
-    .settings-sidebar {
-      min-width: 180px;
-      position: sticky;
-      top: 100px;
-      height: fit-content;
-      flex-shrink: 0;
-      overflow-y: visible;
-      justify-content: flex-start;
-    }
-
-    .settings-tabs {
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .tab-button {
-      padding: 14px 16px;
-      font-size: 0.95rem;
-      white-space: normal;
-      flex: none;
-      width: 100%;
-      min-width: auto;
-    }
-
-    .tab-button i {
-      font-size: 1.1rem;
-    }
-
-    .settings-content-area {
-      flex: 1;
-      min-width: 0;
-    }
-  }
-
-  .loading-spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: white;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  /* ==================== FOOTER LINKS ==================== */
-  .settings-footer {
-    width: 100%;
-    margin-top: 40px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .footer-links-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .footer-link {
-    padding: 10px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: white;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-  }
-
-  .footer-link:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: translateY(-2px);
-  }
-
-  .footer-link.active {
-    background: white;
-    color: #ff7a00;
-    border-color: white;
-  }
-
-  html.dark-mode .footer-link {
-    background: rgba(148, 163, 184, 0.1);
-    border-color: rgba(148, 163, 184, 0.2);
-    color: #e2e8f0;
-  }
-
-  html.dark-mode .footer-link:hover {
-    background: rgba(148, 163, 184, 0.2);
-    border-color: rgba(148, 163, 184, 0.4);
-  }
-
-  html.dark-mode .footer-link.active {
-    background: #ff7a00;
-    color: white;
-    border-color: #ff7a00;
-  }
-
-  /* Mobile Footer Links */
-  .footer-links-mobile {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: auto;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .footer-link-mobile {
-    padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    color: white;
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-  }
-
-  .footer-link-mobile:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: translateX(4px);
-  }
-
-  html.dark-mode .footer-link-mobile {
-    background: rgba(148, 163, 184, 0.1);
-    border-color: rgba(148, 163, 184, 0.2);
-  }
-
-  html.dark-mode .footer-link-mobile:hover {
-    background: rgba(148, 163, 184, 0.2);
-    border-color: rgba(148, 163, 184, 0.4);
-  }
-
-  /* ==================== FOOTER MODAL CONTENT ==================== */
-  #footer-content-modal {
-    animation: fadeInOverlay 0.3s ease;
-  }
-
-  #footer-content-modal > div {
-    animation: slideUp 0.3s ease;
-    max-height: 85vh;
-    overflow-y: auto;
-  }
-
-  .footer-page-content {
-    color: #1a202c;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-
-  .footer-page-content h2 {
-    color: #054e97;
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    border-bottom: 3px solid #ff7a00;
-    padding-bottom: 12px;
-  }
-
-  .footer-page-content h3 {
-    color: #0d47a1;
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-top: 20px;
-    margin-bottom: 12px;
-  }
-
-  .footer-page-content p {
-    color: #404040;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 16px;
-  }
-
-  .footer-page-content ol,
-  .footer-page-content ul {
-    color: #404040;
-    font-size: 0.95rem;
-    line-height: 1.8;
-    margin: 16px 0;
-    padding-left: 24px;
-  }
-
-  .footer-page-content li {
-    margin-bottom: 12px;
-  }
-
-  .footer-page-content strong {
-    color: #054e97;
-    font-weight: 700;
-  }
-
-  /* Dark mode for modal */
-  html.dark-mode .footer-page-content {
-    color: #e2e8f0;
-  }
-
-  html.dark-mode .footer-page-content h2 {
-    color: #60a5fa;
-    border-bottom-color: #ff9e64;
-  }
-
-  html.dark-mode .footer-page-content h3 {
-    color: #93c5fd;
-  }
-
-  html.dark-mode .footer-page-content p {
-    color: #cbd5e1;
-  }
-
-  html.dark-mode .footer-page-content ol,
-  html.dark-mode .footer-page-content ul {
-    color: #cbd5e1;
-  }
-
-  html.dark-mode .footer-page-content strong {
-    color: #60a5fa;
-  }
-
-  /* Modal backdrop styling */
-  #footer-content-modal {
-    background: rgba(0, 0, 0, 0.6) !important;
-  }
-
-  #footer-content-modal > div {
-    background: white;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  }
-
-  html.dark-mode #footer-content-modal > div {
-    background: #1e293b;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-  }
-
-  #footer-content-modal button {
-    color: #404040;
-    transition: all 0.2s ease;
-  }
-
-  html.dark-mode #footer-content-modal button {
-    color: #cbd5e1;
-  }
-
-  #footer-content-modal button:hover {
-    color: #ff7a00;
-    transform: scale(1.2);
-  }
-
-  @keyframes fadeInOverlay {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .settings-footer {
-      margin-top: 24px;
-      padding-top: 16px;
-    }
-
-    .footer-links-wrapper {
-      gap: 12px;
-    }
-
-    .footer-link {
-      padding: 8px 12px;
-      font-size: 0.8rem;
-    }
-
-    #footer-content-modal > div {
-      max-width: 95vw;
-      margin: 20px auto;
-      max-height: 90vh;
-      padding: 24px 16px !important;
-    }
-
-    .footer-page-content h2 {
-      font-size: 1.3rem;
-    }
-
-    .footer-page-content h3 {
-      font-size: 0.95rem;
-    }
-
-    .footer-page-content p,
-    .footer-page-content ol,
-    .footer-page-content ul {
-      font-size: 0.9rem;
-    }
-  }
-</style>
-
-<div class="page-container">
-  <div class="settings-wrapper">
-    <!-- Header -->
-    <div class="settings-header">
-      <div style="text-align: center;">
-        <h1>⚙️ Settings</h1>
-        <p>Manage your account, profile, and security settings</p>
-      </div>
-      <button class="hamburger-menu" onclick="toggleSidebar()" id="hamburgerBtn" style="display: none;">
-        <span></span>
-        <span></span>
-        <span></span>
+{% set editing = profile_form.errors|length > 0 %}
+{% set id_done = current_user.id_verification_status == 'submitted' %}
+{% set initial = (current_user.username or '?')[0] %}
+
+<div class="st">
+  <div class="st-shell">
+
+    <div class="st-title">
+      <p>Manage your account, profile, and security.</p>
+    </div>
+
+    <!-- Mobile: menu button + quick section chips -->
+    <div class="st-mobilebar">
+      <button type="button" class="st-menu-btn" id="hamburgerBtn" aria-controls="stSidebar" aria-expanded="false">
+        <i class="fas fa-bars"></i> Menu
       </button>
     </div>
 
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="st-overlay" id="sidebarOverlay"></div>
 
-    <!-- Main Settings Area -->
-    <div class="settings-main">
-      <!-- Sidebar with Tab Buttons -->
-      <div class="settings-sidebar">
-        <!-- Dark Mode Toggle at Top -->
-        <div class="dark-mode-toggle-wrapper">
-          <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-            <i class="fas fa-moon"></i>
-          </button>
+    <div class="st-layout">
+
+      <!-- Sidebar: drawer on mobile, sticky card on desktop -->
+      <aside class="st-sidebar" id="stSidebar" aria-label="Account navigation">
+        <div class="st-side-head">
+          <span class="st-avatar-sm">
+            {% if current_user.profile_picture %}
+              <img src="{{ current_user.profile_picture | image_url }}" alt="">
+            {% else %}{{ initial }}{% endif %}
+          </span>
+          <div class="st-side-id">
+            <strong>{{ current_user.username }}</strong>
+            <span>{{ current_user.email }}</span>
+          </div>
+          <button type="button" class="st-close-btn" id="closeSidebarBtn" aria-label="Close menu"><i class="fas fa-xmark"></i></button>
         </div>
 
-        <div class="settings-tabs">
-          <button class="tab-button active" onclick="switchTab('profile', event)">
-            <i class="fas fa-user"></i> Profile
-          </button>
-          <button class="tab-button" onclick="switchTab('password', event)">
-            <i class="fas fa-lock"></i> Password
-          </button>
-          <button class="tab-button" onclick="switchTab('verification', event)">
-            <i class="fas fa-id-card"></i> Verification
-          </button>
-          <button class="tab-button" onclick="switchTab('delete', event)">
-            <i class="fas fa-trash-alt"></i> Delete Account
-          </button>
+        <nav class="st-nav">
+          <p class="st-nav-label">Account</p>
+          <button type="button" class="st-nav-item" data-tab="profile"><span class="st-ico"><i class="fas fa-user"></i></span> Profile</button>
+          <button type="button" class="st-nav-item" data-tab="password"><span class="st-ico"><i class="fas fa-lock"></i></span> Password</button>
+          <button type="button" class="st-nav-item" data-tab="verification"><span class="st-ico"><i class="fas fa-id-card"></i></span> Verification</button>
 
-          <div class="tab-divider"></div>
+          <a href="{{ url_for('payments.fund_account') }}" class="st-fund"><i class="fas fa-coins"></i> Fund Account</a>
 
-          <a href="{{ url_for('payments.fund_account') }}" class="fund-account-button">
-            <i class="fas fa-coins"></i> Fund Account
-          </a>
-
-          <a href="{{ url_for('user.user_items') }}" class="tab-button">
-            <i class="fas fa-box"></i> My Items
-          </a>
-          <a href="{{ url_for('user.my_trades') }}" class="tab-button">
-            <i class="fas fa-exchange-alt"></i> My Trades
-          </a>
-          <a href="{{ url_for('user.my_reservations') }}" class="tab-button">
-            <i class="icon-reserved-sign" aria-hidden="true">
+          <p class="st-nav-label">My activity</p>
+          <a href="{{ url_for('user.user_items') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-box"></i></span> My Items <i class="fas fa-chevron-right st-chev"></i></a>
+          <a href="{{ url_for('user.my_trades') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-right-left"></i></span> My Trades <i class="fas fa-chevron-right st-chev"></i></a>
+          <a href="{{ url_for('user.my_reservations') }}" class="st-nav-item">
+            <span class="st-ico" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round">
                 <path d="M6 5H22V19H2Z"/>
                 <path d="M10 5L6 19"/>
                 <path d="M12.5 12H19"/>
               </svg>
-            </i> Reservations
+            </span> Reservations <i class="fas fa-chevron-right st-chev"></i>
           </a>
-          <a href="{{ url_for('user.my_valuations') }}" class="tab-button">
-            <i class="fas fa-chart-line"></i> Valuations
-          </a>
-          <a href="{{ url_for('user.my_revaluations') }}" class="tab-button">
-            <i class="fas fa-scale-balanced"></i> Revaluations
-          </a>
-          <a href="{{ url_for('favorites.view_favorites') }}" class="tab-button">
-            <i class="fas fa-heart"></i> Favorites
-          </a>
-        </div>
+          <a href="{{ url_for('user.my_valuations') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-chart-line"></i></span> Valuations <i class="fas fa-chevron-right st-chev"></i></a>
+          <a href="{{ url_for('user.my_revaluations') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-scale-balanced"></i></span> Revaluations <i class="fas fa-chevron-right st-chev"></i></a>
+          <a href="{{ url_for('favorites.view_favorites') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-heart"></i></span> Favorites <i class="fas fa-chevron-right st-chev"></i></a>
 
-        <!-- Footer Links for Mobile -->
-        <div class="footer-links-mobile">
-          <a href="{{ url_for('marketplace.about') }}" class="footer-link-mobile">
-            <i class="fas fa-info-circle"></i> About Us
-          </a>
-          <a href="{{ url_for('marketplace.how_it_works') }}" class="footer-link-mobile">
-            <i class="fas fa-book"></i> How It Works
-          </a>
-          <a href="{{ url_for('marketplace.safety') }}" class="footer-link-mobile">
-            <i class="fas fa-shield-alt"></i> Safety
-          </a>
-          <a href="{{ url_for('marketplace.contact') }}" class="footer-link-mobile">
-            <i class="fas fa-envelope"></i> Contact
-          </a>
-          <a href="{{ url_for('marketplace.faq') }}" class="footer-link-mobile">
-            <i class="fas fa-question-circle"></i> FAQ
-          </a>
-          <a href="{{ url_for('marketplace.terms') }}" class="footer-link-mobile">
-            <i class="fas fa-file-alt"></i> Terms
-          </a>
-          <a href="{{ url_for('marketplace.privacy') }}" class="footer-link-mobile">
-            <i class="fas fa-lock"></i> Privacy
-          </a>
-        </div>
-      </div>
+          <details class="st-help">
+            <summary>Help &amp; legal <i class="fas fa-chevron-down"></i></summary>
+            <a href="{{ url_for('marketplace.about') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-circle-info"></i></span> About us</a>
+            <a href="{{ url_for('marketplace.how_it_works') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-route"></i></span> How it works</a>
+            <a href="{{ url_for('marketplace.safety') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-shield-halved"></i></span> Safety</a>
+            <a href="{{ url_for('marketplace.faq') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-circle-question"></i></span> FAQ</a>
+            <a href="{{ url_for('marketplace.contact') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-headset"></i></span> Contact</a>
+            <a href="{{ url_for('marketplace.terms') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-file-contract"></i></span> Terms</a>
+            <a href="{{ url_for('marketplace.privacy') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-user-shield"></i></span> Privacy</a>
+          </details>
 
-      <!-- Content Area -->
-      <div class="settings-content-area">
-        <!-- Profile Tab -->
-        <div id="profile" class="tab-content active">
-      <div class="settings-card">
-        <div class="profile-header-banner">
-          <form method="POST" action="{{ url_for('user.settings') }}" enctype="multipart/form-data" id="avatarUploadForm" class="avatar-upload-form">
-            <input type="hidden" name="form_type" value="profile_picture">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="file" name="profile_picture" id="avatarFileInput" accept="image/png,image/jpeg,image/gif,image/webp">
-            {% if current_user.profile_picture %}
-              <label for="avatarFileInput" class="profile-avatar-badge has-photo" title="Change profile photo">
-                <img src="{{ current_user.profile_picture | image_url }}" alt="{{ current_user.username }}">
-                <span class="avatar-edit-overlay"><i class="fas fa-camera"></i></span>
+          <p class="st-nav-label">Danger zone</p>
+          <button type="button" class="st-nav-item danger" data-tab="delete"><span class="st-ico"><i class="fas fa-trash-alt"></i></span> Delete Account</button>
+        </nav>
+
+        <div class="st-side-foot">
+          <button type="button" id="darkModeToggle" class="st-theme" aria-pressed="false" title="Toggle dark mode">
+            <span class="st-ico"><i class="fas fa-moon"></i></span>
+            <span class="st-label">Dark mode</span>
+            <span class="st-switch" aria-hidden="true"></span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <main class="st-content">
+
+        <!-- Profile -->
+        <section class="st-panel st-stack" data-panel="profile" aria-label="Profile">
+          <div class="st-card st-hero">
+            <form method="POST" action="{{ url_for('user.settings') }}" enctype="multipart/form-data" id="avatarUploadForm" class="st-avatar-form">
+              <input type="hidden" name="form_type" value="profile_picture">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="file" name="profile_picture" id="avatarFileInput" accept="image/png,image/jpeg,image/gif,image/webp">
+              <label for="avatarFileInput" class="st-avatar" title="{{ 'Change profile photo' if current_user.profile_picture else 'Upload a profile photo' }}">
+                {% if current_user.profile_picture %}
+                  <img class="st-avatar-img" src="{{ current_user.profile_picture | image_url }}" alt="{{ current_user.username }}">
+                {% else %}
+                  <span class="st-avatar-initial">{{ initial }}</span>
+                {% endif %}
+                <span class="st-avatar-cam"><i class="fas fa-camera"></i><span class="st-sr">Upload a profile photo</span></span>
               </label>
-            {% else %}
-              <label for="avatarFileInput" class="profile-avatar-badge avatar-empty" title="Upload a profile photo" aria-label="Upload a profile photo">
-                <i class="fas fa-plus"></i>
-              </label>
-            {% endif %}
-          </form>
-          <div class="profile-header-text">
-            <h2>✨ Edit Your Profile</h2>
-            <p>Hi {{ current_user.username }}, keep your details up to date for smooth trading &amp; delivery.</p>
-            {% if not current_user.profile_picture %}
-              <p class="avatar-upload-hint"><i class="fas fa-camera"></i> Tap the + to upload your profile photo.</p>
-            {% endif %}
-          </div>
-        </div>
-
-        <form method="POST" enctype="multipart/form-data" onsubmit="showLoading('Saving your profile...')" id="profileEditForm" style="display:none;">
-          <input type="hidden" name="form_type" value="profile">
-
-          <div class="profile-form-shell">
-            <div class="profile-section">
-              <h3 class="section-title"><i class="fas fa-address-card" style="margin-right: 6px;"></i>Contact Information</h3>
-              <p class="section-subtitle">Keep your contact details current for orders and account updates.</p>
-              <div class="profile-field-grid">
-                <div class="form-group">
-                  {{ profile_form.email.label(class="form-label") }}
-                  <div class="input-wrapper">
-                    {{ profile_form.email(class="form-control", placeholder="your.email@example.com") }}
-                    <i class="fas fa-envelope input-icon"></i>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  {{ profile_form.phone_number.label(class="form-label") }}
-                  <div class="input-wrapper">
-                    {{ profile_form.phone_number(class="form-control", placeholder="+234 800 000 0000") }}
-                    <i class="fas fa-phone input-icon"></i>
-                  </div>
-                </div>
+            </form>
+            <div>
+              <h2>{{ current_user.username }}</h2>
+              <p class="st-hero-sub">Keep your details up to date for smooth trading &amp; delivery.</p>
+              <div class="st-badges">
+                {% if id_done %}
+                  <span class="st-badge ok"><i class="fas fa-circle-check"></i> ID submitted</span>
+                {% else %}
+                  <span class="st-badge warn"><i class="fas fa-triangle-exclamation"></i> ID not submitted</span>
+                {% endif %}
               </div>
-            </div>
-
-            <div class="profile-section">
-              <h3 class="section-title"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>Address Details</h3>
-              <p class="section-subtitle">This helps with delivery and pickup.</p>
-              <div class="form-group full">
-                {{ profile_form.address.label(class="form-label") }}
-                <div class="input-wrapper">
-                  {{ profile_form.address(class="form-control", placeholder="Enter your full home or delivery address") }}
-                  <i class="fas fa-home input-icon"></i>
-                </div>
-              </div>
-
-              <div class="profile-field-grid" style="margin-top: 20px;">
-                <div class="form-group">
-                  {{ profile_form.city.label(class="form-label") }}
-                  <div class="input-wrapper">
-                    {{ profile_form.city(class="form-control", placeholder="City") }}
-                    <i class="fas fa-city input-icon"></i>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  {{ profile_form.state.label(class="form-label") }}
-                  <div class="input-wrapper">
-                    {{ profile_form.state(class="form-control") }}
-                    <i class="fas fa-flag input-icon"></i>
-                  </div>
-                </div>
-              </div>
+              {% if not current_user.profile_picture %}
+                <p class="st-hint"><i class="fas fa-camera"></i> Tap the camera to add a photo (JPG, PNG, GIF or WEBP, max 10MB).</p>
+              {% endif %}
+              <p class="st-avatar-msg" id="avatarMsg" role="alert"></p>
             </div>
           </div>
 
-          <div class="form-buttons">
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save"></i> Save Changes
-            </button>
-            <button type="button" class="btn btn-secondary" id="cancelProfileEditBtn">
-              <i class="fas fa-times"></i> Cancel
-            </button>
-          </div>
-        </form>
-
-        <!-- Read-only Profile View -->
-        <div id="profileViewMode">
-          <div class="profile-form-shell">
-            <div class="profile-section">
-              <h3 class="section-title"><i class="fas fa-address-card" style="margin-right: 6px;"></i>Contact Information</h3>
-              <div class="profile-field-grid">
-                <div class="form-group">
-                  <label class="form-label">Email</label>
-                  <div class="profile-view-value">{{ current_user.email or '—' }}</div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Phone Number</label>
-                  <div class="profile-view-value">{{ current_user.phone_number or '—' }}</div>
-                </div>
+          <section class="st-card{% if editing %} is-editing{% endif %}" id="profileCard">
+            <div class="st-card-head">
+              <div>
+                <h2>Personal information</h2>
+                <p>Used for orders, delivery and account updates.</p>
               </div>
+              <button type="button" class="st-btn ghost small st-view-only" id="editProfileBtn"><i class="fas fa-pen"></i> Edit</button>
             </div>
 
-            <div class="profile-section">
-              <h3 class="section-title"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>Address Details</h3>
-              <div class="form-group full">
-                <label class="form-label">Address</label>
-                <div class="profile-view-value">{{ current_user.address or '—' }}</div>
-              </div>
-              <div class="profile-field-grid" style="margin-top: 20px;">
-                <div class="form-group">
-                  <label class="form-label">City</label>
-                  <div class="profile-view-value">{{ current_user.city or '—' }}</div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">State</label>
-                  <div class="profile-view-value">{{ current_user.state or '—' }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-buttons">
-            <button type="button" class="btn btn-primary" id="editProfileBtn">
-              <i class="fas fa-edit"></i> Edit Profile
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- Items Tab -->
-    <div id="items" class="tab-content">
-      <div class="settings-card">
-        <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">📦 Your Items</h2>
-        <div style="text-align: center; padding: 40px 20px;">
-          <p style="color: #666; font-size: 1.1rem; margin-bottom: 20px;">Manage all your items for trading or selling</p>
-          <a href="{{ url_for('user.user_items') }}" class="btn btn-primary" style="display: inline-block; padding: 12px 32px; font-size: 1rem;">
-            <i class="fas fa-box"></i> View & Manage Items
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Password Tab -->
-    <div id="password" class="tab-content">
-      <div class="settings-card">
-        <form method="POST">
-          <input type="hidden" name="form_type" value="password">
-
-          <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">Change Password</h2>
-
-          <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i>
-            <span>Password must be at least 8 characters long</span>
-          </div>
-
-          <!-- Current Password -->
-          <div class="form-group">
-            <label class="form-label">Current Password</label>
-            <input type="password" name="current_password" class="form-control" placeholder="Enter your current password" required>
-          </div>
-
-          <!-- New Password -->
-          <div class="form-group">
-            <label class="form-label">New Password</label>
-            <input type="password" name="new_password" class="form-control" placeholder="Enter new password" required minlength="8">
-          </div>
-
-          <!-- Confirm New Password -->
-          <div class="form-group">
-            <label class="form-label">Confirm New Password</label>
-            <input type="password" name="confirm_password" class="form-control" placeholder="Confirm new password" required minlength="8">
-          </div>
-
-          <div class="form-buttons">
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-key"></i> Update Password
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Verification Tab -->
-    <div id="verification" class="tab-content">
-      <div class="settings-card">
-        <h2 style="color: #054e97; margin: 0 0 28px 0; font-size: 1.3rem;">Identity Details</h2>
-
-        {% if current_user.id_verification_status == 'submitted' %}
-          <div class="verification-locked-box">
-            <div class="verification-status verified">Submitted</div>
-            <p class="verification-note">Your NIN and government ID have been submitted and added to your account records.</p>
-          </div>
-        {% else %}
-          <form method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="form_type" value="identity_verification">
-
-            <div class="form-group">
-              <label class="form-label" for="nin">National Identity Number (NIN)</label>
-              <input type="text" id="nin" name="nin" class="form-control" placeholder="Enter your NIN" maxlength="20" required>
-            </div>
-
-            <div class="form-group full">
-              <label class="form-label" for="government_id">Government ID Card</label>
-              <div class="file-input-wrapper">
-                <label class="file-input-label" for="government_id" id="governmentIdLabel">
-                  <i class="fas fa-id-card" id="governmentIdIcon"></i>
-                  <span id="governmentIdLabelText">Upload government ID card</span>
-                </label>
-                <input type="file" id="government_id" name="government_id" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" required>
-              </div>
-              <small class="field-hint">Accepted: JPG, JPEG, PNG, PDF • Max size: 10MB</small>
-            </div>
-
-            <div class="form-buttons" style="margin-top: 8px;">
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-check-circle"></i> Submit
-              </button>
-            </div>
-          </form>
-          <script>
-            document.getElementById('government_id')?.addEventListener('change', function () {
-              const label = document.getElementById('governmentIdLabel');
-              const icon = document.getElementById('governmentIdIcon');
-              const text = document.getElementById('governmentIdLabelText');
-              const file = this.files && this.files[0];
-              if (file) {
-                label.classList.add('file-attached');
-                icon.className = 'fas fa-check-circle';
-                text.textContent = file.name;
-              } else {
-                label.classList.remove('file-attached');
-                icon.className = 'fas fa-id-card';
-                text.textContent = 'Upload government ID card';
-              }
-            });
-          </script>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Delete Account Tab -->
-    <div id="delete" class="tab-content">
-      <div class="settings-card">
-        <form method="POST">
-          <input type="hidden" name="form_type" value="delete">
-
-          <h2 class="delete-account-title">⚠️ Delete Account</h2>
-
-          <div class="danger-zone">
-            <h3>
-              <i class="fas fa-exclamation-triangle"></i>
-              Permanent Account Deletion
-            </h3>
-            <p>
-              Deleting your account is <strong>permanent and cannot be undone</strong>. All your:
-            </p>
-            <ul class="danger-zone-list">
-              <li>Profile information and settings</li>
-              <li>Uploaded items</li>
-              <li>Trading history</li>
-              <li>Orders and transactions</li>
-              <li>Notifications</li>
+            <ul class="st-details st-view-only">
+              <li>
+                <span class="st-ico"><i class="fas fa-envelope"></i></span>
+                <div><div class="st-k">Email</div><div class="st-v{% if not current_user.email %} empty{% endif %}">{{ current_user.email or 'Not added yet' }}</div></div>
+              </li>
+              <li>
+                <span class="st-ico"><i class="fas fa-phone"></i></span>
+                <div><div class="st-k">Phone number</div><div class="st-v{% if not current_user.phone_number %} empty{% endif %}">{{ current_user.phone_number or 'Not added yet' }}</div></div>
+              </li>
+              <li>
+                <span class="st-ico"><i class="fas fa-house"></i></span>
+                <div><div class="st-k">Address</div><div class="st-v{% if not current_user.address %} empty{% endif %}">{{ current_user.address or 'Not added yet' }}</div></div>
+              </li>
+              <li>
+                <span class="st-ico"><i class="fas fa-city"></i></span>
+                <div><div class="st-k">City</div><div class="st-v{% if not current_user.city %} empty{% endif %}">{{ current_user.city or 'Not added yet' }}</div></div>
+              </li>
+              <li>
+                <span class="st-ico"><i class="fas fa-flag"></i></span>
+                <div><div class="st-k">State</div><div class="st-v{% if not current_user.state %} empty{% endif %}">{{ current_user.state or 'Not added yet' }}</div></div>
+              </li>
             </ul>
-            <p style="margin-top: 16px;">
-              will be <strong>permanently deleted</strong> from our system.
-            </p>
 
-            <div class="info-box">
-              <p>
-                <strong>Before you delete:</strong> Make sure you've settled all your trades and orders. Once deleted, we cannot recover your data.
-              </p>
-            </div>
+            <form method="POST" enctype="multipart/form-data" onsubmit="showLoading('Saving your profile...')" id="profileEditForm" class="st-edit-only" novalidate>
+              <input type="hidden" name="form_type" value="profile">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <!-- Confirmation Checkboxes -->
-            <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(220, 38, 38, 0.3);">
-              <div class="checkbox-wrapper">
-                <input type="checkbox" id="confirm_delete" name="confirm_delete" required>
-                <label for="confirm_delete">I understand this action is permanent and cannot be undone</label>
-              </div>
-
-              <div style="margin-top: 16px;">
-                <label class="form-label">Type your username to confirm ({{ current_user.username }})</label>
-                <div class="input-wrapper">
-                  <input type="text" name="confirm_username" class="form-control" placeholder="Type your username here" required>
-                  <span class="input-icon">✓</span>
+              <h3 class="st-sub">Contact</h3>
+              <div class="st-form-grid cols-2">
+                <div class="st-field{% if profile_form.email.errors %} has-error{% endif %}">
+                  {{ profile_form.email.label(class="st-label") }}
+                  <div class="st-wrap">
+                    <i class="fas fa-envelope st-lead"></i>
+                    {{ profile_form.email(class="st-input", placeholder="your.email@example.com", autocomplete="email", inputmode="email") }}
+                  </div>
+                  {% for err in profile_form.email.errors %}<p class="st-error">{{ err }}</p>{% endfor %}
+                </div>
+                <div class="st-field{% if profile_form.phone_number.errors %} has-error{% endif %}">
+                  {{ profile_form.phone_number.label(class="st-label") }}
+                  <div class="st-wrap">
+                    <i class="fas fa-phone st-lead"></i>
+                    {{ profile_form.phone_number(class="st-input", placeholder="+234 800 000 0000", autocomplete="tel", inputmode="tel") }}
+                  </div>
+                  {% for err in profile_form.phone_number.errors %}<p class="st-error">{{ err }}</p>{% endfor %}
                 </div>
               </div>
 
-              <div class="form-buttons" style="margin-top: 24px;">
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure? This cannot be undone!')">
-                  <i class="fas fa-trash-alt"></i> Delete My Account
-                </button>
+              <h3 class="st-sub">Address</h3>
+              <div class="st-form-grid cols-2">
+                <div class="st-field full{% if profile_form.address.errors %} has-error{% endif %}">
+                  {{ profile_form.address.label(class="st-label") }}
+                  <div class="st-wrap textarea">
+                    <i class="fas fa-house st-lead"></i>
+                    {{ profile_form.address(class="st-input", rows="2", placeholder="Enter your full home or delivery address", autocomplete="street-address") }}
+                  </div>
+                  {% for err in profile_form.address.errors %}<p class="st-error">{{ err }}</p>{% endfor %}
+                </div>
+                <div class="st-field{% if profile_form.city.errors %} has-error{% endif %}">
+                  {{ profile_form.city.label(class="st-label") }}
+                  <div class="st-wrap">
+                    <i class="fas fa-city st-lead"></i>
+                    {{ profile_form.city(class="st-input", placeholder="City", autocomplete="address-level2") }}
+                  </div>
+                  {% for err in profile_form.city.errors %}<p class="st-error">{{ err }}</p>{% endfor %}
+                </div>
+                <div class="st-field{% if profile_form.state.errors %} has-error{% endif %}">
+                  {{ profile_form.state.label(class="st-label") }}
+                  <div class="st-wrap">
+                    <i class="fas fa-flag st-lead"></i>
+                    {{ profile_form.state(class="st-input", autocomplete="address-level1") }}
+                  </div>
+                  {% for err in profile_form.state.errors %}<p class="st-error">{{ err }}</p>{% endfor %}
+                </div>
               </div>
+
+              <div class="st-savebar">
+                <div class="st-actions">
+                  <button type="button" class="st-btn ghost" id="cancelProfileEditBtn"><i class="fas fa-xmark"></i> Cancel</button>
+                  <button type="submit" class="st-btn primary"><i class="fas fa-floppy-disk"></i> Save changes</button>
+                </div>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <!-- Password -->
+        <section class="st-panel" data-panel="password" aria-label="Change password">
+          <div class="st-card">
+            <div class="st-card-head">
+              <div>
+                <h2>Change password</h2>
+                <p>Use a strong password you don't use anywhere else.</p>
+              </div>
+              <span class="st-ico"><i class="fas fa-key"></i></span>
             </div>
+
+            <form method="POST" id="passwordForm" data-remember="password">
+              <input type="hidden" name="form_type" value="password">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+              <div class="st-callout" style="margin-bottom:18px">
+                <i class="fas fa-circle-info"></i>
+                <span>Password must be at least 8 characters long.</span>
+              </div>
+
+              <div class="st-form-grid">
+                <div class="st-field">
+                  <label class="st-label" for="current_password">Current password</label>
+                  <div class="st-wrap has-eye">
+                    <i class="fas fa-lock st-lead"></i>
+                    <input type="password" id="current_password" name="current_password" class="st-input" placeholder="Enter your current password" autocomplete="current-password" required>
+                    <button type="button" class="st-eye" aria-label="Show password" aria-pressed="false"><i class="fas fa-eye"></i></button>
+                  </div>
+                </div>
+
+                <div class="st-field">
+                  <label class="st-label" for="new_password">New password</label>
+                  <div class="st-wrap has-eye">
+                    <i class="fas fa-key st-lead"></i>
+                    <input type="password" id="new_password" name="new_password" class="st-input" placeholder="Enter new password" autocomplete="new-password" required minlength="8">
+                    <button type="button" class="st-eye" aria-label="Show password" aria-pressed="false"><i class="fas fa-eye"></i></button>
+                  </div>
+                  <div class="st-meter" id="pwMeter" data-level="0" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                  <p class="st-meter-text" id="pwMeterText" aria-live="polite"></p>
+                </div>
+
+                <div class="st-field">
+                  <label class="st-label" for="confirm_password">Confirm new password</label>
+                  <div class="st-wrap has-eye">
+                    <i class="fas fa-check-double st-lead"></i>
+                    <input type="password" id="confirm_password" name="confirm_password" class="st-input" placeholder="Confirm new password" autocomplete="new-password" required minlength="8">
+                    <button type="button" class="st-eye" aria-label="Show password" aria-pressed="false"><i class="fas fa-eye"></i></button>
+                  </div>
+                  <p class="st-help-text" id="pwMatchText" aria-live="polite"></p>
+                </div>
+              </div>
+
+              <div class="st-actions">
+                <button type="submit" class="st-btn primary"><i class="fas fa-key"></i> Update password</button>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
-    </div>
-      </div>
+        </section>
+
+        <!-- Verification -->
+        <section class="st-panel" data-panel="verification" aria-label="Identity verification">
+          <div class="st-card">
+            <div class="st-card-head">
+              <div>
+                <h2>Identity details</h2>
+                <p>We verify your identity to keep every trade accountable.</p>
+              </div>
+              <span class="st-ico"><i class="fas fa-id-card"></i></span>
+            </div>
+
+            {% if id_done %}
+              <div class="st-status">
+                <span class="st-ico"><i class="fas fa-check"></i></span>
+                <div>
+                  <strong>Submitted</strong>
+                  <p>Your NIN and government ID have been submitted and added to your account records.</p>
+                </div>
+              </div>
+            {% else %}
+              <form method="POST" enctype="multipart/form-data" data-remember="verification">
+                <input type="hidden" name="form_type" value="identity_verification">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="st-form-grid">
+                  <div class="st-field">
+                    <label class="st-label" for="nin">National Identity Number (NIN)</label>
+                    <div class="st-wrap">
+                      <i class="fas fa-fingerprint st-lead"></i>
+                      <input type="text" id="nin" name="nin" class="st-input" placeholder="Enter your NIN" maxlength="20" inputmode="numeric" autocomplete="off" required>
+                    </div>
+                  </div>
+
+                  <div class="st-field">
+                    <span class="st-label">Government ID card</span>
+                    <label class="st-drop" id="governmentIdLabel" for="government_id">
+                      <i class="fas fa-id-card" id="governmentIdIcon"></i>
+                      <strong id="governmentIdLabelText">Tap to upload your government ID</strong>
+                      <span>JPG, JPEG, PNG or PDF &bull; max 10MB</span>
+                      <input type="file" id="government_id" name="government_id" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" required>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="st-actions">
+                  <button type="submit" class="st-btn primary"><i class="fas fa-circle-check"></i> Submit for verification</button>
+                </div>
+              </form>
+            {% endif %}
+          </div>
+        </section>
+
+        <!-- Delete account -->
+        <section class="st-panel" data-panel="delete" aria-label="Delete account">
+          <div class="st-card st-danger">
+            <div class="st-card-head">
+              <div>
+                <h2>Delete account</h2>
+                <p>Permanent account deletion</p>
+              </div>
+              <span class="st-ico" style="background:var(--st-danger-soft);color:var(--st-danger)"><i class="fas fa-triangle-exclamation"></i></span>
+            </div>
+
+            <form method="POST" id="deleteForm" data-remember="delete" data-username="{{ current_user.username }}">
+              <input type="hidden" name="form_type" value="delete">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+              <p>Deleting your account is <strong>permanent and cannot be undone</strong>. All your:</p>
+              <ul class="st-list" style="margin:10px 0 12px">
+                <li>Profile information and settings</li>
+                <li>Uploaded items</li>
+                <li>Trading history</li>
+                <li>Orders and transactions</li>
+                <li>Notifications</li>
+              </ul>
+              <p>will be <strong>permanently deleted</strong> from our system.</p>
+
+              <div class="st-callout warn" style="margin-top:16px">
+                <i class="fas fa-circle-info"></i>
+                <span><strong>Before you delete:</strong> make sure you've settled all your trades and orders. Once deleted, we cannot recover your data.</span>
+              </div>
+
+              <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--st-border)">
+                <label class="st-check" for="confirm_delete">
+                  <input type="checkbox" id="confirm_delete" name="confirm_delete" required>
+                  <span>I understand this action is permanent and cannot be undone</span>
+                </label>
+
+                <div class="st-field" style="margin-top:14px">
+                  <label class="st-label" for="confirm_username">Type your username to confirm (<strong>{{ current_user.username }}</strong>)</label>
+                  <div class="st-wrap">
+                    <i class="fas fa-user st-lead"></i>
+                    <input type="text" id="confirm_username" name="confirm_username" class="st-input" placeholder="Type your username here" autocomplete="off" autocapitalize="off" required>
+                  </div>
+                </div>
+
+                <div class="st-actions">
+                  <button type="submit" class="st-btn danger" id="deleteBtn" disabled><i class="fas fa-trash-alt"></i> Delete my account</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+      </main>
     </div>
   </div>
 </div>
-
-<script>
-  function switchTab(tabName, event) {
-    event.preventDefault();
-
-    // Hide all tabs
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => tab.classList.remove('active'));
-
-    // Remove active class from all buttons
-    const buttons = document.querySelectorAll('.tab-button');
-    buttons.forEach(btn => btn.classList.remove('active'));
-
-    // Show selected tab
-    document.getElementById(tabName).classList.add('active');
-
-    // Add active class to clicked button
-    event.target.closest('.tab-button').classList.add('active');
-
-    // Close sidebar on mobile after tab click
-    closeSidebar();
-  }
-
-  // Toggle between read-only profile view and the editable form
-  document.addEventListener('DOMContentLoaded', function() {
-    const viewMode = document.getElementById('profileViewMode');
-    const editForm = document.getElementById('profileEditForm');
-    const editBtn = document.getElementById('editProfileBtn');
-    const cancelBtn = document.getElementById('cancelProfileEditBtn');
-
-    editBtn?.addEventListener('click', function() {
-      viewMode.style.display = 'none';
-      editForm.style.display = '';
-    });
-
-    cancelBtn?.addEventListener('click', function() {
-      editForm.style.display = 'none';
-      viewMode.style.display = '';
-    });
-
-    // Auto-upload the profile photo as soon as one is chosen
-    const avatarInput = document.getElementById('avatarFileInput');
-    avatarInput?.addEventListener('change', function() {
-      const file = avatarInput.files[0];
-      if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        alert('Please choose an image file (PNG, JPG, GIF or WEBP).');
-        avatarInput.value = '';
-        return;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Image is too large. Please choose one under 10MB.');
-        avatarInput.value = '';
-        return;
-      }
-
-      if (typeof showLoading === 'function') showLoading('Uploading your photo...');
-      document.getElementById('avatarUploadForm').submit();
-    });
-  });
-
-  function toggleSidebar() {
-    const sidebar = document.querySelector('.settings-sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-
-    sidebar.classList.toggle('show');
-    overlay.classList.toggle('show');
-    hamburgerBtn.classList.toggle('active');
-  }
-
-  function closeSidebar() {
-    const sidebar = document.querySelector('.settings-sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-
-    sidebar.classList.remove('show');
-    overlay.classList.remove('show');
-    hamburgerBtn.classList.remove('active');
-  }
-
-  function backToMenu(event) {
-    event.preventDefault();
-    // No longer needed - sidebar is still accessible via hamburger menu
-  }
-
-  // Show hamburger menu on mobile
-  function initializeSidebar() {
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const isMobile = window.innerWidth <= 768;
-    
-    if (isMobile) {
-      hamburgerBtn.style.display = 'flex';
-    } else {
-      hamburgerBtn.style.display = 'none';
-      closeSidebar();
-    }
-  }
-
-  // Handle window resize
-  window.addEventListener('resize', function() {
-    initializeSidebar();
-  });
-
-  // Add focus state to inputs
-  document.addEventListener('DOMContentLoaded', function() {
-    initializeSidebar();
-
-    const inputs = document.querySelectorAll('.form-control');
-    inputs.forEach(input => {
-      input.addEventListener('focus', function() {
-        this.closest('.input-wrapper').classList.add('focused');
-      });
-      input.addEventListener('blur', function() {
-        this.closest('.input-wrapper').classList.remove('focused');
-      });
-    });
-  });
-
-  // Dark Mode Toggle Handler
-  document.addEventListener('DOMContentLoaded', function() {
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    
-    if (darkModeToggle) {
-      // Wait for darkModeManager to be available
-      const checkManager = setInterval(() => {
-        if (window.darkModeManager) {
-          clearInterval(checkManager);
-          setupToggle();
-        }
-      }, 100);
-      
-      // Fallback if manager is already available
-      if (window.darkModeManager) {
-        setupToggle();
-      }
-      
-      function setupToggle() {
-        // Update button icon based on current mode
-        function updateToggleIcon() {
-          const icon = darkModeToggle.querySelector('i');
-          if (document.documentElement.classList.contains('dark-mode')) {
-            icon.classList.remove('fa-moon');
-            icon.classList.add('fa-sun');
-          } else {
-            icon.classList.remove('fa-sun');
-            icon.classList.add('fa-moon');
-          }
-        }
-        
-        // Initial icon update
-        updateToggleIcon();
-        
-        // Toggle dark mode on button click
-        darkModeToggle.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          if (window.darkModeManager) {
-            window.darkModeManager.toggle();
-            updateToggleIcon();
-            console.log('Dark mode toggled from settings:', window.darkModeManager.getMode());
-          }
-        });
-      }
-    }
-  });
-</script>
-
 {% endblock %}

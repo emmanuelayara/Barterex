@@ -19,10 +19,11 @@
 <meta name="twitter:title" content="{{ item.name }} - Barter Express">
 <meta name="twitter:description" content="{{ og_description }}">
 <meta name="twitter:image" content="{{ og_image_url }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/item_detail.css') }}">
 {% endblock %}
 
 {% block content %}
-<style>
+<style media="not all">
   * {
     box-sizing: border-box;
     margin: 0;

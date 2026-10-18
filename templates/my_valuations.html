@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}My Valuations{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">{% endblock %}
 {% block content %}
-<style>
+<style media="not all">
   .page-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
@@ -254,10 +256,11 @@
   }
 </style>
 
-<div class="page-container">
+<div class="page-container mp">
   <input type="hidden" id="globalCsrfToken" value="{{ csrf_token() }}">
   <div class="main-content">
     <div class="page-header">
+      {{ fx.floaters('banner') }}
       <h1 class="page-title">📊 My Valuations</h1>
       <p class="page-subtitle">Discover what your items are worth - no commitment until you choose to trade them.</p>
     </div>

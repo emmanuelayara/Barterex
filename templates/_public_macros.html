@@ -1,0 +1,34 @@
+{# Shared building blocks for the public pages (see static/css/public-pages.css). #}
+{% from '_floaters.html' import floaters %}
+
+{% macro assets() %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/public-pages.css') }}">
+<script src="{{ url_for('static', filename='js/public-pages.js') }}" defer></script>
+{% endmacro %}
+
+{% macro hero(icon, kicker, title, subtitle) %}
+<header class="pp-hero">
+    {{ floaters('banner') }}
+    <div class="pp-hero-inner">
+        <span class="pp-kicker"><i class="{{ icon }}"></i> {{ kicker }}</span>
+        <h1>{{ title }}</h1>
+        {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+        {{ caller() if caller else '' }}
+    </div>
+</header>
+{% endmacro %}
+
+{% macro explore(current) %}
+<nav class="pp-explore" aria-label="More about Barter Express">
+    <h2>Explore</h2>
+    <ul>
+        <li><a href="{{ url_for('marketplace.about') }}" {% if current == 'about' %}aria-current="page"{% endif %}><i class="fas fa-circle-info"></i> About</a></li>
+        <li><a href="{{ url_for('marketplace.how_it_works') }}" {% if current == 'how' %}aria-current="page"{% endif %}><i class="fas fa-route"></i> How it works</a></li>
+        <li><a href="{{ url_for('marketplace.safety') }}" {% if current == 'safety' %}aria-current="page"{% endif %}><i class="fas fa-shield-halved"></i> Safety</a></li>
+        <li><a href="{{ url_for('marketplace.faq') }}" {% if current == 'faq' %}aria-current="page"{% endif %}><i class="fas fa-circle-question"></i> FAQ</a></li>
+        <li><a href="{{ url_for('marketplace.contact') }}" {% if current == 'contact' %}aria-current="page"{% endif %}><i class="fas fa-headset"></i> Contact</a></li>
+        <li><a href="{{ url_for('marketplace.terms') }}" {% if current == 'terms' %}aria-current="page"{% endif %}><i class="fas fa-file-contract"></i> Terms</a></li>
+        <li><a href="{{ url_for('marketplace.privacy') }}" {% if current == 'privacy' %}aria-current="page"{% endif %}><i class="fas fa-user-shield"></i> Privacy</a></li>
+    </ul>
+</nav>
+{% endmacro %}

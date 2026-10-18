@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% import '_floaters.html' as fx %}
 {% block title %}Marketplace{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/marketplace.css') }}">{% endblock %}
 
 {% block content %}
-<style>
+<style media="not all">
   /* CSS remains the same - keeping your brand colors and styling */
   :root {
     --primary-color: #ff7a00;
@@ -1576,7 +1578,7 @@
 <div class="marketplace-page">
   <div class="marketplace-container">
     <div class="marketplace-header">
-      <h1>🛒 Explore the Marketplace</h1>
+      {{ fx.floaters('banner') }}      <h1>🛒 Explore the Marketplace</h1>
       <strong><p>1 ᗸXC = 1 ₦aira</p></strong>
     </div>
 
@@ -1717,7 +1719,7 @@
 
     <div class="results-info">
       <div class="results-count">
-        <strong>{{ items.total }}</strong> items found
+        <strong>{{ items|length }}</strong> items found
         {% if request.args.get('search') or request.args.get('condition') or request.args.get('category') or request.args.get('state') or request.args.get('price_range') or request.args.get('min_price') or request.args.get('max_price') %}
           • Filtered results
         {% endif %}

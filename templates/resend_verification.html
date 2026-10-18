@@ -1,105 +1,56 @@
 {% extends 'base.html' %}
-
+{% import '_floaters.html' as fx %}
 {% block title %}Resend Verification Email - Barter Express{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+<script src="{{ url_for('static', filename='js/auth.js') }}" defer></script>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-lg">
-                <div class="card-header bg-orange text-white">
-                    <h2 class="mb-0">
-                        <i class="fas fa-envelope"></i> Resend Verification Email
-                    </h2>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted mb-4">
-                        Don't see the verification email? Enter your email address and we'll send you a new link.
-                    </p>
+<div class="au">
+  <div class="au-grid">
 
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category if category != 'warning' else 'warning' }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
+    <aside class="au-side">
+      {{ fx.floaters('panel') }}
+      <span class="au-kicker"><i class="fas fa-envelope-circle-check"></i> Verify your email</span>
+      <h1>Resend verification email</h1>
+      <p>Don't see the verification email? Enter your email address and we'll send you a new link.</p>
+    </aside>
 
-                    <form method="POST" class="mt-4">
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <input 
-                                type="email" 
-                                class="form-control" 
-                                id="email" 
-                                name="email" 
-                                value="{{ email }}"
-                                placeholder="Enter your email address"
-                                required
-                            >
-                            <small class="text-muted d-block mt-2">
-                                We'll send a new verification link to this email.
-                            </small>
-                        </div>
+    <main class="au-card">
+      <div class="au-card-head">
+        <h2>Send a new link</h2>
+        <p>We'll send a new verification link to this email.</p>
+      </div>
 
-                        <button type="submit" class="btn btn-orange w-100 btn-lg">
-                            <i class="fas fa-paper-plane"></i> Resend Verification Email
-                        </button>
-                    </form>
+      <form method="POST" data-auth-form data-busy="Sending..." novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                    <div class="alert alert-info mt-4" role="alert">
-                        <strong>💡 Tip:</strong> Check your spam or junk folder if you don't see the email.
-                        <br>
-                        <strong>Also try:</strong> Make sure to check promotions/updates tabs in Gmail.
-                    </div>
-
-                    <hr>
-                    <p class="text-center text-muted small">
-                        Already verified? <a href="{{ url_for('auth.login') }}">Go to Login</a>
-                        <br>
-                        Don't have an account? <a href="{{ url_for('auth.register') }}">Register Here</a>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Security Info -->
-            <div class="alert alert-light border border-secondary mt-3">
-                <h5 class="mb-3">ℹ️ Why Email Verification?</h5>
-                <ul class="mb-0 small">
-                    <li>✓ Keeps your account secure</li>
-                    <li>✓ Ensures we can reach you about your trades</li>
-                    <li>✓ Prevents fake accounts and spam</li>
-                    <li>✓ Enables account recovery if needed</li>
-                </ul>
-            </div>
+        <div class="au-field">
+          <label class="au-label" for="email">Email address</label>
+          <div class="au-wrap">
+            <i class="fas fa-envelope au-lead"></i>
+            <input type="email" class="au-input" id="email" name="email" value="{{ email }}" placeholder="Enter your email address" autocomplete="email" inputmode="email" autocapitalize="off" required>
+          </div>
+          <p class="au-error" data-client></p>
         </div>
-    </div>
-</div>
 
-<style>
-    .bg-orange {
-        background: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%) !important;
-    }
-    
-    .btn-orange {
-        background: linear-gradient(135deg, #ff7a00 0%, #ff9500 100%);
-        color: white;
-        border: none;
-        font-weight: 600;
-        transition: transform 0.2s;
-    }
-    
-    .btn-orange:hover {
-        color: white;
-        transform: scale(1.02);
-    }
-    
-    .card {
-        border-radius: 12px;
-        overflow: hidden;
-    }
-</style>
+        <button type="submit" class="au-btn"><i class="fas fa-paper-plane"></i> Resend verification email</button>
+      </form>
+
+      <div class="au-callout info" style="margin-top:20px;margin-bottom:0">
+        <i class="fas fa-lightbulb"></i>
+        <div>
+          <strong>Tip:</strong> check your spam or junk folder if you don't see the email. In Gmail, also look in the Promotions and Updates tabs.
+        </div>
+      </div>
+
+      <div class="au-alt">
+        <p>Already verified? <a href="{{ url_for('auth.login') }}">Go to login</a></p>
+        <p style="margin-top:6px">Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
+      </div>
+    </main>
+
+  </div>
+</div>
 {% endblock %}

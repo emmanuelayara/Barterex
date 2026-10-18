@@ -1,18 +1,17 @@
 {% extends "base.html" %}
+{% import '_floaters.html' as fx %}
 
 {% block title %}My Wishlists - Barter Express{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/wishlist.css') }}">{% endblock %}
 
 {% block content %}
 <div class="wishlist-manage-container">
   <!-- Header Section -->
   <div class="wishlist-header">
-    <div class="header-content">
+    {{ fx.floaters('banner') }}    <div class="header-content">
       <h1>My Wishlists</h1>
       <p class="subtitle">Monitor items you're searching for and manage your preferences</p>
     </div>
-    <button class="btn-primary" id="addWishlistBtn">
-      <span class="icon">+</span> Add Wishlist
-    </button>
   </div>
 
   <!-- Wishlists Grid -->
@@ -284,7 +283,7 @@
   </div>
 </div>
 
-<style>
+<style media="not all">
   .wishlist-manage-container {
     padding: 2rem;
     max-width: 1200px;

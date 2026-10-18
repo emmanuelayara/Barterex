@@ -1,278 +1,94 @@
 {% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
 {% block title %}Safety Tips - Barter Express{% endblock %}
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
 
 {% block content %}
-<head>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .safety-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
-
-        .hero-section {
-            text-align: center;
-            margin-bottom: 5rem;
-            position: relative;
-        }
-
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: -2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 4px;
-            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-            border-radius: 2px;
-        }
-
-        .hero-section h1 {
-            color: #054e97;
-            font-size: 3.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-            position: relative;
-        }
-
-        .hero-section .subtitle {
-            color: #666;
-            font-size: 1.3rem;
-            max-width: 700px;
-            margin: 0 auto;
-            font-weight: 300;
-        }
-
-        .safety-section {
-            background: white;
-            margin-bottom: 3rem;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
-            border: 1px solid rgba(255, 122, 0, 0.1);
-            position: relative;
-        }
-
-        .safety-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-        }
-
-        .section-header {
-            background: linear-gradient(135deg, #054e97 0%, #0a6bb8 100%);
-            color: white;
-            padding: 2rem 3rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .section-header i {
-            font-size: 2.5rem;
-            opacity: 0.9;
-        }
-
-        .section-header h2 {
-            margin: 0;
-            font-size: 2rem;
-        }
-
-        .section-content {
-            padding: 3rem;
-        }
-
-        .safety-tip {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background: #f9fafb;
-            border-left: 4px solid #ff7a00;
-            border-radius: 8px;
-        }
-
-        .safety-tip h3 {
-            color: #054e97;
-            margin-bottom: 0.5rem;
-        }
-
-        .safety-tip p {
-            color: #666;
-            line-height: 1.8;
-        }
-
-        .checklist {
-            list-style: none;
-        }
-
-        .checklist li {
-            padding: 0.75rem 0;
-            padding-left: 2rem;
-            position: relative;
-            color: #666;
-        }
-
-        .checklist li:before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: #ff7a00;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .warning-box {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 8px;
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-
-        .warning-box i {
-            color: #ff7a00;
-            font-size: 1.5rem;
-            margin-right: 1rem;
-        }
-
-        .warning-box h3 {
-            color: #054e97;
-            margin-bottom: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .safety-container {
-                padding: 2rem 1rem;
-            }
-
-            .hero-section h1 {
-                font-size: 2.5rem;
-            }
-
-            .section-header {
-                padding: 1.5rem;
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .section-content {
-                padding: 1.5rem;
-            }
-
-            .safety-tip {
-                padding: 1rem;
-                margin-bottom: 1.5rem;
-            }
-        }
-    </style>
-</head>
-
-<div class="safety-container">
-    <div class="hero-section">
-        <h1>Safety Guidelines</h1>
-        <p class="subtitle">How to stay safe while trading on Barter Express</p>
+<div class="pp">
+    {% call pp.hero('fas fa-shield-halved', 'Safety guidelines', 'Trade with confidence', 'How to stay safe while trading on Barter Express.') %}
+    <div class="pp-actions">
+        <a class="pp-btn primary" href="{{ url_for('marketplace.contact') }}"><i class="fas fa-flag"></i> Report a concern</a>
     </div>
+    {% endcall %}
 
-    <!-- Before Trading -->
-    <div class="safety-section">
-        <div class="section-header">
-            <i class="fas fa-shield-alt"></i>
-            <h2>Before Trading</h2>
-        </div>
-        <div class="section-content">
-            <div class="safety-tip">
-                <h3>Verified User Accounts</h3>
-                <p>All Barter Express users undergo identity verification before they can trade. We verify government-issued IDs and cross-check information to prevent fraud and ensure accountability.</p>
+    <main class="pp-main pp-stack">
+        <section class="pp-card pp-reveal">
+            <div class="pp-section-head">
+                <span class="pp-icon green"><i class="fas fa-user-check"></i></span>
+                <h2>Before trading</h2>
             </div>
-
-            <div class="safety-tip">
-                <h3>Item Verification & Approval</h3>
-                <p>Every item is physically verified by our team before an exchange is finalized. We verify item authenticity, condition, and accuracy of descriptions. Until then, your item stays with you, and only items that pass verification can be exchanged.</p>
+            <div class="pp-grid cols-2">
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Verified user accounts</h3>
+                    <p>All Barter Express users undergo identity verification before they can trade. We verify government-issued IDs and cross-check information to prevent fraud and ensure accountability.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Item verification &amp; approval</h3>
+                    <p>Every item is physically verified by our team before an exchange is finalized. We verify item authenticity, condition, and accuracy of descriptions. Until then, your item stays with you, and only items that pass verification can be exchanged.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Fair valuations</h3>
+                    <p>Our AI-powered valuation system analyzes item images and descriptions to provide market value estimates. Our professional appraisers review valuations, and physical verification confirms the item matches what was described, to prevent disputes over item value.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Secure BXC system</h3>
+                    <p>Your ᗸ BXC (Barter Express Credits) balance is a platform credit, not cash or a bank deposit. BXC can only be used through our platform. All credit movements are recorded and traceable.</p>
+                </div>
             </div>
+        </section>
 
-            <div class="safety-tip">
-                <h3>Fair Valuations</h3>
-                <p>Our AI-powered valuation system analyzes item images and descriptions to provide market value estimates. Our professional appraisers review valuations, and physical verification confirms the item matches what was described, to prevent disputes over item value.</p>
+        <section class="pp-card pp-reveal">
+            <div class="pp-section-head">
+                <span class="pp-icon blue"><i class="fas fa-box-open"></i></span>
+                <h2>Secure verification &amp; handover</h2>
             </div>
-
-            <div class="safety-tip">
-                <h3>Secure BXC System</h3>
-                <p>Your ᗸ BXC (Barter Express Credits) balance is a platform credit, not cash or a bank deposit. BXC can only be used through our platform. All credit movements are recorded and traceable.</p>
+            <div class="pp-grid cols-2">
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">You keep your items until verification</h3>
+                    <p>Barter Express does not store or hold your items while they are valued or listed. Items are handed over only when a reservation requires physical verification, within the 72-hour settlement window.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Pickup station or home service</h3>
+                    <p>Verify at one of our pickup stations at no charge, or choose the home service. The home-service fee is quoted upfront, paid by you, and non-refundable. You never need to contact other users to arrange handover.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Item insurance</h3>
+                    <p>Items in transit through our courier partners are insured. If an item is lost or damaged during courier delivery, you receive compensation.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Delivery confirmation</h3>
+                    <p>You'll receive notifications at each stage of verification and delivery. Confirm receipt in the app to complete your exchange. Disputes can be filed if items don't match descriptions.</p>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- Platform-Managed Delivery -->
-    <div class="safety-section">
-        <div class="section-header">
-            <i class="fas fa-truck"></i>
-            <h2>Secure Verification &amp; Handover</h2>
-        </div>
-        <div class="section-content">
-            <div class="safety-tip">
-                <h3>You Keep Your Items Until Verification</h3>
-                <p>Barter Express does not store or hold your items while they are valued or listed. Items are handed over only when a reservation requires physical verification, within the 72-hour settlement window.</p>
+        <section class="pp-card pp-reveal">
+            <div class="pp-section-head">
+                <span class="pp-icon"><i class="fas fa-coins"></i></span>
+                <h2>Credits &amp; payments</h2>
             </div>
-
-            <div class="safety-tip">
-                <h3>Pickup Station or Home Service</h3>
-                <p>Verify at one of our pickup stations at no charge, or choose the home service. The home-service fee is quoted upfront, paid by you, and non-refundable. You never need to contact other users to arrange handover.</p>
+            <div class="pp-grid cols-3">
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Verified BXC</h3>
+                    <p>BXC earned from a valuation are provisional. They can be used only to reserve items, and are confirmed once your item passes physical verification. BXC cannot be refunded to external accounts - they can only be used on Barter Express.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Reserved BXC</h3>
+                    <p>When you reserve an item, the BXC involved are reserved against that trade. They are released or applied depending on the outcome of verification. If there's a dispute, our support team can mediate and adjust BXC if needed.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">No wire transfers to individuals</h3>
+                    <p>Barter Express never asks you to send money to individuals or to pay anyone other than the company. Exchanges are settled in BXC. The only cash payments are the ₦100 fee for valuations beyond your daily free one and the optional home-service fee, both paid on the platform, and the transaction fee on completed exchanges, which is never deducted automatically and is paid directly to the company at our office by bank transfer or other available methods.</p>
+                </div>
             </div>
+        </section>
 
-            <div class="safety-tip">
-                <h3>Item Insurance</h3>
-                <p>Items in transit through our courier partners are insured. If an item is lost or damaged during courier delivery, you receive compensation.</p>
+        <section class="pp-card pp-reveal">
+            <div class="pp-section-head">
+                <span class="pp-icon blue"><i class="fas fa-lock"></i></span>
+                <h2>Account security</h2>
             </div>
-
-            <div class="safety-tip">
-                <h3>Delivery Confirmation</h3>
-                <p>You'll receive notifications at each stage of verification and delivery. Confirm receipt in the app to complete your exchange. Disputes can be filed if items don't match descriptions.</p>
-            </div>
-        </div>
-
-            <div class="safety-tip">
-                <h3>Verified BXC</h3>
-                <p>BXC earned from a valuation are provisional. They can be used only to reserve items, and are confirmed once your item passes physical verification. BXC cannot be refunded to external accounts - they can only be used on Barter Express.</p>
-            </div>
-
-            <div class="safety-tip">
-                <h3>Reserved BXC</h3>
-                <p>When you reserve an item, the BXC involved are reserved against that trade. They are released or applied depending on the outcome of verification. If there's a dispute, our support team can mediate and adjust BXC if needed.</p>
-            </div>
-
-            <div class="safety-tip">
-                <h3>No Wire Transfers</h3>
-                <p>Barter Express never asks you to send money to individuals or to pay anyone other than the company. Exchanges are settled in BXC. The only cash payments are the ₦100 fee for valuations beyond your daily free one and the optional home-service fee, both paid on the platform, and the transaction fee on completed exchanges, which is never deducted automatically and is paid directly to the company at our office by bank transfer or other available methods.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Account Security -->
-    <div class="safety-section">
-        <div class="section-header">
-            <i class="fas fa-key"></i>
-            <h2>Account Security</h2>
-        </div>
-        <div class="section-content">
-            <ul class="checklist">
+            <ul class="pp-checks small">
                 <li>Use a strong, unique password</li>
                 <li>Enable two-factor authentication on your account</li>
                 <li>Never share your password with anyone</li>
@@ -283,37 +99,37 @@
                 <li>Report suspicious login attempts immediately</li>
                 <li>Verify email addresses that contact you from the platform</li>
             </ul>
-        </div>
-    </div>
+        </section>
 
-    <!-- Reporting Issues -->
-    <div class="safety-section">
-        <div class="section-header">
-            <i class="fas fa-exclamation-circle"></i>
-            <h2>Report Suspicious Activity</h2>
-        </div>
-        <div class="section-content">
-            <div class="safety-tip">
-                <h3>Report Fraudulent Listings</h3>
-                <p>If you encounter suspicious behavior, false listings, or concerning users, use the report feature. Provide details about the concerning activity and our moderation team will investigate.</p>
+        <section class="pp-card pp-reveal">
+            <div class="pp-section-head">
+                <span class="pp-icon"><i class="fas fa-triangle-exclamation"></i></span>
+                <h2>Report suspicious activity</h2>
             </div>
+            <div class="pp-grid cols-2">
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Report fraudulent listings</h3>
+                    <p>If you encounter suspicious behavior, false listings, or concerning users, use the report feature. Provide details about the concerning activity and our moderation team will investigate.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Contact support immediately</h3>
+                    <p>Report scams, harassment, fraudulent items, or safety concerns to our support team right away. We take these matters seriously and investigate promptly.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Transaction issues</h3>
+                    <p>Dispute any transaction where the item doesn't match its description or doesn't arrive. Our support team will review verification and delivery records and may compensate you, adjust your BXC, or reverse the exchange.</p>
+                </div>
+                <div class="pp-tile">
+                    <h3 style="margin-top:0">Community standards</h3>
+                    <p>Help keep Barter Express safe by reporting abusive users, suspicious behavior, and policy violations. Our moderation team acts swiftly on credible reports.</p>
+                </div>
+            </div>
+            <div class="pp-actions" style="margin-top:18px">
+                <a href="{{ url_for('marketplace.contact') }}" class="pp-btn primary"><i class="fas fa-headset"></i> Contact support</a>
+            </div>
+        </section>
 
-            <div class="safety-tip">
-                <h3>Contact Support Immediately</h3>
-                <p>Report scams, harassment, fraudulent items, or safety concerns to our support team right away. We take these matters seriously and investigate promptly.</p>
-            </div>
-
-            <div class="safety-tip">
-                <h3>Transaction Issues</h3>
-                <p>Dispute any transaction where the item doesn't match its description or doesn't arrive. Our support team will review verification and delivery records and may compensate you, adjust your BXC, or reverse the exchange.</p>
-            </div>
-
-            <div class="safety-tip">
-                <h3>Community Standards</h3>
-                <p>Help keep Barter Express safe by reporting abusive users, suspicious behavior, and policy violations. Our moderation team acts swiftly on credible reports.</p>
-            </div>
-        </div>
-    </div>
+        {{ pp.explore('safety') }}
+    </main>
 </div>
-
 {% endblock %}

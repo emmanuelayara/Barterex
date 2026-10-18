@@ -1,42 +1,57 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}Revaluation Proposals{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <h1>Reservation revaluation proposals</h1>
-  <p>Both the buyer and the requested item's owner must accept a revised value within 24 hours.</p>
-  {% if proposals %}
-    {% for proposal in proposals %}
-      {% set reservation = proposal.reservation %}
-      {% set is_buyer = current_user.id == reservation.user_id %}
-      {% set my_decision = proposal.buyer_decision if is_buyer else proposal.seller_decision %}
-      <section class="card mb-3 p-3">
-        <h2 class="h5">{{ proposal.item.name if proposal.item else 'Item removed' }}</h2>
-        <p>
-          Reservation #{{ reservation.id }} · {{ 'Buyer' if is_buyer else 'Requested-item owner' }}
-          · ᗸ{{ '{:,.0f}'.format(proposal.original_value) }} → ᗸ{{ '{:,.0f}'.format(proposal.proposed_value) }}
-        </p>
-        {% if proposal.reservation_asset_id %}
-          <p>Declining keeps this backing item yours and gives it zero BXC value in this reservation; any shortfall must be covered for the reservation to proceed.</p>
-        {% else %}
-          <p>Declining this requested-item price cancels the reservation; the buyer will be asked again before any passed backing items transfer.</p>
-        {% endif %}
-        <p>
-          Your decision: {{ my_decision }} · Other party:
-          {{ proposal.seller_decision if is_buyer else proposal.buyer_decision }}
-          · Respond by {{ proposal.decision_expires_at.strftime('%b %d, %Y %I:%M %p') }}
-        </p>
-        {% if my_decision == 'pending' %}
-          <form method="POST" action="{{ url_for('user.respond_to_reservation_revaluation', reservation_id=reservation.id, revaluation_id=proposal.id) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <button type="submit" name="decision" value="accept" class="btn btn-success">Accept revised value</button>
-            <button type="submit" name="decision" value="decline" class="btn btn-outline-danger">Decline</button>
-          </form>
-        {% endif %}
-      </section>
-    {% endfor %}
-  {% else %}
-    <div class="alert alert-info">You have no pending reservation revaluation proposals.</div>
-  {% endif %}
-  <a href="{{ url_for('user.my_reservations') }}">View my reservations</a>
+<div class="page-container mp">
+  <div class="main-content">
+    <div class="page-header">
+      {{ fx.floaters('banner') }}
+      <h1 class="page-title">Revaluation proposals</h1>
+      <p class="page-subtitle">Both the buyer and the requested item's owner must accept a revised value within 24 hours.</p>
+    </div>
+
+    {% if proposals %}
+      <div class="rv-list">
+        {% for proposal in proposals %}
+          {% set reservation = proposal.reservation %}
+          {% set is_buyer = current_user.id == reservation.user_id %}
+          {% set my_decision = proposal.buyer_decision if is_buyer else proposal.seller_decision %}
+          <section class="rv-card">
+            <h2>{{ proposal.item.name if proposal.item else 'Item removed' }}</h2>
+            <p>
+              Reservation #{{ reservation.id }} · {{ 'Buyer' if is_buyer else 'Requested-item owner' }}
+              · <strong>ᗸ{{ '{:,.0f}'.format(proposal.original_value) }} → ᗸ{{ '{:,.0f}'.format(proposal.proposed_value) }}</strong>
+            </p>
+            {% if proposal.reservation_asset_id %}
+              <p>Declining keeps this backing item yours and gives it zero BXC value in this reservation; any shortfall must be covered for the reservation to proceed.</p>
+            {% else %}
+              <p>Declining this requested-item price cancels the reservation; the buyer will be asked again before any passed backing items transfer.</p>
+            {% endif %}
+            <p>
+              Your decision: <span class="status-badge {{ 'status-pending' if my_decision == 'pending' else '' }}">{{ my_decision }}</span>
+              · Other party: <span class="status-badge">{{ proposal.seller_decision if is_buyer else proposal.buyer_decision }}</span>
+              · Respond by {{ proposal.decision_expires_at.strftime('%b %d, %Y %I:%M %p') }}
+            </p>
+            {% if my_decision == 'pending' %}
+              <form method="POST" class="rv-actions" action="{{ url_for('user.respond_to_reservation_revaluation', reservation_id=reservation.id, revaluation_id=proposal.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" name="decision" value="accept" class="trade-btn">Accept revised value</button>
+                <button type="submit" name="decision" value="decline" class="cancel-btn">Decline</button>
+              </form>
+            {% endif %}
+          </section>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🧾</div>
+        <h3 class="empty-title">No pending proposals</h3>
+        <p class="empty-description">You have no pending reservation revaluation proposals.</p>
+      </div>
+    {% endif %}
+
+    <div class="mp-back"><a href="{{ url_for('user.my_reservations') }}"><i class="fas fa-arrow-left"></i> View my reservations</a></div>
+  </div>
 </div>
 {% endblock %}

@@ -1,312 +1,185 @@
 {% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
 {% block title %}Terms of Use - Barter Express{% endblock %}
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
 
 {% block content %}
-<head>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<div class="pp">
+    {% call pp.hero('fas fa-file-contract', 'Legal', 'Terms of Use', 'Please read these terms carefully before using Barter Express.') %}
+    <p class="pp-meta">Last updated: October 18, 2026</p>
+    {% endcall %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .terms-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
-
-        .hero-section {
-            text-align: center;
-            margin-bottom: 4rem;
-            position: relative;
-        }
-
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: -2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 4px;
-            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-            border-radius: 2px;
-        }
-
-        .hero-section h1 {
-            color: #054e97;
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-            position: relative;
-        }
-
-        .hero-section p {
-            color: #666;
-            font-size: 1.1rem;
-        }
-
-        .terms-content {
-            background: white;
-            border-radius: 20px;
-            padding: 3rem;
-            box-shadow: 0 15px 50px rgba(5, 78, 151, 0.1);
-            border: 1px solid rgba(255, 122, 0, 0.1);
-            position: relative;
-        }
-
-        .terms-content::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(135deg, #ff7a00 0%, #ff9533 100%);
-        }
-
-        .terms-section {
-            margin-bottom: 3rem;
-        }
-
-        .terms-section h2 {
-            color: #054e97;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid rgba(255, 122, 0, 0.2);
-            padding-bottom: 0.5rem;
-        }
-
-        .terms-section h3 {
-            color: #0a6bb8;
-            font-size: 1.2rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .terms-section p {
-            color: #666;
-            margin-bottom: 1rem;
-            line-height: 1.8;
-        }
-
-        .terms-section ul {
-            color: #666;
-            margin-left: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .terms-section li {
-            margin-bottom: 0.75rem;
-            line-height: 1.8;
-        }
-
-        .highlight {
-            background: rgba(255, 122, 0, 0.1);
-            padding: 1.5rem;
-            border-left: 4px solid #ff7a00;
-            border-radius: 5px;
-            margin: 1.5rem 0;
-        }
-
-        .last-updated {
-            text-align: center;
-            color: #999;
-            font-size: 0.9rem;
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(5, 78, 151, 0.1);
-        }
-
-        @media (max-width: 768px) {
-            .terms-container {
-                padding: 2rem 1rem;
-            }
-
-            .hero-section h1 {
-                font-size: 2rem;
-            }
-
-            .terms-content {
-                padding: 1.5rem;
-            }
-
-            .terms-section h2 {
-                font-size: 1.3rem;
-            }
-
-            .terms-section h3 {
-                font-size: 1.1rem;
-            }
-        }
-    </style>
-</head>
-
-<div class="terms-container">
-    <div class="hero-section">
-        <h1>Terms of Use</h1>
-        <p>Please read these terms carefully before using Barter Express</p>
-    </div>
-
-    <div class="terms-content">
-        <div class="terms-section">
-            <h2>1. Agreement to Terms</h2>
-            <p>By accessing and using Barter Express, you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, you may not use the service.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>2. Use License</h2>
-            <p>Permission is granted to temporarily download one copy of the materials (information or software) on Barter Express for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
+    <main class="pp-main pp-narrow">
+        <nav class="pp-toc" aria-label="Terms sections">
             <ul>
-                <li>Modify or copy the materials</li>
-                <li>Use the materials for any commercial purpose or for any public display</li>
-                <li>Attempt to decompile or reverse engineer any software contained on the site</li>
-                <li>Remove any copyright or other proprietary notations from the materials</li>
-                <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
+                <li><a href="#t1">1. Agreement</a></li>
+                <li><a href="#t2">2. Licence</a></li>
+                <li><a href="#t3">3. Disclaimer</a></li>
+                <li><a href="#t4">4. Limitations</a></li>
+                <li><a href="#t5">5. Accuracy</a></li>
+                <li><a href="#t6">6. Links</a></li>
+                <li><a href="#t7">7. Changes</a></li>
+                <li><a href="#t8">8. Conduct</a></li>
+                <li><a href="#t9">9. Listings</a></li>
+                <li><a href="#t10">10. Exchanges &amp; fees</a></li>
+                <li><a href="#t11">11. IP</a></li>
+                <li><a href="#t12">12. Liability</a></li>
+                <li><a href="#t13">13. Indemnity</a></li>
+                <li><a href="#t14">14. Disputes</a></li>
+                <li><a href="#t15">15. Law</a></li>
+                <li><a href="#t16">16. Contact</a></li>
             </ul>
+        </nav>
+
+        <div class="pp-stack">
+            <section class="pp-card pp-legal" id="t1">
+                <h2>1. Agreement to Terms</h2>
+                <p>By accessing and using Barter Express, you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, you may not use the service.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t2">
+                <h2>2. Use License</h2>
+                <p>Permission is granted to temporarily download one copy of the materials (information or software) on Barter Express for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:</p>
+                <ul>
+                    <li>Modify or copy the materials</li>
+                    <li>Use the materials for any commercial purpose or for any public display</li>
+                    <li>Attempt to decompile or reverse engineer any software contained on the site</li>
+                    <li>Remove any copyright or other proprietary notations from the materials</li>
+                    <li>Transfer the materials to another person or "mirror" the materials on any other server</li>
+                </ul>
+            </section>
+
+            <section class="pp-card pp-legal" id="t3">
+                <h2>3. Disclaimer</h2>
+                <p>The materials on Barter Express are provided on an 'as is' basis. Barter Express makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t4">
+                <h2>4. Limitations</h2>
+                <p>In no event shall Barter Express or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on Barter Express, even if Barter Express or an authorized representative has been notified orally or in writing of the possibility of such damage.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t5">
+                <h2>5. Accuracy of Materials</h2>
+                <p>The materials appearing on Barter Express could include technical, typographical, or photographic errors. Barter Express does not warrant that any of the materials on its website are accurate, complete, or current. Barter Express may make changes to the materials contained on its website at any time without notice.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t6">
+                <h2>6. Links</h2>
+                <p>Barter Express has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by Barter Express of the site. Use of any such linked website is at the user's own risk.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t7">
+                <h2>7. Modifications</h2>
+                <p>Barter Express may revise these terms of use for its website at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of use.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t8">
+                <h2>8. User Conduct</h2>
+                <h3>You agree not to:</h3>
+                <ul>
+                    <li>Harass, abuse, or threaten other users</li>
+                    <li>Post false, inaccurate, or misleading information</li>
+                    <li>List counterfeit, stolen, or illegal items</li>
+                    <li>Attempt to manipulate the trading system or abuse the platform</li>
+                    <li>Engage in fraudulent or deceptive practices</li>
+                    <li>Share personal information of others without consent</li>
+                    <li>Spam or send unsolicited messages</li>
+                </ul>
+                <div class="pp-callout warn"><i class="fas fa-triangle-exclamation"></i><div><strong>Violation of these conduct standards may result in account suspension or permanent ban.</strong></div></div>
+            </section>
+
+            <section class="pp-card pp-legal" id="t9">
+                <h2>9. Item Listings</h2>
+                <h3>User responsibilities:</h3>
+                <ul>
+                    <li>You are responsible for the accuracy of your item descriptions</li>
+                    <li>Items must be legal to own and trade</li>
+                    <li>You must own or have rights to trade the items listed</li>
+                    <li>Prices/values must be reasonable and honestly represented</li>
+                    <li>Photos must be of the actual items being traded</li>
+                </ul>
+            </section>
+
+            <section class="pp-card pp-legal" id="t10">
+                <h2>10. Exchanges, BXC and Fees</h2>
+
+                <h3>Non-Custody Principle</h3>
+                <p>Barter Express is a valuation, verification and exchange platform. We do not take possession of, store, or hold your items while they are valued, submitted for a trade request, pre-verified, or activated on the marketplace. You keep your items, and remain responsible for them, until a reservation requires physical verification.</p>
+
+                <h3>BXC (Barter Express Credits)</h3>
+                <ul>
+                    <li>BXC are platform credits, not money, a bank deposit, or e-money. They cannot be withdrawn, refunded, or transferred to external accounts.</li>
+                    <li>BXC granted after you accept an AI valuation are provisional. They can be used only to reserve items, and are confirmed once your item passes physical verification.</li>
+                    <li>When you reserve an item, the BXC involved are reserved against that trade and are released or applied depending on the outcome of verification.</li>
+                </ul>
+
+                <h3>Reservations, Verification and Backing Assets</h3>
+                <ul>
+                    <li>When you reserve a marketplace item, you choose one or more of your own activated items as backing assets to cover its value.</li>
+                    <li>The seller's item and each backing asset must pass physical verification within the 72-hour settlement window. Failing to submit items in time, or submitting items that fail inspection, may reduce your reliability score and cancel the reservation.</li>
+                    <li>By selecting an item as a backing asset you consent to the following: once it passes physical verification, ownership of that item transfers to Barter Express and it is recorded in our inventory. Your consent is recorded at the time you confirm the reservation.</li>
+                    <li>Backing assets are locked from the marketplace and cannot back any other reservation until the reservation resolves.</li>
+                </ul>
+
+                <h3>Verification and Delivery</h3>
+                <ul>
+                    <li>Physical verification takes place at a Barter Express pickup station (free), or through the optional home service.</li>
+                    <li>The home-service fee is quoted upfront, must be paid by you before pickup and verification, and is non-refundable.</li>
+                    <li>Items in transit through our courier partners are insured under those partners' cover. Compensation for loss or damage is subject to that cover and our dispute process.</li>
+                    <li>You are responsible for the accurate condition and description of your items at the time of verification and handover.</li>
+                </ul>
+
+                <h3>Fees</h3>
+                <ul>
+                    <li>Signing up and listing items is free.</li>
+                    <li>Your first AI valuation each day is free. Each additional valuation costs ₦100.</li>
+                    <li>A transaction fee of 3% of the exchange value (minimum ₦500, maximum ₦5,000) applies only when an exchange successfully completes, not when an item is merely requested or reserved. It is not deducted automatically from your BXC or account. You pay it directly to the company at our office by bank transfer or other available payment methods.</li>
+                    <li>Fees are shown before you pay them.</li>
+                </ul>
+
+                <h3>Disputes</h3>
+                <p>Disputes should be reported within 7 days of the exchange. Barter Express will review verification and delivery records and may mediate, adjust BXC, compensate you under applicable courier cover, or reverse the exchange.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t11">
+                <h2>11. Intellectual Property Rights</h2>
+                <p>All content on Barter Express, including text, graphics, logos, images, and software, is the property of Barter Express or its content suppliers and is protected by international copyright laws.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t12">
+                <h2>12. Limitation of Liability</h2>
+                <p>In no case shall Barter Express be liable for any indirect, incidental, special, consequential, or punitive damages. This limitation applies even if Barter Express has been advised of the possibility of such damages.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t13">
+                <h2>13. Indemnification</h2>
+                <p>You agree to indemnify, defend, and hold harmless Barter Express from any claims, damages, losses, or expenses arising from your use of the website or violation of these terms.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t14">
+                <h2>14. Dispute Resolution</h2>
+                <p>Any disputes arising from use of Barter Express shall be resolved through our internal dispute resolution process first. If unresolved, disputes may be subject to arbitration or litigation as permitted by law.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t15">
+                <h2>15. Governing Law</h2>
+                <p>These terms and conditions are governed by and construed in accordance with the laws of the jurisdiction where Barter Express operates, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.</p>
+            </section>
+
+            <section class="pp-card pp-legal" id="t16">
+                <h2>16. Contact Information</h2>
+                <p>If you have questions about these Terms of Use, please contact us at:</p>
+                <div class="pp-actions" style="margin-top:14px">
+                    <a class="pp-btn secondary" href="mailto:barter@barterxpress.com"><i class="fas fa-envelope"></i> barter@barterxpress.com</a>
+                    <a class="pp-btn primary" href="{{ url_for('marketplace.contact') }}"><i class="fas fa-headset"></i> Contact us</a>
+                </div>
+            </section>
+
+            <p class="pp-updated">Last Updated: October 18, 2026</p>
         </div>
 
-        <div class="terms-section">
-            <h2>3. Disclaimer</h2>
-            <p>The materials on Barter Express are provided on an 'as is' basis. Barter Express makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>4. Limitations</h2>
-            <p>In no event shall Barter Express or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on Barter Express, even if Barter Express or an authorized representative has been notified orally or in writing of the possibility of such damage.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>5. Accuracy of Materials</h2>
-            <p>The materials appearing on Barter Express could include technical, typographical, or photographic errors. Barter Express does not warrant that any of the materials on its website are accurate, complete, or current. Barter Express may make changes to the materials contained on its website at any time without notice.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>6. Links</h2>
-            <p>Barter Express has not reviewed all of the sites linked to its website and is not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by Barter Express of the site. Use of any such linked website is at the user's own risk.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>7. Modifications</h2>
-            <p>Barter Express may revise these terms of use for its website at any time without notice. By using this website, you are agreeing to be bound by the then current version of these terms of use.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>8. User Conduct</h2>
-            <h3>You agree not to:</h3>
-            <ul>
-                <li>Harass, abuse, or threaten other users</li>
-                <li>Post false, inaccurate, or misleading information</li>
-                <li>List counterfeit, stolen, or illegal items</li>
-                <li>Attempt to manipulate the trading system or abuse the platform</li>
-                <li>Engage in fraudulent or deceptive practices</li>
-                <li>Share personal information of others without consent</li>
-                <li>Spam or send unsolicited messages</li>
-            </ul>
-
-            <div class="highlight">
-                <strong>Violation of these conduct standards may result in account suspension or permanent ban.</strong>
-            </div>
-        </div>
-
-        <div class="terms-section">
-            <h2>9. Item Listings</h2>
-            <h3>User Responsibilities:</h3>
-            <ul>
-                <li>You are responsible for the accuracy of your item descriptions</li>
-                <li>Items must be legal to own and trade</li>
-                <li>You must own or have rights to trade the items listed</li>
-                <li>Prices/values must be reasonable and honestly represented</li>
-                <li>Photos must be of the actual items being traded</li>
-            </ul>
-        </div>
-
-        <div class="terms-section">
-            <h2>10. Exchanges, BXC and Fees</h2>
-
-            <h3>Non-Custody Principle</h3>
-            <p>Barter Express is a valuation, verification and exchange platform. We do not take possession of, store, or hold your items while they are valued, submitted for a trade request, pre-verified, or activated on the marketplace. You keep your items, and remain responsible for them, until a reservation requires physical verification.</p>
-
-            <h3>BXC (Barter Express Credits)</h3>
-            <ul>
-                <li>BXC are platform credits, not money, a bank deposit, or e-money. They cannot be withdrawn, refunded, or transferred to external accounts.</li>
-                <li>BXC granted after you accept an AI valuation are provisional. They can be used only to reserve items, and are confirmed once your item passes physical verification.</li>
-                <li>When you reserve an item, the BXC involved are reserved against that trade and are released or applied depending on the outcome of verification.</li>
-            </ul>
-
-            <h3>Reservations, Verification and Backing Assets</h3>
-            <ul>
-                <li>When you reserve a marketplace item, you choose one or more of your own activated items as backing assets to cover its value.</li>
-                <li>The seller's item and each backing asset must pass physical verification within the 72-hour settlement window. Failing to submit items in time, or submitting items that fail inspection, may reduce your reliability score and cancel the reservation.</li>
-                <li>By selecting an item as a backing asset you consent to the following: once it passes physical verification, ownership of that item transfers to Barter Express and it is recorded in our inventory. Your consent is recorded at the time you confirm the reservation.</li>
-                <li>Backing assets are locked from the marketplace and cannot back any other reservation until the reservation resolves.</li>
-            </ul>
-
-            <h3>Verification and Delivery</h3>
-            <ul>
-                <li>Physical verification takes place at a Barter Express pickup station (free), or through the optional home service.</li>
-                <li>The home-service fee is quoted upfront, must be paid by you before pickup and verification, and is non-refundable.</li>
-                <li>Items in transit through our courier partners are insured under those partners' cover. Compensation for loss or damage is subject to that cover and our dispute process.</li>
-                <li>You are responsible for the accurate condition and description of your items at the time of verification and handover.</li>
-            </ul>
-
-            <h3>Fees</h3>
-            <ul>
-                <li>Signing up and listing items is free.</li>
-                <li>Your first AI valuation each day is free. Each additional valuation costs ₦100.</li>
-                <li>A transaction fee of 3% of the exchange value (minimum ₦500, maximum ₦5,000) applies only when an exchange successfully completes, not when an item is merely requested or reserved. It is not deducted automatically from your BXC or account. You pay it directly to the company at our office by bank transfer or other available payment methods.</li>
-                <li>Fees are shown before you pay them.</li>
-            </ul>
-
-            <h3>Disputes</h3>
-            <p>Disputes should be reported within 7 days of the exchange. Barter Express will review verification and delivery records and may mediate, adjust BXC, compensate you under applicable courier cover, or reverse the exchange.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>11. Intellectual Property Rights</h2>
-            <p>All content on Barter Express, including text, graphics, logos, images, and software, is the property of Barter Express or its content suppliers and is protected by international copyright laws.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>12. Limitation of Liability</h2>
-            <p>In no case shall Barter Express be liable for any indirect, incidental, special, consequential, or punitive damages. This limitation applies even if Barter Express has been advised of the possibility of such damages.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>13. Indemnification</h2>
-            <p>You agree to indemnify, defend, and hold harmless Barter Express from any claims, damages, losses, or expenses arising from your use of the website or violation of these terms.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>14. Dispute Resolution</h2>
-            <p>Any disputes arising from use of Barter Express shall be resolved through our internal dispute resolution process first. If unresolved, disputes may be subject to arbitration or litigation as permitted by law.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>15. Governing Law</h2>
-            <p>These terms and conditions are governed by and construed in accordance with the laws of the jurisdiction where Barter Express operates, and you irrevocably submit to the exclusive jurisdiction of the courts in that location.</p>
-        </div>
-
-        <div class="terms-section">
-            <h2>16. Contact Information</h2>
-            <p>If you have questions about these Terms of Use, please contact us at:</p>
-            <p><strong>Barter Express Support Team</strong><br>
-            Email: barter@barterxpress.com<br>
-            Website: <a href="{{ url_for('marketplace.contact') }}" style="color: #ff7a00;">Contact Us</a></p>
-        </div>
-
-        <div class="last-updated">
-            Last Updated: October 18, 2026
-        </div>
-    </div>
+        {{ pp.explore('terms') }}
+    </main>
 </div>
-
 {% endblock %}

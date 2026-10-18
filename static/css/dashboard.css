@@ -1,0 +1,246 @@
+/* ==========================================================================
+   Barter Express - Dashboard. Layered over the page's legacy inline CSS
+   (which is switched off with media="not all"); markup and scripts unchanged
+   apart from small hooks. Scoped under .dash.
+   ========================================================================== */
+
+.dash {
+    background: var(--bx-bg);
+    color: var(--bx-text);
+    min-height: calc(100vh - var(--bx-nav-h));
+    padding: 0 0 28px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: clip;
+    max-width: none;
+    margin: 0;
+}
+.dash *, .dash *::before, .dash *::after { box-sizing: border-box; }
+:where(.dash) :is(h1, h2, h3, h4, p, ul) { margin: 0; padding: 0; }
+.dash ul { list-style: none; }
+.dash a { text-decoration: none; }
+.dash :focus-visible { outline: 3px solid var(--bx-orange); outline-offset: 2px; border-radius: 8px; }
+.dash > *:not(.welcome-section) { width: calc(100% - 28px); max-width: 1200px; margin-left: auto; margin-right: auto; }
+.dash > br { display: none; }
+
+/* ---------- Welcome banner ---------- */
+.dash .welcome-section {
+    position: relative; overflow: hidden; width: 100%; max-width: none;
+    display: flex !important; flex-direction: column; align-items: center !important; justify-content: center !important; gap: 14px; text-align: center;
+    margin: 0 0 18px !important; padding: 26px 18px 56px;
+    color: #fff; background: linear-gradient(145deg, var(--bx-blue), var(--bx-blue-dark)); border-radius: 0 0 28px 28px;
+}
+.dash .welcome-section::before {
+    content: ''; position: absolute; right: -90px; top: -110px; width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 122, 0, .45), rgba(255, 122, 0, 0) 70%); pointer-events: none;
+}
+.dash .welcome-section > *:not(.bx-floaters) { position: relative; }
+.dash .welcome-title { font-size: clamp(1.4rem, 5.5vw, 2.1rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: #fff; -webkit-text-fill-color: #fff; overflow-wrap: anywhere; }
+.dash .settings-btn-dashboard {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 22px; border-radius: 14px;
+    background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .3); color: #fff !important; font-size: .92rem; font-weight: 700;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background .15s ease;
+}
+.dash .settings-btn-dashboard:hover { background: rgba(255, 255, 255, .26); }
+
+/* ---------- Stat cards ---------- */
+.dash .stats-grid { position: relative; z-index: 2; margin-top: -40px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+.dash .stat-card {
+    position: relative; display: flex; flex-direction: column; gap: 4px; padding: 16px;
+    background: var(--bx-surface); border: 1px solid var(--bx-border); border-radius: var(--bx-radius); box-shadow: var(--bx-shadow);
+    transition: transform .2s ease, border-color .2s ease;
+}
+.dash .stat-card:hover { border-color: rgba(255, 122, 0, .5); }
+.dash .stat-icon { width: 44px; height: 44px; display: grid; place-items: center; margin-bottom: 6px; border-radius: 14px; background: var(--bx-accent-soft); font-size: 1.3rem; font-weight: 800; color: var(--bx-orange); }
+.dash .stat-title { color: var(--bx-muted); font-size: .76rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.dash .stat-value { color: var(--bx-text); font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+.dash .stat-card .stat-value[style] { font-size: .95rem !important; font-weight: 700; line-height: 1.4 !important; overflow-wrap: anywhere; }
+.dash .stat-description { color: var(--bx-muted); font-size: .82rem; line-height: 1.45; }
+.dash .stat-description a { color: var(--bx-orange-dark); font-weight: 700; }
+.dash .stat-description span[style] { color: var(--bx-orange-dark) !important; }
+
+.dash .stat-card-balance {
+    grid-column: 1 / -1; padding-bottom: 16px; color: #fff; border: 0;
+    background: linear-gradient(145deg, #ff8f26 0%, #f46d00 60%, #d95a00 100%);
+    box-shadow: 0 14px 30px rgba(244, 109, 0, .35);
+}
+.dash .stat-card-balance .stat-icon { background: rgba(255, 255, 255, .2); color: #fff; }
+.dash .stat-card-balance .stat-title, .dash .stat-card-balance .stat-description { color: rgba(255, 255, 255, .88); }
+.dash .stat-card-balance .stat-value { color: #fff; font-size: clamp(1.9rem, 8vw, 2.6rem); }
+.dash .fund-account-btn {
+    position: static; order: 9; align-self: stretch; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; margin-top: 12px; padding: 0 18px; border: 0; border-radius: 14px;
+    background: #fff; color: var(--bx-orange-dark) !important; font-size: .95rem; font-weight: 800; box-shadow: 0 6px 16px rgba(0, 0, 0, .18);
+}
+.dash .fund-account-btn:active { transform: scale(.98); }
+.dash .stats-grid > .stat-card:last-child { grid-column: 1 / -1; }
+
+/* ---------- Widgets ---------- */
+.dash .widgets-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 16px; }
+.dash .progress-card, .dash .referral-card, .dash .notifications-section, .dash .recommendations-card {
+    background: var(--bx-surface); border: 1px solid var(--bx-border); border-radius: var(--bx-radius); box-shadow: var(--bx-shadow); padding: 18px 16px;
+}
+.dash .progress-card h3, .dash .recommendations-card h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 14px; color: var(--bx-text); }
+.dash .progress-item { display: flex; align-items: center; gap: 16px; }
+.dash .progress-ring-container { position: relative; flex: 0 0 auto; width: 92px; height: 92px; }
+.dash .progress-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.dash .progress-ring-circle-bg { fill: none; stroke: var(--bx-border); stroke-width: 4.5; }
+.dash .progress-ring-circle { fill: none; stroke: url(#gradientRing); stroke-width: 4.5; stroke-linecap: round; stroke-dasharray: 163.36; animation: dash-ring 1.4s ease-out both; }
+@keyframes dash-ring { from { stroke-dashoffset: 163.36; } }
+.dash .progress-label { font-size: .85rem; font-weight: 700; color: var(--bx-muted); }
+.dash .progress-percentage { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; color: var(--bx-text); line-height: 1.15; }
+.dash .progress-info div[style] { font-size: .8rem !important; line-height: 1.4; }
+
+/* Level card */
+.dash .level-card {
+    position: relative; overflow: hidden; padding: 20px 16px; color: #fff; border-radius: var(--bx-radius);
+    background: linear-gradient(145deg, var(--bx-blue), var(--bx-blue-dark)); box-shadow: var(--bx-shadow);
+}
+.dash .level-card::before {
+    content: ''; position: absolute; right: -70px; top: -80px; width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 122, 0, .4), rgba(255, 122, 0, 0) 70%); pointer-events: none;
+}
+.dash .level-content { position: relative; display: grid; gap: 14px; }
+.dash .level-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.dash .level-title { font-size: .76rem; font-weight: 800; letter-spacing: .08em; color: rgba(255, 255, 255, .85); }
+.dash .level-badge { padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, .16); border: 1px solid rgba(255, 255, 255, .25); font-size: .8rem; font-weight: 800; }
+.dash .level-display { display: flex; align-items: center; gap: 14px; }
+.dash .level-number {
+    width: 64px; height: 64px; display: grid; place-items: center; border-radius: 20px; background: var(--bx-orange);
+    font-size: 1.9rem; font-weight: 800; color: #fff; box-shadow: 0 8px 18px rgba(255, 122, 0, .4);
+}
+.dash .level-name { font-size: 1.25rem; font-weight: 800; }
+.dash .level-info-text { color: rgba(255, 255, 255, .85); font-size: .88rem; line-height: 1.5; }
+.dash .level-progress-bar { height: 10px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .2); }
+.dash .level-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffb066, var(--bx-orange)); }
+.dash .tier-progression-in-card { padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .2); }
+.dash .tier-progression-title { margin-bottom: 10px; font-size: .76rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(255, 255, 255, .85); }
+.dash .tier-progression-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.dash .tier-progress-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 12px; background: rgba(255, 255, 255, .08); text-align: center; opacity: .65; }
+.dash .tier-progress-item.active { opacity: 1; background: rgba(255, 255, 255, .2); box-shadow: inset 0 0 0 2px var(--bx-orange); }
+.dash .tier-progress-icon { font-size: 1.3rem; line-height: 1.2; }
+.dash .tier-progress-range { font-size: .66rem; font-weight: 700; color: rgba(255, 255, 255, .85); }
+.dash .tier-progress-name { font-size: .62rem; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+
+/* Referral */
+.dash .referral-card { background: linear-gradient(145deg, #ff8f26 0%, #f46d00 60%, #d95a00 100%); border: 0; color: #fff; box-shadow: 0 14px 30px rgba(244, 109, 0, .3); }
+.dash .referral-content { display: grid; gap: 12px; }
+.dash .referral-title { font-size: 1.15rem; font-weight: 800; }
+.dash .referral-subtitle { color: rgba(255, 255, 255, .9); font-size: .9rem; }
+.dash .referral-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dash .referral-stat { display: flex; flex-direction: column; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, .18); }
+.dash .referral-stat-value { font-size: 1.4rem; font-weight: 800; }
+.dash .referral-stat-label { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: rgba(255, 255, 255, .88); }
+.dash .referral-button {
+    width: 100%; min-height: 50px; padding: 10px 14px; border: 0; border-radius: 14px; background: #fff; color: var(--bx-orange-dark);
+    font: inherit; font-size: .92rem; font-weight: 800; cursor: pointer; overflow-wrap: anywhere; box-shadow: 0 6px 16px rgba(0, 0, 0, .18);
+}
+.dash .referral-button:active { transform: scale(.98); }
+
+/* ---------- Notifications & recommendations ---------- */
+.dash .notifications-section, .dash .recommendations-card { margin-bottom: 16px; }
+.dash .notifications-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.dash .notifications-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: var(--bx-accent-soft); }
+.dash .notifications-title { font-size: 1.05rem; font-weight: 800; color: var(--bx-text); }
+.dash .notification-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid var(--bx-border); }
+.dash .notification-item:first-child { border-top: 0; }
+.dash .notification-dot { flex: 0 0 auto; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--bx-orange); box-shadow: 0 0 0 4px var(--bx-accent-soft); }
+.dash .notification-message { font-size: .93rem; color: var(--bx-text); overflow-wrap: anywhere; }
+.dash .notification-date { margin-top: 2px; font-size: .76rem; color: var(--bx-muted); }
+.dash .empty-state, .dash .empty-recommendations { padding: 26px 12px; text-align: center; color: var(--bx-muted); }
+.dash .empty-state-icon { font-size: 2.2rem; margin-bottom: 6px; }
+.dash .empty-state a { display: inline-block; margin-top: 8px; color: var(--bx-orange-dark); font-weight: 700; }
+.dash .recommendations-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.dash .recommendation-item { overflow: hidden; cursor: pointer; border: 1px solid var(--bx-border); border-radius: 16px; background: var(--bx-surface); transition: transform .2s ease, border-color .2s ease; }
+.dash .recommendation-item:hover { transform: translateY(-3px); border-color: var(--bx-orange); }
+.dash .recommendation-image { aspect-ratio: 1 / 1; display: grid; place-items: center; overflow: hidden; background: var(--bx-tint); color: var(--bx-muted); font-size: 2rem; }
+.dash .recommendation-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dash .recommendation-info { padding: 10px 12px 12px; }
+.dash .recommendation-name { font-size: .9rem; font-weight: 700; color: var(--bx-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash .recommendation-seller { margin: 2px 0 6px; font-size: .75rem; color: var(--bx-muted); }
+.dash .recommendation-view { font-size: .85rem; font-weight: 800; color: var(--bx-orange-dark); }
+
+@media (min-width: 640px) {
+    .dash > *:not(.welcome-section) { width: calc(100% - 48px); }
+    .dash .welcome-section { flex-direction: row; justify-content: space-between !important; text-align: left; padding: 34px 32px 64px; }
+    .dash .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .dash .stat-card-balance, .dash .stats-grid > .stat-card:last-child { grid-column: auto; }
+    .dash .stat-card-balance { grid-column: span 1; }
+    .dash .progress-card, .dash .referral-card, .dash .notifications-section, .dash .recommendations-card { padding: 22px; }
+    .dash .recommendations-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 960px) {
+    .dash .widgets-grid { grid-template-columns: 1fr 1.35fr 1fr; gap: 16px; align-items: stretch; }
+    .dash .recommendations-grid { grid-template-columns: repeat(5, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .dash .progress-ring-circle { animation: none; }
+    .dash .stat-card, .dash .recommendation-item { transition: none; }
+}
+
+/* ---------- Phones: same arrangement as desktop, just smaller ---------- */
+@media (max-width: 639px) {
+    .dash > *:not(.welcome-section) { width: calc(100% - 20px); }
+    .dash .welcome-section { flex-direction: row; justify-content: space-between !important; gap: 8px; text-align: left; padding: 16px 12px 44px; margin-bottom: 12px !important; }
+    .dash .welcome-title { font-size: 1.05rem; line-height: 1.25; }
+    .dash .settings-btn-dashboard { flex: 0 0 auto; min-height: 38px; padding: 0 12px; gap: 6px; border-radius: 12px; font-size: .74rem; }
+
+    .dash .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: -30px; margin-bottom: 10px; }
+    .dash .stat-card, .dash .stat-card-balance { grid-column: auto; padding: 10px 9px; gap: 2px; border-radius: 16px; }
+    .dash .stats-grid > .stat-card:last-child { grid-column: auto; }
+    .dash .stat-icon { width: 30px; height: 30px; margin-bottom: 2px; border-radius: 10px; font-size: .95rem; }
+    .dash .stat-title { font-size: .58rem; letter-spacing: .04em; }
+    .dash .stat-value, .dash .stat-card-balance .stat-value { font-size: .98rem; letter-spacing: -.03em; }
+    .dash .stat-card .stat-value[style] { font-size: .7rem !important; line-height: 1.3 !important; }
+    .dash .stat-description { font-size: .58rem; line-height: 1.35; }
+    .dash .stat-description small { font-size: .58rem !important; }
+    .dash .fund-account-btn { min-height: 30px; margin-top: 6px; padding: 0 6px; gap: 4px; border-radius: 9px; font-size: .6rem; }
+    .dash .fund-account-btn i { font-size: .65rem; }
+
+    .dash .widgets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+    .dash .progress-card { order: 1; padding: 12px 10px; border-radius: 16px; }
+    .dash .referral-card { order: 2; padding: 12px 10px; border-radius: 16px; }
+    .dash .level-card { order: 3; grid-column: 1 / -1; padding: 14px 12px; border-radius: 16px; }
+    .dash .progress-card h3 { margin-bottom: 8px; font-size: .8rem; }
+    .dash .progress-item { flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+    .dash .progress-ring-container { width: 62px; height: 62px; }
+    .dash .progress-label { font-size: .64rem; }
+    .dash .progress-percentage { font-size: 1.2rem; }
+    .dash .progress-info div[style] { font-size: .6rem !important; margin-top: 2px !important; }
+    .dash .referral-content { gap: 8px; }
+    .dash .referral-title { font-size: .85rem; }
+    .dash .referral-subtitle { font-size: .62rem; line-height: 1.35; }
+    .dash .referral-stats { gap: 6px; }
+    .dash .referral-stat { padding: 6px 8px; border-radius: 10px; }
+    .dash .referral-stat-value { font-size: .95rem; }
+    .dash .referral-stat-label { font-size: .5rem; }
+    .dash .referral-button { min-height: 34px; padding: 6px 6px; border-radius: 10px; font-size: .62rem; line-height: 1.25; }
+
+    .dash .level-content { gap: 10px; }
+    .dash .level-title { font-size: .62rem; }
+    .dash .level-badge { padding: 2px 9px; font-size: .68rem; }
+    .dash .level-number { width: 46px; height: 46px; border-radius: 14px; font-size: 1.35rem; }
+    .dash .level-name { font-size: 1rem; }
+    .dash .level-info-text { font-size: .74rem; }
+    .dash .level-progress-bar { height: 8px; }
+    .dash .tier-progression-title { font-size: .6rem; margin-bottom: 8px; }
+    .dash .tier-progress-item { padding: 6px 1px; border-radius: 10px; }
+    .dash .tier-progress-icon { font-size: 1.05rem; }
+    .dash .tier-progress-range { font-size: .56rem; }
+    .dash .tier-progress-name { font-size: .5rem; }
+
+    .dash .notifications-section, .dash .recommendations-card { padding: 12px 12px; border-radius: 16px; margin-bottom: 10px; }
+    .dash .notifications-header { gap: 8px; margin-bottom: 6px; }
+    .dash .notifications-icon { width: 30px; height: 30px; border-radius: 10px; font-size: .85rem; }
+    .dash .notifications-title, .dash .recommendations-card h3 { font-size: .85rem; }
+    .dash .recommendations-card h3 { margin-bottom: 8px; }
+    .dash .notification-item { padding: 8px 0; gap: 8px; }
+    .dash .notification-message { font-size: .78rem; }
+    .dash .notification-date { font-size: .64rem; }
+    .dash .recommendations-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .dash .recommendation-item { border-radius: 12px; }
+    .dash .recommendation-info { padding: 6px 7px 8px; }
+    .dash .recommendation-name { font-size: .7rem; }
+    .dash .recommendation-seller { font-size: .58rem; margin: 1px 0 3px; }
+    .dash .recommendation-view { font-size: .66rem; }
+    .dash .empty-state, .dash .empty-recommendations { padding: 16px 8px; font-size: .76rem; }
+}
