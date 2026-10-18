@@ -49,9 +49,6 @@ class AIItemValuator:
         'For Parts': 0.20,
     }
     
-    # Platform commission rate
-    PLATFORM_COMMISSION = 0.10  # 10% fee
-    
     def __init__(self):
         """Initialize the valuator"""
         self.session = requests.Session()
