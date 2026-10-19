@@ -185,21 +185,22 @@ def upload_item():
         allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
         image_validation_errors = []
         
-        if not images_from_request or len([f for f in images_from_request if f and f.filename]) == 0:
-            image_validation_errors.append('Please upload at least 6 images so buyers can see your item.')
-        else:
-            # Check image count
-            valid_images = [f for f in images_from_request if f and f.filename]
-            is_valid, error_msg = validate_image_count(len(valid_images))
-            if not is_valid:
-                image_validation_errors.append(error_msg)
-            
-            # Check each image type
-            for img_file in valid_images:
-                is_valid, error_msg = validate_image_type(img_file.filename, allowed_extensions)
+        if request.method == 'POST':
+            if not images_from_request or len([f for f in images_from_request if f and f.filename]) == 0:
+                image_validation_errors.append('Please upload at least 6 images so buyers can see your item.')
+            else:
+                # Check image count
+                valid_images = [f for f in images_from_request if f and f.filename]
+                is_valid, error_msg = validate_image_count(len(valid_images))
                 if not is_valid:
                     image_validation_errors.append(error_msg)
-                    logger.warning(f"Invalid file type rejected - File: {img_file.filename}")
+
+                # Check each image type
+                for img_file in valid_images:
+                    is_valid, error_msg = validate_image_type(img_file.filename, allowed_extensions)
+                    if not is_valid:
+                        image_validation_errors.append(error_msg)
+                        logger.warning(f"Invalid file type rejected - File: {img_file.filename}")
         
         if image_validation_errors:
             for error in image_validation_errors:
