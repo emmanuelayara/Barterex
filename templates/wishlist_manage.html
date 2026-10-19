@@ -14,6 +14,80 @@
     </div>
   </div>
 
+  <!-- Create Wishlist -->
+  <section class="wishlist-create" id="addWishlistModal">
+    <div class="wishlist-create-header">
+      <h2>Add New Wishlist</h2>
+    </div>
+
+    <form id="addWishlistForm" class="wishlist-form">
+      <!-- Search Type Toggle -->
+      <div class="form-group">
+        <label>What are you looking for?</label>
+        <div class="type-selector">
+          <label class="type-option">
+            <input type="radio" name="search_type" value="item" checked>
+            <span>Specific Item</span>
+          </label>
+          <label class="type-option">
+            <input type="radio" name="search_type" value="category">
+            <span>Category</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Item Name Input -->
+      <div class="form-group" id="itemNameGroup">
+        <label for="itemName">Item Name *</label>
+        <input type="text" id="itemName" name="item_name" 
+               placeholder="e.g., iPhone 13 Pro, Gaming Laptop"
+               class="form-control">
+        <small class="help-text">We'll notify you when similar items are available</small>
+      </div>
+
+      <!-- Category Input -->
+      <div class="form-group" id="categoryGroup" style="display:none;">
+        <label for="category">Category *</label>
+        <select id="category" name="category" class="form-control">
+          <option value="">Select a category...</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Furniture">Furniture</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Books">Books</option>
+          <option value="Home & Garden">Home & Garden</option>
+          <option value="Sports">Sports</option>
+          <option value="Art & Collectibles">Art & Collectibles</option>
+          <option value="Toys">Toys</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Notification Settings -->
+      <div class="form-group">
+        <label>Notification Preferences</label>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="notify_via_email" checked>
+            <span class="checkbox-text">
+              <span class="icon">📧</span> Email notifications
+            </span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="notify_via_app" checked>
+            <span class="checkbox-text">
+              <span class="icon">🔔</span> In-app notifications
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Create Wishlist</button>
+      </div>
+    </form>
+  </section>
+
   <!-- Wishlists Grid -->
   {% if wishlists %}
     <!-- Search, Filter, Sort and Bulk Actions Toolbar -->
@@ -193,94 +267,7 @@
         </nav>
       </div>
     {% endif %}
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-icon">📭</div>
-      <h2>No Wishlists Yet</h2>
-      <p>Start creating wishlists to get notified when items matching your interests become available!</p>
-      <button class="btn-primary btn-lg" id="addWishlistBtnEmpty">
-        Create Your First Wishlist
-      </button>
-    </div>
   {% endif %}
-</div>
-
-<!-- Add Wishlist Modal -->
-<div class="modal" id="addWishlistModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>Add New Wishlist</h2>
-      <button class="btn-close" id="closeModal">&times;</button>
-    </div>
-    
-    <form id="addWishlistForm" class="wishlist-form">
-      <!-- Search Type Toggle -->
-      <div class="form-group">
-        <label>What are you looking for?</label>
-        <div class="type-selector">
-          <label class="type-option">
-            <input type="radio" name="search_type" value="item" checked>
-            <span>Specific Item</span>
-          </label>
-          <label class="type-option">
-            <input type="radio" name="search_type" value="category">
-            <span>Category</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Item Name Input -->
-      <div class="form-group" id="itemNameGroup">
-        <label for="itemName">Item Name *</label>
-        <input type="text" id="itemName" name="item_name" 
-               placeholder="e.g., iPhone 13 Pro, Gaming Laptop"
-               class="form-control">
-        <small class="help-text">We'll notify you when similar items are available</small>
-      </div>
-
-      <!-- Category Input -->
-      <div class="form-group" id="categoryGroup" style="display:none;">
-        <label for="category">Category *</label>
-        <select id="category" name="category" class="form-control">
-          <option value="">Select a category...</option>
-          <option value="Electronics">Electronics</option>
-          <option value="Furniture">Furniture</option>
-          <option value="Clothing">Clothing</option>
-          <option value="Books">Books</option>
-          <option value="Home & Garden">Home & Garden</option>
-          <option value="Sports">Sports</option>
-          <option value="Art & Collectibles">Art & Collectibles</option>
-          <option value="Toys">Toys</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-
-      <!-- Notification Settings -->
-      <div class="form-group">
-        <label>Notification Preferences</label>
-        <div class="checkbox-group">
-          <label class="checkbox-label">
-            <input type="checkbox" name="notify_via_email" checked>
-            <span class="checkbox-text">
-              <span class="icon">📧</span> Email notifications
-            </span>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" name="notify_via_app" checked>
-            <span class="checkbox-text">
-              <span class="icon">🔔</span> In-app notifications
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
-        <button type="submit" class="btn-primary">Create Wishlist</button>
-      </div>
-    </form>
-  </div>
 </div>
 
 <style media="not all">
@@ -1316,24 +1303,6 @@
 </style>
 
 <script>
-  // Modal Management
-  const modal = document.getElementById('addWishlistModal');
-  const addButtons = document.querySelectorAll('#addWishlistBtn, #addWishlistBtnEmpty');
-  const closeBtn = document.getElementById('closeModal');
-  const cancelBtn = document.getElementById('cancelBtn');
-
-  addButtons.forEach(btn => {
-    btn.addEventListener('click', () => modal.classList.add('active'));
-  });
-
-  [closeBtn, cancelBtn].forEach(btn => {
-    btn.addEventListener('click', () => modal.classList.remove('active'));
-  });
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('active');
-  });
-
   // Toggle between Item and Category
   const searchTypeInputs = document.querySelectorAll('input[name="search_type"]');
   const itemNameGroup = document.getElementById('itemNameGroup');

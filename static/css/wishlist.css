@@ -62,17 +62,17 @@ html.dark-mode .wishlist-manage-container .btn-success { color: #86efac; }
     background: var(--bx-surface); border: 1px solid var(--bx-border); border-radius: var(--bx-radius); box-shadow: var(--bx-shadow);
 }
 .toolbar-section { display: grid; gap: 10px; }
-.wishlist-manage-container .search-input, .wishlist-manage-container .filter-select, .modal .form-control {
+.wishlist-manage-container .search-input, .wishlist-manage-container .filter-select, .modal .form-control, .wishlist-create .form-control {
     display: block; width: 100%; min-height: 50px; padding: 11px 14px;
     border: 1.5px solid var(--bx-border); border-radius: 14px; background: var(--bx-surface); color: var(--bx-text);
     font: inherit; font-size: 16px; transition: border-color .15s ease, box-shadow .15s ease;
 }
-.wishlist-manage-container .filter-select, .modal select.form-control {
+.wishlist-manage-container .filter-select, .modal select.form-control, .wishlist-create select.form-control {
     appearance: none; -webkit-appearance: none; padding-right: 36px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2355677d' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 14px center;
 }
-.wishlist-manage-container .search-input:focus, .wishlist-manage-container .filter-select:focus, .modal .form-control:focus {
+.wishlist-manage-container .search-input:focus, .wishlist-manage-container .filter-select:focus, .modal .form-control:focus, .wishlist-create .form-control:focus {
     outline: none; border-color: var(--bx-orange); box-shadow: 0 0 0 4px rgba(255, 122, 0, .18);
 }
 .filters-sort { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -158,6 +158,25 @@ html.dark-mode .status-badge.paused { background: rgba(245, 158, 11, .18); color
 .modal .form-group { margin-bottom: 16px; }
 .modal .form-group > label { display: block; margin-bottom: 7px; font-size: .88rem; font-weight: 700; }
 .modal .help-text { display: block; margin-top: 6px; color: var(--bx-muted); font-size: .8rem; }
+
+/* ---------- Create-wishlist card (always visible, directly under the banner) ---------- */
+.wishlist-create {
+    position: relative; z-index: 3; margin-top: -26px; margin-bottom: 16px; padding: 16px;
+    background: var(--bx-surface); border: 1px solid var(--bx-border); border-radius: var(--bx-radius); box-shadow: var(--bx-shadow);
+}
+.wishlist-create-header { margin-bottom: 14px; }
+.wishlist-create-header h2 { font-size: 1.15rem; font-weight: 800; color: var(--bx-text); }
+.wishlist-create .form-group { margin-bottom: 16px; }
+.wishlist-create .form-group > label { display: block; margin-bottom: 7px; font-size: .88rem; font-weight: 700; }
+.wishlist-create .help-text { display: block; margin-top: 6px; color: var(--bx-muted); font-size: .8rem; }
+.wishlist-create .btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 22px;
+    border: 2px solid transparent; border-radius: 14px; font: inherit; font-size: .98rem; font-weight: 700; cursor: pointer;
+    background: var(--bx-orange); color: #fff; box-shadow: 0 8px 18px rgba(255, 122, 0, .3); transition: transform .15s ease, background .15s ease;
+}
+.wishlist-create .btn-primary:hover { background: var(--bx-orange-dark); }
+.wishlist-create .btn-primary:active { transform: scale(.98); }
+.wishlist-create + .wishlist-toolbar { margin-top: 0; }
 .type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 14px; background: var(--bx-tint); }
 .type-option { position: relative; display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 11px; font-size: .9rem; font-weight: 700; color: var(--bx-muted); cursor: pointer; }
 .type-option input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
