@@ -407,6 +407,7 @@ class Item(db.Model):
 
     # --- 30-day marketplace freshness reconfirmation ---
     last_reconfirmed_at = db.Column(db.DateTime, nullable=True)
+    freshness_warning_sent_at = db.Column(db.DateTime, nullable=True)  # advance warning for the current cycle
     reconfirmation_code = db.Column(db.String(12), nullable=True)  # must appear in the reconfirmation photo/video
 
     # --- Seller-submitted verification video (see ItemVideo) ---
@@ -587,6 +588,8 @@ class Reservation(db.Model):
     expires_at = db.Column(db.DateTime, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     cancelled_at = db.Column(db.DateTime, nullable=True)
+    # Smallest "hours remaining" reminder window already sent for the 72h deadline (see RESERVATION_REMINDER_HOURS)
+    deadline_reminder_hours = db.Column(db.Integer, nullable=True)
 
     # Final (re-)verification of the SELLER's item, in parallel with each backing
     # asset's own verification (see ReservationAsset.verification_status below).

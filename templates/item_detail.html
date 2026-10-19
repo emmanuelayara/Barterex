@@ -950,7 +950,7 @@
         {% if item.video_url %}
           <div class="video-link-section">
             <a href="{{ item.video_url }}" target="_blank" rel="noopener noreferrer" class="video-text-link">
-              <i class="fab fa-youtube"></i> Watch video here...
+              <i class="fab fa-youtube"></i> Watch video
             </a>
           </div>
         {% endif %}
@@ -971,9 +971,8 @@
 
             <div class="item-meta">
               <div class="meta-tag">⚡ {{ item.condition }}</div>
+              <div class="meta-tag loc">📍 {{ item.location }}</div>
             </div>
-
-            <div class="location-info">📍 Available in {{ item.location }}</div>
           </div>
 
           <!-- Price -->
@@ -1000,20 +999,22 @@
             {% if current_user.is_authenticated and current_user.id != item.user_id %}
               {% if active_reservation and active_reservation.user_id == current_user.id %}
                 <div class="reservation-banner">
-                  <strong>🔖 You're acquiring this item</strong> backed by ᗸ{{ '{:,.0f}'.format(active_reservation.provisional_credits_used) }} of your own activated items.
-                  Settlement window ends {{ active_reservation.expires_at.strftime('%b %d, %I:%M %p') }}.
-                  <br>Bring your chosen item(s) in for final verification - the seller must do the same with this item. Both must pass for the trade to complete.
+                  <strong>🔖 You're acquiring this item</strong>
+                  <span class="rb-line">Backed by ᗸ{{ '{:,.0f}'.format(active_reservation.provisional_credits_used) }} of your items</span>
+                  <span class="rb-line">Settlement ends {{ active_reservation.expires_at.strftime('%b %d, %I:%M %p') }}</span>
+                  <span class="rb-note">Bring your chosen item(s) in for verification. The seller does the same with this item, and both must pass to complete the trade.</span>
                 </div>
                 <form method="POST" action="{{ url_for('marketplace.cancel_item_reservation', item_id=item.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                  <button type="submit" class="trade-button secondary">Cancel Reservation</button>
+                  <button type="submit" class="trade-button secondary">Cancel reservation</button>
                 </form>
               {% elif active_reservation %}
-                <div class="reservation-banner">🔒 This item is currently reserved by another buyer.</div>
+                <div class="reservation-banner">🔒 Reserved by another buyer.</div>
               {% elif item.value %}
-                <a href="{{ url_for('marketplace.choose_backing_assets', item_id=item.id) }}" class="trade-button secondary" style="display:block;text-align:center;text-decoration:none;">
-                  🔖 Get with BXC (choose your items, held {{ reservation_hold_hours }}h)
+                <a href="{{ url_for('marketplace.choose_backing_assets', item_id=item.id) }}" class="trade-button secondary">
+                  <i class="fas fa-bookmark"></i> Get with BXC
                 </a>
+                <p class="action-hint">Pick your items to back this trade. Held for {{ reservation_hold_hours }}h.</p>
               {% endif %}
             {% endif %}
           </div>

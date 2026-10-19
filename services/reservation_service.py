@@ -30,12 +30,15 @@ from models import (
     ReservationRevaluation,
     Trade,
     User,
+    VerificationIntake,
 )
 from logger_config import setup_logger
+from services.email_notifications import notify_admins, notify_user
 
 logger = setup_logger(__name__)
 
 RESERVATION_HOLD_HOURS = 72
+RESERVATION_REMINDER_HOURS = (24, 6)
 TITLE_TRANSFER_CONSENT_HOURS = 24
 REVALUATION_DECISION_HOURS = 24
 LEGACY_BACKING_ASSET_CONSENT_VERSION = 'company_inventory_v1'
@@ -53,6 +56,48 @@ def _reject_reservation(message):
 def _reject_transition(message):
     db.session.rollback()
     return False, message
+
+
+def _format_deadline(moment):
+    return moment.strftime('%d %b %Y, %H:%M UTC')
+
+
+def _notice(user_id, message, subject):
+    """In-app notification plus email about a reservation event."""
+    return notify_user(
+        user_id,
+        message,
+        subject=subject,
+        heading=subject,
+        cta_endpoint='user.my_reservations',
+        cta_label='View My Reservations',
+        notification_type='reservation',
+    )
+
+
+def is_item_in_custody(item):
+    """True once an item has passed physical verification and is held by Barter Express."""
+    return item.owner_type != 'user' or db.session.query(
+        VerificationIntake.query.filter_by(item_id=item.id, outcome='passed').exists()
+    ).scalar()
+
+
+def pending_physical_verification_item_ids():
+    """
+    Subquery of item ids reserved by another user whose owner still has them and
+    must bring them in for physical verification before the reservation expires.
+    """
+    passed_intake = db.session.query(VerificationIntake.id).filter(
+        VerificationIntake.item_id == Reservation.item_id,
+        VerificationIntake.outcome == 'passed',
+    ).exists()
+    return db.session.query(Reservation.item_id).join(Item, Item.id == Reservation.item_id).filter(
+        Reservation.status == 'active',
+        Reservation.seller_item_verification_status == 'not_submitted',
+        Reservation.expires_at > datetime.utcnow(),
+        Item.owner_type == 'user',
+        ~passed_intake,
+    )
 
 
 def get_eligible_backing_items(user):
@@ -163,14 +208,15 @@ def _create_revaluation(reservation, item, original_value, proposed_value, admin
         (reservation.user_id, 'buyer'),
         (item.user_id, 'seller'),
     ):
-        db.session.add(Notification(
-            user_id=participant_id,
-            message=(
+        _notice(
+            participant_id,
+            (
                 f"A revised valuation of ᗸ{normalized_value:,} was proposed for "
                 f"{item_description} in reservation {reservation.id}. Both parties must "
                 f"respond by {deadline:%b %d, %Y %I:%M %p}."
             ),
-        ))
+            "Revised valuation needs your response",
+        )
     logger.info(
         f"Reservation {reservation.id} revaluation proposed for item {item.id}: "
         f"{original_value} -> {normalized_value}"
@@ -206,14 +252,15 @@ def _exclude_backing_asset(reservation, asset, proposal=None, resolution_status=
     if proposal:
         proposal.status = resolution_status
         proposal.resolved_at = datetime.utcnow()
-    db.session.add(Notification(
-        user_id=reservation.user_id,
-        message=(
+    _notice(
+        reservation.user_id,
+        (
             f"'{item.name}' was not accepted at its revised value. It remains yours and "
             "contributes no BXC to this reservation; you can cover any resulting shortfall "
             "with another eligible item or spendable BXC."
         ),
-    ))
+        "A backing item was not accepted at its revised value",
+    )
 
 
 def _has_pending_revaluations(reservation):
@@ -401,13 +448,14 @@ def respond_to_reservation_revaluation(revaluation_id, user, accepted):
                 reservation.item.user_id if is_buyer and reservation.item
                 else reservation.user_id
             )
-            db.session.add(Notification(
-                user_id=other_id,
-                message=(
+            _notice(
+                other_id,
+                (
                     f"The other party accepted the revised valuation for '{proposal.item.name}'. "
                     f"Please respond by {proposal.decision_expires_at:%b %d, %Y %I:%M %p}."
                 ),
-            ))
+                "The other party accepted the revised valuation",
+            )
         settled = _resolve_reservation(reservation)
         db.session.commit()
     except Exception:
@@ -463,14 +511,15 @@ def _finish_revaluation_decision(reservation, proposal, accepted):
         if grant_delta < 0 and int(seller.provisional_credits or 0) < abs(grant_delta):
             proposal.status = 'declined'
             reservation.seller_item_revaluation_failed = True
-            db.session.add(Notification(
-                user_id=reservation.user_id,
-                message=(
+            _notice(
+                reservation.user_id,
+                (
                     "The seller cannot support the revised provisional-credit adjustment. "
                     "The reservation will be cancelled and you will be asked again before any "
                     "passed backing item transfers."
                 ),
-            ))
+                "Revised valuation could not be applied",
+            )
             return
         if grant_delta:
             _change_reservation_balance(
@@ -486,21 +535,23 @@ def _finish_revaluation_decision(reservation, proposal, accepted):
         reservation.purchase_value = proposal.proposed_value
 
     proposal.status = 'applied'
-    db.session.add(Notification(
-        user_id=reservation.user_id,
-        message=(
+    _notice(
+        reservation.user_id,
+        (
             f"The revised valuation of ᗸ{proposal.proposed_value:,} for "
             f"'{proposal.item.name}' was accepted by both parties."
         ),
-    ))
+        "Revised valuation accepted",
+    )
     if reservation.item and reservation.item.user_id != reservation.user_id:
-        db.session.add(Notification(
-            user_id=reservation.item.user_id,
-            message=(
+        _notice(
+            reservation.item.user_id,
+            (
                 f"The revised valuation of ᗸ{proposal.proposed_value:,} for "
                 f"'{proposal.item.name}' was accepted by both parties."
             ),
-        ))
+            "Revised valuation accepted",
+        )
 
 
 def _acquire_backing_asset(reservation, asset, hold_for_purchase=True):
@@ -565,14 +616,15 @@ def _acquire_backing_asset(reservation, asset, hold_for_purchase=True):
     if held_for_purchase:
         _change_held_spendable(reservation, held_for_purchase, 'hold', item=item)
 
-    db.session.add(Notification(
-        user_id=buyer.id,
-        message=(
+    _notice(
+        buyer.id,
+        (
             f"'{item.name}' passed physical verification and is now Barter Express property. "
             f"ᗸ{available_credit:,} was added to your available spendable BXC; "
             f"ᗸ{held_for_purchase:,} is held for your reservation."
         ),
-    ))
+        "Your backing item passed verification",
+    )
 
 
 def _lock_reservation_for_update(reservation_id):
@@ -813,6 +865,35 @@ def create_reservation(
         item.reserved_at = datetime.utcnow()
         item.reservation_expires_at = expires_at
         item.is_available = False
+        deadline = _format_deadline(expires_at)
+        if not is_item_in_custody(item):
+            notify_user(
+                item.user,
+                f"Your item '{item.name}' has been reserved by another user. Bring it to Barter Express "
+                f"for physical verification and confirmation within {RESERVATION_HOLD_HOURS} hours "
+                f"(by {deadline}). If you don't, the reservation is released and your reliability "
+                "score is reduced.",
+                subject=f"Action required: bring '{item.name}' for verification within {RESERVATION_HOLD_HOURS} hours",
+                heading='Your item was reserved',
+                details=[
+                    f"Item: {item.name} (#{item.item_number})",
+                    f"Deadline: {deadline}",
+                    "If it passes inspection, the exchange proceeds and the item moves to its new owner.",
+                    "Missing the deadline or failing verification reduces your reliability score.",
+                ],
+                cta_endpoint='user.user_items',
+                cta_label='View My Items',
+                notification_type='reservation',
+                category='alert',
+            )
+        notify_admins(
+            'settlement.manage',
+            f"New reservation awaiting verification: {item.name}",
+            f"'{item.name}' (#{item.item_number}) was reserved by {user.username}. Both sides must be "
+            f"physically verified by {deadline}.",
+            cta_endpoint='admin.settlement_queue',
+            cta_label='Open Settlement Queue',
+        )
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -840,6 +921,13 @@ def cancel_reservation(reservation, user):
 
     try:
         _cancel_reservation(reservation, new_status='cancelled', relist_seller_item=True, relist_assets=True)
+        if reservation.item:
+            _notice(
+                reservation.item.user_id,
+                f"The buyer cancelled their reservation on '{reservation.item.name}'. You no longer need "
+                "to bring it in for verification; it is back on the marketplace.",
+                "A reservation on your item was cancelled",
+            )
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -1002,13 +1090,42 @@ def release_expired_reservations(item_id=None):
             )
         ):
             continue
-        if reservation.seller_item_verification_status == 'not_submitted':
+        seller_missed = reservation.seller_item_verification_status == 'not_submitted'
+        buyer_missed = any(
+            asset.verification_status == 'not_submitted' for asset in reservation.backing_assets
+        )
+        if seller_missed:
             _adjust_reliability(reservation.item.user if reservation.item else None, -RELIABILITY_PENALTY)
         for asset in reservation.backing_assets:
             if asset.verification_status == 'not_submitted':
                 _adjust_reliability(reservation.user, -RELIABILITY_PENALTY)
         try:
             _cancel_reservation(reservation, new_status='expired', relist_seller_item=True, relist_assets=True)
+            if reservation.item:
+                _notice(
+                    reservation.item.user_id,
+                    (
+                        f"The reservation on '{reservation.item.name}' expired because it wasn't brought in "
+                        "for physical verification in time. Your reliability score was reduced and the item "
+                        "is back on the marketplace."
+                        if seller_missed else
+                        f"The reservation on '{reservation.item.name}' expired before the exchange "
+                        "completed. The item is back on the marketplace."
+                    ),
+                    "A reservation on your item expired",
+                )
+            _notice(
+                reservation.user_id,
+                (
+                    "Your reservation expired because your backing item(s) weren't brought in for "
+                    "physical verification in time. Your reliability score was reduced and your held BXC "
+                    "was released."
+                    if buyer_missed else
+                    "Your reservation expired before the exchange completed. Your held BXC and "
+                    "collateral were released."
+                ),
+                "Your reservation expired",
+            )
             db.session.commit()
             released_count += 1
         except Exception:
@@ -1045,6 +1162,60 @@ def release_expired_reservations(item_id=None):
     if released_count:
         logger.info(f"Expired {released_count} reservation(s) past their settlement window")
     return released_count
+
+
+def send_reservation_deadline_reminders():
+    """
+    Remind whoever still owes a physical verification as the settlement window
+    closes (see RESERVATION_REMINDER_HOURS). Each window is sent once per reservation.
+    Returns the number of reservations reminded.
+    """
+    now = datetime.utcnow()
+    horizon = now + timedelta(hours=max(RESERVATION_REMINDER_HOURS))
+    reservations = Reservation.query.filter(
+        Reservation.status == 'active',
+        Reservation.expires_at > now,
+        Reservation.expires_at <= horizon,
+    ).all()
+    reminded = 0
+    for reservation in reservations:
+        hours_left = (reservation.expires_at - now).total_seconds() / 3600
+        window = min(hours for hours in RESERVATION_REMINDER_HOURS if hours_left <= hours)
+        if (
+            reservation.deadline_reminder_hours is not None
+            and reservation.deadline_reminder_hours <= window
+        ):
+            continue
+        deadline = _format_deadline(reservation.expires_at)
+        item = reservation.item
+        try:
+            if (
+                item
+                and reservation.seller_item_verification_status == 'not_submitted'
+                and not is_item_in_custody(item)
+            ):
+                _notice(
+                    item.user_id,
+                    f"Reminder: bring '{item.name}' to Barter Express for physical verification by "
+                    f"{deadline} (about {max(1, round(hours_left))} hour(s) left), or the reservation "
+                    "is released and your reliability score is reduced.",
+                    f"Reminder: bring '{item.name}' for verification before {deadline}",
+                )
+            if any(asset.verification_status == 'not_submitted' for asset in reservation.backing_assets):
+                _notice(
+                    reservation.user_id,
+                    f"Reminder: your backing item(s) for '{item.name if item else 'your reservation'}' still "
+                    f"need physical verification by {deadline} (about {max(1, round(hours_left))} hour(s) "
+                    "left), or the reservation is cancelled and your reliability score is reduced.",
+                    "Reminder: bring your backing items for verification",
+                )
+            reservation.deadline_reminder_hours = window
+            db.session.commit()
+            reminded += 1
+        except Exception:
+            db.session.rollback()
+            logger.error(f"Could not send reminders for reservation {reservation.id}", exc_info=True)
+    return reminded
 
 
 def respond_to_failed_seller_title_transfer(reservation, user, accepted):
@@ -1139,16 +1310,17 @@ def _finish_failed_seller_title_decision(reservation, accepted, decision):
     reservation.status = 'cancelled'
     reservation.cancelled_at = datetime.utcnow()
     _update_backing_return_status(reservation)
-    db.session.add(Notification(
-        user_id=buyer.id,
-        message=(
+    _notice(
+        buyer.id,
+        (
             "Your verified backing item(s) were transferred to Barter Express and their full "
             "verified BXC value is now spendable."
             if accepted else
             "Your verified backing item(s) remain yours and were released. Their original "
             "provisional BXC has been restored."
         ),
-    ))
+        "Your title-transfer decision was recorded",
+    )
     logger.info(
         f"Reservation {reservation.id} failed-seller title decision: {decision}"
     )
@@ -1193,8 +1365,16 @@ def verify_seller_item(
         reservation.seller_item_verification_status = 'passed' if passed else 'failed'
         reservation.seller_item_verified_at = datetime.utcnow()
         reservation.seller_item_verification_notes = notes
+        seller_id = reservation.item.user_id if reservation.item else None
         if not passed:
             _adjust_reliability(reservation.item.user if reservation.item else None, -RELIABILITY_PENALTY)
+            _notice(
+                seller_id,
+                f"'{reservation.item.name}' did not pass physical verification"
+                + (f": {notes}" if notes else ".")
+                + " The reservation was cancelled and your reliability score was reduced.",
+                "Your item did not pass physical verification",
+            )
         elif reservation.item:
             _create_revaluation(
                 reservation,
@@ -1205,6 +1385,13 @@ def verify_seller_item(
             )
 
         settled = _resolve_reservation(reservation)
+        if passed and not settled and reservation.item:
+            _notice(
+                seller_id,
+                f"'{reservation.item.name}' passed physical verification. The exchange completes once "
+                "the buyer's side is verified and any revised valuation is agreed.",
+                "Your item passed physical verification",
+            )
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -1351,9 +1538,9 @@ def _resolve_reservation(reservation):
             reservation.title_transfer_decision_expires_at = (
                 datetime.utcnow() + timedelta(hours=TITLE_TRANSFER_CONSENT_HOURS)
             )
-            db.session.add(Notification(
-                user_id=reservation.user_id,
-                message=(
+            _notice(
+                reservation.user_id,
+                (
                     (
                         "The requested item failed physical verification. Your verified backing "
                         "item(s) still belong to you. Confirm within 24 hours whether to transfer "
@@ -1366,7 +1553,8 @@ def _resolve_reservation(reservation):
                     "Barter Express; if you decline or do not respond, they stay yours and their "
                     "original provisional BXC is restored."
                 ),
-            ))
+                "Action needed within 24 hours: confirm your title-transfer decision",
+            )
             logger.info(
                 f"Reservation {reservation.id} awaiting renewed title consent after seller-side failure"
             )
@@ -1394,10 +1582,11 @@ def _resolve_reservation(reservation):
                 detail = " Your backing items remain yours and their provisional BXC was restored."
         else:
             detail = " Your collateral items have been released back to you and your provisional credits are untouched."
-        db.session.add(Notification(
-            user_id=reservation.user_id,
-            message=f"⚠️ The item you tried to acquire failed final verification.{detail}"
-        ))
+        _notice(
+            reservation.user_id,
+            f"⚠️ The item you tried to acquire failed final verification.{detail}",
+            "The item you reserved failed verification",
+        )
         logger.info(f"Reservation {reservation.id} cancelled - seller-side verification/revaluation failed")
         return False
 
@@ -1429,19 +1618,22 @@ def _resolve_reservation(reservation):
 
     if any_failed:
         _cancel_reservation(reservation, new_status='cancelled', relist_seller_item=True, relist_assets=True)
-        db.session.add(Notification(
-            user_id=reservation.item.user_id if reservation.item else None,
-            message="⚠️ The buyer's collateral for your item failed verification. Your item is back on the marketplace."
-        ))
+        if reservation.item:
+            _notice(
+                reservation.item.user_id,
+                "⚠️ The buyer's collateral for your item failed verification. Your item is back on the marketplace.",
+                "Your item is back on the marketplace",
+            )
         if reservation.clearing_mode == 'company_inventory':
-            db.session.add(Notification(
-                user_id=reservation.user_id,
-                message=(
+            _notice(
+                reservation.user_id,
+                (
                     "A backing item failed verification. Any backing item that had already passed remains "
                     "Barter Express property and its BXC value remains yours; other backing items and held "
                     "purchase BXC were released."
                 ),
-            ))
+                "A backing item failed verification",
+            )
         logger.info(f"Reservation {reservation.id} cancelled - backing asset(s) failed verification")
         return False
 
@@ -1653,17 +1845,23 @@ def _settle_reservation(reservation):
         buyer_message += f" ᗸ{purchase_amount:,} was spent from your held BXC balance."
     elif change_amount:
         buyer_message += f" ᗸ{change_amount:,} in change was added to your spendable balance."
-    db.session.add(Notification(user_id=buyer.id, message=buyer_message))
-    db.session.add(Notification(
-        user_id=buyer.id,
-        message=(
+    _notice(buyer.id, buyer_message, "Your purchase is complete")
+    _notice(
+        buyer.id,
+        (
             f"Your purchase is verified and order {order_number} is ready for fulfillment."
             if reservation.delivery_method == 'pickup'
             else f"Your purchase is verified. Accept and pay the home-service quote before dispatching order {order_number}."
         ),
-    ))
-    db.session.add(Notification(user_id=seller.id,
-                                 message=f"🎉 '{seller_item.name}' has been exchanged! Thanks for trading on Barter Express."))
+        "Your order is ready for fulfillment"
+        if reservation.delivery_method == 'pickup'
+        else "Action needed: pay the home-service quote",
+    )
+    _notice(
+        seller.id,
+        f"🎉 '{seller_item.name}' has been exchanged! Thanks for trading on Barter Express.",
+        "Your item has been exchanged",
+    )
 
     logger.info(f"Reservation {reservation.id} settled - Buyer: {buyer.username}, Item: {seller_item.id}")
     return True

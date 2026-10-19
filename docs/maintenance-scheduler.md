@@ -1,9 +1,12 @@
 # Reservation and listing maintenance
 
 The `maintenance-sweep` Flask command releases expired reservation holds,
-finishes expired failed-item title-transfer decisions, and deactivates listings
-that have passed the 30-day freshness window. It is safe to rerun; the existing
-reservation transitions are locked and status-checked, and listings are only
+sends the 24-hour and 6-hour reservation verification reminders,
+finishes expired failed-item title-transfer decisions, warns owners 3 days
+before the 30-day freshness window lapses, and deactivates listings
+that have passed it. It is safe to rerun; the existing
+reservation transitions are locked and status-checked, reminders are recorded
+so each is sent once, and listings are only
 deactivated while still approved and available.
 
 The command intentionally does not process account deletion requests. Account

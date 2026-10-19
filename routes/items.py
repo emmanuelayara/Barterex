@@ -10,6 +10,7 @@ from app import db, app
 from models import Item, ItemImage, ItemVideo, Cart, CartItem, Trade, Order, OrderItem, PickupStation, Notification
 from forms import UploadItemForm, OrderForm
 from routes.auth import send_email_async
+from services.email_notifications import notify_admins
 from logger_config import setup_logger
 from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailableError, FileUploadError, DatabaseError, CheckoutError
 from error_handlers import handle_errors, handle_api_errors, safe_database_operation, retry_operation
@@ -569,6 +570,13 @@ def trade_this_item(item_id):
     ))
 
     logger.info(f"Item submitted for pre-verification - Item: {item.id}, User: {current_user.username}")
+    notify_admins(
+        'items.preverification',
+        f"New pre-verification request: {item.name}",
+        f"{current_user.username} submitted '{item.name}' (#{item.item_number}) for pre-verification.",
+        cta_endpoint='admin.preverification_queue',
+        cta_label='Open Pre-verification Queue',
+    )
     flash(f"'{item.name}' was submitted for pre-verification. We'll notify you once it's reviewed.", 'success')
     return redirect(url_for('user.my_valuations'))
 
@@ -637,6 +645,13 @@ def confirm_activation_upload(item_id):
     item.status = 'pending_activation'
 
     logger.info(f"Activation video submitted - Item: {item.id}, User: {current_user.username}")
+    notify_admins(
+        'items.video_review',
+        f"New activation video to review: {item.name}",
+        f"{current_user.username} uploaded a verification video for '{item.name}' (#{item.item_number}).",
+        cta_endpoint='admin.video_review_queue',
+        cta_label='Open Video Review',
+    )
     if is_ajax:
         return jsonify({'success': True})
     flash(f"Video submitted for '{item.name}'! An admin will review it before your item goes live.", 'success')
@@ -710,6 +725,14 @@ def reconfirm_item(item_id):
     if is_high_value:
         item.status = 'reconfirmation_review'
         logger.info(f"Reconfirmation submitted for admin review - Item: {item.id}, User: {current_user.username}")
+        notify_admins(
+            'items.reconfirmation',
+            f"Reconfirmation photo to review: {item.name}",
+            f"{current_user.username} submitted a reconfirmation photo for high-value item "
+            f"'{item.name}' (#{item.item_number}). Check that the code is visible.",
+            cta_endpoint='admin.reconfirmation_review_queue',
+            cta_label='Open Reconfirmation Review',
+        )
         flash('Photo submitted! Since this is a high-value item, an admin will confirm the code is visible before relisting it.', 'success')
     else:
         item.last_reconfirmed_at = datetime.utcnow()

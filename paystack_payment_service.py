@@ -10,8 +10,9 @@ import hashlib
 import hmac
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from models import Notification, Payment, Reservation, User, CreditTransaction
+from models import Payment, Reservation, User, CreditTransaction
 from app import db
+from services.email_notifications import notify_user
 
 load_dotenv()
 
@@ -203,13 +204,15 @@ class PaystackPaymentService:
         payment.paid_at = datetime.utcnow()
         payment.payment_method = payment_method
         reservation.delivery_fee_status = 'paid'
-        db.session.add(Notification(
-            user_id=reservation.user_id,
-            message=(
-                f"Your non-refundable home-service fee for reservation {reservation.id} is paid. "
-                "Dispatch may proceed after verification succeeds."
-            ),
-        ))
+        notify_user(
+            reservation.user_id,
+            f"Your non-refundable home-service fee for reservation {reservation.id} is paid. "
+            "Dispatch may proceed after verification succeeds.",
+            subject="Home-service fee received",
+            cta_endpoint='user.my_reservations',
+            cta_label='View My Reservations',
+            notification_type='reservation',
+        )
     
     @staticmethod
     def get_auth_header():

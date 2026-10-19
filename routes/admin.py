@@ -10,6 +10,7 @@ import secrets
 import csv
 import io
 import zipfile
+from html import unescape
 
 from app import db
 from models import (
@@ -42,7 +43,7 @@ from logger_config import setup_logger
 from exceptions import ValidationError, DatabaseError, AuthenticationError, AuthorizationError
 from error_handlers import handle_errors, safe_database_operation
 from valuator_client import report_verification
-
+from services.email_notifications import notify_admins, notify_user, queue_email
 logger = setup_logger(__name__)
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -467,10 +468,23 @@ def admin_dashboard():
                 flash("Invalid search characters detected.", "warning")
                 search = ""  # Clear search to prevent exploitation
 
+        from services.reservation_service import pending_physical_verification_item_ids
+
+        # Reserved items still with their owners wait here for physical verification;
+        # they move to Approved or Rejected once the admin records the outcome.
+        awaiting_physical = Item.id.in_(pending_physical_verification_item_ids())
+        pending_filter = db.or_(Item.status.in_(PENDING_ITEM_STATUSES), awaiting_physical)
+        approved_filter = db.and_(Item.status == 'approved', ~awaiting_physical)
+        rejected_filter = Item.status.in_(('rejected', 'failed_verification'))
+
         query = Item.query.options(joinedload(Item.user), joinedload(Item.images))
 
         if status == 'pending':
-            query = query.filter(Item.status.in_(PENDING_ITEM_STATUSES))
+            query = query.filter(pending_filter)
+        elif status == 'approved':
+            query = query.filter(approved_filter)
+        elif status == 'rejected':
+            query = query.filter(rejected_filter)
         elif status != 'all':
             query = query.filter(Item.status == status)
 
@@ -483,14 +497,22 @@ def admin_dashboard():
             )
 
         items = None
+        awaiting_physical_ids = set()
         if admin_can('items.review'):
             items = query.order_by(Item.id.desc()).paginate(page=page, per_page=10)
+            page_item_ids = [listed.id for listed in items.items]
+            if page_item_ids:
+                awaiting_physical_ids = {
+                    item_id for (item_id,) in Item.query.filter(
+                        Item.id.in_(page_item_ids), awaiting_physical
+                    ).with_entities(Item.id).all()
+                }
 
         total_users = User.query.count()
         total_items = Item.query.count()
-        approved_items = Item.query.filter_by(status='approved').count()
-        pending_items = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).count()
-        rejected_items = Item.query.filter_by(status='rejected').count()
+        approved_items = Item.query.filter(approved_filter).count()
+        pending_items = Item.query.filter(pending_filter).count()
+        rejected_items = Item.query.filter(rejected_filter).count()
         traded_items = Item.query.filter_by(is_available=False).count()
         total_credits_traded = db.session.query(db.func.sum(Item.value)).filter_by(is_available=False).scalar() or 0
         
@@ -506,6 +528,7 @@ def admin_dashboard():
         return render_template(
             'admin/dashboard.html',
             items=items,
+            awaiting_physical_ids=awaiting_physical_ids,
             total_users=total_users,
             total_items=total_items,
             approved_items=approved_items,
@@ -876,6 +899,17 @@ def reject_unban_appeal(user_id):
         user.appeal_message = None
         user.unban_request_date = None
         user.unban_requested = False
+        notify_user(
+            user,
+            "Your appeal to lift your account suspension was reviewed and has not been approved. "
+            "Your account remains restricted. If you believe this is a mistake, contact support.",
+            subject="Your unban appeal was not approved",
+            heading="Appeal decision",
+            cta_endpoint='contact.contact_form',
+            cta_label='Contact Support',
+            notification_type='account',
+            category='alert',
+        )
         db.session.commit()
         
         # Log to audit log
@@ -963,6 +997,17 @@ def reject_unban(user_id):
         user = User.query.get_or_404(user_id)
         if user.is_banned and user.unban_requested:
             user.unban_requested = False
+            notify_user(
+                user,
+                "Your request to lift your account suspension was reviewed and has not been approved. "
+                "Your account remains restricted. If you believe this is a mistake, contact support.",
+                subject="Your unban request was not approved",
+                heading="Unban request decision",
+                cta_endpoint='contact.contact_form',
+                cta_label='Contact Support',
+                notification_type='account',
+                category='alert',
+            )
             db.session.commit()
             
             # Log to audit log
@@ -1446,16 +1491,20 @@ def approve_preverification(item_id):
             }
         )
 
-        db.session.add(Notification(
-            user_id=item.user_id,
-            message=(
+        notify_user(
+            item.user_id,
+            (
                 f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
                 "Your verification video is now awaiting review."
                 if has_pending_video else
                 f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
                 "Open it from My Valuations and select \"Activate for Trade\" when you're ready."
-            )
-        ))
+            ),
+            subject=f"Pre-verification passed for '{item.name}'",
+            cta_endpoint='user.my_valuations',
+            cta_label='Open My Valuations',
+            notification_type='listing',
+        )
 
         logger.info(f"Pre-verification approved - Item ID: {item_id}, Name: {item.name}, Final Value: {final_value}, Admin ID: {session.get('admin_id')}")
         flash(f"Pre-verification approved for '{item.name}' at {final_value} credits.", "success")
@@ -1526,11 +1575,16 @@ def reject_preverification(item_id):
             after_value={'status': 'valuation_only'}
         )
 
-        db.session.add(Notification(
-            user_id=item.user_id,
-            message=f"⚠️ Pre-verification for '{item.name}' needs attention. Reason: {reason}. "
-                    f"It's back in My Valuations - fix the issue and select \"Trade This Item\" again."
-        ))
+        notify_user(
+            item.user_id,
+            f"⚠️ Pre-verification for '{item.name}' needs attention. Reason: {reason}. "
+            f"It's back in My Valuations - fix the issue and select \"Trade This Item\" again.",
+            subject=f"Pre-verification for '{item.name}' needs attention",
+            cta_endpoint='user.my_valuations',
+            cta_label='Open My Valuations',
+            notification_type='listing',
+            category='alert',
+        )
 
         logger.info(f"Pre-verification rejected - Item ID: {item_id}, Name: {item.name}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
         flash(f"Pre-verification rejected for '{item.name}'.", "warning")
@@ -1639,11 +1693,15 @@ def approve_activation_video(video_id):
         after_value={'status': 'approved', 'video_url': result['url']}
     )
 
-    db.session.add(Notification(
-        user_id=item.user_id,
-        message=f"🎉 '{item.name}' is now live on the marketplace! Watch its video: {result['url']}. "
-                + (f"ᗸ{provisional_amount:,} provisional BXC was added to your account." if provisional_amount else '')
-    ))
+    notify_user(
+        item.user_id,
+        f"🎉 '{item.name}' is now live on the marketplace! Watch its video: {result['url']}. "
+        + (f"ᗸ{provisional_amount:,} provisional BXC was added to your account." if provisional_amount else ''),
+        subject=f"'{item.name}' is now live on the marketplace",
+        cta_endpoint='user.user_items',
+        cta_label='View My Items',
+        notification_type='listing',
+    )
 
     logger.info(f"Activation video approved - Item ID: {item.id}, Video ID: {video.id}, YouTube: {result['url']}, Admin ID: {session.get('admin_id')}")
     flash(f"'{item.name}' is now live! Video published to {result['url']}.", 'success')
@@ -1693,11 +1751,16 @@ def reject_activation_video(video_id):
     )
 
     if item:
-        db.session.add(Notification(
-            user_id=item.user_id,
-            message=f"⚠️ The verification video for '{item.name}' was not approved. Reason: {reason}. "
-                    f"Open it from My Valuations and select \"Activate for Trade\" to try again."
-        ))
+        notify_user(
+            item.user_id,
+            f"⚠️ The verification video for '{item.name}' was not approved. Reason: {reason}. "
+            f"Open it from My Valuations and select \"Activate for Trade\" to try again.",
+            subject=f"The verification video for '{item.name}' was not approved",
+            cta_endpoint='user.my_valuations',
+            cta_label='Open My Valuations',
+            notification_type='listing',
+            category='alert',
+        )
 
     logger.info(f"Activation video rejected - Video ID: {video.id}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
     flash('Video rejected.', 'warning')
@@ -1769,13 +1832,18 @@ def set_reservation_delivery_quote(reservation_id):
 
     reservation.delivery_quote_naira = round(quote, 2)
     reservation.delivery_fee_status = 'awaiting_payment'
-    db.session.add(Notification(
-        user_id=reservation.user_id,
-        message=(
+    notify_user(
+        reservation.user_id,
+        (
             f"Barter Express quoted ₦{reservation.delivery_quote_naira:,.2f} for the non-refundable "
             f"home service on reservation {reservation.id}. Accept and pay through Paystack before pickup or dispatch."
         ),
-    ))
+        subject="Action needed: pay your home-service quote",
+        cta_endpoint='user.my_reservations',
+        cta_label='View My Reservations',
+        notification_type='reservation',
+        category='alert',
+    )
     db.session.commit()
     flash('Home-service quote sent to the buyer.', 'success')
     return redirect(url_for('admin.settlement_queue'))
@@ -2014,10 +2082,14 @@ def approve_reconfirmation(item_id):
         action_type='approve_reconfirmation', target_type='item', target_id=item.id, target_name=item.name,
         description=f"Reconfirmation approved for '{item.name}'", after_value={'status': 'approved'}
     )
-    db.session.add(Notification(
-        user_id=item.user_id,
-        message=f"✅ '{item.name}' has been reconfirmed and is back on the marketplace!"
-    ))
+    notify_user(
+        item.user_id,
+        f"✅ '{item.name}' has been reconfirmed and is back on the marketplace!",
+        subject=f"'{item.name}' is back on the marketplace",
+        cta_endpoint='user.user_items',
+        cta_label='View My Items',
+        notification_type='listing',
+    )
 
     logger.info(f"Reconfirmation approved - Item ID: {item.id}, Admin ID: {session.get('admin_id')}")
     flash(f"'{item.name}' reconfirmed and relisted.", 'success')
@@ -2048,10 +2120,15 @@ def reject_reconfirmation(item_id):
         description=f"Reconfirmation rejected for '{item.name}'", reason=reason,
         after_value={'status': 'reconfirmation_required'}
     )
-    db.session.add(Notification(
-        user_id=item.user_id,
-        message=f"⚠️ Reconfirmation photo for '{item.name}' was rejected. Reason: {reason}. Please resubmit from My Items."
-    ))
+    notify_user(
+        item.user_id,
+        f"⚠️ Reconfirmation photo for '{item.name}' was rejected. Reason: {reason}. Please resubmit from My Items.",
+        subject=f"Your reconfirmation photo for '{item.name}' was rejected",
+        cta_endpoint='user.user_items',
+        cta_label='Resubmit From My Items',
+        notification_type='listing',
+        category='alert',
+    )
 
     logger.info(f"Reconfirmation rejected - Item ID: {item.id}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
     flash('Reconfirmation rejected.', 'warning')
@@ -2076,12 +2153,25 @@ def delete_item(item_id):
         
         item_name = item.name
         item_id_num = item.id
+        owner_id = item.user_id
+        reason = request.form.get('reason', '').strip()[:200]
         
         # Mark item as unavailable instead of deleting from DB (preserve records)
         item.is_available = False
         item.status = 'deleted'
         item.updated_at = datetime.utcnow()
         
+        notify_user(
+            owner_id,
+            f"Your item '{item_name}' was removed from the marketplace by Barter Express."
+            + (f" Reason: {reason}." if reason else "")
+            + " Contact support if you have questions.",
+            subject=f"'{item_name}' was removed from the marketplace",
+            cta_endpoint='contact.contact_form',
+            cta_label='Contact Support',
+            notification_type='listing',
+            category='alert',
+        )
         db.session.commit()
         
         logger.info(f"Item deleted from marketplace - Item ID: {item_id_num}, Name: {item_name}")
@@ -2512,6 +2602,18 @@ def update_order_status(order_id):
                 note.message = f"{status_messages.get(order.status, f'Order status updated to {order.status}')} You earned 20 trading points!"
             
             db.session.add(note)
+
+        queue_email(
+            order.user.email,
+            f"Order {order.order_number}: {order.status}",
+            f"Your order is {order.status.lower()}",
+            note.message,
+            username=order.user.username,
+            details=[f"Order number: {order.order_number}", f"Items: {item_names}"],
+            cta_endpoint='user.view_order_details',
+            cta_label='View Order Details',
+            order_id=order.id,
+        )
 
         db.session.commit()
         
@@ -3379,7 +3481,30 @@ def update_message_status(message_id):
             flash('Invalid status.', 'danger')
             return redirect(request.referrer or url_for('admin.view_messages'))
         
+        previous_status = message.status
         message.status = new_status
+        if new_status != previous_status and new_status in ('in_progress', 'resolved'):
+            status_text = (
+                "Our team is now working on your message and will follow up soon."
+                if new_status == 'in_progress' else
+                "Your message has been marked as resolved. If you still need help, send us a new message."
+            )
+            queue_email(
+                unescape(str(message.email)),
+                f"Update on your message to Barter Express ({new_status.replace('_', ' ')})",
+                "Update on your message",
+                status_text,
+                username=unescape(str(message.name)),
+                details=[f"Reference: #{message.id}", f"Status: {new_status.replace('_', ' ').title()}"],
+            )
+            if message.user_id:
+                notify_user(
+                    message.user_id,
+                    status_text,
+                    subject=f"Update on your message (#{message.id})",
+                    email=False,
+                    notification_type='support',
+                )
         db.session.commit()
         
         logger.info(f"Message {message_id} status updated to {new_status} by admin")

@@ -11,6 +11,7 @@ from services.freshness_service import (
     FRESHNESS_WINDOW_DAYS,
     HIGH_VALUE_THRESHOLD,
     deactivate_stale_items,
+    warn_items_nearing_freshness_deadline,
 )
 from services.maintenance_service import run_maintenance_sweep
 
@@ -119,14 +120,47 @@ class FreshnessServiceTests(unittest.TestCase):
         self.assertTrue(self.company_item.is_available)
         self.assertEqual(Notification.query.count(), 2)
 
+    def test_warns_owner_once_before_listing_is_pulled(self):
+        self.fresh_listing.last_reconfirmed_at = datetime.utcnow() - timedelta(days=FRESHNESS_WINDOW_DAYS - 2)
+        db.session.commit()
+
+        with patch("routes.auth.send_email_async") as send_email:
+            self.assertEqual(warn_items_nearing_freshness_deadline(), 1)
+            self.assertEqual(warn_items_nearing_freshness_deadline(), 0)
+
+        send_email.assert_called_once()
+        self.assertEqual(send_email.call_args.kwargs["recipients"], [self.user.email])
+        self.assertEqual(Notification.query.count(), 1)
+        self.assertTrue(self.fresh_listing.is_available)
+
+        # A warning from a previous cycle (before the latest reconfirmation) doesn't block a new one.
+        self.fresh_listing.freshness_warning_sent_at = datetime.utcnow() - timedelta(days=60)
+        db.session.commit()
+        with patch("routes.auth.send_email_async"):
+            self.assertEqual(warn_items_nearing_freshness_deadline(), 1)
+
     def test_sweep_is_idempotent_and_returns_job_counts(self):
         with patch(
             "services.maintenance_service.release_expired_reservations",
             return_value=3,
-        ) as expire_reservations:
+        ) as expire_reservations, patch(
+            "services.maintenance_service.send_reservation_deadline_reminders",
+            return_value=1,
+        ), patch(
+            "services.maintenance_service.warn_items_nearing_freshness_deadline",
+            return_value=0,
+        ):
             result = run_maintenance_sweep()
 
-        self.assertEqual(result, {"expired_reservations": 3, "stale_items": 2})
+        self.assertEqual(
+            result,
+            {
+                "expired_reservations": 3,
+                "reservation_reminders": 1,
+                "stale_items": 2,
+                "freshness_warnings": 0,
+            },
+        )
         expire_reservations.assert_called_once_with()
         self.assertEqual(deactivate_stale_items(), 0)
         self.assertEqual(Notification.query.count(), 2)
@@ -138,12 +172,20 @@ class FreshnessServiceTests(unittest.TestCase):
         ), patch(
             "services.maintenance_service.deactivate_stale_items",
             return_value=4,
+        ), patch(
+            "services.maintenance_service.send_reservation_deadline_reminders",
+            return_value=5,
+        ), patch(
+            "services.maintenance_service.warn_items_nearing_freshness_deadline",
+            return_value=6,
         ):
             result = app.test_cli_runner().invoke(args=["maintenance-sweep"])
 
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn("2 reservation deadline(s) resolved", result.output)
+        self.assertIn("5 reservation reminder(s) sent", result.output)
         self.assertIn("4 stale listing(s) deactivated", result.output)
+        self.assertIn("6 freshness warning(s) sent", result.output)
 
 
 if __name__ == "__main__":

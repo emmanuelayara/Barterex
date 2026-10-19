@@ -159,24 +159,34 @@
     background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
     border: none;
     color: white;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 700;
     cursor: pointer;
-    padding: 8px 16px;
+    padding: 4px 10px;
     margin-left: auto;
-    border-radius: 8px;
+    border-radius: 6px;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
+    box-shadow: 0 2px 8px rgba(255, 122, 0, 0.25);
     flex-shrink: 0;
     text-transform: uppercase;
     letter-spacing: 0.2px;
+    line-height: 1.2;
+  }
+
+  html.dark-mode .filter-toggle-btn {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
   }
 
   .filter-toggle-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(255, 122, 0, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.35);
+  }
+
+  html.dark-mode .filter-toggle-btn:hover {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
   }
 
   .filter-toggle-btn:active {
@@ -400,14 +410,15 @@
   .filter-btn {
     background: linear-gradient(135deg, var(--primary-color) 0%, #ff8c00 100%);
     color: white;
-    padding: 8px 16px;
+    padding: 4px 10px;
     border: none;
     border-radius: 6px;
     font-weight: 700;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+    line-height: 1.2;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 3px 10px rgba(255, 122, 0, 0.25);
+    box-shadow: 0 2px 8px rgba(255, 122, 0, 0.25);
     text-transform: uppercase;
     letter-spacing: 0.2px;
     white-space: nowrap;
@@ -416,21 +427,21 @@
     justify-content: center;
     gap: 4px;
     flex: 1;
-    min-width: 140px;
+    min-width: 110px;
   }
 
   html.dark-mode .filter-btn {
-    background: linear-gradient(135deg, #ff9500 0%, #ff8c00 100%);
-    box-shadow: 0 3px 10px rgba(255, 149, 0, 0.35);
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
   }
 
   .filter-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 122, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(255, 122, 0, 0.4);
   }
 
   html.dark-mode .filter-btn:hover {
-    box-shadow: 0 6px 16px rgba(255, 149, 0, 0.5);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
   }
 
   .filter-btn:active {
@@ -921,7 +932,7 @@
     .price-input { padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; }
     .price-toggle { gap: 8px; margin-bottom: 10px; }
     .toggle-btn { padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; flex: none; }
-    .filter-btn { padding: 12px 20px; border-radius: 12px; font-size: 0.9rem; min-width: auto; flex: 0 1 auto; }
+    .filter-btn { padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; min-width: auto; flex: 0 1 auto; }
     .clear-filters-btn { padding: 12px 20px; border-radius: 12px; font-size: 0.9rem; gap: 6px; min-width: auto; flex: 0 1 auto; }
     .results-info { margin-bottom: 20px; padding: 15px 20px; border-radius: 12px; }
     .results-count { font-size: 0.9rem; }
@@ -972,7 +983,7 @@
     .filter-header { flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
     .filter-header h3 { flex: 1 1 auto; font-size: 0.9rem; }
     .filter-icon { width: 24px; height: 24px; font-size: 0.8rem; }
-    .filter-toggle-btn { padding: 6px 12px; font-size: 0.65rem; gap: 4px; }
+    .filter-toggle-btn { padding: 4px 10px; font-size: 0.65rem; gap: 4px; }
     .filter-form { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; padding: 6px 0; }
     .form-group { gap: 4px; }
     .form-group label { font-size: 0.6rem; }
@@ -983,7 +994,7 @@
     .toggle-btn { padding: 4px 6px; font-size: 0.55rem; min-width: 50px; flex: 1 1 calc(33.333% - 3px); }
     .price-range-selector { grid-template-columns: 1fr; }
     .price-custom { grid-template-columns: 1fr 1fr; gap: 6px; }
-    .filter-btn, .clear-filters-btn { padding: 6px 10px; font-size: 0.65rem; min-width: 120px; flex: 1 1 calc(50% - 4px); }
+    .filter-btn, .clear-filters-btn { padding: 4px 10px; font-size: 0.65rem; min-width: 100px; flex: 1 1 calc(50% - 4px); }
     .price-input { padding: 6px 8px; border-radius: 4px; font-size: 0.7rem; }
     .results-info { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; }
     .results-count { font-size: 0.7rem; }
@@ -1701,22 +1712,6 @@
       </form>
     </div>
 
-    <!-- Recommendations Section (for logged-in users) - After filter section, before results -->
-    {% if current_user.is_authenticated %}
-    <div class="recommendations-section" id="recommendationsSection" style="display: none;">
-      <div class="recommendations-header">
-        <div class="recommendations-icon">⭐</div>
-        <div>
-          <h3>Recommended For You</h3>
-          <div class="recommendations-subtitle">Based on your browsing history</div>
-        </div>
-      </div>
-      <div class="recommendations-grid" id="recommendationsGrid">
-        <div class="recommendations-loading">⏳ Loading recommendations...</div>
-      </div>
-    </div>
-    {% endif %}
-
     <div class="results-info">
       <div class="results-count">
         <strong>{{ items|length }}</strong> items found
@@ -1968,80 +1963,6 @@
       "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
-  }
-
-  // ==================== RECOMMENDATIONS LOADER ====================
-
-  async function loadRecommendations() {
-    const section = document.getElementById('recommendationsSection');
-    if (!section) return; // Not logged in
-
-    try {
-      const response = await fetch('/api/recommended');
-      const data = await response.json();
-
-      if (data.recommended && data.recommended.length > 0) {
-        displayRecommendations(data.recommended);
-        section.style.display = 'block';
-      } else {
-        section.style.display = 'none';
-      }
-    } catch (e) {
-      console.error('Error loading recommendations:', e);
-      section.style.display = 'none';
-    }
-  }
-
-  function displayRecommendations(items) {
-    const grid = document.getElementById('recommendationsGrid');
-    if (!grid) return;
-
-    function formatImageUrl(url) {
-      if (!url) return '/static/placeholder.png';
-      if (typeof url !== 'string') return '/static/placeholder.png';
-
-      url = url.trim();
-      if (!url) return '/static/placeholder.png';
-
-      // If already a full URL, return as-is
-      if (url.includes('http://') || url.includes('https://')) {
-        return url;
-      }
-
-      // If local static path, ensure proper format
-      if (url.includes('/static/')) {
-        return url.replace(/\/+/g, '/');
-      }
-
-      // Strip any legacy path prefixes and keep only the filename
-      const filename = url.split('/').pop().replace(/^\/+|\/+$/g, '');
-      if (!filename) {
-        return '/static/placeholder.png';
-      }
-
-      return `/static/uploads/${filename}`;
-    }
-
-    let html = '';
-    items.slice(0, 8).forEach(item => {
-      const imageUrl = formatImageUrl(item.image_url);
-      html += `
-        <div class="recommendation-item" onclick="window.location.href='/item/${item.id}'">
-          <img src="${imageUrl}" 
-               alt="${item.name}" 
-               class="recommendation-image" 
-               loading="lazy"
-               onerror="this.src='/static/placeholder.png'" />
-          <div class="recommendation-content">
-            <div class="recommendation-name">${escapeHtml(item.name)}</div>
-            <div class="recommendation-category">${item.category}</div>
-            <div class="recommendation-value">ᗸ${(item.value || 0).toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-          </div>
-        </div>
-      `;
-    });
-
-    grid.innerHTML = html || '<div class="recommendations-empty">No recommendations available yet.</div>';
   }
 
   // ==================== ORIGINAL FUNCTIONS ====================
@@ -2453,9 +2374,8 @@
     initializeGlobalElements();
     initializeSearchListeners();
     
-    // Initialize category stats and recommendations
+    // Initialize category stats
     initializeCategoryStats();
-    loadRecommendations();
     
     // ========== FILTER TOGGLE ==========
     const filterToggleBtn = document.getElementById('filterToggleBtn');

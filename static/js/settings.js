@@ -114,6 +114,8 @@
         };
         root.querySelector('#editProfileBtn').addEventListener('click', function () { setEditing(true); });
         root.querySelector('#cancelProfileEditBtn').addEventListener('click', function () { setEditing(false); });
+        // Arriving from the dashboard progress card: open the form straight away.
+        if (new URLSearchParams(location.search).get('edit') === 'profile') setEditing(true);
     }
 
     /* ---------- Profile photo: validate, then upload straight away ---------- */

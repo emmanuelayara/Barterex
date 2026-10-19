@@ -5,6 +5,8 @@ from app import db
 from logger_config import setup_logger
 from markupsafe import escape
 from error_handlers import handle_errors
+from html import unescape
+from services.email_notifications import notify_admins, queue_email
 import datetime
 
 logger = setup_logger(__name__)
@@ -55,6 +57,25 @@ def contact_form():
             
             # Save to database
             db.session.add(contact_message)
+            db.session.flush()
+
+            sender_name = unescape(str(name))
+            queue_email(
+                unescape(str(email)),
+                "We received your message - Barter Express",
+                "We got your message",
+                "Thanks for contacting Barter Express. Our support team has received your message "
+                "and will reply as soon as possible.",
+                username=sender_name,
+                details=[f"Reference: #{contact_message.id}"],
+            )
+            notify_admins(
+                'messages.manage',
+                f"New contact message from {sender_name}",
+                f"{sender_name} sent a new message through the contact form (reference #{contact_message.id}).",
+                cta_endpoint='admin.view_messages',
+                cta_label='Open Messages',
+            )
             db.session.commit()
             
             logger.info(f"Contact message received from {name} ({email}) - ID: {contact_message.id}")

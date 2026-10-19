@@ -117,7 +117,9 @@ def maintenance_sweep_command():
     click.echo(
         "Maintenance sweep complete: "
         f"{result['expired_reservations']} reservation deadline(s) resolved; "
-        f"{result['stale_items']} stale listing(s) deactivated."
+        f"{result['reservation_reminders']} reservation reminder(s) sent; "
+        f"{result['stale_items']} stale listing(s) deactivated; "
+        f"{result['freshness_warnings']} freshness warning(s) sent."
     )
 
 

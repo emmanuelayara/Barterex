@@ -85,6 +85,14 @@ def dashboard() -> Union[str, Response]:
         
         # Calculate missing profile fields
         missing_fields = [name for name, field in zip(profile_field_names, profile_fields) if not field]
+
+        # Send users to the form that still needs filling; None once everything is complete
+        if any(not field for field in profile_fields[:-1]):
+            profile_action_url = url_for('user.settings', edit='profile') + '#profile'
+        elif not profile_fields[-1]:
+            profile_action_url = url_for('user.settings') + '#verification'
+        else:
+            profile_action_url = None
         
         # Calculate trading goals
         completed_trades = Trade.query.filter(
@@ -128,6 +136,7 @@ def dashboard() -> Union[str, Response]:
             recent_notifications=recent_notifications,
             profile_completion=profile_completion,
             missing_fields=missing_fields,
+            profile_action_url=profile_action_url,
             completed_trades=completed_trades,
             orders_placed=orders_placed,
             upload_progress=upload_progress,
@@ -865,27 +874,10 @@ def cancel_order(order_id):
         
         # Send email notification
         try:
-            from app import send_email_async
+            from routes.auth import send_email_async
             send_email_async(
                 subject=f"Order Cancellation Confirmation - {order.order_number}",
                 recipients=[current_user.email],
-                text_body=f"""
-Dear {current_user.username},
-
-Your order {order.order_number} has been successfully cancelled.
-
-Order Details:
-- Order Number: {order.order_number}
-- Items: {', '.join(item_names)}
-- BXC Refunded: ᗸ{refund_amount:,.0f}
-- Cancellation Date: {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p')}
-{f'Reason: {cancellation_reason}' if cancellation_reason else ''}
-
-Your refund has been processed and added back to your account.
-
-Best regards,
-Barter Express Team
-                """,
                 html_body=f"""
 <html>
   <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">

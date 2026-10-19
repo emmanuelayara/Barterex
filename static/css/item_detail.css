@@ -100,22 +100,52 @@ html.dark-mode .meta-tag { color: #ffb066; }
 .description-text strong { color: var(--bx-text); }
 
 /* ---------- Actions ---------- */
-.action-section { display: flex; flex-direction: column; gap: 12px; }
+.action-section { display: flex; flex-direction: column; gap: 10px; }
+.action-section:empty { display: none; }
 .reservation-banner {
-    padding: 14px 16px; border-radius: var(--bx-radius-sm); border-left: 4px solid var(--bx-orange);
-    background: var(--bx-accent-soft); color: var(--bx-text); font-size: .92rem; line-height: 1.55;
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 12px 14px; border-radius: var(--bx-radius-sm); border-left: 4px solid var(--bx-orange);
+    background: var(--bx-accent-soft); color: var(--bx-text); font-size: .88rem; line-height: 1.45;
 }
+.reservation-banner strong { font-size: .95rem; }
+.reservation-banner .rb-line { color: var(--bx-text); font-weight: 600; }
+.reservation-banner .rb-note { margin-top: 4px; color: var(--bx-muted); font-size: .82rem; }
 .trade-button {
-    display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 54px; padding: 12px 20px;
-    border: 0; border-radius: 16px; background: var(--bx-orange); color: #fff !important;
-    font: inherit; font-size: 1.02rem; font-weight: 700; cursor: pointer; text-decoration: none !important;
-    box-shadow: 0 10px 22px rgba(255, 122, 0, .35); transition: transform .15s ease, background .15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 46px; padding: 10px 18px;
+    border: 0; border-radius: 999px; background: var(--bx-orange); color: #fff !important;
+    font: inherit; font-size: .95rem; font-weight: 700; line-height: 1.2; cursor: pointer; text-decoration: none !important;
+    box-shadow: 0 6px 14px rgba(255, 122, 0, .28); transition: transform .15s ease, background .15s ease;
     -webkit-tap-highlight-color: transparent;
 }
+.trade-button i { font-size: .9rem; }
 .trade-button:hover { background: var(--bx-orange-dark); }
 .trade-button:active { transform: scale(.98); }
 .trade-button.secondary { background: var(--bx-orange); }
-form .trade-button.secondary { background: var(--bx-surface); color: var(--bx-danger) !important; border: 2px solid var(--bx-border); box-shadow: none; }
+form .trade-button.secondary { min-height: 42px; background: transparent; color: var(--bx-danger) !important; border: 1.5px solid color-mix(in srgb, var(--bx-danger) 40%, var(--bx-border)); box-shadow: none; font-size: .9rem; }
+form .trade-button.secondary:hover { background: var(--bx-danger-soft); }
+.action-hint { text-align: center; color: var(--bx-muted); font-size: .8rem; line-height: 1.4; }
+
+/* ---------- Compact phone layout ---------- */
+@media (max-width: 639px) {
+    .page-container .main-content { padding: 10px 10px 24px; }
+    .slideshow-wrapper { aspect-ratio: 4 / 3; }
+    .slideshow-nav { width: 38px; height: 38px; font-size: 1.4rem; }
+    .thumbnail { flex-basis: 52px; height: 52px; border-radius: 10px; }
+    .thumbnail-nav { padding: 8px 12px; }
+    .video-link-section { padding: 10px 14px 0; }
+    .video-text-link { min-height: 38px; padding: 0 14px; font-size: .84rem; }
+    .info-section { padding: 14px 14px 16px; gap: 14px; }
+    .item-title { font-size: 1.25rem; }
+    .favorite-button, .share-button { width: 40px; height: 40px; border-radius: 12px; font-size: 1rem; }
+    .item-meta { margin-top: 8px; gap: 6px; }
+    .meta-tag { padding: 4px 11px; font-size: .78rem; }
+    .price-section { padding: 11px 14px; align-items: center; flex-wrap: nowrap; }
+    .price-label { font-size: .7rem; }
+    .price-value { font-size: 1.4rem; }
+    .description-title { font-size: .92rem; margin-bottom: 4px; }
+    .description-text { font-size: .92rem; line-height: 1.6; }
+}
+
 
 /* ---------- Related ---------- */
 .related-section { margin-top: 22px; }

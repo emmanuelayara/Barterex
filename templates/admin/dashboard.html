@@ -432,7 +432,8 @@
     color: var(--primary-blue);
   }
 
-  .status-pill.status-rejected {
+  .status-pill.status-rejected,
+  .status-pill.status-failed_verification {
     background: rgba(220, 38, 38, 0.1);
     color: #b91c1c;
   }
@@ -830,9 +831,21 @@
               </div>
 
           <div class="item-side">
+            {% if item.id in awaiting_physical_ids %}
+            <span class="status-pill status-pending">Awaiting physical verification</span>
+            {% if can('settlement.manage') %}
+            <div class="item-actions">
+              <a class="act-btn act-approve" href="{{ url_for('admin.settlement_queue') }}">
+                <i class="bi bi-clipboard-check"></i>Verify
+              </a>
+            </div>
+            {% endif %}
+            {% else %}
             <span class="status-pill status-{{ item.status }}">{{ item.status|replace('_', ' ')|capitalize }}</span>
+            {% endif %}
 
-            {% if item.status == 'pending' %}
+            {% if item.id in awaiting_physical_ids %}
+            {% elif item.status == 'pending' %}
             <div class="item-actions" role="group">
               {% set item_images = item.images|map(attribute='image_url')|list if item.images else ([item.image_url] if item.image_url else []) %}
               {% set image_metadata = [] %}

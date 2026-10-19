@@ -11,6 +11,7 @@ from models import (
     ClearingInventoryItem,
     CreditTransaction,
     Item,
+    Notification,
     Order,
     OrderItem,
     Payment,
@@ -29,9 +30,11 @@ from services.reservation_service import (
     cover_reservation_shortfall,
     create_reservation,
     get_reservation_shortfall,
+    pending_physical_verification_item_ids,
     release_expired_reservations,
     respond_to_failed_seller_title_transfer,
     respond_to_reservation_revaluation,
+    send_reservation_deadline_reminders,
     verify_backing_asset,
     verify_seller_item,
 )
@@ -1253,6 +1256,200 @@ class ReservationSettlementTests(unittest.TestCase):
         seller_page = client.get('/my-revaluations')
         self.assertEqual(seller_page.status_code, 200)
         self.assertIn('Accept revised value', seller_page.get_data(as_text=True))
+
+    def test_reserving_an_item_in_owner_possession_emails_and_notifies_seller(self):
+        with patch('routes.auth.send_email_async') as send_email:
+            buyer, seller, seller_item, reservation = self._create_reservation(
+                purchase_value=100,
+                backing_values=[100],
+            )
+
+        send_email.assert_called_once()
+        self.assertEqual(send_email.call_args.kwargs['recipients'], [seller.email])
+        self.assertIn('72 hours', send_email.call_args.kwargs['subject'])
+        self.assertIn('Requested item', send_email.call_args.kwargs['html_body'])
+        notification = Notification.query.filter_by(user_id=seller.id).one()
+        self.assertIn('physical verification', notification.message)
+
+    def test_reserving_an_item_already_in_custody_does_not_notify_seller(self):
+        seller = User(username='seller', email='seller@example.com', password_hash='h', credits=0)
+        buyer = User(username='buyer', email='buyer@example.com', password_hash='h', credits=500)
+        admin = Admin(username='intake-admin', email='intake@example.com', is_super_admin=True, password='h')
+        db.session.add_all([seller, buyer, admin])
+        db.session.flush()
+        item = Item(
+            name='Verified item', category='Electronics', user_id=seller.id, value=100,
+            status='approved', is_approved=True, is_available=True,
+        )
+        db.session.add(item)
+        db.session.flush()
+        db.session.add(VerificationIntake(
+            item_id=item.id,
+            workflow_type='standard_item_verification',
+            outcome='passed',
+            received_at=datetime.utcnow(),
+            received_location='Warehouse',
+            received_by_admin_id=admin.id,
+            observed_condition='Brand New',
+            serial_check='not_applicable',
+            identity_confirmed=True,
+            inspected_at=datetime.utcnow(),
+            inspected_by_admin_id=admin.id,
+        ))
+        db.session.commit()
+
+        with patch('routes.auth.send_email_async') as send_email:
+            reservation, error = create_reservation(buyer, item, [], funding_mode='spendable')
+
+        self.assertIsNone(error)
+        self.assertNotIn(
+            [seller.email],
+            [call.kwargs['recipients'] for call in send_email.call_args_list],
+        )
+        self.assertEqual(Notification.query.filter_by(user_id=seller.id).count(), 0)
+        self.assertEqual(
+            Item.query.filter(Item.id.in_(pending_physical_verification_item_ids())).count(), 0
+        )
+
+    def test_admin_dashboard_moves_reserved_item_from_pending_to_approved_or_rejected(self):
+        with patch('routes.auth.send_email_async'):
+            buyer, seller, seller_item, reservation = self._create_reservation(
+                purchase_value=100,
+                backing_values=[100],
+            )
+            second_item = Item(
+                name='Second item', category='Electronics', user_id=seller.id, value=50,
+                status='approved', is_approved=True, is_available=True,
+            )
+            db.session.add(second_item)
+            db.session.commit()
+            second_buyer = User(
+                username='buyer2', email='buyer2@example.com', password_hash='h', credits=100,
+            )
+            db.session.add(second_buyer)
+            db.session.commit()
+            second_reservation, error = create_reservation(
+                second_buyer, second_item, [], funding_mode='spendable'
+            )
+        self.assertIsNone(error)
+        admin = Admin(username='dash-admin', email='dash@example.com', is_super_admin=True, password='h')
+        db.session.add(admin)
+        db.session.commit()
+
+        def names(status):
+            with app.test_client() as client:
+                with client.session_transaction() as flask_session:
+                    flask_session['admin_id'] = admin.id
+                response = client.get(f'/admin/dashboard?status={status}')
+            self.assertEqual(response.status_code, 200)
+            html = response.get_data(as_text=True)
+            return {n for n in ('Requested item', 'Second item') if f'title="{n}"' in html}, html
+
+        pending, html = names('pending')
+        self.assertEqual(pending, {'Requested item', 'Second item'})
+        self.assertIn('Awaiting physical verification', html)
+        self.assertEqual(names('approved')[0], set())
+
+        with patch('trading_points.award_points_for_purchase', return_value=None):
+            ok, error = verify_seller_item(reservation, passed=True)
+            self.assertTrue(ok, error)
+            ok, error = verify_seller_item(second_reservation, passed=False)
+            self.assertTrue(ok, error)
+
+        self.assertEqual(names('pending')[0], set())
+        self.assertEqual(names('approved')[0], {'Requested item'})
+        self.assertEqual(names('rejected')[0], {'Second item'})
+
+    def _recipients(self, send_email):
+        return [call.kwargs['recipients'][0] for call in send_email.call_args_list]
+
+    def test_expired_reservation_notifies_seller_and_buyer(self):
+        with patch('routes.auth.send_email_async') as send_email:
+            buyer, seller, seller_item, reservation = self._create_reservation(
+                purchase_value=100,
+                backing_values=[100],
+            )
+            send_email.reset_mock()
+            reservation.expires_at = datetime.utcnow() - timedelta(minutes=1)
+            db.session.commit()
+
+            release_expired_reservations()
+
+        self.assertCountEqual(self._recipients(send_email), [seller.email, buyer.email])
+        seller_notes = [n.message for n in Notification.query.filter_by(user_id=seller.id)]
+        buyer_notes = [n.message for n in Notification.query.filter_by(user_id=buyer.id)]
+        self.assertTrue(any("wasn't brought in" in message for message in seller_notes))
+        self.assertTrue(any("backing item(s) weren't brought in" in message for message in buyer_notes))
+
+    def test_buyer_cancellation_notifies_seller(self):
+        with patch('routes.auth.send_email_async') as send_email:
+            buyer, seller, seller_item, reservation = self._create_reservation(
+                purchase_value=100,
+                backing_values=[100],
+            )
+            send_email.reset_mock()
+            ok, error = cancel_reservation(reservation, buyer)
+
+        self.assertTrue(ok, error)
+        self.assertEqual(self._recipients(send_email), [seller.email])
+        self.assertTrue(any(
+            'cancelled their reservation' in n.message
+            for n in Notification.query.filter_by(user_id=seller.id)
+        ))
+
+    def test_failed_seller_verification_notifies_seller(self):
+        with patch('routes.auth.send_email_async') as send_email:
+            buyer, seller, seller_item, reservation = self._create_reservation(
+                purchase_value=100,
+                backing_values=[100],
+            )
+            send_email.reset_mock()
+            ok, error = verify_seller_item(reservation, passed=False, notes='Screen is cracked')
+
+        self.assertTrue(ok, error)
+        self.assertIn(seller.email, self._recipients(send_email))
+        self.assertTrue(any(
+            'did not pass physical verification: Screen is cracked' in n.message
+            for n in Notification.query.filter_by(user_id=seller.id)
+        ))
+
+    def test_deadline_reminders_are_sent_once_per_window(self):
+        with patch('routes.auth.send_email_async') as send_email:
+            buyer, seller, seller_item, reservation = self._create_reservation(
+                purchase_value=100,
+                backing_values=[100],
+            )
+            send_email.reset_mock()
+            self.assertEqual(send_reservation_deadline_reminders(), 0)
+
+            reservation.expires_at = datetime.utcnow() + timedelta(hours=20)
+            db.session.commit()
+            self.assertEqual(send_reservation_deadline_reminders(), 1)
+            self.assertEqual(send_reservation_deadline_reminders(), 0)
+            self.assertCountEqual(self._recipients(send_email), [seller.email, buyer.email])
+
+            send_email.reset_mock()
+            reservation.expires_at = datetime.utcnow() + timedelta(hours=5)
+            db.session.commit()
+            self.assertEqual(send_reservation_deadline_reminders(), 1)
+            self.assertEqual(len(self._recipients(send_email)), 2)
+
+    def test_queued_emails_are_dropped_when_the_transaction_rolls_back(self):
+        from services.email_notifications import notify_user
+
+        user = User(username='rollback-user', email='rollback@example.com', password_hash='h')
+        db.session.add(user)
+        db.session.commit()
+        with patch('routes.auth.send_email_async') as send_email:
+            notify_user(user, 'Should never be sent', subject='Nope')
+            db.session.rollback()
+            db.session.commit()
+            send_email.assert_not_called()
+
+            notify_user(user, 'Will be sent', subject='Yes')
+            send_email.assert_not_called()
+            db.session.commit()
+            send_email.assert_called_once()
 
 
 if __name__ == '__main__':
