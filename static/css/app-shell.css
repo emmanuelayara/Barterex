@@ -284,6 +284,34 @@ html.dark-mode .bx-btn.ghost { color: #9cc7f5 !important; }
 @media (prefers-reduced-motion: reduce) {
     .bx-brand__logo, .bx-tab i, .bx-nav__link { transition: none; }
 }
+
+/* ---------- Colour scheme: light by default, dark only when the user chooses it ---------- */
+html { color-scheme: light; }
+html.dark-mode { color-scheme: dark; }
+
+/* ---------- Title banners with floating items: orange in light mode, blue in dark mode ---------- */
+:root { --bx-banner-orange: linear-gradient(145deg, #ff8f26 0%, #f46d00 55%, #d95a00 100%); }
+html:not(.dark-mode) :is(
+    .pp-hero, .au-side, .marketplace-header, .favorites-header, .wishlist-header, .upload-page .upload-header,
+    .dash .welcome-section, .mp .page-header, .order-details-container > .order-header,     .fund-header, .history-header, .ac-banner
+) { background: var(--bx-banner-orange); }
+/* the soft orange glow in the corner becomes a white glow on an orange banner */
+html:not(.dark-mode) :is(
+    .pp-hero, .au-side, .marketplace-header, .favorites-header, .wishlist-header, .upload-page .upload-header,
+    .dash .welcome-section, .mp .page-header, .order-details-container > .order-header,     .fund-header, .history-header, .ac-banner
+)::before { background: radial-gradient(circle, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0) 70%); }
+/* keep white text readable on the lighter orange */
+html:not(.dark-mode) :is(
+    .pp-hero, .au-side, .marketplace-header, .favorites-header, .wishlist-header, .upload-page .upload-header,
+    .dash .welcome-section, .mp .page-header, .order-details-container > .order-header,     .fund-header, .history-header, .ac-banner
+) :is(h1, h2, .page-title, .welcome-title, .order-number) { text-shadow: 0 2px 12px rgba(120, 40, 0, .35); }
+html:not(.dark-mode) :is(.pp-hero, .au-side, .mp .page-header, .upload-page .upload-header, .favorites-header, .wishlist-header, .fund-header, .history-header, .ac-banner) :is(p, .page-subtitle, .upload-subtitle) { color: rgba(255, 255, 255, .96) !important; text-shadow: 0 1px 8px rgba(120, 40, 0, .3); }
+/* orange-on-orange details switch to white */
+html:not(.dark-mode) .pp-kicker i, html:not(.dark-mode) .au-kicker i, html:not(.dark-mode) .au-highlight i { color: #fff; }
+html:not(.dark-mode) .pp-hero .pp-btn.primary { background: #fff; color: var(--bx-orange-dark) !important; box-shadow: 0 8px 18px rgba(120, 40, 0, .25); }
+html:not(.dark-mode) .pp-hero .pp-btn.primary:hover { background: #fff3e6; }
+html:not(.dark-mode) .fund-header .conversion-info { background: rgba(255, 255, 255, .22); }
+html:not(.dark-mode) .dash .welcome-section .settings-btn-dashboard { background: rgba(255, 255, 255, .2); }
 @media print {
     .bx-nav, .bx-tabbar, .bx-footer { display: none !important; }
 }

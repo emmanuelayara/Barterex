@@ -29,6 +29,8 @@
     content: ''; position: absolute; right: -90px; top: -110px; width: 260px; height: 260px; border-radius: 50%;
     background: radial-gradient(circle, rgba(255, 122, 0, .45), rgba(255, 122, 0, 0) 70%); pointer-events: none;
 }
+/* the page's legacy inline CSS has its own dark-mode header rule; restore the blue banner */
+html.dark-mode .upload-page .upload-header { background: linear-gradient(145deg, var(--bx-blue), var(--bx-blue-dark)); border: 0; box-shadow: none; }
 .upload-page .upload-header h1 {
     position: relative; display: flex; align-items: center; justify-content: center; gap: 12px;
     font-size: clamp(1.5rem, 6vw, 2.2rem); font-weight: 800; letter-spacing: -.02em; color: #fff; -webkit-text-fill-color: #fff;

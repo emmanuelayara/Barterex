@@ -1,9 +1,18 @@
 {% extends "base.html" %}
 
+{% import '_floaters.html' as fx %}
+
 {% block title %}Security Settings - Account Management{% endblock %}
 
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">{% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container py-5 ac">
+    <div class="ac-banner">
+        {{ fx.floaters('banner') }}
+        <h1 class="ac-title">Security Settings</h1>
+        <p class="ac-sub">Protect your account, manage your devices and control your data.</p>
+    </div>
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <!-- Security Score Card -->
@@ -49,8 +58,7 @@
                 </a>
             </div>
 
-            <!-- 1. Security Preferences -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="security-preferences">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-shield-alt"></i> Security Preferences</h5>
                 </div>
@@ -101,8 +109,7 @@
                 </div>
             </div>
 
-            <!-- 2. Password -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="password">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-key"></i> Password</h5>
                 </div>
@@ -121,8 +128,7 @@
                 </div>
             </div>
 
-            <!-- 3. Two-Factor Authentication -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="two-factor">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-mobile-alt"></i> Two-Factor Authentication</h5>
                 </div>
@@ -147,8 +153,7 @@
                 </div>
             </div>
 
-            <!-- 4. Trusted Devices -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="trusted-devices">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-laptop"></i> Trusted Devices</h5>
                 </div>
@@ -182,8 +187,7 @@
                 </div>
             </div>
 
-            <!-- 5. IP Whitelist -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="ip-whitelist">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-network-wired"></i> IP Whitelist</h5>
                 </div>
@@ -215,8 +219,7 @@
                 </div>
             </div>
 
-            <!-- 6. Activity Log -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="activity-log">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-history"></i> Activity Log</h5>
                 </div>
@@ -228,8 +231,7 @@
                 </div>
             </div>
 
-            <!-- 7. Data & Privacy -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="data-privacy">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-user-secret"></i> Data & Privacy</h5>
                 </div>
@@ -256,6 +258,7 @@
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/account.js') }}"></script>
 <script>
 // Update security score display
 fetch('{{ url_for("account.api_security_score") }}')
@@ -264,6 +267,7 @@ fetch('{{ url_for("account.api_security_score") }}')
         document.getElementById('security-score').textContent = data.score + '/100';
         document.getElementById('score-status').textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
         document.getElementById('score-status').className = `text-${data.color}`;
-    });
+    })
+    .catch(() => {});
 </script>
 {% endblock %}

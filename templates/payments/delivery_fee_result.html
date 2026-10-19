@@ -1,17 +1,33 @@
 {% extends 'base.html' %}
 {% block title %}Home-service payment{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css') }}">{% endblock %}
 {% block content %}
-<main class="container py-5">
-  <div class="card p-4 mx-auto" style="max-width: 650px;">
-    {% if success %}
-      <h1>Home-service fee paid</h1>
-      <p>Your non-refundable delivery fee was verified. Dispatch can proceed once reservation inspection is complete.</p>
-    {% else %}
-      <h1>Payment not completed</h1>
-      <p>{{ error or 'Paystack could not verify this delivery-fee payment.' }}</p>
-    {% endif %}
-    <p>Payment reference: {{ reference }}</p>
-    <a class="btn btn-primary" href="{{ url_for('user.my_reservations') }}">View my reservations</a>
+{% if success %}
+<div class="success-container">
+  <div class="success-card">
+    <div class="success-icon">✓</div>
+    <h1 class="success-title">Home-service fee paid</h1>
+    <p class="success-message">Your non-refundable delivery fee was verified. Dispatch can proceed once reservation inspection is complete.</p>
+    <div class="reference-box"><strong>Reference:</strong> {{ reference }}</div>
+    <div class="action-buttons">
+      <a class="btn btn-primary" href="{{ url_for('user.my_reservations') }}"><i class="fas fa-bookmark"></i> View my reservations</a>
+    </div>
   </div>
-</main>
+</div>
+{% else %}
+<div class="error-container">
+  <div class="error-card">
+    <div class="error-icon">✗</div>
+    <h1 class="error-title">Payment not completed</h1>
+    <p class="error-message">{{ error or 'Paystack could not verify this delivery-fee payment.' }}</p>
+    <div class="reference-box"><strong>Reference:</strong> {{ reference }}</div>
+    <div class="action-buttons">
+      <a class="btn btn-primary" href="{{ url_for('user.my_reservations') }}"><i class="fas fa-bookmark"></i> View my reservations</a>
+    </div>
+    <div class="footer-text">
+      If the problem persists, please <a href="{{ url_for('contact.contact_form') }}" class="support-link">contact support</a>.
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

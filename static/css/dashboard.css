@@ -63,6 +63,7 @@
     background: linear-gradient(145deg, #ff8f26 0%, #f46d00 60%, #d95a00 100%);
     box-shadow: 0 14px 30px rgba(244, 109, 0, .35);
 }
+html:not(.dark-mode) .dash .stat-card-balance { box-shadow: 0 0 0 4px var(--bx-bg), 0 14px 30px rgba(244, 109, 0, .35); }
 .dash .stat-card-balance .stat-icon { background: rgba(255, 255, 255, .2); color: #fff; }
 .dash .stat-card-balance .stat-title, .dash .stat-card-balance .stat-description { color: rgba(255, 255, 255, .88); }
 .dash .stat-card-balance .stat-value { color: #fff; font-size: clamp(1.9rem, 8vw, 2.6rem); }

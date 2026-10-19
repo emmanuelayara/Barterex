@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}Payment History{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css') }}">{% endblock %}
 
 {% block content %}
-<style>
+<style media="not all">
   .history-container {
     max-width: 1000px;
     margin: 0 auto;
@@ -185,6 +187,7 @@
   </a>
 
   <div class="history-header">
+    {{ fx.floaters('banner') }}
     <h1>Payment History</h1>
     <p>View all your BXC purchase transactions</p>
   </div>
@@ -204,25 +207,25 @@
         <tbody>
           {% for payment in payments %}
           <tr>
-            <td class="date-cell">
+            <td class="date-cell" data-label="Date">
               {% if payment.created_at %}
                 {{ payment.created_at[:10] }}
                 <br>
                 <small>{{ payment.created_at[11:16] }}</small>
               {% endif %}
             </td>
-            <td class="amount-cell">
+            <td class="amount-cell" data-label="Amount">
               ₦{{ "{:,.2f}".format(payment.amount) }}
             </td>
-            <td class="credits-cell">
+            <td class="credits-cell" data-label="BXC">
               ᗸ{{ payment.credits|int }} BXC
             </td>
-            <td>
+            <td data-label="Status">
               <span class="status-badge status-{{ payment.status.lower() }}">
                 {{ payment.status }}
               </span>
             </td>
-            <td>
+            <td data-label="Reference">
               <code style="background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">
                 {{ payment.reference[:8] }}...
               </code>

@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}Choose Items to Back This Purchase{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">{% endblock %}
 {% block content %}
-<style>
+<style media="not all">
   .page-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
@@ -98,9 +100,10 @@
   .empty-state { background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 30px 20px; text-align: center; color: #6b7280; }
 </style>
 
-<div class="page-container">
+<div class="page-container mp">
   <div class="main-content">
     <div class="page-header">
+      {{ fx.floaters('banner') }}
       <h1 class="page-title">🧺 Reserve This Purchase</h1>
       <p class="page-subtitle">Choose how to fund "{{ item.name }}" and where you want it routed.</p>
     </div>

@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 {% block title %}Fund Account - Buy Credits{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css') }}">{% endblock %}
 
 {% block content %}
-<style>
+<style media="not all">
   .fund-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
@@ -475,6 +477,7 @@
   <div class="fund-wrapper">
     <!-- Header -->
     <div class="fund-header">
+      {{ fx.floaters('banner') }}
       <h1>Fund Your Account</h1>
       <p>Buy ᗸ BXC (Barter Express Credits) to purchase items</p>
       <div class="conversion-info">

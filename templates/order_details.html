@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
 
 {% block title %}Order Details - {{ order.order_number }}{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/orders.css') }}">{% endblock %}
 
 {% block content %}
-<style>
+<style media="not all">
   :root {
     --primary-color: #054e97;
     --primary-light: #0066cc;
@@ -1044,6 +1046,7 @@
 <div class="order-details-container">
   <!-- Order Header -->
   <div class="order-header">
+    {{ fx.floaters('banner') }}
     <div class="order-number">📦 {{ order.order_number }}</div>
     <div>Placed on {{ transaction_exp['date_ordered'] }}</div>
     <div class="order-status">

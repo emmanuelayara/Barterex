@@ -4,6 +4,11 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <script>
+        /* Apply the user's saved dark-mode choice before first paint (no flash). Default is light. */
+        try { if (localStorage.getItem('barterex-dark-mode') === 'true') document.documentElement.classList.add('dark-mode'); } catch (e) {}
+    </script>
     <title>Barter Express - {% block title %}{% endblock %}</title>
     <!-- Modern Design System CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
@@ -75,7 +80,7 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            background-color: var(--bg-secondary);
+            background-color: var(--bx-bg);
             color: var(--text-primary);
             min-height: 100vh;
             padding-bottom: 80px; /* Space for bottom nav - increased for proper spacing */
@@ -84,7 +89,7 @@
         
         /* Dark mode body transition */
         html.dark-mode body {
-            background-color: var(--bg-secondary);
+            background-color: var(--bx-bg);
             color: var(--text-primary);
         }
 
@@ -890,18 +895,8 @@
            DARK MODE
            ======================================== */
         
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: whitesmoke;
-                color: whitesmoke;
-            }
-            
-            .container {
-                background: rgba(30, 41, 59, 0.8);
-                border-radius: 20px;
-                backdrop-filter: blur(10px);
-            }
-        }
+        /* Dark mode is controlled only by the user's own toggle (html.dark-mode);
+           the device colour scheme is intentionally ignored. */
 
         /* ========================================
            PRINT STYLES
@@ -2144,25 +2139,12 @@ class DarkModeManager {
     }
     
     initDarkMode() {
-        // Load saved preference or use system preference
-        const savedMode = localStorage.getItem(this.storageKey);
-        
-        if (savedMode) {
-            this.isDarkMode = savedMode === 'true';
-        } else {
-            // Check system preference
-            this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        }
-        
+        // Light mode is the default. Dark mode is used only when the user has switched it on
+        // themselves (saved in localStorage); the device/system colour scheme is ignored.
+        let savedMode = null;
+        try { savedMode = localStorage.getItem(this.storageKey); } catch (e) { /* storage unavailable */ }
+        this.isDarkMode = savedMode === 'true';
         this.applyDarkMode();
-        
-        // Listen for system preference changes
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            if (!localStorage.getItem(this.storageKey)) {
-                this.isDarkMode = e.matches;
-                this.applyDarkMode();
-            }
-        });
     }
     
     applyDarkMode() {
@@ -2177,7 +2159,7 @@ class DarkModeManager {
     
     toggle() {
         this.isDarkMode = !this.isDarkMode;
-        localStorage.setItem(this.storageKey, String(this.isDarkMode));
+        try { localStorage.setItem(this.storageKey, String(this.isDarkMode)); } catch (e) { /* storage unavailable */ }
         this.applyDarkMode();
         return this.isDarkMode;
     }

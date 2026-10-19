@@ -21,7 +21,9 @@
     background: var(--bx-surface); border: 1px solid var(--bx-border); border-radius: var(--bx-radius);
     box-shadow: var(--bx-shadow); overflow: hidden;
 }
-.item-layout { display: grid; grid-template-columns: 1fr; gap: 0; }
+.item-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.item-layout > * { min-width: 0; }
+.trade-button { text-align: center; line-height: 1.35; }
 
 /* ---------- Slideshow ---------- */
 .slideshow-section { background: var(--bx-tint); }

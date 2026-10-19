@@ -1,9 +1,17 @@
 {% extends "base.html" %}
+{% import '_floaters.html' as fx %}
 
 {% block title %}Setup Two-Factor Authentication{% endblock %}
 
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">{% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container py-5 ac">
+    <div class="ac-banner">
+        {{ fx.floaters('banner') }}
+        <h1 class="ac-title">Two-Factor Setup</h1>
+        <p class="ac-sub">Add a second step to your sign-in with an authenticator app.</p>
+    </div>
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <div class="card shadow">

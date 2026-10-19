@@ -1,9 +1,17 @@
 {% extends "base.html" %}
+{% import '_floaters.html' as fx %}
 
 {% block title %}Delete Account{% endblock %}
 
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">{% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container py-5 ac">
+    <div class="ac-banner">
+        {{ fx.floaters('banner') }}
+        <h1 class="ac-title">Delete Account</h1>
+        <p class="ac-sub">Review what happens before you go. You have 30 days to change your mind.</p>
+    </div>
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <div class="card shadow border-danger">
@@ -114,7 +122,7 @@
                             <div class="alert alert-info">
                                 <i class="fas fa-lightbulb"></i> 
                                 Before you go, we'd appreciate any feedback about why you're leaving. 
-                                <a href="mailto:support@barterex.com?subject=Account%20Deletion%20Feedback" class="alert-link">
+                                <a href="mailto:barter@barterxpress.com?subject=Account%20Deletion%20Feedback" class="alert-link">
                                     Send us a message
                                 </a>
                             </div>
@@ -155,7 +163,7 @@
                 <p class="mb-2">
                     If you have questions or concerns, our support team is here to help.
                 </p>
-                <a href="mailto:support@barterex.com" class="btn btn-outline-secondary btn-sm">
+                <a href="mailto:barter@barterxpress.com" class="btn btn-outline-secondary btn-sm">
                     <i class="fas fa-envelope"></i> Contact Support
                 </a>
             </div>
