@@ -1011,10 +1011,16 @@
               {% elif active_reservation %}
                 <div class="reservation-banner">🔒 Reserved by another buyer.</div>
               {% elif item.value %}
-                <a href="{{ url_for('marketplace.choose_backing_assets', item_id=item.id) }}" class="trade-button secondary">
-                  <i class="fas fa-bookmark"></i> Get with BXC
-                </a>
-                <p class="action-hint">Pick your items to back this trade. Held for {{ reservation_hold_hours }}h.</p>
+                {% if current_user.is_profile_complete() %}
+                  <a href="{{ url_for('marketplace.choose_backing_assets', item_id=item.id) }}" class="trade-button secondary">
+                    <i class="fas fa-bookmark"></i> Get with BXC
+                  </a>
+                  <p class="action-hint">Pick your items to back this trade. Held for {{ reservation_hold_hours }}h.</p>
+                {% else %}
+                  <a href="{{ url_for('user.settings', edit='profile') }}#profile" class="trade-button secondary">
+                    Complete your profile to reserve
+                  </a>
+                {% endif %}
               {% endif %}
             {% endif %}
           </div>

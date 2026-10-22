@@ -53,6 +53,23 @@ def _get_top_categories(limit: int = 3) -> List[Dict[str, Any]]:
         for name, count in ranked if count > 0
     ][:limit]
 
+
+def _redirect_incomplete_profile() -> Union[None, Response]:
+    if current_user.is_profile_complete():
+        return None
+
+    incomplete_fields = current_user.get_incomplete_profile_fields()
+    logger.warning(
+        f"User with incomplete profile attempted to reserve an item: "
+        f"{current_user.username}, Missing: {incomplete_fields}"
+    )
+    flash(
+        f'Please complete your profile before reserving items. Missing: {", ".join(incomplete_fields)}',
+        'warning',
+    )
+    return redirect(url_for('user.settings', edit='profile') + '#profile')
+
+
 # ==================== ROUTES ====================
 
 @marketplace_bp.route('/')
@@ -236,6 +253,10 @@ def view_item(item_id: int) -> Union[str, Response]:
 @handle_errors
 def choose_backing_assets(item_id: int) -> Union[str, Response]:
     """"Get with BXC": pick which of the buyer's own activated items will back this purchase."""
+    profile_redirect = _redirect_incomplete_profile()
+    if profile_redirect:
+        return profile_redirect
+
     item = Item.query.get_or_404(item_id)
     if item.user_id == current_user.id:
         flash("You can't acquire your own item.", 'info')
@@ -262,6 +283,10 @@ def choose_backing_assets(item_id: int) -> Union[str, Response]:
 def reserve_item(item_id: int) -> Response:
     """Lock in a "Get with BXC" purchase using the buyer's chosen backing assets as collateral."""
     item = Item.query.get_or_404(item_id)
+    profile_redirect = _redirect_incomplete_profile()
+    if profile_redirect:
+        return profile_redirect
+
     backing_item_ids = request.form.getlist('backing_item_id', type=int)
     funding_mode = request.form.get('funding_mode', 'item_backed')
     delivery_method = request.form.get('delivery_method')
