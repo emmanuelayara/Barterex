@@ -1,6 +1,6 @@
 """Track reservation deadline reminders and listing freshness warnings.
 
-Revision ID: add_notification_reminder_tracking
+Revision ID: notif_reminder_20261019
 Revises: add_admin_deleted_at
 """
 
@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = 'add_notification_reminder_tracking'
+revision = 'notif_reminder_20261019'
 down_revision = 'add_admin_deleted_at'
 branch_labels = None
 depends_on = None
