@@ -35,5 +35,6 @@ requests==2.34.2
 # See services/video_service.py and services/youtube_publisher.py.
 google-cloud-storage==2.18.2
 google-api-python-client==2.149.0
-google-auth==2.35.0
+google-auth==2.62.0
 google-auth-oauthlib==1.2.1
+cryptography==50.0.2

@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = 'add_durable_video_publishing'
-down_revision = 'remove_item_preverification_stage'
+down_revision = 'remove_preverify_20261030'
 branch_labels = None
 depends_on = None
 

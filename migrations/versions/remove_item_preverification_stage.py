@@ -1,15 +1,15 @@
 """Remove the separate pre-listing item pre-verification stage.
 
-Revision ID: remove_item_preverification_stage
-Revises: add_notification_reminder_tracking
+Revision ID: remove_preverify_20261030
+Revises: notif_reminder_20261019
 """
 
 from alembic import op
 import sqlalchemy as sa
 
 
-revision = 'remove_item_preverification_stage'
-down_revision = 'add_notification_reminder_tracking'
+revision = 'remove_preverify_20261030'
+down_revision = 'notif_reminder_20261019'
 branch_labels = None
 depends_on = None
 
