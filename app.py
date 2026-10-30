@@ -357,7 +357,7 @@ def check_maintenance_mode():
 def inject_favorites_info():
     from flask_login import current_user
     from flask_wtf.csrf import generate_csrf
-    from models import Favorite
+    from models import Favorite, Item, Order, Reservation
     
     context = {
         'csrf_token': generate_csrf,
@@ -367,13 +367,44 @@ def inject_favorites_info():
     if current_user.is_authenticated:
         # Get favorites count
         favorites_count = Favorite.query.filter_by(user_id=current_user.id).count()
+        now = datetime.utcnow()
+        pending_reservations_count = Reservation.query.filter(
+            Reservation.user_id == current_user.id,
+            db.or_(
+                db.and_(
+                    Reservation.status == 'active',
+                    Reservation.expires_at >= now,
+                    db.or_(
+                        Reservation.revaluation_shortfall_expires_at.is_(None),
+                        Reservation.revaluation_shortfall_expires_at >= now,
+                    ),
+                ),
+                db.and_(
+                    Reservation.status == 'awaiting_consent',
+                    Reservation.title_transfer_decision_expires_at >= now,
+                ),
+            ),
+        ).count()
         
         context.update({
             'favorites_count': favorites_count,
+            'pending_reservations_count': pending_reservations_count,
+            'pending_orders_count': Order.query.filter(
+                Order.user_id == current_user.id,
+                Order.cancelled.is_(False),
+                Order.status.in_(('Pending', 'Processing', 'Shipped', 'Ready for Pickup')),
+            ).count(),
+            'pending_valuations_count': Item.query.filter(
+                Item.user_id == current_user.id,
+                Item.status.in_(Item.LIFECYCLE_STATUSES),
+            ).count(),
         })
     else:
         context.update({
             'favorites_count': 0,
+            'pending_reservations_count': 0,
+            'pending_orders_count': 0,
+            'pending_valuations_count': 0,
         })
     
     return context

@@ -1,5 +1,28 @@
 # Admin Section Improvements - Progress Tracker
 
+## Pending-work badges - October 30, 2026
+
+The current implementation supersedes the original Phase 1 badge behavior below.
+Counts are permission-scoped and refreshed on page loads, not live push updates.
+Zero-count badges are hidden.
+
+| Queue | Counted work |
+|---|---|
+| Item review | Pending item statuses and reserved items awaiting physical verification, counted once per item |
+| Video review | Pending reviews and failed publishing jobs needing intervention; automatic queued/publishing/retry jobs are excluded |
+| Reconfirmations | Items in reconfirmation review |
+| Settlement | Reservations in the settlement queue, including pending delivery quotes and required backing returns; one count per reservation |
+| Orders | Non-cancelled Pending, Processing, Shipped, and Ready for Pickup orders |
+| Unban appeals | Banned users with a nonempty appeal and a request date |
+| Messages | Pending and in-progress messages, even after they have been read |
+
+Dashboard shortcuts and queue headings show pending counts. The persistent admin
+navbar's Dashboard link shows the sum of accessible queue entries. That sum is
+not a unique customer/case count: physical verification can appear in both item
+review and settlement. Historical inventory, custody logs, audit logs, user lists,
+pickup-station configuration, and system settings have no artificial pending count.
+Database errors are not disguised as an empty queue.
+
 ## ✅ COMPLETED - Phase 1
 
 ### 1. ✅ Add Pending Items Badge to Admin Navigation

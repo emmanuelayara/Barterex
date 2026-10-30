@@ -27,7 +27,7 @@
   <a href="{{ url_for('admin.admin_dashboard') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
   <div class="adm-head">
     <div>
-      <h1>Reconfirmation Review</h1>
+      <h1>Reconfirmation Review {{ pending_badge('reconfirmations') }}</h1>
       <p>High-value items whose owner submitted a fresh photo - confirm the code is visible before relisting.</p>
     </div>
   </div>

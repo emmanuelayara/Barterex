@@ -703,7 +703,7 @@
     {% endif %}
   </section>
 
-  {% set show_review = can('items.video_review') or can('items.reconfirmation') or can('settlement.manage') or can('verification.intake') or can('inventory.view') %}
+  {% set show_review = can('items.review') or can('items.video_review') or can('items.reconfirmation') or can('settlement.manage') or can('verification.intake') or can('inventory.view') %}
   {% set show_mgmt = can('users.view') or can('orders.manage') or can('pickup.manage') or current_admin.is_super_admin %}
   {% set show_system = can('system.settings') or can('audit.view') %}
   {% set show_support = can('users.appeals') or can('messages.manage') %}
@@ -718,9 +718,10 @@
     {% if show_review %}
     <nav class="link-card" aria-label="Review queues">
       <div class="link-card-title">Review queues</div>
-      {% if can('items.video_review') %}<a href="{{ url_for('admin.video_review_queue') }}" class="link-row"><i class="bi bi-camera-video"></i>Video Review</a>{% endif %}
-      {% if can('items.reconfirmation') %}<a href="{{ url_for('admin.reconfirmation_review_queue') }}" class="link-row"><i class="bi bi-arrow-repeat"></i>Reconfirmations</a>{% endif %}
-      {% if can('settlement.manage') %}<a href="{{ url_for('admin.settlement_queue') }}" class="link-row"><i class="bi bi-arrow-left-right"></i>Settlement Queue</a>{% endif %}
+      {% if can('items.review') %}<a href="{{ url_for('admin.admin_dashboard', status='pending') }}" class="link-row"><i class="bi bi-search"></i>Item Review {{ pending_badge('items') }}</a>{% endif %}
+      {% if can('items.video_review') %}<a href="{{ url_for('admin.video_review_queue') }}" class="link-row"><i class="bi bi-camera-video"></i>Video Review {{ pending_badge('videos') }}</a>{% endif %}
+      {% if can('items.reconfirmation') %}<a href="{{ url_for('admin.reconfirmation_review_queue') }}" class="link-row"><i class="bi bi-arrow-repeat"></i>Reconfirmations {{ pending_badge('reconfirmations') }}</a>{% endif %}
+      {% if can('settlement.manage') %}<a href="{{ url_for('admin.settlement_queue') }}" class="link-row"><i class="bi bi-arrow-left-right"></i>Settlement Queue {{ pending_badge('settlements') }}</a>{% endif %}
       {% if can('verification.intake') %}<a href="{{ url_for('admin.verification_intake_log') }}" class="link-row"><i class="bi bi-clipboard-check"></i>Verification Intake</a>{% endif %}
       {% if can('inventory.view') %}<a href="{{ url_for('admin.clearing_inventory') }}" class="link-row"><i class="bi bi-box-seam"></i>Clearing Inventory</a>{% endif %}
     </nav>
@@ -730,7 +731,7 @@
     <nav class="link-card" aria-label="Management">
       <div class="link-card-title">Management</div>
       {% if can('users.view') %}<a href="{{ url_for('admin.manage_users') }}" class="link-row"><i class="bi bi-people"></i>Manage Users</a>{% endif %}
-      {% if can('orders.manage') %}<a href="{{ url_for('admin.manage_orders') }}" class="link-row"><i class="bi bi-box-seam"></i>Manage Orders</a>{% endif %}
+      {% if can('orders.manage') %}<a href="{{ url_for('admin.manage_orders') }}" class="link-row"><i class="bi bi-box-seam"></i>Manage Orders {{ pending_badge('orders') }}</a>{% endif %}
       {% if can('pickup.manage') %}<a href="{{ url_for('admin.manage_pickup_stations') }}" class="link-row"><i class="bi bi-geo-alt"></i>Pickup Stations</a>{% endif %}
       {% if current_admin.is_super_admin %}
       <a href="{{ url_for('admin.manage_admins') }}" class="link-row"><i class="bi bi-shield-lock"></i>Manage Admins</a>
@@ -756,13 +757,13 @@
       {% if can('users.appeals') %}
       <a href="{{ url_for('admin.pending_appeals') }}" class="link-row">
         <i class="bi bi-chat-left-quote"></i>Unban Appeals
-        <span class="count-badge {% if pending_appeals > 0 %}is-alert{% endif %}">{{ pending_appeals }}</span>
+        {{ pending_badge('appeals') }}
       </a>
       {% endif %}
       {% if can('messages.manage') %}
       <a href="{{ url_for('admin.view_messages') }}" class="link-row">
         <i class="bi bi-envelope"></i>Messages
-        <span class="count-badge {% if pending_messages_count > 0 %}is-alert{% endif %}">{{ pending_messages_count }}</span>
+        {{ pending_badge('messages') }}
       </a>
       {% endif %}
     </nav>

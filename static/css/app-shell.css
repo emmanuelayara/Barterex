@@ -85,6 +85,7 @@ html.dark-mode .bx-brand__name { color: #e8eef7; }
 
 .bx-nav__links { display: flex; align-items: center; gap: 6px; list-style: none; margin: 0; padding: 0; }
 .bx-nav__link {
+    position: relative;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     min-width: 44px; height: 44px; padding: 0 12px;
     border: 1px solid transparent; border-radius: 14px;
@@ -96,6 +97,13 @@ html.dark-mode .bx-brand__name { color: #e8eef7; }
 }
 .bx-nav__link i { font-size: 1.05rem; color: var(--bx-muted); transition: color .15s ease; }
 .bx-nav__link span { display: none; }
+.bx-nav__link .bx-nav__badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    position: absolute; top: -4px; right: -4px;
+    min-width: 20px; height: 20px; padding: 0 5px;
+    border-radius: 999px; background: #b91c1c; color: #fff;
+    font-size: .7rem; font-weight: 800; line-height: 1;
+}
 .bx-nav__link:hover { background: var(--bx-tint); }
 .bx-nav__link:hover i { color: var(--bx-blue); }
 html.dark-mode .bx-nav__link:hover i { color: #8dbcf2; }

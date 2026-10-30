@@ -31,7 +31,7 @@
   <a href="{{ url_for('admin.admin_dashboard') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
   <div class="adm-head">
     <div>
-      <h1>Video Review Queue</h1>
+      <h1>Video Review Queue {{ pending_badge('videos') }}</h1>
       <p>Approve a video to queue unlisted YouTube publishing. Items go live only after processing and activation succeed.</p>
     </div>
   </div>

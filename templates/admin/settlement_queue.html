@@ -29,7 +29,7 @@
   <a class="adm-back" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i> Admin dashboard</a>
   <div class="adm-head">
     <div>
-      <h1>Settlement Queue</h1>
+      <h1>Settlement Queue {{ pending_badge('settlements') }}</h1>
       <p>Verified backing items stay buyer-owned until the requested item passes. If the requested item fails, ask the buyer to reconfirm title transfer before any backing item enters Barter Express inventory.</p>
     </div>
     <div class="adm-head-actions">

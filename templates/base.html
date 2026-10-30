@@ -1143,18 +1143,27 @@
             <ul class="bx-nav__links">
                 {% if current_user.is_authenticated %}
                     <li>
-                        <a href="{{ url_for('user.my_reservations') }}" class="bx-nav__link{% if request.endpoint == 'user.my_reservations' %} is-active{% endif %}" title="Reservations" aria-label="Reservations">
+                        <a href="{{ url_for('user.my_reservations') }}" class="bx-nav__link{% if request.endpoint == 'user.my_reservations' %} is-active{% endif %}" title="Reservations{% if pending_reservations_count %} ({{ pending_reservations_count }} pending){% endif %}" aria-label="Reservations{% if pending_reservations_count %}, {{ pending_reservations_count }} pending{% endif %}">
                             <i class="fas fa-bookmark"></i><span>Reservations</span>
+                            {% if pending_reservations_count %}
+                                <span class="bx-nav__badge" aria-hidden="true">{{ pending_reservations_count }}</span>
+                            {% endif %}
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('user.user_orders') }}" class="bx-nav__link{% if request.endpoint == 'user.user_orders' %} is-active{% endif %}" title="Orders" aria-label="Orders">
+                        <a href="{{ url_for('user.my_valuations') }}" class="bx-nav__link{% if request.endpoint == 'user.my_valuations' %} is-active{% endif %}" title="Valuations{% if pending_valuations_count %} ({{ pending_valuations_count }} pending){% endif %}" aria-label="Valuations{% if pending_valuations_count %}, {{ pending_valuations_count }} pending{% endif %}">
+                            <i class="fas fa-chart-line"></i><span>Valuations</span>
+                            {% if pending_valuations_count %}
+                                <span class="bx-nav__badge" aria-hidden="true">{{ pending_valuations_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('user.user_orders') }}" class="bx-nav__link{% if request.endpoint == 'user.user_orders' %} is-active{% endif %}" title="Orders{% if pending_orders_count %} ({{ pending_orders_count }} pending){% endif %}" aria-label="Orders{% if pending_orders_count %}, {{ pending_orders_count }} pending{% endif %}">
                             <i class="fas fa-box"></i><span>Orders</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('auth.logout') }}" class="bx-nav__link is-danger" title="Logout" aria-label="Logout">
-                            <i class="fas fa-right-from-bracket"></i><span>Logout</span>
+                            {% if pending_orders_count %}
+                                <span class="bx-nav__badge" aria-hidden="true">{{ pending_orders_count }}</span>
+                            {% endif %}
                         </a>
                     </li>
                 {% else %}

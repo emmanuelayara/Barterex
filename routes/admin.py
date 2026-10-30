@@ -142,20 +142,66 @@ def enforce_admin_permissions():
 @admin_bp.context_processor
 def inject_admin_context():
     """Inject admin-wide context variables into all admin templates"""
+    from models import ItemVideo, Reservation
+    from services.reservation_service import pending_physical_verification_item_ids
+
     context = dict(
         can=admin_can,
         current_admin=current_admin(),
         pending_items_count=0,
         pending_messages_count=0,
     )
-    try:
-        if admin_can('items.review'):
-            context['pending_items_count'] = Item.query.filter(Item.status.in_(PENDING_ITEM_STATUSES)).count()
-        if admin_can('messages.manage'):
-            context['pending_messages_count'] = ContactMessage.query.filter_by(is_read=False, status='pending').count()
-    except Exception as e:
-        logger.error(f"Error in admin context processor: {str(e)}")
+    counts = {}
+    if admin_can('items.review'):
+        counts['items'] = Item.query.filter(db.or_(
+            Item.status.in_(PENDING_ITEM_STATUSES),
+            Item.id.in_(pending_physical_verification_item_ids()),
+        )).count()
+    if admin_can('items.video_review'):
+        counts['videos'] = ItemVideo.query.filter(
+            ItemVideo.status.in_(('pending', 'publish_failed')),
+        ).count()
+    if admin_can('items.reconfirmation'):
+        counts['reconfirmations'] = Item.query.filter_by(status='reconfirmation_review').count()
+    if admin_can('settlement.manage'):
+        counts['settlements'] = Reservation.query.filter(_settlement_queue_filter()).count()
+    if admin_can('orders.manage'):
+        counts['orders'] = Order.query.filter(
+            Order.cancelled.is_(False),
+            Order.status.in_(('Pending', 'Processing', 'Shipped', 'Ready for Pickup')),
+        ).count()
+    if admin_can('users.appeals'):
+        counts['appeals'] = User.query.filter(
+            User.is_banned.is_(True),
+            User.appeal_message.isnot(None),
+            User.appeal_message != '',
+            User.unban_request_date.isnot(None),
+        ).count()
+    if admin_can('messages.manage'):
+        counts['messages'] = ContactMessage.query.filter(
+            ContactMessage.status.in_(('pending', 'in_progress')),
+        ).count()
+    context.update(
+        admin_pending_counts=counts,
+        admin_pending_total=sum(counts.values()),
+        pending_items_count=counts.get('items', 0),
+        pending_messages_count=counts.get('messages', 0),
+    )
     return context
+
+
+def _settlement_queue_filter():
+    from models import Reservation
+
+    return db.or_(
+        Reservation.status == 'active',
+        db.and_(
+            Reservation.status == 'completed',
+            Reservation.delivery_method == 'home delivery',
+            Reservation.delivery_fee_status == 'quote_pending',
+        ),
+        Reservation.backing_return_status == 'return_required',
+    )
 
 # ==================== ROUTES ====================
 
@@ -1592,15 +1638,7 @@ def settlement_queue():
 
     try:
         release_expired_reservations()
-        reservations = Reservation.query.filter(db.or_(
-            Reservation.status == 'active',
-            db.and_(
-                Reservation.status == 'completed',
-                Reservation.delivery_method == 'home delivery',
-                Reservation.delivery_fee_status == 'quote_pending',
-            ),
-            Reservation.backing_return_status == 'return_required',
-        )).options(
+        reservations = Reservation.query.filter(_settlement_queue_filter()).options(
             joinedload(Reservation.item), joinedload(Reservation.user), joinedload(Reservation.backing_assets)
         ).order_by(Reservation.created_at.asc()).all()
         return render_template('admin/settlement_queue.html', reservations=reservations)

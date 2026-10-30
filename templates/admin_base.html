@@ -431,6 +431,8 @@
     .adm-pill.bad { background: rgba(220, 38, 38, 0.1); color: #b91c1c; }
     .adm-count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--tint); color: var(--primary-blue); font-size: 0.72rem; font-weight: 700; text-align: center; }
     .adm-count.is-alert { background: var(--accent-orange); color: #fff; }
+    .adm-count.admin-pending-badge { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: #b91c1c; color: #fff; }
+    .link-row .admin-pending-badge { margin-left: auto; }
 
     /* ---- Buttons ---- */
     .adm-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border: 1px solid transparent; border-radius: 10px; font-size: 0.86rem; font-weight: 600; line-height: 1.2; text-decoration: none; cursor: pointer; transition: var(--transition); }
@@ -508,6 +510,13 @@
   {% block extra_css %}{% endblock %}
 </head>
 
+{% macro pending_badge(queue) -%}
+  {% set count = admin_pending_counts.get(queue, 0) %}
+  {% if count %}
+    <span class="adm-count is-alert admin-pending-badge" data-pending-queue="{{ queue }}" aria-label="{{ count }} pending">{{ count }}</span>
+  {% endif %}
+{%- endmacro %}
+
 <body>
   <!-- Enhanced Top Navbar -->
   <nav class="admin-navbar">
@@ -540,6 +549,9 @@
           <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link">
             <i class="bi bi-speedometer2"></i>
             Dashboard
+            {% if admin_pending_total %}
+            <span class="adm-count is-alert" title="Pending queue entries; a case may appear in more than one queue" aria-label="{{ admin_pending_total }} pending queue entries">{{ admin_pending_total }}</span>
+            {% endif %}
           </a>
         </div>
 

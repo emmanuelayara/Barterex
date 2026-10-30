@@ -5,7 +5,7 @@
     <div class="adm-head">
         <div>
             <a href="{{ url_for('admin.manage_users') }}" class="adm-back"><i class="bi bi-arrow-left"></i> Back to Users</a>
-            <h1>Pending Unban Appeals</h1>
+            <h1>Pending Unban Appeals {{ pending_badge('appeals') }}</h1>
             <p>Review and approve or reject unban appeals from suspended users</p>
         </div>
         <div class="adm-head-actions">
