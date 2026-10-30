@@ -1419,187 +1419,6 @@ def reject_item(item_id):
     return redirect(url_for('admin.admin_dashboard'))
 
 
-@admin_bp.route('/pre-verification')
-@admin_login_required
-@handle_errors
-def preverification_queue():
-    """Items whose owner clicked "Trade This Item" - awaiting pre-verification (ownership, serial/IMEI, condition)."""
-    try:
-        items = Item.query.filter_by(status='trade_requested').options(
-            joinedload(Item.images)
-        ).order_by(Item.trade_requested_at.asc()).all()
-        return render_template('admin/preverification.html', items=items)
-    except Exception as e:
-        logger.error(f"Error loading pre-verification queue: {str(e)}", exc_info=True)
-        flash('An error occurred while loading the pre-verification queue.', 'danger')
-        return redirect(url_for('admin.admin_dashboard'))
-
-
-@admin_bp.route('/pre-verification/<int:item_id>/approve', methods=['POST'])
-@admin_login_required
-@handle_errors
-@safe_database_operation("approve_preverification")
-def approve_preverification(item_id):
-    from audit_logger import log_audit_action
-    from services.verification_intake_service import (
-        IntakeValidationError,
-        create_verification_intake,
-    )
-
-    try:
-        item = Item.query.get_or_404(item_id)
-
-        if item.status != 'trade_requested':
-            flash(f"Item '{item.name}' is not awaiting pre-verification.", "info")
-            return redirect(url_for('admin.preverification_queue'))
-
-        try:
-            final_value = item.activation_credit_amount()
-        except ValueError as error:
-            logger.warning(f"Pre-verification blocked - Item ID: {item_id}: {error}")
-            flash(str(error), 'danger')
-            return redirect(url_for('admin.preverification_queue'))
-
-        create_verification_intake(
-            item,
-            session.get('admin_id'),
-            _verification_intake_details_from_form(),
-            workflow_type='trade_preverification',
-            outcome='passed',
-        )
-        item.value = final_value
-        item.preverification_notes = request.form.get('preverification_notes', '').strip() or None
-        item.preverification_approved_at = datetime.utcnow()
-        item.preverification_approved_by_id = session.get('admin_id')
-        from models import ItemVideo
-        has_pending_video = ItemVideo.query.filter_by(
-            item_id=item.id,
-            status='pending',
-        ).first() is not None
-        item.status = 'pending_activation' if has_pending_video else 'preverification_approved'
-
-        log_audit_action(
-            action_type='approve_preverification',
-            target_type='item',
-            target_id=item_id,
-            target_name=item.name,
-            description=f"Pre-verification approved for '{item.name}', final value set to {final_value}",
-            after_value={
-                'status': item.status,
-                'value': final_value,
-                'video_pending_review': has_pending_video,
-            }
-        )
-
-        notify_user(
-            item.user_id,
-            (
-                f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
-                "Your verification video is now awaiting review."
-                if has_pending_video else
-                f"✅ Pre-verification passed for '{item.name}'! Final value: ᗸ{final_value:,.0f}. "
-                "Open it from My Valuations and select \"Activate for Trade\" when you're ready."
-            ),
-            subject=f"Pre-verification passed for '{item.name}'",
-            cta_endpoint='user.my_valuations',
-            cta_label='Open My Valuations',
-            notification_type='listing',
-        )
-
-        logger.info(f"Pre-verification approved - Item ID: {item_id}, Name: {item.name}, Final Value: {final_value}, Admin ID: {session.get('admin_id')}")
-        flash(f"Pre-verification approved for '{item.name}' at {final_value} credits.", "success")
-
-    except ValidationError as e:
-        logger.warning(f"Validation error approving pre-verification: {str(e)}")
-        flash(str(e.message), 'danger')
-        raise  # Re-raise so decorator knows to rollback
-    except IntakeValidationError as e:
-        db.session.rollback()
-        flash(str(e), 'danger')
-
-    return redirect(url_for('admin.preverification_queue'))
-
-
-@admin_bp.route('/pre-verification/<int:item_id>/reject', methods=['POST'])
-@admin_login_required
-@handle_errors
-@safe_database_operation("reject_preverification")
-def reject_preverification(item_id):
-    from audit_logger import log_audit_action
-    from services.verification_intake_service import (
-        IntakeValidationError,
-        create_verification_intake,
-    )
-
-    try:
-        item = Item.query.get_or_404(item_id)
-        reason = request.form.get('rejection_reason', '').strip()
-
-        if not reason:
-            logger.warning(f"Pre-verification rejection without reason - Item ID: {item_id}, Admin ID: {session.get('admin_id')}")
-            raise ValidationError("You must provide a rejection reason", field="rejection_reason")
-
-        if item.status != 'trade_requested':
-            flash(f"Item '{item.name}' is not awaiting pre-verification.", "info")
-            return redirect(url_for('admin.preverification_queue'))
-
-        from models import ItemVideo
-        from services import video_service
-
-        for video in ItemVideo.query.filter_by(item_id=item.id, status='pending').all():
-            video.status = 'rejected'
-            video.rejection_reason = f"Pre-verification rejected: {reason}"
-            if video.temp_video_url and video_service.delete_object(video.temp_video_url):
-                video.temp_copy_deleted_at = datetime.utcnow()
-                video.temp_video_url = None
-
-        create_verification_intake(
-            item,
-            session.get('admin_id'),
-            _verification_intake_details_from_form(),
-            workflow_type='trade_preverification',
-            outcome='failed',
-        )
-        # Not a terminal rejection - send it back to My Valuations so the owner can fix and retry.
-        item.status = 'valuation_only'
-        item.rejection_reason = reason
-        item.ownership_confirmed = False
-
-        log_audit_action(
-            action_type='reject_preverification',
-            target_type='item',
-            target_id=item_id,
-            target_name=item.name,
-            description=f"Pre-verification rejected for '{item.name}'",
-            reason=reason,
-            after_value={'status': 'valuation_only'}
-        )
-
-        notify_user(
-            item.user_id,
-            f"⚠️ Pre-verification for '{item.name}' needs attention. Reason: {reason}. "
-            f"It's back in My Valuations - fix the issue and select \"Trade This Item\" again.",
-            subject=f"Pre-verification for '{item.name}' needs attention",
-            cta_endpoint='user.my_valuations',
-            cta_label='Open My Valuations',
-            notification_type='listing',
-            category='alert',
-        )
-
-        logger.info(f"Pre-verification rejected - Item ID: {item_id}, Name: {item.name}, Reason: {reason}, Admin ID: {session.get('admin_id')}")
-        flash(f"Pre-verification rejected for '{item.name}'.", "warning")
-
-    except ValidationError as e:
-        logger.warning(f"Validation error rejecting pre-verification: {str(e)}")
-        flash(str(e.message), 'danger')
-        raise  # Re-raise so decorator knows to rollback
-    except IntakeValidationError as e:
-        db.session.rollback()
-        flash(str(e), 'danger')
-
-    return redirect(url_for('admin.preverification_queue'))
-
-
 @admin_bp.route('/video-review')
 @admin_login_required
 @handle_errors
@@ -1609,12 +1428,18 @@ def video_review_queue():
     from services import video_service
 
     try:
-        videos = ItemVideo.query.filter_by(status='pending').options(
+        videos = ItemVideo.query.filter(
+            ItemVideo.status.in_(('pending', 'queued', 'publishing', 'retry_wait', 'publish_failed')),
+        ).options(
             joinedload(ItemVideo.item)
         ).order_by(ItemVideo.submitted_at.asc()).all()
         preview_urls = {video.id: video_service.generate_read_url(video.temp_video_url) for video in videos}
         return render_template('admin/video_review.html', videos=videos, preview_urls=preview_urls,
-                                video_storage_configured=video_service.is_configured())
+                                video_storage_configured=video_service.is_configured(),
+                                cleanup_pending=ItemVideo.query.filter(
+                                    ItemVideo.status.in_(('approved', 'rejected')),
+                                    ItemVideo.temp_video_url.isnot(None),
+                                ).count())
     except Exception as e:
         logger.error(f"Error loading video review queue: {str(e)}", exc_info=True)
         flash('An error occurred while loading the video review queue.', 'danger')
@@ -1626,85 +1451,73 @@ def video_review_queue():
 @handle_errors
 @safe_database_operation("approve_activation_video")
 def approve_activation_video(video_id):
-    """
-    Publishes the video to YouTube and, on success, activates the item: lists it
-    on the marketplace and grants the owner provisional BXC. See services/
-    video_service.py and services/youtube_publisher.py.
-    """
+    """Approve review and commit durable work; never upload in a web request."""
     from models import ItemVideo
-    from services.item_activation_service import activate_item
-    from audit_logger import log_audit_action
-    from services import video_service, youtube_publisher
+    from services.video_publishing import queue_video
 
     video = ItemVideo.query.filter_by(id=video_id).with_for_update().first_or_404()
-    if video.status != 'pending':
-        flash('This video has already been reviewed.', 'info')
-        return redirect(url_for('admin.video_review_queue'))
+    try:
+        queue_video(video, session['admin_id'])
+    except ValueError as error:
+        logger.warning('Video %s could not be queued: %s', video_id, error)
+        flash(str(error), 'danger')
+    else:
+        flash('Video approved and queued. The worker will publish it unlisted before listing the item.', 'success')
+    return redirect(url_for('admin.video_review_queue'))
 
-    item = video.item
-    if not item:
-        flash('The item for this video no longer exists.', 'danger')
-        return redirect(url_for('admin.video_review_queue'))
 
-    if item.status not in ('trade_requested', 'pending_activation'):
-        logger.warning(f"Activation blocked for item {item.id} in status {item.status}")
-        flash('This item is not awaiting activation.', 'danger')
+@admin_bp.route('/video-review/<int:video_id>/retry', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("retry_activation_video")
+def retry_activation_video(video_id):
+    from models import ItemVideo
+    from services.video_publishing import retry_video
+    video = ItemVideo.query.filter_by(id=video_id).with_for_update().first_or_404()
+    try:
+        retry_video(video, session['admin_id'])
+    except ValueError as error:
+        logger.warning('Video retry refused for %s: %s', video_id, error)
+        flash(str(error), 'danger')
+    else:
+        flash('Publishing retry queued. Saved upload progress and any YouTube ID will be reused.', 'success')
+    return redirect(url_for('admin.video_review_queue'))
+
+
+@admin_bp.route('/video-review/<int:video_id>/reconcile', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation("reconcile_activation_video")
+def reconcile_activation_video(video_id):
+    from models import ItemVideo, AuditLog
+    from services import youtube_publisher
+    from services.video_publishing import retry_video, video_reference
+
+    video = ItemVideo.query.filter_by(id=video_id).with_for_update().first_or_404()
+    if video.status != 'publish_failed':
+        flash('Only failed jobs can be reconciled.', 'danger')
+        return redirect(url_for('admin.video_review_queue'))
+    youtube_id = request.form.get('youtube_video_id', '').strip()
+    if video.youtube_video_id and video.youtube_video_id != youtube_id:
+        flash('This job already has a saved YouTube ID. Retry it instead of replacing it.', 'danger')
         return redirect(url_for('admin.video_review_queue'))
     try:
-        provisional_amount = item.activation_credit_amount()
-    except ValueError as error:
-        logger.warning(f"Activation blocked - Item ID: {item.id}: {error}")
+        youtube_publisher.get_video_status(youtube_id, expected_reference=video_reference(video))
+    except youtube_publisher.PublishingError as error:
+        logger.warning('Video reconciliation refused for %s: %s', video_id, error)
         flash(str(error), 'danger')
         return redirect(url_for('admin.video_review_queue'))
-    if item.provisional_credit_granted_at is not None:
-        logger.warning(f"Activation blocked: item {item.id} already has an activation credit")
-        flash('This item has already received provisional credits. Review its credit history before retrying.', 'danger')
-        return redirect(url_for('admin.video_review_queue'))
-
-    video_bytes = video_service.download_bytes(video.temp_video_url)
-    if video_bytes is None:
-        flash('Could not fetch the video from storage. Please try again.', 'danger')
-        return redirect(url_for('admin.video_review_queue'))
-
-    result = youtube_publisher.upload_video(
-        video_bytes, title=item.name, description=item.description or '', privacy_status='unlisted'
-    )
-    if not result.get('success'):
-        flash(f"Could not publish to YouTube: {result.get('error')}", 'danger')
-        return redirect(url_for('admin.video_review_queue'))
-
-    video.status = 'approved'
-    video.reviewed_at = datetime.utcnow()
-    video.reviewed_by_admin_id = session.get('admin_id')
-    video.youtube_video_id = result['video_id']
-    video.youtube_url = result['url']
-    if video_service.delete_object(video.temp_video_url):
-        video.temp_copy_deleted_at = datetime.utcnow()
-        video.temp_video_url = None
-
-    provisional_amount = activate_item(item.id, result['url'])
-
-    log_audit_action(
-        action_type='approve_activation_video',
-        target_type='item',
-        target_id=item.id,
-        target_name=item.name,
-        description=f"Activation video approved and published for '{item.name}' ({result['url']})",
-        after_value={'status': 'approved', 'video_url': result['url']}
-    )
-
-    notify_user(
-        item.user_id,
-        f"🎉 '{item.name}' is now live on the marketplace! Watch its video: {result['url']}. "
-        + (f"ᗸ{provisional_amount:,} provisional BXC was added to your account." if provisional_amount else ''),
-        subject=f"'{item.name}' is now live on the marketplace",
-        cta_endpoint='user.user_items',
-        cta_label='View My Items',
-        notification_type='listing',
-    )
-
-    logger.info(f"Activation video approved - Item ID: {item.id}, Video ID: {video.id}, YouTube: {result['url']}, Admin ID: {session.get('admin_id')}")
-    flash(f"'{item.name}' is now live! Video published to {result['url']}.", 'success')
+    video.youtube_video_id = youtube_id
+    video.youtube_url = f'https://youtu.be/{youtube_id}'
+    video.publish_progress = 100
+    video.publish_phase = 'processing'
+    db.session.add(AuditLog(
+        admin_id=session['admin_id'], action_type='reconcile_activation_video',
+        target_type='item', target_id=video.item_id, target_name=video.item.name,
+        description=f'Admin linked existing unlisted channel video {youtube_id} to publishing job {video.id}.',
+    ))
+    retry_video(video, session['admin_id'])
+    flash('Existing channel video linked. The worker will verify processing and finish activation.', 'success')
     return redirect(url_for('admin.video_review_queue'))
 
 
@@ -1715,9 +1528,8 @@ def approve_activation_video(video_id):
 def reject_activation_video(video_id):
     from models import ItemVideo
     from audit_logger import log_audit_action
-    from services import video_service
 
-    video = ItemVideo.query.get_or_404(video_id)
+    video = ItemVideo.query.filter_by(id=video_id).with_for_update().first_or_404()
     reason = request.form.get('rejection_reason', '').strip()
 
     if not reason:
@@ -1733,12 +1545,10 @@ def reject_activation_video(video_id):
     video.rejection_reason = reason
     video.reviewed_at = datetime.utcnow()
     video.reviewed_by_admin_id = session.get('admin_id')
-    if video_service.delete_object(video.temp_video_url):
-        video.temp_copy_deleted_at = datetime.utcnow()
-        video.temp_video_url = None
+    # Cleanup is picked up by the worker only after rejection commits.
 
     if item:
-        item.status = 'preverification_approved'  # back to "ready to Activate for Trade"
+        item.status = 'valuation_only'
 
     log_audit_action(
         action_type='reject_activation_video',
@@ -1747,14 +1557,14 @@ def reject_activation_video(video_id):
         target_name=item.name if item else None,
         description=f"Activation video rejected for '{item.name if item else video.item_id}'",
         reason=reason,
-        after_value={'status': 'preverification_approved'}
+        after_value={'status': 'valuation_only'}
     )
 
     if item:
         notify_user(
             item.user_id,
             f"⚠️ The verification video for '{item.name}' was not approved. Reason: {reason}. "
-            f"Open it from My Valuations and select \"Activate for Trade\" to try again.",
+            f"Open it from My Valuations and submit a replacement video.",
             subject=f"The verification video for '{item.name}' was not approved",
             cta_endpoint='user.my_valuations',
             cta_label='Open My Valuations',

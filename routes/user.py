@@ -522,7 +522,7 @@ def user_orders():
 def my_valuations():
     """
     Private tracker for items in any pre-listing stage - valuation_only,
-    trade_requested, preverification_approved, pending_activation.
+    or pending_activation.
     See models.Item.LIFECYCLE_STATUSES.
     """
     try:

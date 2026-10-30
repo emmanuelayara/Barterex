@@ -9,6 +9,7 @@ from flask_mail import Message
 from flask import render_template
 from difflib import SequenceMatcher
 import logging
+from services.email_branding import add_email_logo
 
 logger = logging.getLogger(__name__)
 
@@ -228,7 +229,7 @@ def send_wishlist_email(recipient, user_name, item_title, item_id, category, con
             msg = Message(
                 subject=subject,
                 recipients=[recipient],
-                html=html_body,
+                html=add_email_logo(html_body),
                 sender=sender
             )
             

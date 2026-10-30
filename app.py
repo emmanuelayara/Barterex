@@ -57,6 +57,11 @@ app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 mail_sender_name, mail_sender_email = os.getenv('MAIL_DEFAULT_SENDER', 'Barter Express,barter@barterxpress.com').split(',')
 app.config['MAIL_DEFAULT_SENDER'] = (mail_sender_name.strip(), mail_sender_email.strip())
+app.config['APP_URL'] = os.getenv('APP_URL', 'https://barterxpress.com').rstrip('/')
+app.config['EMAIL_LOGO_URL'] = os.getenv(
+    'EMAIL_LOGO_URL',
+    'https://barterxpress.com/static/logo.png',
+)
 
 # ✅ Suppress Flask-Mail debug output
 app.config['MAIL_DEBUG'] = os.getenv('MAIL_DEBUG', 'False').lower() in ['true', '1', 'yes']
@@ -124,6 +129,24 @@ def maintenance_sweep_command():
 
 
 # ✅ User loader for Flask-Login
+@app.cli.command("video-publishing-worker")
+@click.option('--once', is_flag=True, help='Process one due job and exit.')
+@click.option('--poll-seconds', type=click.IntRange(1, 60), default=5, show_default=True)
+def video_publishing_worker_command(once, poll_seconds):
+    """Run durable publishing and temporary-video cleanup outside web requests."""
+    import time
+    from services.video_publishing import run_next_job
+
+    click.echo('Video publishing worker started (unlisted uploads only).')
+    while True:
+        worked = run_next_job()
+        if once:
+            click.echo('Processed a job.' if worked else 'No jobs due.')
+            return
+        if not worked:
+            time.sleep(poll_seconds)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

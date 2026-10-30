@@ -528,6 +528,7 @@ def notify_credit_purchase(user_id, amount_naira, credits_purchased, previous_ba
         try:
             from datetime import datetime
             from flask import current_app
+            from services.email_branding import add_email_logo
             
             email_data = {
                 'user_name': user.username,
@@ -556,7 +557,7 @@ def notify_credit_purchase(user_id, amount_naira, credits_purchased, previous_ba
             msg = Message(
                 subject=f'Credit Purchase Confirmation - {credits_purchased:,.0f} BXC Added',
                 recipients=[user.email],
-                html=email_html
+                html=add_email_logo(email_html)
             )
             
             try:

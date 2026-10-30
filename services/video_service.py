@@ -3,10 +3,10 @@ Temporary video storage for the "Activate for Trade" verification video.
 
 Seller records/selects a video in the browser -> this module mints a short-lived
 SIGNED URL so the browser can PUT the file straight into Google Cloud Storage
-(the Barterex VPS never receives the video bytes). After an admin approves it
-(see routes/admin.py video_review), services/youtube_publisher.py fetches the
-object from GCS, publishes it to YouTube, and delete_object() removes the
-temp copy.
+(the web upload never passes through the Barterex VPS). After admin approval,
+the durable worker transfers the object from GCS to YouTube in memory without
+writing it to VPS disk. A separate cleanup job deletes the temporary cloud copy
+only after activation commits.
 
 Settings (.env):
     GCS_BUCKET_NAME             Bucket to hold temp videos (unset = feature OFF)
@@ -175,7 +175,7 @@ def download_bytes(object_name: str):
     try:
         bucket = _client().bucket(_bucket_name())
         blob = bucket.blob(object_name)
-        return blob.download_as_bytes()
+        return blob.download_as_bytes(timeout=60, retry=None)
     except Exception as e:
         logger.error(f"Could not download GCS object {object_name}: {e}", exc_info=True)
         return None
@@ -186,8 +186,13 @@ def delete_object(object_name: str) -> bool:
     if not object_name or not is_configured():
         return False
     try:
+        from google.api_core.exceptions import NotFound
         bucket = _client().bucket(_bucket_name())
-        bucket.blob(object_name).delete()
+        try:
+            bucket.blob(object_name).delete(timeout=60, retry=None)
+        except NotFound:
+            # A worker may have deleted it before crashing ahead of its DB commit.
+            return True
         return True
     except Exception as e:
         logger.warning(f"Could not delete GCS object {object_name}: {e}")

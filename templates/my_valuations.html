@@ -110,18 +110,7 @@
     color: #4b5563;
   }
 
-  .stage-pill.stage-preverification_approved { background: rgba(16, 185, 129, 0.15); color: #059669; }
   .stage-pill.stage-pending_activation { background: rgba(124, 58, 237, 0.15); color: #6d28d9; }
-  .stage-pill.stage-trade_requested { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
-
-  .final-value {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #16a34a;
-    margin-bottom: 4px;
-  }
-
-  .activate-btn { background: #7c3aed; }
 
   .activate-help {
     font-size: 0.72rem;
@@ -286,18 +275,36 @@
                 {% else %}
                   <div class="valuation-estimate pending">No AI estimate available for this item</div>
                 {% endif %}
+                {% set video = item.videos|sort(attribute='submitted_at', reverse=true)|first %}
                 <div class="stage-pill stage-{{ item.status }}">
-                  {{ {'valuation_only': 'Not yet submitted', 'trade_requested': 'Video submitted · awaiting pre-verification',
-                      'preverification_approved': 'Ready to Activate for Trade',
-                      'pending_activation': 'Video submitted - awaiting review'}[item.status] }}
+                  {% if video and video.status in ['queued', 'publishing', 'retry_wait', 'publish_failed'] %}
+                    Video approved &middot; {{ 'publishing delayed' if video.status == 'publish_failed' else 'publishing in progress' }}
+                  {% else %}
+                  {{ {'valuation_only': 'Not yet submitted',
+                      'pending_activation': 'Video submitted · awaiting admin review'}[item.status] }}
+                  {% endif %}
                 </div>
+                {% if item.status == 'pending_activation' %}
+                  {% if video and video.status in ['queued', 'publishing', 'retry_wait', 'publish_failed'] %}
+                    <p class="activate-help">
+                      {% if video.status == 'publish_failed' %}
+                        Your video passed review. Publishing is delayed and our team has been notified.
+                        You do not need to upload it again.
+                      {% elif video.publish_phase == 'processing' %}
+                        Video uploaded. YouTube is processing it before your item goes live.
+                      {% else %}
+                        Video approved &middot; {{ video.status|replace('_', ' ') }} &middot; Upload {{ video.publish_progress }}%.
+                      {% endif %}
+                    </p>
+                  {% endif %}
+                {% endif %}
               </div>
               <div class="valuation-actions">
                 {% if item.status == 'valuation_only' %}
                   <details class="trade-details">
                     <summary class="trade-this-btn">Trade This Item</summary>
                     <form method="POST" action="{{ url_for('items.trade_this_item', item_id=item.id) }}"
-                          class="trade-form video-submit-form no-loading" data-item-id="{{ item.id }}" data-upload-mode="trade"
+                          class="trade-form video-submit-form no-loading" data-item-id="{{ item.id }}"
                           data-max-video-size="{{ max_video_size_bytes }}"
                           data-max-video-duration="{{ max_video_duration_seconds }}">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -314,22 +321,8 @@
                         I confirm I own this item and it matches the description/photos
                       </label>
                       <input type="text" name="serial_number" placeholder="Serial number / IMEI (optional)" class="trade-input">
-                      <button type="submit" class="trade-submit-btn activate-upload-btn">Upload video &amp; submit for Pre-Verification</button>
+                      <button type="submit" class="trade-submit-btn activate-upload-btn">Upload video &amp; submit for review</button>
                     </form>
-                  </details>
-                {% elif item.status == 'preverification_approved' %}
-                  <div class="final-value">Final Value: ᗸ{{ '{:,.0f}'.format(item.value) if item.value else '—' }}</div>
-                  <details class="trade-details">
-                    <summary class="trade-this-btn activate-btn">🎬 Activate for Trade</summary>
-                    <div class="trade-form video-submit-form" data-item-id="{{ item.id }}" data-upload-mode="activation"
-                         data-max-video-size="{{ max_video_size_bytes }}"
-                         data-max-video-duration="{{ max_video_duration_seconds }}">
-                      <p class="activate-help">Record or select a video showing this item's condition and functionality (up to {{ max_video_duration_seconds }} seconds).</p>
-                      <input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v" capture="environment" class="activate-file-input">
-                      <button type="button" class="trade-submit-btn activate-upload-btn">Upload &amp; Submit Video</button>
-                      <div class="activate-progress" hidden>Uploading… <span class="activate-progress-pct">0%</span></div>
-                      <div class="activate-error" hidden></div>
-                    </div>
                   </details>
                 {% endif %}
               </div>
@@ -358,8 +351,7 @@
 </div>
 
 <script>
-  // Upload verification video directly to cloud storage before either trade request
-  // submission or activation submission. See routes/items.py and services/video_service.py.
+  // Upload the verification video directly to cloud storage before submitting it for review.
   document.querySelectorAll('.video-submit-form').forEach(function (form) {
     const itemId = form.dataset.itemId;
     const fileInput = form.querySelector('.activate-file-input');
@@ -452,34 +444,12 @@
               return;
             }
 
-            if (form.dataset.uploadMode === 'trade') {
-              const objectNameInput = document.createElement('input');
-              objectNameInput.type = 'hidden';
-              objectNameInput.name = 'object_name';
-              objectNameInput.value = result.data.object_name;
-              form.appendChild(objectNameInput);
-              form.submit();
-              return;
-            }
-
-            const confirmData = new FormData();
-            confirmData.append('object_name', result.data.object_name);
-            if (csrfToken) confirmData.append('csrf_token', csrfToken.value);
-
-            fetch(`/items/${itemId}/activate/confirm-upload`, {
-              method: 'POST',
-              headers: { 'X-Requested-With': 'XMLHttpRequest' },
-              body: confirmData,
-            })
-              .then(function (response) {
-                return response.json().then(function (data) {
-                  if (!response.ok || !data.success) {
-                    throw new Error(data.error || 'The video was uploaded but could not be submitted.');
-                  }
-                  window.location.reload();
-                });
-              })
-              .catch(function (err) { showError(err.message); });
+            const objectNameInput = document.createElement('input');
+            objectNameInput.type = 'hidden';
+            objectNameInput.name = 'object_name';
+            objectNameInput.value = result.data.object_name;
+            form.appendChild(objectNameInput);
+            form.submit();
           });
 
           xhr.addEventListener('error', function () {
@@ -493,16 +463,12 @@
         });
     }
 
-    if (form.tagName === 'FORM') {
-      form.addEventListener('submit', function (event) {
-        if (!form.querySelector('input[name="object_name"]')) {
-          event.preventDefault();
-          submitVideo();
-        }
-      });
-    } else {
-      uploadBtn.addEventListener('click', submitVideo);
-    }
+    form.addEventListener('submit', function (event) {
+      if (!form.querySelector('input[name="object_name"]')) {
+        event.preventDefault();
+        submitVideo();
+      }
+    });
   });
 </script>
 {% endblock %}

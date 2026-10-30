@@ -54,7 +54,6 @@ class AdminPagesRenderTests(unittest.TestCase):
             f'/admin/view_user/{self.user.id}',
             f'/admin/user/{self.user.id}/edit',
             '/admin/approvals',
-            '/admin/pre-verification',
             '/admin/video-review',
             '/admin/reconfirmation-review',
             '/admin/settlement-queue',
@@ -86,6 +85,10 @@ class AdminPagesRenderTests(unittest.TestCase):
     def test_login_page_renders(self):
         response = app.test_client().get('/admin/login')
         self.assertEqual(response.status_code, 200)
+
+    def test_preverification_route_is_removed(self):
+        response = self._client().get('/admin/pre-verification')
+        self.assertEqual(response.status_code, 404)
 
     def test_forbidden_page_renders(self):
         limited = Admin(username='limited', email='limited@example.com', password='x')

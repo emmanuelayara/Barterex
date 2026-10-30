@@ -390,17 +390,9 @@ class Item(db.Model):
     # ineligible to back any other purchase until that reservation resolves.
     locked_for_reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=True)
 
-    # --- Staged non-custody lifecycle (valuation -> trade request -> pre-verification -> activation) ---
-    # `status` keeps its existing values (pending/approved/rejected/etc. - see PENDING_ITEM_STATUSES in
-    # routes/admin.py) PLUS these new pre-listing stages, set by routes built in later phases:
-    #   valuation_only -> trade_requested -> preverification_approved -> pending_activation -> approved
-    LIFECYCLE_STATUSES = (
-        'valuation_only', 'trade_requested', 'preverification_approved', 'pending_activation'
-    )
-    trade_requested_at = db.Column(db.DateTime, nullable=True)
-    preverification_notes = db.Column(db.Text, nullable=True)
-    preverification_approved_at = db.Column(db.DateTime, nullable=True)
-    preverification_approved_by_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=True)
+    # --- Staged non-custody lifecycle (valuation -> video review -> activation) ---
+    # Legacy pre-verification statuses are normalized by the matching migration.
+    LIFECYCLE_STATUSES = ('valuation_only', 'pending_activation')
     ownership_confirmed = db.Column(db.Boolean, default=False)
     serial_number = db.Column(db.String(100), nullable=True)  # serial/IMEI, where applicable
     activated_at = db.Column(db.DateTime, nullable=True)       # when "Activate for Trade" completed (video approved)
@@ -514,13 +506,15 @@ class ItemImage(db.Model):
 class ItemVideo(db.Model):
     """
     A seller-submitted "Activate for Trade" verification video. Uploaded directly
-    from the user's device to temporary cloud storage (see services/video_service.py,
-    built in a later phase) - never touches the VPS. An admin reviews it; on
-    approval it's pushed to the official YouTube channel and the temp copy is
-    deleted. Kept as its own table (not columns on Item) so a rejected submission
+    from the user's device to temporary cloud storage (see services/video_service.py).
+    An admin reviews it; a durable worker publishes it unlisted, activates the item,
+    then deletes the temp copy. The worker transfers video bytes in memory, not
+    persistent VPS storage. Kept as its own table so a rejected submission
     and its resubmission both stay in history.
     """
-    VALID_STATUSES = {'pending', 'approved', 'rejected'}
+    VALID_STATUSES = {
+        'pending', 'queued', 'publishing', 'retry_wait', 'publish_failed', 'approved', 'rejected',
+    }
 
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id', name='fk_itemvideo_item'), nullable=False)
@@ -537,6 +531,20 @@ class ItemVideo(db.Model):
     youtube_video_id = db.Column(db.String(50), nullable=True)
     youtube_url = db.Column(db.String(300), nullable=True)
     temp_copy_deleted_at = db.Column(db.DateTime, nullable=True)
+    publish_phase = db.Column(db.String(30), nullable=True)
+    publish_attempts = db.Column(db.Integer, default=0, nullable=False)
+    publish_progress = db.Column(db.Integer, default=0, nullable=False)
+    publish_error = db.Column(db.Text, nullable=True)
+    publish_next_attempt_at = db.Column(db.DateTime, nullable=True)
+    publish_started_at = db.Column(db.DateTime, nullable=True)
+    publish_lease_token = db.Column(db.String(32), nullable=True)
+    publish_lease_until = db.Column(db.DateTime, nullable=True)
+    # Resumable session URLs grant upload access: never expose them in pages or logs.
+    upload_session_uri = db.Column(db.Text, nullable=True)
+    upload_source_sha256 = db.Column(db.String(64), nullable=True)
+    cleanup_attempts = db.Column(db.Integer, default=0, nullable=False)
+    cleanup_next_attempt_at = db.Column(db.DateTime, nullable=True)
+    cleanup_error = db.Column(db.Text, nullable=True)
 
     item = db.relationship('Item', back_populates='videos')
     uploaded_by = db.relationship('User', foreign_keys=[uploaded_by_id])
@@ -545,6 +553,8 @@ class ItemVideo(db.Model):
     __table_args__ = (
         db.Index('idx_itemvideo_item_id', 'item_id'),
         db.Index('idx_itemvideo_status', 'status'),
+        db.Index('idx_itemvideo_publish_due', 'status', 'publish_next_attempt_at'),
+        db.Index('idx_itemvideo_youtube_id', 'youtube_video_id', unique=True),
     )
 
     def __repr__(self):

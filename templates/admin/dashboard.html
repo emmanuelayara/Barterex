@@ -703,7 +703,7 @@
     {% endif %}
   </section>
 
-  {% set show_review = can('items.preverification') or can('items.video_review') or can('items.reconfirmation') or can('settlement.manage') or can('verification.intake') or can('inventory.view') %}
+  {% set show_review = can('items.video_review') or can('items.reconfirmation') or can('settlement.manage') or can('verification.intake') or can('inventory.view') %}
   {% set show_mgmt = can('users.view') or can('orders.manage') or can('pickup.manage') or current_admin.is_super_admin %}
   {% set show_system = can('system.settings') or can('audit.view') %}
   {% set show_support = can('users.appeals') or can('messages.manage') %}
@@ -718,7 +718,6 @@
     {% if show_review %}
     <nav class="link-card" aria-label="Review queues">
       <div class="link-card-title">Review queues</div>
-      {% if can('items.preverification') %}<a href="{{ url_for('admin.preverification_queue') }}" class="link-row"><i class="bi bi-search"></i>Pre-Verification</a>{% endif %}
       {% if can('items.video_review') %}<a href="{{ url_for('admin.video_review_queue') }}" class="link-row"><i class="bi bi-camera-video"></i>Video Review</a>{% endif %}
       {% if can('items.reconfirmation') %}<a href="{{ url_for('admin.reconfirmation_review_queue') }}" class="link-row"><i class="bi bi-arrow-repeat"></i>Reconfirmations</a>{% endif %}
       {% if can('settlement.manage') %}<a href="{{ url_for('admin.settlement_queue') }}" class="link-row"><i class="bi bi-arrow-left-right"></i>Settlement Queue</a>{% endif %}

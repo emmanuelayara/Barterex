@@ -20,6 +20,7 @@ from werkzeug.utils import secure_filename
 from threading import Thread
 
 from flask_mail import Mail, Message
+from services.email_branding import add_email_logo
 from app import app, login_manager, db, mail
 from models import User, Item, Admin, Trade, Notification, CreditTransaction, db, Order, PickupStation, ItemImage, Cart, CartItem, OrderItem
 from forms import AdminRegisterForm, AdminLoginForm, RegisterForm, LoginForm, UploadItemForm, ProfileUpdateForm, OrderForm, PickupStationForm, ForgotPasswordForm, ResetPasswordForm
@@ -56,7 +57,7 @@ def send_email_async(subject, recipients, html_body, sender=None):
         sender=sender or app.config['MAIL_DEFAULT_SENDER'],
         recipients=recipients if isinstance(recipients, list) else [recipients]
     )
-    msg.html = html_body
+    msg.html = add_email_logo(html_body)
     
     # Send in background thread (daemon=True means thread dies when main program exits)
     Thread(target=send_async_email, args=(app, msg), daemon=True).start()

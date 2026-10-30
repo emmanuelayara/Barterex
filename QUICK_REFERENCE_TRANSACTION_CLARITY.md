@@ -14,6 +14,21 @@ Transaction Clarity is a comprehensive feature that provides users with clear un
 3. ✅ **Delivery Timelines** - Estimated dates for each delivery method
 4. ✅ **Receipt Downloads** - Professional PDF receipts for record keeping
 
+### Branded order receipts
+
+The existing **Download Receipt** action produces a PDF with the company logo,
+blue-and-orange branding, wrapping item descriptions, and repeated table headers
+on multi-page orders. Order-time BXC totals and balances are separate from
+NGN home-service fees. Reservation receipts include the funding method, backing
+items and verification status, settlement date, and delivery-fee status when
+recorded. Pickup, delivery, cancellation details, and transaction notes are also
+included where available.
+
+Receipts reflect the order status at download, not proof of delivery or payment
+of a pending service fee. The logo is embedded from `static/logo.png`, so it
+does not require internet access to display. No database migration is needed
+for the receipt redesign.
+
 ---
 
 ## 📋 Files Modified/Created

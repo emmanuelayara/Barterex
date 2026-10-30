@@ -46,7 +46,7 @@ def queue_email(
             # Context processors need a request; use an isolated app context so the
             # caller's cached login state in `g` is left untouched.
             stack.enter_context(current_app.app_context())
-            stack.enter_context(current_app.test_request_context())
+            stack.enter_context(current_app.test_request_context(base_url=current_app.config['APP_URL']))
         cta_url = url_for(cta_endpoint, _external=True, **cta_values) if cta_endpoint else None
         html_body = render_template(
             'emails/notification.html',

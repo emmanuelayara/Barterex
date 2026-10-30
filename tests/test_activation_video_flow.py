@@ -7,6 +7,7 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 from app import app, db
 from models import Admin, Item, ItemVideo, ReservationCreditEntry, User
 from services.video_service import build_object_name
+from services.video_publishing import run_next_job
 
 
 class ActivationVideoFlowTests(unittest.TestCase):
@@ -48,6 +49,10 @@ class ActivationVideoFlowTests(unittest.TestCase):
         )
         db.session.add(self.item)
         db.session.commit()
+        self.owner_id, self.item_id = self.owner.id, self.item.id
+        email = patch('routes.auth.send_email_async')
+        email.start()
+        self.addCleanup(email.stop)
 
     def tearDown(self):
         db.session.remove()
@@ -72,6 +77,8 @@ class ActivationVideoFlowTests(unittest.TestCase):
         self.assertIn('video-submit-form', page)
         self.assertIn('video-submit-form no-loading', page)
         self.assertIn('activate/request-upload-url', page)
+        self.assertIn('Upload video &amp; submit for review', page)
+        self.assertNotIn('Pre-Verification', page)
 
     def test_trade_request_requires_uploaded_video(self):
         client = app.test_client()
@@ -129,12 +136,12 @@ class ActivationVideoFlowTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         db.session.refresh(self.item)
         video = ItemVideo.query.one()
-        self.assertEqual(self.item.status, 'trade_requested')
+        self.assertEqual(self.item.status, 'pending_activation')
         self.assertTrue(self.item.ownership_confirmed)
         self.assertEqual(video.status, 'pending')
         self.assertEqual(video.temp_video_url, object_name)
 
-    def test_upload_url_can_be_requested_before_preverification(self):
+    def test_upload_url_can_be_requested_before_video_review(self):
         client = app.test_client()
         self._login_owner(client)
         object_name = build_object_name(self.item.id, 'video/mp4')
@@ -154,78 +161,6 @@ class ActivationVideoFlowTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()['object_name'], object_name)
-
-    def test_activation_confirmation_returns_json_and_records_video(self):
-        self.item.status = 'preverification_approved'
-        db.session.commit()
-        client = app.test_client()
-        self._login_owner(client)
-        object_name = build_object_name(self.item.id, 'video/mp4')
-
-        with patch(
-            'services.video_service.validate_uploaded_object',
-            return_value={'success': True},
-        ):
-            response = client.post(
-                f'/items/{self.item.id}/activate/confirm-upload',
-                data={'object_name': object_name},
-                headers={'X-Requested-With': 'XMLHttpRequest'},
-            )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json(), {'success': True})
-        db.session.refresh(self.item)
-        self.assertEqual(self.item.status, 'pending_activation')
-        self.assertEqual(ItemVideo.query.one().temp_video_url, object_name)
-
-    def test_activation_confirmation_returns_json_error_for_invalid_video(self):
-        self.item.status = 'preverification_approved'
-        db.session.commit()
-        client = app.test_client()
-        self._login_owner(client)
-
-        with patch(
-            'services.video_service.validate_uploaded_object',
-            return_value={'success': False, 'error': 'The video upload did not complete.'},
-        ):
-            response = client.post(
-                f'/items/{self.item.id}/activate/confirm-upload',
-                data={'object_name': build_object_name(self.item.id, 'video/mp4')},
-                headers={'X-Requested-With': 'XMLHttpRequest'},
-            )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.get_json(),
-            {'success': False, 'error': 'The video upload did not complete.'},
-        )
-        self.assertEqual(ItemVideo.query.count(), 0)
-
-    def test_preverification_approval_sends_existing_video_to_review_queue(self):
-        self.item.status = 'trade_requested'
-        video = ItemVideo(
-            item_id=self.item.id,
-            uploaded_by_id=self.owner.id,
-            temp_video_url=build_object_name(self.item.id, 'video/mp4'),
-            status='pending',
-        )
-        db.session.add(video)
-        db.session.commit()
-
-        client = app.test_client()
-        with client.session_transaction() as session:
-            session['admin_id'] = self.admin.id
-            session['admin_username'] = self.admin.username
-
-        with patch('services.verification_intake_service.create_verification_intake'):
-            response = client.post(
-                f'/admin/pre-verification/{self.item.id}/approve',
-                data={'final_value': '125'},
-            )
-
-        self.assertEqual(response.status_code, 302)
-        db.session.refresh(self.item)
-        self.assertEqual(self.item.status, 'pending_activation')
 
     def _pending_video(self):
         self.item.status = 'pending_activation'
@@ -247,18 +182,28 @@ class ActivationVideoFlowTests(unittest.TestCase):
         self.item.ai_estimated_value = 250.4
         self.owner.provisional_credits = 50
         client, video = self._pending_video()
+        video_id = video.id
+        def publish_video(*args, **kwargs):
+            kwargs['on_session']('https://www.googleapis.com/upload/session')
+            kwargs['on_result']('published01')
+            return 'published01'
+
         with patch('services.video_service.download_bytes', return_value=b'video'), \
              patch('services.video_service.delete_object', return_value=True), \
-             patch('services.youtube_publisher.upload_video', return_value={
-                 'success': True, 'video_id': 'published', 'url': 'https://youtu.be/published',
-             }) as publish:
-            response = client.post(f'/admin/video-review/{video.id}/approve')
+             patch('services.youtube_publisher.upload_video', side_effect=publish_video) as publish, \
+             patch('services.youtube_publisher.get_video_status', return_value=True):
+            response = client.post(f'/admin/video-review/{video_id}/approve')
             self.assertEqual(response.status_code, 302)
-            client.post(f'/admin/video-review/{video.id}/approve')
+            self.assertEqual(db.session.get(ItemVideo, video_id).status, 'queued')
+            publish.assert_not_called()
+            client.post(f'/admin/video-review/{video_id}/approve')
+            run_next_job()
             publish.assert_called_once()
+            run_next_job()  # Cleanup only, never another upload or credit.
 
-        db.session.refresh(self.owner)
-        db.session.refresh(self.item)
+        self.owner = db.session.get(User, self.owner_id)
+        self.item = db.session.get(Item, self.item_id)
+        video = db.session.get(ItemVideo, video_id)
         self.assertEqual(self.owner.provisional_credits, 300)
         self.assertEqual(self.owner.credits, 0)
         self.assertEqual(self.item.value, 250)
@@ -293,15 +238,16 @@ class ActivationVideoFlowTests(unittest.TestCase):
 
     def test_failed_publishing_does_not_activate_or_grant_credits(self):
         client, video = self._pending_video()
+        video_id = video.id
+        from services.youtube_publisher import PublishingError
         with patch('services.video_service.download_bytes', return_value=b'video'), \
-             patch('services.youtube_publisher.upload_video', return_value={
-                 'success': False, 'error': 'Publishing unavailable',
-             }):
-            client.post(f'/admin/video-review/{video.id}/approve')
-        db.session.refresh(video)
-        self.assertEqual(video.status, 'pending')
-        self.assertFalse(self.item.is_available)
-        self.assertEqual(self.owner.provisional_credits, 0)
+             patch('services.youtube_publisher.upload_video', side_effect=PublishingError('Publishing unavailable')):
+            client.post(f'/admin/video-review/{video_id}/approve')
+            run_next_job()
+        video = db.session.get(ItemVideo, video_id)
+        self.assertEqual(video.status, 'retry_wait')
+        self.assertFalse(db.session.get(Item, self.item_id).is_available)
+        self.assertEqual(db.session.get(User, self.owner_id).provisional_credits, 0)
         self.assertEqual(ReservationCreditEntry.query.count(), 0)
 
 

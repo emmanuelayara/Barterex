@@ -11,6 +11,7 @@ from logger_config import setup_logger
 from exceptions import AuthenticationError, UserBannedError, EmailSendError
 from error_handlers import handle_errors, safe_database_operation
 from app import db
+from services.email_branding import add_email_logo
 
 logger = setup_logger(__name__)
 
@@ -38,7 +39,7 @@ def send_email_async(subject, recipients, html_body, sender=None):
             sender=sender or (current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@barterex.com')),
             recipients=recipients if isinstance(recipients, list) else [recipients]
         )
-        msg.html = html_body
+        msg.html = add_email_logo(html_body)
         logger.debug(f"Sending email to {recipients} with subject: {subject}")
         Thread(target=send_async_email, args=(current_app._get_current_object(), msg), daemon=True).start()
         logger.info(f"Email task queued for {recipients}")

@@ -47,7 +47,7 @@ class VerificationIntakeTests(unittest.TestCase):
             condition='Like New',
             serial_number='SERIAL-123',
             user_id=self.owner.id,
-            status='trade_requested',
+            status='approved',
         )
         db.session.add(self.item)
         db.session.commit()
@@ -71,13 +71,13 @@ class VerificationIntakeTests(unittest.TestCase):
             self.item,
             self.admin.id,
             self.details,
-            workflow_type='trade_preverification',
+            workflow_type='reservation_seller_item',
             outcome='passed',
         )
         db.session.commit()
 
         self.assertEqual(intake.item_id, self.item.id)
-        self.assertEqual(intake.workflow_type, 'trade_preverification')
+        self.assertEqual(intake.workflow_type, 'reservation_seller_item')
         self.assertEqual(intake.outcome, 'passed')
         self.assertEqual(intake.observed_serial_number, 'SERIAL-123')
         self.assertTrue(intake.identity_confirmed)
@@ -87,25 +87,6 @@ class VerificationIntakeTests(unittest.TestCase):
         self.assertEqual(receipt.to_location, 'Barter Express Main Station')
         self.assertEqual(receipt.custodian_name, self.admin.username)
         self.assertEqual(receipt.recorded_by_admin_id, self.admin.id)
-
-    def test_preverification_approval_route_records_intake_and_receipt(self):
-        client = app.test_client()
-        with client.session_transaction() as flask_session:
-            flask_session['admin_id'] = self.admin.id
-            flask_session['admin_username'] = self.admin.username
-
-        response = client.post(
-            f'/admin/pre-verification/{self.item.id}/approve',
-            data=dict(self.details, final_value='125', preverification_notes='Approved'),
-        )
-
-        self.assertEqual(response.status_code, 302)
-        db.session.refresh(self.item)
-        self.assertEqual(self.item.status, 'preverification_approved')
-        intake = VerificationIntake.query.filter_by(item_id=self.item.id).one()
-        self.assertEqual(intake.workflow_type, 'trade_preverification')
-        self.assertEqual(intake.outcome, 'passed')
-        self.assertEqual(CustodyEvent.query.filter_by(intake_id=intake.id).count(), 1)
 
     def test_standard_item_approval_route_records_intake(self):
         self.item.status = 'pending'
@@ -143,7 +124,7 @@ class VerificationIntakeTests(unittest.TestCase):
                 self.item,
                 self.admin.id,
                 incorrect_identity,
-                workflow_type='trade_preverification',
+                workflow_type='reservation_seller_item',
                 outcome='passed',
             )
 
@@ -157,7 +138,7 @@ class VerificationIntakeTests(unittest.TestCase):
                 self.item,
                 self.admin.id,
                 serial_mismatch,
-                workflow_type='trade_preverification',
+                workflow_type='reservation_seller_item',
                 outcome='passed',
             )
         self.assertEqual(VerificationIntake.query.count(), 0)
@@ -168,7 +149,7 @@ class VerificationIntakeTests(unittest.TestCase):
             self.item,
             self.admin.id,
             dict(self.details, identity_confirmed='no', serial_check='mismatch'),
-            workflow_type='trade_preverification',
+            workflow_type='reservation_seller_item',
             outcome='failed',
         )
         db.session.commit()
@@ -209,7 +190,7 @@ class VerificationIntakeTests(unittest.TestCase):
             self.item,
             self.admin.id,
             self.details,
-            workflow_type='trade_preverification',
+            workflow_type='reservation_seller_item',
             outcome='passed',
         )
         db.session.commit()

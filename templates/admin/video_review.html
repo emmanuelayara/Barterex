@@ -32,12 +32,17 @@
   <div class="adm-head">
     <div>
       <h1>Video Review Queue</h1>
-      <p>Verification videos submitted via "Activate for Trade" - approve to publish to YouTube and list the item.</p>
+      <p>Approve a video to queue unlisted YouTube publishing. Items go live only after processing and activation succeed.</p>
     </div>
   </div>
 
   {% if not video_storage_configured %}
     <div class="vid-warning"><i class="bi bi-exclamation-triangle-fill"></i> Video storage (GCS_BUCKET_NAME) is not fully configured - previews below may not load.</div>
+  {% endif %}
+  {% if cleanup_pending %}
+    <div class="adm-panel" style="padding:12px;margin-bottom:16px;">
+      {{ cleanup_pending }} temporary cloud video(s) awaiting cleanup. The publishing worker retries cleanup independently.
+    </div>
   {% endif %}
 
   {% if videos %}
@@ -45,8 +50,8 @@
       <div class="adm-panel-head">
         <div class="adm-panel-icon"><i class="bi bi-camera-video"></i></div>
         <div>
-          <h2>Videos awaiting review</h2>
-          <p>Approve to publish to YouTube and list the item.</p>
+          <h2>Video review &amp; publishing</h2>
+          <p>Progress is upload progress; YouTube processing and item activation happen afterwards.</p>
         </div>
         <div class="adm-panel-actions"><span class="adm-count is-alert">{{ videos|length }}</span></div>
       </div>
@@ -72,14 +77,43 @@
             </div>
 
             <div class="adm-row-side">
-              <span class="adm-pill warn"><i class="bi bi-hourglass-split"></i> Pending</span>
+              <span class="adm-pill warn">{{ video.status|replace('_', ' ')|title }}</span>
             </div>
 
             <div class="vid-actions">
+              {% if video.status != 'pending' %}
+                <p><strong>Stage:</strong> {{ (video.publish_phase or 'queued')|replace('_', ' ')|title }}
+                  &middot; Upload {{ video.publish_progress }}% &middot; Failed attempts {{ video.publish_attempts }}/5</p>
+                <progress value="{{ video.publish_progress }}" max="100" style="width:100%;" aria-label="Video upload progress">{{ video.publish_progress }}%</progress>
+                {% if video.publish_next_attempt_at %}<p>Next check/retry: {{ video.publish_next_attempt_at.strftime('%d %b %Y %H:%M:%S') }} UTC</p>{% endif %}
+                {% if video.publish_error %}<p role="alert" style="color:#b91c1c;">{{ video.publish_error }}</p>{% endif %}
+                {% if video.youtube_url %}<p><a href="{{ video.youtube_url }}" target="_blank" rel="noopener noreferrer">View saved unlisted video</a></p>{% endif %}
+                {% if video.status == 'publish_failed' %}
+                  <form method="POST" action="{{ url_for('admin.retry_activation_video', video_id=video.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="adm-btn">Retry saved publishing job</button>
+                  </form>
+                  {% if not video.youtube_video_id %}
+                    <details style="margin-top:12px;">
+                      <summary>Recover an upload already on the official channel</summary>
+                      <p>If the final upload response was lost, locate the exact item video in YouTube Studio.
+                        Link its ID here instead of uploading a duplicate. Ownership and unlisted visibility are checked.</p>
+                      <form method="POST" action="{{ url_for('admin.reconcile_activation_video', video_id=video.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <label for="youtube-id-{{ video.id }}">Existing YouTube video ID</label>
+                        <input id="youtube-id-{{ video.id }}" name="youtube_video_id" pattern="[A-Za-z0-9_-]{11}" maxlength="11" required>
+                        <button type="submit" class="adm-btn">Link existing video &amp; resume</button>
+                      </form>
+                    </details>
+                  {% endif %}
+                {% else %}
+                  <p>The background worker will continue this job. Refresh to see the latest progress.</p>
+                {% endif %}
+              {% else %}
               <div class="vid-buttons">
                 <form method="POST" action="{{ url_for('admin.approve_activation_video', video_id=video.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                  <button type="submit" class="adm-btn success approve-btn"><i class="bi bi-check-lg"></i> Approve &amp; Publish to YouTube</button>
+                  <button type="submit" class="adm-btn success approve-btn"><i class="bi bi-check-lg"></i> Approve &amp; Queue Unlisted Video</button>
                 </form>
                 <button type="button" class="adm-btn danger reject-btn" onclick="toggleRejectForm({{ video.id }})"><i class="bi bi-x-circle"></i> Reject</button>
               </div>
@@ -91,6 +125,7 @@
                   <button type="button" class="adm-btn ghost cancel-btn" onclick="toggleRejectForm({{ video.id }})">Cancel</button>
                 </form>
               </div>
+              {% endif %}
             </div>
           </li>
         {% endfor %}

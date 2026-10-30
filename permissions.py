@@ -12,7 +12,6 @@ here is treated as super-admin-only, so new routes fail closed.
 PERMISSION_GROUPS = [
     ('Item Review', 'bi-search', [
         ('items.review', 'Review items', 'View the item queue and approve or reject submitted items'),
-        ('items.preverification', 'Pre-verification', 'Approve or reject items in the pre-verification queue'),
         ('items.video_review', 'Video review', 'Approve or reject activation videos'),
         ('items.reconfirmation', 'Reconfirmations', 'Review failed-seller title reconfirmations'),
         ('items.manage', 'Manage items', 'Delete items and change or fix item statuses'),
@@ -67,12 +66,11 @@ ENDPOINT_PERMISSIONS = {
     'admin.approve_items': 'items.review',
     'admin.approve_item': 'items.review',
     'admin.reject_item': 'items.review',
-    'admin.preverification_queue': 'items.preverification',
-    'admin.approve_preverification': 'items.preverification',
-    'admin.reject_preverification': 'items.preverification',
     'admin.video_review_queue': 'items.video_review',
     'admin.approve_activation_video': 'items.video_review',
     'admin.reject_activation_video': 'items.video_review',
+    'admin.retry_activation_video': 'items.video_review',
+    'admin.reconcile_activation_video': 'items.video_review',
     'admin.reconfirmation_review_queue': 'items.reconfirmation',
     'admin.approve_reconfirmation': 'items.reconfirmation',
     'admin.reject_reconfirmation': 'items.reconfirmation',

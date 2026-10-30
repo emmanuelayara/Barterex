@@ -1,0 +1,20 @@
+[Unit]
+Description=Barter Express durable unlisted video publishing and cleanup worker
+After=network-online.target barterex.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=barterex
+Group=www-data
+WorkingDirectory=/var/www/barterex/app
+EnvironmentFile=/etc/barterex/barterex.env
+ExecStart=/var/www/barterex/venv/bin/flask --app app:app video-publishing-worker
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=90
+KillSignal=SIGTERM
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

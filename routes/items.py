@@ -534,10 +534,11 @@ def estimate_value():
 @safe_database_operation("trade_this_item")
 def trade_this_item(item_id):
     """
-    Moves a private "My Valuations" item into the admin pre-verification queue.
-    This is the user's commitment point - see routes/admin.py preverification_queue.
+    Submits an item and its activation video directly to the admin video-review queue.
     """
-    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
+    item = Item.query.filter_by(
+        id=item_id, user_id=current_user.id,
+    ).with_for_update().first_or_404()
 
     if item.status != 'valuation_only':
         flash('This item is not available to trade right now.', 'info')
@@ -560,9 +561,8 @@ def trade_this_item(item_id):
 
     item.ownership_confirmed = True
     item.serial_number = (request.form.get('serial_number') or '').strip() or None
-    item.status = 'trade_requested'
-    item.trade_requested_at = datetime.utcnow()
-    item.rejection_reason = None  # clear any feedback from a previous pre-verification attempt
+    item.status = 'pending_activation'
+    item.rejection_reason = None
     db.session.add(ItemVideo(
         item_id=item.id,
         uploaded_by_id=current_user.id,
@@ -570,15 +570,15 @@ def trade_this_item(item_id):
         status='pending',
     ))
 
-    logger.info(f"Item submitted for pre-verification - Item: {item.id}, User: {current_user.username}")
+    logger.info(f"Activation video submitted - Item: {item.id}, User: {current_user.username}")
     notify_admins(
-        'items.preverification',
-        f"New pre-verification request: {item.name}",
-        f"{current_user.username} submitted '{item.name}' (#{item.item_number}) for pre-verification.",
-        cta_endpoint='admin.preverification_queue',
-        cta_label='Open Pre-verification Queue',
+        'items.video_review',
+        f"New activation video to review: {item.name}",
+        f"{current_user.username} uploaded a verification video for '{item.name}' (#{item.item_number}).",
+        cta_endpoint='admin.video_review_queue',
+        cta_label='Open Video Review',
     )
-    flash(f"'{item.name}' was submitted for pre-verification. We'll notify you once it's reviewed.", 'success')
+    flash(f"Video submitted for '{item.name}'! An admin will review it before your item goes live.", 'success')
     return redirect(url_for('user.my_valuations'))
 
 
@@ -597,7 +597,7 @@ def request_activation_upload_url(item_id):
     item = Item.query.filter_by(id=item_id, user_id=current_user.id).first()
     if not item:
         return jsonify({'success': False, 'error': 'Item not found.'}), 404
-    if item.status not in ('valuation_only', 'preverification_approved'):
+    if item.status != 'valuation_only':
         return jsonify({'success': False, 'error': 'This item is not ready for a verification video.'}), 400
 
     content_type = (request.get_json(silent=True) or {}).get('content_type', 'video/mp4')
@@ -608,55 +608,6 @@ def request_activation_upload_url(item_id):
     result = video_service.generate_upload_url(object_name, content_type)
     status_code = 200 if result.get('success') else 503
     return jsonify(result), status_code
-
-
-@items_bp.route('/items/<int:item_id>/activate/confirm-upload', methods=['POST'])
-@rate_limit("10 per hour")
-@login_required
-@handle_errors
-@safe_database_operation("confirm_activation_upload")
-def confirm_activation_upload(item_id):
-    """Step 2: the browser calls this once the video has finished uploading to GCS."""
-    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first_or_404()
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-
-    if item.status != 'preverification_approved':
-        if is_ajax:
-            return jsonify({'success': False, 'error': 'This item is not ready to be activated.'}), 400
-        flash('This item is not ready to be activated.', 'danger')
-        return redirect(url_for('user.my_valuations'))
-
-    object_name = (request.form.get('object_name') or '').strip()
-    from services import video_service
-
-    upload_validation = video_service.validate_uploaded_object(object_name, item.id)
-    if not upload_validation.get('success'):
-        if is_ajax:
-            return jsonify({
-                'success': False,
-                'error': upload_validation.get('error', 'The video upload did not complete. Please try again.'),
-            }), 400
-        flash(
-            upload_validation.get('error', 'The video upload did not complete. Please try again.'),
-            'danger',
-        )
-        return redirect(url_for('user.my_valuations'))
-
-    db.session.add(ItemVideo(item_id=item.id, uploaded_by_id=current_user.id, temp_video_url=object_name, status='pending'))
-    item.status = 'pending_activation'
-
-    logger.info(f"Activation video submitted - Item: {item.id}, User: {current_user.username}")
-    notify_admins(
-        'items.video_review',
-        f"New activation video to review: {item.name}",
-        f"{current_user.username} uploaded a verification video for '{item.name}' (#{item.item_number}).",
-        cta_endpoint='admin.video_review_queue',
-        cta_label='Open Video Review',
-    )
-    if is_ajax:
-        return jsonify({'success': True})
-    flash(f"Video submitted for '{item.name}'! An admin will review it before your item goes live.", 'success')
-    return redirect(url_for('user.my_valuations'))
 
 
 @items_bp.route('/items/<int:item_id>/reconfirm', methods=['POST'])

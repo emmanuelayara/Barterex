@@ -4,12 +4,14 @@ Handles order receipts, transaction explanations, and delivery timelines
 """
 
 from datetime import datetime, timedelta
+from pathlib import Path
+from xml.sax.saxutils import escape
 from flask import render_template_string
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image, KeepTogether
 from io import BytesIO
 from logger_config import setup_logger
 
@@ -213,7 +215,7 @@ def get_status_explanation(status):
 
 def generate_pdf_receipt(order, user):
     """
-    Generate a PDF receipt for the order
+    Generate a branded, paginated receipt with separate BXC and NGN summaries.
     
     Args:
         order: Order object
@@ -223,158 +225,242 @@ def generate_pdf_receipt(order, user):
         BytesIO object containing PDF data
     """
     try:
-        # Create PDF buffer
         buffer = BytesIO()
-        
-        # Create PDF document
         doc = SimpleDocTemplate(
             buffer,
             pagesize=letter,
-            rightMargin=0.5*inch,
-            leftMargin=0.5*inch,
-            topMargin=0.5*inch,
-            bottomMargin=0.5*inch,
-            title=f"Receipt-{order.order_number}"
+            rightMargin=42,
+            leftMargin=42,
+            topMargin=38,
+            bottomMargin=54,
+            title=f"Receipt-{order.order_number}",
+            author="Barter Express",
         )
-        
-        # Container for PDF elements
+        navy = colors.HexColor('#054e97')
+        orange = colors.HexColor('#ff7a00')
+        ink = colors.HexColor('#182b43')
+        muted = colors.HexColor('#61738a')
+        pale = colors.HexColor('#f1f6fc')
+        line = colors.HexColor('#dce5ef')
+        width = doc.width - 12
         elements = []
-        
-        # Define styles
         styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=24,
-            textColor=colors.HexColor('#054e97'),
-            spaceAfter=10,
-            alignment=1  # Center
+        body = ParagraphStyle(
+            'ReceiptBody', parent=styles['Normal'], fontSize=9, leading=13,
+            textColor=ink, splitLongWords=True,
         )
-        
-        heading_style = ParagraphStyle(
-            'CustomHeading',
-            parent=styles['Heading2'],
-            fontSize=14,
-            textColor=colors.HexColor('#054e97'),
-            spaceAfter=8,
-            spaceBefore=8
+        small = ParagraphStyle(
+            'ReceiptSmall', parent=body, fontSize=8, leading=11, textColor=muted,
         )
-        
-        # Title
-        elements.append(Paragraph("🛒 BARTER EXPRESS TRANSACTION RECEIPT", title_style))
-        elements.append(Spacer(1, 0.2*inch))
-        
-        # Order header info
-        order_info = [
-            ['Order Number:', order.order_number],
-            ['Date:', order.date_ordered.strftime('%d %B %Y, %H:%M')],
-            ['Customer:', user.username],
-            ['Email:', user.email],
-        ]
-        
-        order_table = Table(order_info, colWidths=[2*inch, 4*inch])
-        order_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e8f0f7')),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        heading = ParagraphStyle(
+            'ReceiptHeading', parent=body, fontName='Helvetica-Bold',
+            fontSize=11, leading=15, textColor=navy,
+            spaceBefore=17, spaceAfter=8, keepWithNext=True,
+        )
+        white = ParagraphStyle(
+            'ReceiptWhite', parent=body, textColor=colors.white,
+            fontName='Helvetica-Bold',
+        )
+        title = ParagraphStyle(
+            'ReceiptTitle', parent=body, fontName='Helvetica-Bold',
+            fontSize=25, leading=30, textColor=navy, alignment=2,
+        )
+
+        def text(value, style=body):
+            return Paragraph(escape(str(value if value is not None else 'Not recorded')), style)
+
+        def amount(value, currency='BXC'):
+            return f"{value:,.2f} {currency}" if value is not None else 'Not recorded'
+
+        def details(rows):
+            table = Table(
+                [[text(label, small), text(value)] for label, value in rows],
+                colWidths=[width * 0.29, width * 0.71], hAlign='LEFT',
+            )
+            table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('BACKGROUND', (0, 0), (-1, -1), pale),
+                ('LEFTPADDING', (0, 0), (-1, -1), 12),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+                ('TOPPADDING', (0, 0), (-1, -1), 7),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+                ('LINEBELOW', (0, 0), (-1, -2), 0.4, colors.white),
+            ]))
+            return table
+
+        def item_table(headers, rows, widths):
+            table = Table(
+                [[text(label, white) for label in headers]]
+                + [[text(value) for value in row] for row in rows],
+                colWidths=widths, repeatRows=1, hAlign='LEFT',
+            )
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), navy),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, pale]),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 10),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+                ('LINEBELOW', (0, 1), (-1, -1), 0.5, line),
+            ]))
+            return table
+
+        logo = Image(str(Path(__file__).resolve().parent / 'static' / 'logo.png'),
+                     width=66, height=66, mask='auto')
+        brand = Paragraph(
+            '<b>BARTER EXPRESS</b><br/><font size="8" color="#61738a">'
+            'Your transaction, clearly recorded.</font>', body,
+        )
+        header = Table(
+            [[logo, brand, Paragraph('RECEIPT', title)]],
+            colWidths=[78, width - 238, 160],
+            hAlign='LEFT',
+        )
+        header.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 14),
+            ('LINEBELOW', (0, 0), (-1, -1), 3, orange),
         ]))
-        elements.append(order_table)
-        elements.append(Spacer(1, 0.2*inch))
-        
-        # Delivery Information
-        elements.append(Paragraph("📦 Delivery Information", heading_style))
-        delivery_info = [
-            ['Method:', order.delivery_method.title()],
-            ['Estimated Delivery:', order.estimated_delivery_date.strftime('%d %B %Y') if order.estimated_delivery_date else 'To be determined'],
-            ['Status:', order.status],
-        ]
-        
-        if order.delivery_address:
-            delivery_info.append(['Address:', order.delivery_address])
-        
-        delivery_table = Table(delivery_info, colWidths=[2*inch, 4*inch])
-        delivery_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e8f0f7')),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        elements.extend([header, Spacer(1, 16)])
+        elements.append(details([
+            ('Order reference', order.order_number),
+            ('Order date', order.date_ordered.strftime('%d %B %Y, %H:%M')),
+            ('Order status', 'Cancelled' if order.cancelled else order.status),
+            ('Customer', user.username),
+            ('Email', user.email),
         ]))
-        elements.append(delivery_table)
-        elements.append(Spacer(1, 0.2*inch))
-        
-        # Items ordered
-        elements.append(Paragraph("📋 Items in This Order", heading_style))
-        items_data = [['Item #', 'Item Name', 'Condition', 'Value (₦)']]
-        
-        for item in order.items:
-            items_data.append([
-                item.item.item_number[:12],
-                item.item.name[:25],
-                item.item.condition,
-                f"₦{item.item.value:,.0f}"
+
+        elements.append(Paragraph('01 / ITEMS IN THIS ORDER', heading))
+        rows = []
+        for order_item in order.items:
+            item = order_item.item
+            rows.append([
+                item.item_number if item else f'Item {order_item.item_id}',
+                item.name if item else 'Item no longer available',
+                item.condition if item else 'Not recorded',
+                amount(order.total_credits if len(order.items) == 1 else item.value)
+                if item else 'Not recorded',
             ])
-        
-        items_data.append(['', '', 'TOTAL:', f"₦{order.total_credits:,.0f}"])
-        
-        items_table = Table(items_data, colWidths=[1.2*inch, 2.3*inch, 1.2*inch, 1.3*inch])
-        items_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#054e97')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e8f0f7')),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-        ]))
-        elements.append(items_table)
-        elements.append(Spacer(1, 0.2*inch))
-        
-        # Credits summary
-        elements.append(Paragraph("💰 Credit Transaction Summary", heading_style))
-        credits_data = [
-            ['Your Balance Before Order:', f"₦{order.credits_balance_before:,.0f}"],
-            ['Credits Used in This Order:', f"₦{order.credits_used:,.0f}"],
-            ['Your Balance After Order:', f"₦{order.credits_balance_after:,.0f}"],
-        ]
-        
-        credits_table = Table(credits_data, colWidths=[3.5*inch, 2.5*inch])
-        credits_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e8f0f7')),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-        ]))
-        elements.append(credits_table)
-        elements.append(Spacer(1, 0.2*inch))
-        
-        # Footer
-        footer_style = ParagraphStyle(
-            'Footer',
-            parent=styles['Normal'],
-            fontSize=9,
-            textColor=colors.grey,
-            alignment=1
-        )
-        elements.append(Paragraph(
-            "Thank you for using Barter Express! For support, visit our website or contact us.<br/>" +
-            f"Generated on {datetime.utcnow().strftime('%d %B %Y at %H:%M')}",
-            footer_style
+        elements.append(item_table(
+            ['Item reference', 'Item description', 'Condition', 'Value (BXC)'],
+            rows or [['-', 'No items recorded', '-', '-']],
+            [width * 0.21, width * 0.39, width * 0.18, width * 0.22],
         ))
-        
-        # Build PDF
-        doc.build(elements)
+
+        elements.append(Paragraph('02 / BXC TRANSACTION SUMMARY', heading))
+        elements.append(details([
+            ('Order value', amount(order.total_credits)),
+            ('Balance before order', amount(order.credits_balance_before)),
+            ('BXC used', amount(order.credits_used)),
+            ('Balance after order', amount(order.credits_balance_after)),
+        ]))
+        elements.append(Spacer(1, 7))
+        elements.append(text(
+            'Balances above are the recorded order-time balances, not your current wallet balance. '
+            'BXC (Barter Express Credits) and NGN (Nigerian naira) are shown separately.',
+            small,
+        ))
+
+        reservation = order.reservation
+        if reservation:
+            funding_elements = [Paragraph('03 / RESERVATION & FUNDING', heading)]
+            funding_rows = [
+                ('Reservation reference', f'RSV-{reservation.id:06d}'),
+                ('Funding method', reservation.funding_mode.replace('_', ' ').title()),
+                ('Reservation status', reservation.status.replace('_', ' ').title()),
+            ]
+            if reservation.completed_at:
+                funding_rows.append((
+                    'Settlement date', reservation.completed_at.strftime('%d %B %Y, %H:%M'),
+                ))
+            funding_elements.append(details(funding_rows))
+            if reservation.backing_assets:
+                funding_elements.append(Spacer(1, 8))
+                asset_rows = []
+                for asset in reservation.backing_assets:
+                    item = asset.item
+                    asset_rows.append([
+                        item.name if item else f'Item {asset.item_id}',
+                        amount(asset.amount),
+                        'Excluded' if asset.excluded_from_settlement
+                        else asset.verification_status.replace('_', ' ').title(),
+                    ])
+                funding_elements.append(item_table(
+                    ['Backing item', 'Recorded value', 'Verification'],
+                    asset_rows, [width * 0.48, width * 0.27, width * 0.25],
+                ))
+            elements.append(KeepTogether(funding_elements))
+
+        elements.append(Paragraph(
+            ('04' if reservation else '03') + ' / DELIVERY & SERVICE FEES', heading,
+        ))
+        delivery_rows = [('Delivery method', order.delivery_method.title())]
+        if order.delivery_address:
+            delivery_rows.append(('Delivery address', order.delivery_address))
+        if order.pickup_station:
+            station = order.pickup_station
+            delivery_rows.append((
+                'Pickup station', f'{station.name}, {station.address}, {station.city}, {station.state}',
+            ))
+        if order.estimated_delivery_date:
+            delivery_rows.append((
+                'Estimated delivery', order.estimated_delivery_date.strftime('%d %B %Y'),
+            ))
+        if order.actual_delivery_date:
+            delivery_rows.append((
+                'Delivered on', order.actual_delivery_date.strftime('%d %B %Y'),
+            ))
+        delivery_rows.append(('Home-service fee', amount(order.logistics_fee_naira, 'NGN')))
+        if reservation:
+            delivery_rows.append((
+                'Fee status', reservation.delivery_fee_status.replace('_', ' ').title(),
+            ))
+        elements.append(details(delivery_rows))
+        if reservation and order.delivery_method == 'home delivery':
+            elements.extend([Spacer(1, 7), text(
+                'The home-service fee is charged separately in NGN and is non-refundable. '
+                'A quoted or pending fee is not proof of payment.', small,
+            )])
+        if order.cancelled or order.cancellation_reason:
+            elements.append(Paragraph('CANCELLATION RECORD', heading))
+            cancellation_rows = [('Reason', order.cancellation_reason or 'Not recorded')]
+            if order.cancelled_at:
+                cancellation_rows.append((
+                    'Cancelled on', order.cancelled_at.strftime('%d %B %Y, %H:%M'),
+                ))
+            elements.append(details(cancellation_rows))
+        if order.transaction_notes:
+            elements.append(Paragraph('TRANSACTION NOTES', heading))
+            elements.append(text(order.transaction_notes))
+        elements.extend([Spacer(1, 18), text(
+            'Thank you for choosing Barter Express. Keep this receipt for your records and '
+            'quote your order reference when contacting support. This receipt records the '
+            'order status at download; it does not confirm delivery or an unrecorded payment.',
+            small,
+        )])
+
+        def page_footer(canvas, document):
+            canvas.saveState()
+            if document.page > 1:
+                canvas.setFillColor(navy)
+                canvas.setFont('Helvetica-Bold', 8)
+                canvas.drawString(48, letter[1] - 25, 'BARTER EXPRESS / RECEIPT')
+                canvas.setFont('Helvetica', 8)
+                canvas.drawRightString(letter[0] - 48, letter[1] - 25, order.order_number)
+                canvas.setStrokeColor(orange)
+                canvas.line(48, letter[1] - 32, letter[0] - 48, letter[1] - 32)
+            canvas.setStrokeColor(line)
+            canvas.line(48, 40, letter[0] - 48, 40)
+            canvas.setFillColor(muted)
+            canvas.setFont('Helvetica', 8)
+            canvas.drawString(48, 27, f'Barter Express | Generated {datetime.utcnow():%d %b %Y %H:%M} UTC')
+            canvas.drawRightString(letter[0] - 48, 27, f'Page {document.page}')
+            canvas.restoreState()
+
+        doc.build(elements, onFirstPage=page_footer, onLaterPages=page_footer)
         buffer.seek(0)
         
         logger.info(f"Generated PDF receipt - Order: {order.order_number}")

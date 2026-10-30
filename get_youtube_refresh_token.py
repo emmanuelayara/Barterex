@@ -18,11 +18,16 @@ It prints a refresh token at the end - put it in your .env as:
     YOUTUBE_CLIENT_SECRET=...
     YOUTUBE_REFRESH_TOKEN=...   <- printed by this script
 
-This token does not expire unless revoked, so you only need to run this once.
+Use a production OAuth consent configuration. Tokens can expire or be revoked;
+external OAuth apps in Testing commonly issue short-lived refresh tokens.
+Existing upload-only tokens must be reauthorized to add read-only processing checks.
 """
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
+SCOPES = [
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/youtube.readonly',
+]
 
 
 def main():
@@ -40,7 +45,7 @@ def main():
     }
 
     flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
-    credentials = flow.run_local_server(port=0)
+    credentials = flow.run_local_server(port=0, access_type='offline', prompt='consent')
 
     print('\nSuccess! Add these to your .env:\n')
     print(f'YOUTUBE_CLIENT_ID={client_id}')
