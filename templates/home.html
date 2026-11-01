@@ -22,10 +22,10 @@
     <section class="hm-start hm-reveal" aria-label="Get started">
       <div class="hm-actions">
         {% if current_user.is_authenticated %}
-          <a href="{{ url_for('marketplace.marketplace') }}" class="hm-btn primary"><i class="fas fa-rocket"></i> Start bartering</a>
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSfgleoaXGXOV-bNH0rlJxOpbxH5419y8LS3c2su3nmzwUNy0A/viewform?usp=dialog" class="hm-btn primary"><i class="fas fa-rocket"></i> Join the Waitlist</a>
           <a href="{{ url_for('user.dashboard') }}" class="hm-btn ghost"><i class="fas fa-table-cells-large"></i> Your dashboard</a>
         {% else %}
-          <a href="{{ url_for('marketplace.marketplace') }}" class="hm-btn primary"><i class="fas fa-rocket"></i> Start bartering</a>
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSfgleoaXGXOV-bNH0rlJxOpbxH5419y8LS3c2su3nmzwUNy0A/viewform?usp=dialog" class="hm-btn primary"><i class="fas fa-rocket"></i> Join the Waitlist</a>
           <a href="{{ url_for('marketplace.how_it_works') }}" class="hm-btn ghost">Learn how</a>
         {% endif %}
       </div>
@@ -105,8 +105,8 @@
       </div>
       <div class="hm-fees hm-reveal">
         <div class="hm-fee"><strong>Free</strong><span>To join and to list your items. Your first AI valuation each day is free.</span></div>
-        <div class="hm-fee"><strong>₦100</strong><span>For each additional AI valuation in a day.</span></div>
-        <div class="hm-fee"><strong>3%</strong><span>Transaction fee (min ₦500, max ₦5,000), only when an exchange successfully completes.</span></div>
+        <div class="hm-fee"><strong>₦150</strong><span>For each additional AI valuation in a day.</span></div>
+        <div class="hm-fee"><strong>5%</strong><span>Transaction fee (min ₦1,000, max ₦5,000), only when an exchange successfully completes.</span></div>
       </div>
       <p class="hm-note">Pickup at our stations is free. The optional home service has a fee quoted upfront.</p>
     </section>
