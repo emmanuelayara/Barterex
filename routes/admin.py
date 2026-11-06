@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash, send_file, jsonify, abort
+from flask import Blueprint, render_template, redirect, url_for, request, session, flash, send_file, jsonify, abort, make_response
 from flask_wtf.csrf import generate_csrf
 from functools import wraps
 from datetime import datetime
@@ -27,8 +27,10 @@ from models import (
     SystemSettings,
     ActivityLog,
     ContactMessage,
+    StolenItemReport,
+    StolenReportEvidence,
 )
-from forms import AdminRegisterForm, AdminLoginForm, AdminPermissionsForm, PickupStationForm
+from forms import AdminRegisterForm, AdminLoginForm, AdminPermissionsForm, PickupStationForm, StolenItemReviewForm
 from permissions import (
     PERMISSION_GROUPS,
     PERMISSION_LABELS,
@@ -181,6 +183,10 @@ def inject_admin_context():
         counts['messages'] = ContactMessage.query.filter(
             ContactMessage.status.in_(('pending', 'in_progress')),
         ).count()
+    if admin_can('reports.manage'):
+        counts['stolen_reports'] = StolenItemReport.query.filter(
+            StolenItemReport.status.in_(StolenItemReport.PENDING_STATUSES),
+        ).count()
     context.update(
         admin_pending_counts=counts,
         admin_pending_total=sum(counts.values()),
@@ -204,6 +210,88 @@ def _settlement_queue_filter():
     )
 
 # ==================== ROUTES ====================
+
+@admin_bp.route('/stolen-reports')
+@admin_login_required
+def stolen_reports():
+    status = request.args.get('status', 'open')
+    if status not in ('open', 'all', *StolenItemReport.STATUSES):
+        abort(400, description='Invalid report status filter.')
+    query = StolenItemReport.query
+    if status == 'open':
+        query = query.filter(StolenItemReport.status.in_(StolenItemReport.PENDING_STATUSES))
+    elif status != 'all':
+        query = query.filter_by(status=status)
+    reports = query.order_by(StolenItemReport.created_at.asc(), StolenItemReport.id.asc()).paginate(
+        page=request.args.get('page', 1, type=int), per_page=20, error_out=False,
+    )
+    response = make_response(render_template('admin/stolen_reports.html', reports=reports, status=status))
+    response.headers['Cache-Control'] = 'private, no-store'
+    return response
+
+
+@admin_bp.route('/stolen-reports/<int:report_id>', methods=['GET', 'POST'])
+@admin_login_required
+def stolen_report_detail(report_id):
+    from sqlalchemy.exc import SQLAlchemyError
+    from models import AuditLog
+
+    if request.method == 'POST':
+        report = StolenItemReport.query.filter_by(id=report_id).with_for_update().first_or_404()
+    else:
+        report = StolenItemReport.query.get_or_404(report_id)
+    form = StolenItemReviewForm(obj=report)
+    if request.method == 'POST':
+        if not form.validate_on_submit():
+            logger.warning('Invalid stolen-report review for report %s by admin %s', report_id, session['admin_id'])
+            db.session.rollback()
+            for errors in form.errors.values():
+                for error in errors:
+                    flash(error, 'danger')
+            return render_template('admin/stolen_report_detail.html', report=report, form=form), 400
+        status = form.status.data
+        notes = form.review_notes.data
+        previous = report.status
+        report.status = status
+        report.review_notes = notes
+        report.reviewed_at = datetime.utcnow()
+        report.reviewed_by_id = session['admin_id']
+        db.session.add(AuditLog(
+            admin_id=session['admin_id'], action_type='review_stolen_report',
+            target_type='stolen_item_report', target_id=report.id,
+            description=f'Report #{report.id} reviewed: {previous} -> {status}. Listing unchanged.',
+            before_value=json.dumps({'status': previous}),
+            after_value=json.dumps({'status': status}),
+        ))
+        try:
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            logger.exception('Could not save stolen-report review %s', report_id)
+            flash('The review could not be saved. Please try again.', 'danger')
+            return render_template('admin/stolen_report_detail.html', report=report, form=form), 500
+        flash('Review saved. Listing restrictions must be handled separately.', 'success')
+        return redirect(url_for('admin.stolen_report_detail', report_id=report.id))
+    response = make_response(render_template('admin/stolen_report_detail.html', report=report, form=form))
+    response.headers['Cache-Control'] = 'private, no-store'
+    return response
+
+
+@admin_bp.route('/stolen-reports/<int:report_id>/evidence/<int:evidence_id>')
+@admin_login_required
+def stolen_report_evidence(report_id, evidence_id):
+    evidence = StolenReportEvidence.query.filter_by(id=evidence_id, report_id=report_id).first_or_404()
+    extension = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}[evidence.content_type]
+    response = send_file(
+        io.BytesIO(evidence.data), mimetype=evidence.content_type,
+        as_attachment=True, download_name=f'report-{report_id}-evidence-{evidence_id}.{extension}',
+        max_age=0,
+    )
+    response.headers['Cache-Control'] = 'private, no-store'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Content-Security-Policy'] = "default-src 'none'; sandbox"
+    return response
+
 
 @admin_bp.route('/register', methods=['GET', 'POST'])
 @admin_login_required

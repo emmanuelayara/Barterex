@@ -503,6 +503,50 @@ class ItemImage(db.Model):
         return len(self.get_quality_flags()) > 0
 
 
+class StolenItemReport(db.Model):
+    PENDING_STATUSES = ('pending', 'under_review')
+    STATUSES = ('pending', 'under_review', 'confirmed', 'dismissed')
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id', ondelete='SET NULL'), nullable=True)
+    reporter_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
+    item_name = db.Column(db.String(200), nullable=False)
+    contact_email = db.Column(db.String(120), nullable=False)
+    details = db.Column(db.Text, nullable=False)
+    imei = db.Column(db.String(15), nullable=True)
+    serial_number = db.Column(db.String(120), nullable=True)
+    police_reference = db.Column(db.String(120), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    reviewed_by_id = db.Column(db.Integer, db.ForeignKey('admin.id', ondelete='SET NULL'), nullable=True)
+    review_notes = db.Column(db.Text, nullable=True)
+
+    item = db.relationship('Item')
+    reporter = db.relationship('User')
+    reviewed_by = db.relationship('Admin')
+    evidence = db.relationship(
+        'StolenReportEvidence', back_populates='report', cascade='all, delete-orphan',
+        order_by='StolenReportEvidence.id',
+    )
+    __table_args__ = (
+        db.Index('idx_stolen_report_status', 'status', 'created_at'),
+        db.Index('idx_stolen_report_reporter_item', 'reporter_id', 'item_id'),
+    )
+
+
+class StolenReportEvidence(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    report_id = db.Column(
+        db.Integer, db.ForeignKey('stolen_item_report.id', ondelete='CASCADE'), nullable=False,
+        index=True,
+    )
+    content_type = db.Column(db.String(30), nullable=False)
+    # Deferred so queue/detail queries do not load attachment bytes.
+    data = db.deferred(db.Column(db.LargeBinary, nullable=False))
+    report = db.relationship('StolenItemReport', back_populates='evidence')
+
+
 class ItemVideo(db.Model):
     """
     A seller-submitted "Activate for Trade" verification video. Uploaded directly

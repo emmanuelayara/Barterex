@@ -1,0 +1,41 @@
+{% extends 'admin_base.html' %}
+{% block title %}Stolen-item reports{% endblock %}
+{% block content %}
+<div class="adm-page">
+  <a class="adm-back" href="{{ url_for('admin.admin_dashboard') }}">Admin dashboard</a>
+  <div class="adm-head">
+    <div>
+      <h1>Stolen-item reports {{ pending_badge('stolen_reports') }}</h1>
+      <p>Private claims requiring evidence review. Reports do not automatically restrict listings.</p>
+    </div>
+  </div>
+  <div class="adm-panel">
+    <form method="get" class="adm-toolbar">
+      <label for="reportStatus">Status</label>
+      <select id="reportStatus" name="status" class="form-select" style="max-width:240px">
+        {% for value, label in [('open', 'Open reports'), ('all', 'All reports'), ('pending', 'Pending'), ('under_review', 'Under review'), ('confirmed', 'Confirmed'), ('dismissed', 'Dismissed')] %}
+          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="adm-btn primary">Filter</button>
+    </form>
+    <ul class="adm-list">
+      {% for report in reports.items %}
+        <li class="adm-row">
+          <div class="adm-row-main">
+            <a href="{{ url_for('admin.stolen_report_detail', report_id=report.id) }}">Report #{{ report.id }}: {{ report.item_name }}</a>
+            <div class="adm-row-meta">{{ report.created_at.strftime('%d %b %Y %H:%M') }} UTC</div>
+          </div>
+          <span class="adm-pill">{{ report.status|replace('_', ' ')|title }}</span>
+        </li>
+      {% else %}
+        <li class="adm-panel-body">No reports match this filter.</li>
+      {% endfor %}
+    </ul>
+    <div class="adm-panel-foot">
+      {% if reports.has_prev %}<a class="adm-btn ghost" href="{{ url_for('admin.stolen_reports', status=status, page=reports.prev_num) }}">Previous</a>{% endif %}
+      {% if reports.has_next %}<a class="adm-btn ghost" href="{{ url_for('admin.stolen_reports', status=status, page=reports.next_num) }}">Next</a>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

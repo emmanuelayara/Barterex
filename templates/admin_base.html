@@ -555,6 +555,15 @@
           </a>
         </div>
 
+        {% if can('reports.manage') %}
+        <div class="nav-item">
+          <a href="{{ url_for('admin.stolen_reports') }}" class="nav-link">
+            <i class="bi bi-flag"></i>
+            Stolen reports {{ pending_badge('stolen_reports') }}
+          </a>
+        </div>
+        {% endif %}
+
         {% if can('inventory.view') %}
         <div class="nav-item">
           <a href="{{ url_for('admin.clearing_inventory') }}" class="nav-link">

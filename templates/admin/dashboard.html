@@ -706,7 +706,7 @@
   {% set show_review = can('items.review') or can('items.video_review') or can('items.reconfirmation') or can('settlement.manage') or can('verification.intake') or can('inventory.view') %}
   {% set show_mgmt = can('users.view') or can('orders.manage') or can('pickup.manage') or current_admin.is_super_admin %}
   {% set show_system = can('system.settings') or can('audit.view') %}
-  {% set show_support = can('users.appeals') or can('messages.manage') %}
+  {% set show_support = can('users.appeals') or can('messages.manage') or can('reports.manage') %}
 
   {% if not (show_review or show_mgmt or show_system or show_support or can('items.review')) %}
   <div class="alert alert-info">
@@ -754,6 +754,11 @@
     {% if show_support %}
     <nav class="link-card" aria-label="Support">
       <div class="link-card-title">Support</div>
+      {% if can('reports.manage') %}
+      <a href="{{ url_for('admin.stolen_reports') }}" class="link-row">
+        <i class="bi bi-flag"></i>Stolen-item Reports {{ pending_badge('stolen_reports') }}
+      </a>
+      {% endif %}
       {% if can('users.appeals') %}
       <a href="{{ url_for('admin.pending_appeals') }}" class="link-row">
         <i class="bi bi-chat-left-quote"></i>Unban Appeals

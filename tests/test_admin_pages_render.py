@@ -147,7 +147,7 @@ class AdminPagesRenderTests(unittest.TestCase):
         db.session.commit()
         expected = {
             'items': 1, 'videos': 2, 'reconfirmations': 1,
-            'settlements': 3, 'orders': 4, 'appeals': 1, 'messages': 3,
+            'settlements': 3, 'orders': 4, 'appeals': 1, 'messages': 3, 'stolen_reports': 0,
         }
         with app.test_request_context('/admin/dashboard'):
             from flask import session
@@ -160,6 +160,8 @@ class AdminPagesRenderTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.get_data(as_text=True)
         for queue, count in expected.items():
+            if not count:
+                continue
             self.assertIn(
                 f'data-pending-queue="{queue}" aria-label="{count} pending">{count}</span>',
                 body,

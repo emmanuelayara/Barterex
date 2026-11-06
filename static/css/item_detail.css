@@ -193,3 +193,16 @@ html.dark-mode .related-price { color: #ffb066; }
 @media (prefers-reduced-motion: reduce) {
     .slideshow-track, .related-item, .thumbnail { transition: none; }
 }
+.item-report-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 32px;
+    margin-top: 8px;
+    font-size: .78rem;
+    color: #b91c1c;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.item-report-link:hover { color: #991b1b; }
+html.dark-mode .item-report-link { color: #fca5a5; }

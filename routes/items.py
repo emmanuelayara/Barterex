@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 from app import db, app
 from models import Item, ItemImage, ItemVideo, Cart, CartItem, Trade, Order, OrderItem, PickupStation, Notification
-from forms import UploadItemForm, OrderForm
+from forms import UploadItemForm, OrderForm, StolenItemReportForm
 from routes.auth import send_email_async
 from services.email_notifications import notify_admins
 from logger_config import setup_logger
@@ -41,6 +41,78 @@ def rate_limit(limit_str):
 logger = setup_logger(__name__)
 
 items_bp = Blueprint('items', __name__)
+
+
+@items_bp.route('/item/<int:item_id>/report-stolen', methods=['GET', 'POST'])
+@login_required
+def report_stolen_item(item_id):
+    from models import StolenItemReport, StolenReportEvidence, User
+    from services.stolen_report_service import read_evidence
+    from sqlalchemy.exc import SQLAlchemyError
+
+    item = Item.query.get_or_404(item_id)
+    form = StolenItemReportForm()
+    if form.validate_on_submit():
+        try:
+            attachments = read_evidence(request.files.getlist('evidence'))
+            if not (attachments or form.imei.data or form.serial_number.data or form.police_reference.data):
+                raise FileUploadError('Provide an evidence image, IMEI, serial number, or police report reference.')
+        except FileUploadError as error:
+            form.evidence.errors = list(form.evidence.errors) + [str(error)]
+            logger.warning('Invalid stolen-report evidence submission by user %s for item %s', current_user.id, item.id)
+            return render_template('report_stolen_item.html', form=form, item=item), 400
+
+        try:
+            # Serialize submissions by this account before checking for an open report.
+            User.query.filter_by(id=current_user.id).with_for_update().one()
+            existing = StolenItemReport.query.filter(
+                StolenItemReport.item_id == item.id,
+                StolenItemReport.reporter_id == current_user.id,
+                StolenItemReport.status.in_(StolenItemReport.PENDING_STATUSES),
+            ).first()
+            if existing:
+                db.session.rollback()
+                flash('You already have an open report for this item. Our team will review it.', 'warning')
+                return render_template('report_stolen_item.html', form=form, item=item), 409
+            recent_reports = StolenItemReport.query.filter(
+                StolenItemReport.reporter_id == current_user.id,
+                StolenItemReport.created_at >= datetime.utcnow() - timedelta(hours=1),
+            ).count()
+            if recent_reports >= 5:
+                db.session.rollback()
+                logger.warning('Stolen-report submission limit reached by user %s', current_user.id)
+                flash('You can submit up to five reports per hour. Please try again later.', 'warning')
+                return render_template('report_stolen_item.html', form=form, item=item), 429
+            report = StolenItemReport(
+                item_id=item.id, reporter_id=current_user.id, item_name=item.name,
+                contact_email=current_user.email, details=form.details.data,
+                imei=form.imei.data or None, serial_number=form.serial_number.data or None,
+                police_reference=form.police_reference.data or None,
+            )
+            for content_type, data in attachments:
+                report.evidence.append(StolenReportEvidence(content_type=content_type, data=data))
+            db.session.add(report)
+            db.session.flush()
+            notify_admins(
+                'reports.manage', 'Stolen-item report needs review',
+                f'A stolen-item report was submitted for item #{item.id}. Reference: #{report.id}. '
+                'Review the private evidence before taking action.',
+                cta_endpoint='admin.stolen_report_detail', cta_label='Review Report', report_id=report.id,
+            )
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            logger.exception('Could not save stolen-item report for item %s', item_id)
+            flash('Your report could not be saved. Please try again.', 'danger')
+            return render_template('report_stolen_item.html', form=form, item=item), 500
+        logger.info('Stolen-item report %s submitted for item %s', report.id, item_id)
+        flash(f'Report #{report.id} received. Our team will review your evidence. The listing has not been changed.', 'success')
+        return redirect(url_for('user.dashboard'))
+    if request.method == 'POST':
+        logger.warning('Invalid stolen-report form by user %s for item %s', current_user.id, item_id)
+    return render_template('report_stolen_item.html', form=form, item=item), (
+        400 if request.method == 'POST' else 200
+    )
 
 # ==================== HELPER FUNCTIONS ====================
 

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Report an item as stolen{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:760px">
+  <a href="{{ url_for('marketplace.view_item', item_id=item.id) }}">Back to item</a>
+  <div class="card mt-3">
+    <div class="card-body">
+      <h1 class="h4">Report as stolen</h1>
+      <p><strong>{{ item.name }}</strong> &middot; Item #{{ item.id }}</p>
+      <p>This is a private claim, not a public accusation. Authorized reviewers will assess your evidence.
+        Submitting a report does not automatically remove the listing or stop a transaction.
+        If a theft occurred, contact the appropriate authorities as well.</p>
+      <p class="small">We will use your account email to contact you. Evidence is not shared on the item page.
+        Only submit information you are authorized to provide. Avoid unrelated personal documents.
+        Keep your original evidence.</p>
+      <form method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        {% for field in [form.details, form.imei, form.serial_number, form.police_reference] %}
+          <div class="mb-3">
+            {{ field.label(class='form-label') }}
+            {% if field.name == 'details' %}
+              {{ field(class='form-control', rows=6, minlength=30, maxlength=5000, required=true, aria_describedby='detailsHelp') }}
+              <small id="detailsHelp">Describe your connection to the item, when it was stolen, and how the evidence identifies this listing (30&ndash;5,000 characters).</small>
+            {% elif field.name == 'imei' %}
+              {{ field(class='form-control', maxlength=15, inputmode='numeric', pattern='[0-9]{15}') }}
+            {% else %}
+              {{ field(class='form-control', maxlength=120) }}
+            {% endif %}
+            {% for error in field.errors %}<div class="text-danger" role="alert">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+        <div class="mb-3">
+          {{ form.evidence.label(class='form-label') }}
+          {{ form.evidence(class='form-control', accept='image/jpeg,image/png,image/webp', aria_describedby='evidenceHelp') }}
+          <small id="evidenceHelp">Up to five JPG, PNG, or WebP images, maximum 5 MB each: receipts, ownership photos, or identifying marks.
+            Provide at least one image, IMEI, serial number, or police report reference.</small>
+          {% for error in form.evidence.errors %}<div class="text-danger" role="alert">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-check mb-3">
+          {{ form.declaration(class='form-check-input') }}
+          {{ form.declaration.label(class='form-check-label') }}
+          {% for error in form.declaration.errors %}<div class="text-danger" role="alert">{{ error }}</div>{% endfor %}
+        </div>
+        {% if form.csrf_token is defined %}
+          {% for error in form.csrf_token.errors %}<div class="text-danger" role="alert">{{ error }}</div>{% endfor %}
+        {% endif %}
+        {{ form.submit(class='btn btn-danger') }}
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

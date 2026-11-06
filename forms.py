@@ -5,6 +5,45 @@ from flask_wtf.file import FileAllowed
 from models import User, Admin
 import re
 
+class StolenItemReviewForm(FlaskForm):
+    status = SelectField('Review status', choices=[
+        ('pending', 'Pending'), ('under_review', 'Under review'),
+        ('confirmed', 'Confirmed'), ('dismissed', 'Dismissed'),
+    ], validators=[DataRequired()])
+    review_notes = TextAreaField(
+        'Internal review notes', validators=[DataRequired(), Length(min=10, max=5000)],
+        filters=[lambda value: value.strip() if value else value],
+    )
+
+
+class StolenItemReportForm(FlaskForm):
+    details = TextAreaField(
+        'Why do you believe this item is stolen?',
+        validators=[DataRequired(), Length(min=30, max=5000)],
+        filters=[lambda value: value.strip() if value else value],
+    )
+    imei = StringField(
+        'IMEI (optional)', validators=[
+            Optional(), Regexp(r'^[0-9]{15}$', message='Enter a 15-digit IMEI.'),
+        ],
+        filters=[lambda value: value.strip() if value else value],
+    )
+    serial_number = StringField(
+        'Serial number (optional)', validators=[Optional(), Length(max=120)],
+        filters=[lambda value: value.strip() if value else value],
+    )
+    police_reference = StringField(
+        'Police report reference (optional)', validators=[Optional(), Length(max=120)],
+        filters=[lambda value: value.strip() if value else value],
+    )
+    evidence = MultipleFileField('Evidence images (optional)')
+    declaration = BooleanField(
+        'I am submitting this report in good faith and believe the information is accurate.',
+        validators=[DataRequired()],
+    )
+    submit = SubmitField('Submit report')
+
+
 # Custom Password Validator
 class PasswordStrengthValidator:
     """Validates password strength requirements"""

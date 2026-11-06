@@ -33,6 +33,7 @@ PERMISSION_GROUPS = [
     ]),
     ('Support', 'bi-envelope', [
         ('messages.manage', 'Contact messages', 'Read and update contact form messages'),
+        ('reports.manage', 'Stolen-item reports', 'Review private stolen-item claims and evidence'),
     ]),
     ('System', 'bi-sliders', [
         ('audit.view', 'Audit log', 'View the admin audit log'),
@@ -113,6 +114,9 @@ ENDPOINT_PERMISSIONS = {
     'admin.export_user_data': 'users.export',
 
     # Support
+    'admin.stolen_reports': 'reports.manage',
+    'admin.stolen_report_detail': 'reports.manage',
+    'admin.stolen_report_evidence': 'reports.manage',
     'admin.view_messages': 'messages.manage',
     'admin.mark_message_read': 'messages.manage',
     'admin.update_message_status': 'messages.manage',
