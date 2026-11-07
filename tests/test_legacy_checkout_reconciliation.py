@@ -189,8 +189,9 @@ class LegacyCheckoutReconciliationTests(unittest.TestCase):
         response = client.get("/settings")
         self.assertEqual(response.status_code, 200)
         page = response.get_data(as_text=True)
-        sidebar = page.split('<div class="settings-tabs">', 1)[1].split(
-            '<!-- Footer Links for Mobile -->', 1,
+        self.assertIn('<aside class="st-sidebar"', page)
+        sidebar = page.split('<aside class="st-sidebar"', 1)[1].split(
+            '</aside>', 1,
         )[0]
         self.assertIn('href="/favorites"', sidebar)
         self.assertIn('href="/my-revaluations"', sidebar)
