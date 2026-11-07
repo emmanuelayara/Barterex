@@ -20,9 +20,18 @@
   <div class="adm-head">
     <div>
       <h1>Verification intake &amp; custody</h1>
-      <p>Physical receipt snapshots and append-only handoff records, including the staff member who logged each event.</p>
+      <p>Active custody shows items still held by Barter Express. Released items and earlier inspections remain in history.</p>
     </div>
+    <form method="POST" action="{{ url_for('admin.synchronize_delivered_custody') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="adm-btn ghost sm" type="submit">Synchronize past deliveries</button>
+    </form>
   </div>
+  <nav aria-label="Custody record views" class="d-flex flex-wrap gap-2 mb-3">
+    {% for value, label in [('active', 'Active custody'), ('history', 'History / released'), ('all', 'All records')] %}
+      <a class="adm-btn sm {{ 'primary' if custody_view == value else 'ghost' }}" href="{{ url_for('admin.verification_intake_log', view=value) }}">{{ label }}</a>
+    {% endfor %}
+  </nav>
 
   {% if intakes.items %}
     {% for intake in intakes.items %}
@@ -38,6 +47,9 @@
             <p>{{ intake.workflow_type|replace('_', ' ') }} · {{ intake.received_at.strftime('%b %d, %Y %I:%M %p') }}</p>
           </div>
           <div class="adm-panel-actions">
+            {% if intake.custody_closed %}
+              <span class="adm-pill info">{{ 'Released to buyer' if current_custody.event_type == 'released_to_buyer' else 'Returned to owner' }}</span>
+            {% endif %}
             <span class="adm-pill {% if intake.outcome == 'passed' %}ok{% else %}bad{% endif %}">
               {{ intake.outcome }}
             </span>
@@ -55,7 +67,7 @@
             <div><strong>Accessories received</strong> {{ intake.accessories_received or 'Not recorded' }}</div>
             <div><strong>Inspection notes</strong> {{ intake.inspection_notes or 'None' }}</div>
             {% if current_custody %}
-              <div><strong>Current recorded custodian</strong> {{ current_custody.custodian_name }} · {{ current_custody.to_location }}</div>
+              <div><strong>{{ 'Final recipient' if intake.custody_closed else 'Last recorded custodian' }}</strong> {{ current_custody.custodian_name }} · {{ current_custody.to_location }}</div>
             {% endif %}
           </div>
 
@@ -74,6 +86,7 @@
           </ol>
         </div>
 
+        {% if intake.id in modifiable_intake_ids %}
         <form method="POST" action="{{ url_for('admin.record_verification_custody', intake_id=intake.id) }}" class="adm-panel-foot vi-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <div class="adm-field mb-0">
@@ -96,13 +109,14 @@
           </div>
           <button type="submit" class="adm-btn primary"><i class="bi bi-arrow-left-right"></i> Record movement / handoff</button>
         </form>
+        {% endif %}
       </article>
     {% endfor %}
     {% if intakes.pages > 1 %}
       <nav aria-label="Verification intake pages" class="d-flex justify-content-center flex-wrap gap-1 my-3">
         {% for page_number in range(1, intakes.pages + 1) %}
           <a class="adm-btn sm {% if page_number == intakes.page %}primary{% else %}ghost{% endif %}"
-             href="{{ url_for('admin.verification_intake_log', page=page_number) }}">
+             href="{{ url_for('admin.verification_intake_log', page=page_number, view=custody_view) }}">
             {{ page_number }}
           </a>
         {% endfor %}
@@ -112,8 +126,8 @@
     <div class="adm-panel">
       <div class="adm-empty">
         <i class="bi bi-clipboard-check"></i>
-        <h6>No intakes yet</h6>
-        <p class="mb-0">No physical verification intakes have been recorded yet.</p>
+        <h6>No {{ 'active custody' if custody_view == 'active' else 'matching' }} records</h6>
+        <p class="mb-0">Use the other views to see retained inspection and delivery history.</p>
       </div>
     </div>
   {% endif %}

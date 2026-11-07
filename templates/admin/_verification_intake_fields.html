@@ -19,12 +19,17 @@
   <label>
     Serial / IMEI observed
     <input type="text" name="observed_serial_number" maxlength="100">
+    {% if not inspection_item.serial_number or not inspection_item.serial_number|trim %}
+      <span style="font-size:0.8rem;font-weight:400">No serial was submitted. Enter the number on the item and select “Record physically observed number” to save it when inspection passes.</span>
+    {% else %}
+      <span style="font-size:0.8rem;font-weight:400">Submitted serial / IMEI: {{ inspection_item.serial_number }}</span>
+    {% endif %}
   </label>
   <label>
     Serial check
     <select name="serial_check" required>
       <option value="">Select check result</option>
-      <option value="matched">{{ 'Record physically observed number' if inspection_item.manual_review_requested and not inspection_item.serial_number else 'Matches submitted number' }}</option>
+      <option value="matched">{{ 'Record physically observed number' if not inspection_item.serial_number or not inspection_item.serial_number|trim else 'Matches submitted number' }}</option>
       <option value="mismatch">Does not match</option>
       <option value="not_applicable">Not applicable / no serial</option>
     </select>

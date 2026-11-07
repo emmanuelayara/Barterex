@@ -133,6 +133,21 @@ class ManualReviewTests(unittest.TestCase):
         self.assertEqual(self.item.status, 'manual_review_pending')
         self.assertEqual(ReservationCreditEntry.query.count(), 0)
 
+    def test_manual_custody_consent_requires_complete_account(self):
+        self.user.id_verification_status = 'not_submitted'
+        db.session.commit()
+        page = self.client.get('/my_valuations').get_data(as_text=True)
+        self.assertIn('Submit identity details to trade', page)
+        self.assertNotIn('Save custody choice', page)
+        response = self.client.post(f'/items/{self.item.id}/manual-custody', data={
+            'custody_choice': 'company', 'consent': '1',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('#verification', response.location)
+        db.session.refresh(self.item)
+        self.assertIsNone(self.item.manual_custody_choice)
+        self.assertIsNone(self.item.manual_custody_consent_at)
+
     def test_home_choice_uses_manual_value_and_grants_provisional_once_after_video(self):
         self.assertEqual(self.choose('home').status_code, 302)
         self.assertEqual(self.verify().status_code, 302)

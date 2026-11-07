@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from models import Payment, Reservation, User, CreditTransaction
 from app import db
-from services.email_notifications import notify_user
+from services.email_notifications import notify_user, notify_admins
 
 load_dotenv()
 
@@ -42,6 +42,11 @@ class PaystackPaymentService:
         """Charge the reservation's home-service fee, never account credits."""
         if reservation.user_id != user.id:
             return {'success': False, 'error': 'You can only pay delivery fees for your own reservation.'}
+        from services.reservation_service import _lock_reservation_for_update
+
+        reservation = _lock_reservation_for_update(reservation.id)
+        if not reservation or reservation.user_id != user.id:
+            return {'success': False, 'error': 'This reservation is no longer available for payment.'}
         if reservation.delivery_method != 'home delivery':
             return {'success': False, 'error': 'This reservation does not require a home-service fee.'}
         if reservation.status not in ('active', 'completed') or (
@@ -64,6 +69,8 @@ class PaystackPaymentService:
             Payment.created_at.desc()
         ).first()
         if existing:
+            if round(existing.amount_naira * 100) != round(amount_naira * 100):
+                return {'success': False, 'error': 'The pending payment amount differs from the home-service fee. Contact support.'}
             payment_link = None
             if existing.status == 'test_pending':
                 payment_link = f'/payments/verify-payment/{existing.paystack_reference}?test=true'
@@ -186,11 +193,10 @@ class PaystackPaymentService:
 
     @staticmethod
     def _complete_delivery_fee_payment(payment, payment_method):
-        reservation = Reservation.query.filter_by(
-            id=payment.reservation_id,
-            user_id=payment.user_id,
-        ).with_for_update().first()
-        if not reservation:
+        from services.reservation_service import _lock_reservation_for_update
+
+        reservation = _lock_reservation_for_update(payment.reservation_id)
+        if not reservation or reservation.user_id != payment.user_id:
             raise ValueError('The reservation linked to this delivery payment no longer exists.')
         if (
             round(float(reservation.delivery_quote_naira or 0) * 100)
@@ -215,10 +221,21 @@ class PaystackPaymentService:
                 _cancel_reservation(reservation, new_status='expired', relist_seller_item=True, relist_assets=True)
             else:
                 settled = _resolve_reservation(reservation)
+        closed = reservation.status not in ('active', 'completed')
+        if closed:
+            notify_admins(
+                'settlement.manage',
+                'Home-service payment received for a closed reservation',
+                f"Reservation {reservation.id} is {reservation.status}; payment {payment.id} "
+                "was received without reopening or settling the reservation. Contact the buyer to resolve the payment.",
+                cta_endpoint='admin.settlement_queue',
+                cta_label='Open Settlement Queue',
+            )
         notify_user(
             reservation.user_id,
             f"Your non-refundable home-service fee for reservation {reservation.id} is paid. "
-            "Dispatch may proceed after verification succeeds.",
+            + ("This reservation is closed and has not been reopened. Contact support about this payment."
+               if closed else "Dispatch may proceed after verification succeeds. This excludes the transaction fee."),
             subject="Home-service fee received",
             cta_endpoint='user.my_reservations',
             cta_label='View My Reservations',

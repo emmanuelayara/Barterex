@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db
-from models import Admin, AuditLog, ContactMessage, Item, ItemVideo, Order, PickupStation, Reservation, User
+from models import Admin, AuditLog, ContactMessage, Item, ItemVideo, Order, PickupStation, Reservation, ReservationAsset, User
 
 
 class AdminPagesRenderTests(unittest.TestCase):
@@ -86,6 +86,73 @@ class AdminPagesRenderTests(unittest.TestCase):
     def test_login_page_renders(self):
         response = app.test_client().get('/admin/login')
         self.assertEqual(response.status_code, 200)
+
+    def test_settlement_layout_preserves_inspection_forms_and_payment_gate(self):
+        from html.parser import HTMLParser
+
+        class Forms(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.forms = {}
+                self.current = None
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'form':
+                    self.current = attrs.get('action')
+                    self.forms[self.current] = []
+                elif self.current and tag in ('input', 'select', 'textarea', 'button'):
+                    self.forms[self.current].append(attrs)
+
+            def handle_endtag(self, tag):
+                if tag == 'form':
+                    self.current = None
+
+        reservation = Reservation(
+            user_id=self.user.id, item_id=self.item.id, status='active',
+            provisional_credits_used=100, delivery_method='home delivery',
+            delivery_address='1 Test Road', delivery_fee_status='paid',
+            delivery_quote_naira=5000, expires_at=datetime.utcnow() + timedelta(days=1),
+        )
+        db.session.add(reservation)
+        db.session.flush()
+        asset = ReservationAsset(reservation_id=reservation.id, item_id=self.item.id, amount=100)
+        db.session.add(asset)
+        db.session.commit()
+        client = self._client()
+        response = client.get('/admin/settlement-queue')
+        self.assertEqual(response.status_code, 200)
+        body = response.get_data(as_text=True)
+        self.assertIn('adm-page settlement-page', body)
+        self.assertIn('Service address', body)
+        self.assertIn('Valuation &amp; review notes', body)
+        parser = Forms()
+        parser.feed(body)
+        from flask import url_for
+        with app.test_request_context():
+            actions = (
+                url_for('admin.verify_seller_item_route', reservation_id=reservation.id),
+                url_for('admin.verify_backing_asset_route', asset_id=asset.id),
+            )
+        for action in actions:
+            with self.subTest(action=action):
+                fields = parser.forms[action]
+                names = {field.get('name') for field in fields}
+                self.assertTrue({
+                    'csrf_token', 'received_location', 'observed_condition',
+                    'observed_serial_number', 'serial_check', 'identity_confirmed',
+                    'accessories_received', 'intake_notes', 'revised_value', 'notes', 'result',
+                }.issubset(names))
+                self.assertEqual(
+                    {field.get('value') for field in fields if field.get('name') == 'result'},
+                    {'pass', 'fail'},
+                )
+        reservation.delivery_fee_status = 'awaiting_payment'
+        db.session.commit()
+        unpaid = client.get('/admin/settlement-queue').get_data(as_text=True)
+        self.assertIn('Waiting for the buyer to pay', unpaid)
+        for action in actions:
+            self.assertNotIn(f'action="{action}"', unpaid)
 
     def test_station_pages_use_verification_station_labels(self):
         client = self._client()

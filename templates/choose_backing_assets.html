@@ -113,7 +113,7 @@
       <strong class="reserve-item-name">{{ item.name }}</strong>
       <span class="reserve-price">ᗸ{{ '{:,.0f}'.format(item.value) }} BXC</span>
     {% if item.owner_type == 'barterex' %}
-    <p class="action-hint">Company inventory is already physically verified. Spendable BXC completes this purchase immediately; item-backed purchases wait for your backing items to pass inspection.</p>
+    <p class="action-hint">Company inventory is already physically verified. Spendable BXC completes this purchase immediately at a Verification Station, or after home-service payment; item-backed purchases wait for your backing items to pass inspection.</p>
     {% endif %}
     </div>
 
@@ -242,6 +242,9 @@
     runningTotal.classList.toggle('sufficient', sufficient);
     runningTotal.classList.toggle('insufficient', !sufficient);
     confirmBtn.disabled = !sufficient || !consented || !stationSelected || !addressEntered;
+    confirmBtn.textContent = deliveryMethod === 'home delivery'
+      ? 'Reserve & pay home-service fee'
+      : 'Confirm reservation';
     if (itemBacked) {
       runningTotal.childNodes[0].textContent = `Selected: ᗸ${total.toLocaleString()} / ᗸ${target.toLocaleString()} `;
     }

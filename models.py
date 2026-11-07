@@ -831,8 +831,15 @@ class VerificationIntake(db.Model):
     received_by = db.relationship('Admin', foreign_keys=[received_by_admin_id])
     inspected_by = db.relationship('Admin', foreign_keys=[inspected_by_admin_id])
     custody_events = db.relationship(
-        'CustodyEvent', back_populates='intake', order_by='CustodyEvent.recorded_at'
+        'CustodyEvent', back_populates='intake', order_by='(CustodyEvent.recorded_at, CustodyEvent.id)'
     )
+
+    @property
+    def custody_closed(self):
+        if not self.custody_events:
+            return False
+        latest = self.custody_events[-1]
+        return latest.event_type == 'released_to_buyer' or latest.to_location == 'Returned to owner'
 
     __table_args__ = (
         db.Index('idx_verification_intake_received_at', 'received_at'),

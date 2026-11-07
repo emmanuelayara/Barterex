@@ -190,6 +190,11 @@ def send_wishlist_email(recipient, user_name, item_title, item_id, category, con
             item_image = item.images[0].image_url
         elif item:
             item_image = item.image_url
+        if item_image:
+            from app import format_image_url
+            item_image = format_image_url(item_image)
+            if not item_image.startswith(('https://', 'http://')):
+                item_image = app.config['APP_URL'].rstrip('/') + '/' + item_image.lstrip('/')
         
         # Prepare template context
         context = {
@@ -202,11 +207,11 @@ def send_wishlist_email(recipient, user_name, item_title, item_id, category, con
             'item_value': item.value if item and item.value else 0,
             'item_image': item_image,
             'item_description': item.description if item and item.description else None,
-            'view_item_url': f"{app.config.get('APP_URL', 'https://barterex.com')}/item/{item_id}",
-            'dashboard_url': f"{app.config.get('APP_URL', 'https://barterex.com')}/dashboard",
-            'wishlist_url': f"{app.config.get('APP_URL', 'https://barterex.com')}/wishlist",
-            'marketplace_url': f"{app.config.get('APP_URL', 'https://barterex.com')}/marketplace",
-            'unsubscribe_url': f"{app.config.get('APP_URL', 'https://barterex.com')}/settings/notifications"
+            'view_item_url': f"{app.config['APP_URL'].rstrip('/')}/item/{item_id}",
+            'dashboard_url': f"{app.config['APP_URL'].rstrip('/')}/dashboard",
+            'wishlist_url': f"{app.config['APP_URL'].rstrip('/')}/wishlist/manage",
+            'marketplace_url': f"{app.config['APP_URL'].rstrip('/')}/marketplace",
+            'unsubscribe_url': f"{app.config['APP_URL'].rstrip('/')}/notification-settings"
         }
         
         logger.debug(f'[WISHLIST] Email context prepared: {list(context.keys())}')

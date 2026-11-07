@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
-from app import app, db
+from app import app, db, limiter
 from models import Admin, Item, ItemVideo, ReservationCreditEntry, User
 from services.video_service import build_object_name
 from services.video_publishing import run_next_job
@@ -22,12 +22,16 @@ class ActivationVideoFlowTests(unittest.TestCase):
     def setUp(self):
         self.app_context = app.app_context()
         self.app_context.push()
+        self.previous_limiter = limiter.enabled
+        limiter.enabled = False
         db.drop_all()
         db.create_all()
         self.owner = User(
             username='video-owner',
             email='video-owner@example.com',
             password_hash='test-hash',
+            phone_number='12345', address='Test road', city='Lagos', state='Lagos',
+            id_verification_status='submitted',
         )
         self.admin = Admin(
             username='video-admin',
@@ -55,6 +59,7 @@ class ActivationVideoFlowTests(unittest.TestCase):
         self.addCleanup(email.stop)
 
     def tearDown(self):
+        limiter.enabled = self.previous_limiter
         db.session.remove()
         db.drop_all()
         self.app_context.pop()
@@ -101,6 +106,46 @@ class ActivationVideoFlowTests(unittest.TestCase):
         db.session.refresh(self.item)
         self.assertEqual(self.item.status, 'valuation_only')
         self.assertEqual(ItemVideo.query.count(), 0)
+
+    def test_trade_and_signed_upload_require_profile_then_identity_submission(self):
+        client = app.test_client()
+        self._login_owner(client)
+        for field, target, expected in (
+            ('phone_number', 'edit=profile', 'Complete your profile'),
+            ('id_verification_status', '#verification', 'Submit your NIN'),
+        ):
+            with self.subTest(field=field):
+                old = getattr(self.owner, field)
+                setattr(self.owner, field, None if field == 'phone_number' else 'not_submitted')
+                db.session.commit()
+                page = client.get('/my_valuations').get_data(as_text=True)
+                self.assertIn('Before trading, complete your profile', page)
+                self.assertNotIn('<details class="trade-details">', page)
+                with patch('services.video_service.generate_upload_url') as signed, patch(
+                    'services.video_service.validate_uploaded_object'
+                ) as validate:
+                    response = client.post(
+                        f'/items/{self.item.id}/activate/request-upload-url',
+                        json={'content_type': 'video/mp4'},
+                    )
+                    self.assertEqual(response.status_code, 403)
+                    self.assertIn(expected, response.get_json()['error'])
+                    self.assertIn(target, response.get_json()['redirect_url'])
+                    signed.assert_not_called()
+                    response = client.post(
+                        f'/items/{self.item.id}/trade-this-item',
+                        data={'ownership_confirmed': '1', 'object_name': 'test'},
+                    )
+                    self.assertEqual(response.status_code, 302)
+                    self.assertIn(target, response.location)
+                    validate.assert_not_called()
+                db.session.refresh(self.item)
+                self.assertEqual(self.item.status, 'valuation_only')
+                self.assertFalse(self.item.ownership_confirmed)
+                self.assertEqual(ItemVideo.query.count(), 0)
+                setattr(self.owner, field, old)
+                db.session.commit()
+        self.assertIn('<details class="trade-details">', client.get('/my_valuations').get_data(as_text=True))
 
     def test_trade_request_rejects_an_invalid_video_object(self):
         client = app.test_client()

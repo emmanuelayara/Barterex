@@ -13,7 +13,7 @@ Features:
 from models import db, User, Notification, Order, Item
 from datetime import datetime, timedelta
 import json
-from flask import render_template_string
+from flask import render_template
 import logging
 
 logger = logging.getLogger(__name__)
@@ -538,15 +538,15 @@ def notify_credit_purchase(user_id, amount_naira, credits_purchased, previous_ba
                 'new_balance': new_balance,
                 'reference': reference,
                 'transaction_date': datetime.utcnow().strftime('%B %d, %Y at %I:%M %p'),
-                'marketplace_url': f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/marketplace",
-                'dashboard_url': f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/dashboard",
-                'help_url': f"{current_app.config.get('BASE_URL', 'http://localhost:5000')}/help",
+                'marketplace_url': f"{current_app.config['APP_URL'].rstrip('/')}/marketplace",
+                'dashboard_url': f"{current_app.config['APP_URL'].rstrip('/')}/dashboard",
+                'help_url': f"{current_app.config['APP_URL'].rstrip('/')}/contact-form",
                 'current_year': datetime.now().year
             }
             
             # Render email template
-            email_html = render_template_string(
-                open('templates/emails/credit_purchase.html').read(),
+            email_html = render_template(
+                'emails/credit_purchase.html',
                 **email_data
             )
             

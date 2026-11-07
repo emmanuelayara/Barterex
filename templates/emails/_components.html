@@ -1,0 +1,44 @@
+{% macro paragraph(text) -%}
+{% for part in (text or '').split('\n\n') if part|trim %}
+<p style="margin:0 0 20px;font-size:16px;line-height:26px;color:#243247;overflow-wrap:anywhere;word-break:break-word;">{% for line in part.split('\n') %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</p>
+{% endfor %}
+{%- endmacro %}
+
+{% macro section(title) -%}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0 24px;border:1px solid #dce4ee;border-radius:8px;background-color:#f8fafc;">
+  <tr><td style="padding:20px;">
+    <h2 style="margin:0 0 16px;font-size:18px;line-height:25px;color:#182b49;">{{ title }}</h2>
+    {{ caller() }}
+  </td></tr>
+</table>
+{%- endmacro %}
+
+{% macro facts(rows) -%}
+<table width="100%" cellspacing="0" cellpadding="0" border="0" aria-label="Details" style="table-layout:fixed;border-collapse:collapse;">
+{% for label, value in rows %}
+  <tr><td style="padding:12px 0;border-bottom:1px solid #dce4ee;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;">
+    <span style="display:block;margin-bottom:4px;font-size:13px;line-height:20px;color:#526175;">{{ label }}</span>
+    <strong style="display:block;font-size:16px;line-height:25px;color:#243247;font-weight:600;">{{ value }}</strong>
+  </td></tr>
+{% endfor %}
+</table>
+{%- endmacro %}
+
+{% macro steps(lines) -%}
+<ul style="margin:0;padding-left:22px;">
+{% for line in lines %}
+  <li style="padding-left:4px;margin:0 0 12px;font-size:16px;line-height:26px;color:#243247;overflow-wrap:anywhere;word-break:break-word;">{{ line }}</li>
+{% endfor %}
+</ul>
+{%- endmacro %}
+
+{% macro action(url, label) -%}
+{% if url %}
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0 20px;max-width:100%;">
+  <tr><td bgcolor="#054e97" style="border-radius:6px;text-align:center;">
+    <a href="{{ url }}" style="display:inline-block;padding:14px 24px;border:1px solid #054e97;border-radius:6px;font-size:16px;line-height:24px;font-weight:bold;color:#ffffff;text-decoration:none;">{{ label }}</a>
+  </td></tr>
+</table>
+<p style="margin:0 0 24px;font-size:13px;line-height:21px;color:#526175;overflow-wrap:anywhere;word-break:break-all;">If the button does not open, copy this link into your browser:<br><a href="{{ url }}" style="color:#054e97;text-decoration:underline;word-break:break-all;">{{ url }}</a></p>
+{% endif %}
+{%- endmacro %}

@@ -90,6 +90,7 @@ ENDPOINT_PERMISSIONS = {
     'admin.verify_backing_asset_route': 'settlement.manage',
     'admin.verification_intake_log': 'verification.intake',
     'admin.record_verification_custody': 'verification.intake',
+    'admin.synchronize_delivered_custody': 'verification.intake',
     'admin.clearing_inventory': 'inventory.view',
     'admin.manage_orders': 'orders.manage',
     'admin.update_order_status': 'orders.manage',

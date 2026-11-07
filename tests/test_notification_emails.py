@@ -126,6 +126,66 @@ class NotificationEmailRouteTests(unittest.TestCase):
         self.assertEqual(self._recipients(send_email), [self.user.email])
         self.assertIn('shipped', Notification.query.filter_by(user_id=self.user.id).first().message)
 
+    def test_shared_layout_keeps_commit_and_rollback_email_behavior(self):
+        from services.email_notifications import notify_user
+
+        with patch('routes.auth.send_email_async') as send:
+            notify_user(
+                self.user, 'First paragraph.\n\nSecond paragraph.',
+                subject='Readable update', details=['Deadline: Tomorrow'],
+                cta_endpoint='user.my_reservations', cta_label='View reservations',
+            )
+            send.assert_not_called()
+            db.session.commit()
+            send.assert_called_once()
+            html = send.call_args.kwargs['html_body']
+            self.assertIn('First paragraph.', html)
+            self.assertIn('Second paragraph.', html)
+            self.assertIn('Deadline: Tomorrow', html)
+            self.assertIn('View reservations', html)
+            self.assertIn('barter-express-email-logo', html)
+            send.reset_mock()
+            notify_user(self.user, 'This change is rolled back.')
+            db.session.rollback()
+            send.assert_not_called()
+
+    def test_credit_purchase_sends_shared_template_with_configured_links(self):
+        from notifications import notify_credit_purchase
+        with app.test_request_context(), patch('flask_mail.Mail') as mail:
+            note = notify_credit_purchase(
+                self.user.id, 500, 500, 0, 500, reference='TEST-CREDIT',
+            )
+        self.assertIsNotNone(note)
+        mail.return_value.send.assert_called_once()
+        message = mail.return_value.send.call_args.args[0]
+        self.assertIn('Your BXC purchase is confirmed', message.html)
+        self.assertIn('TEST-CREDIT', message.html)
+        self.assertIn(app.config['APP_URL'].rstrip('/') + '/dashboard', message.html)
+        self.assertEqual(message.html.count('barter-express-email-logo'), 1)
+
+    def test_wishlist_email_preserves_item_and_preference_links(self):
+        from services.wishlist_service import send_wishlist_email
+
+        item = Item(
+            name='Camera', category='Electronics', condition='Like New',
+            user_id=self.user.id, value=500, image_url='https://example.com/camera.jpg',
+        )
+        db.session.add(item)
+        db.session.commit()
+        with app.test_request_context(), patch('services.wishlist_service.mail.send') as send:
+            result = send_wishlist_email(
+                self.user.email, self.user.username, item.name, item.id,
+                item.category, item.condition, 'Wishlist match', item=item,
+            )
+        self.assertTrue(result)
+        send.assert_called_once()
+        message = send.call_args.args[0]
+        self.assertIn('An item matches your wishlist', message.html)
+        self.assertIn('src="https://example.com/camera.jpg"', message.html)
+        for path in (f'/item/{item.id}', '/wishlist/manage', '/notification-settings'):
+            self.assertIn(app.config['APP_URL'].rstrip('/') + path, message.html)
+        self.assertEqual(message.html.count('barter-express-email-logo'), 1)
+
 
 if __name__ == '__main__':
     unittest.main()

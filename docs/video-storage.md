@@ -11,6 +11,14 @@ credits or lists the item.
 
 ## Camera-only item photos
 
+Registered users can access Upload, request AI valuation and save items to
+Valuations without completing their profile or submitting identity documents.
+Before submitting an item for trade, they must complete phone/address/city/state
+and submit their NIN and government ID (the existing identity-submission status,
+not a new admin-approval requirement). The Valuations UI, activation signed-URL
+endpoint, final trade submission and manual custody-consent submission enforce
+these checks. Browsing saved valuations remains available.
+
 The upload form takes 6-15 JPEG photos from an in-page camera preview using
 `getUserMedia`, preferring the rear camera. There is no image file picker,
 gallery fallback or drag-and-drop import. Users can remove unclear captures
@@ -28,6 +36,14 @@ image count/type/content validation remains in place; no database changes are
 required for camera capture.
 
 ## Optional manual valuation
+
+During physical inspection, an admin can enter a serial/IMEI when none was
+submitted and choose **Record physically observed number**. A passed inspection
+saves it on the item and in the staff-attributed intake record. This applies
+to manual review, requested-item verification and backing-item verification.
+Failed inspections retain the observed number only in the intake record.
+An existing item serial cannot be replaced through this form: the observed
+number must match, or be recorded as a mismatch (which cannot pass).
 
 The upload valuation modal offers **Submit for manual review instead**, including
 when an AI estimate cannot be obtained. These items enter `manual_review_pending`;

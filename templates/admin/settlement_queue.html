@@ -4,28 +4,59 @@
 
 {% block content %}
 <style>
-  .sq-side { padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  .settlement-page .adm-head { align-items: flex-start; gap: 20px; }
+  .settlement-page .adm-head p { max-width: 850px; line-height: 1.7; }
+  .settlement-page .adm-panel { margin-bottom: 28px; overflow: hidden; }
+  .settlement-page .adm-panel-head { padding: 22px 24px; background: #f8fafc; gap: 14px; flex-wrap: wrap; }
+  .settlement-page .adm-panel-head > div { min-width: 0; }
+  .sq-reservation-status { margin-left: auto; }
+  .sq-reference { display: block; margin-bottom: 5px; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .sq-side { padding: 24px; border-bottom: 1px solid var(--line); min-width: 0; overflow-wrap: anywhere; }
   .sq-side:last-child { border-bottom: none; }
   .sq-side h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 4px; font-size: 0.95rem; font-weight: 600; color: var(--ink); }
   .sq-side h3 > i { color: var(--primary-blue); }
-  .sq-meta { font-size: 0.8rem; color: var(--muted); }
+  .sq-meta { font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
   .sq-meta + .sq-meta { margin-top: 4px; }
   .sq-side form { margin-top: 12px; }
 
-  .sq-form { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
-  .sq-form > label { display: flex; flex-direction: column; gap: 6px; flex: 1 1 220px; margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--ink); }
-  .sq-form input[type="text"], .sq-form input[type="number"] { flex: 1 1 200px; min-width: 140px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 0.9rem; color: var(--ink); }
-  .sq-form > label input { width: 100%; }
-  .sq-form input:focus, .intake-fields input:focus, .intake-fields select:focus, .intake-fields textarea:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(5, 78, 151, 0.12); }
+  .sq-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .sq-form label { display: flex; flex-direction: column; gap: 8px; min-width: 0; margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+  .settlement-page .sq-form input:not([type="hidden"]), .settlement-page .sq-form select, .settlement-page .sq-form textarea {
+    flex: none; width: 100%; min-width: 0; height: auto; box-sizing: border-box;
+    padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px;
+    background: #fff; font: inherit; font-weight: 400; color: var(--ink);
+  }
+  .settlement-page .sq-form input:not([type="hidden"]), .settlement-page .sq-form select { min-height: 44px; }
+  .settlement-page .sq-form textarea { min-height: 100px; resize: vertical; }
+  .settlement-page .sq-form input:focus, .settlement-page .sq-form select:focus, .settlement-page .sq-form textarea:focus { outline: 2px solid var(--primary-blue); outline-offset: 1px; }
 
-  .intake-fields { flex: 1 1 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0; padding: 14px; width: 100%; border: 1px solid var(--line); border-radius: 12px; background: #f8fafc; }
-  .intake-fields legend { float: none; width: auto; margin: 0; padding: 0 6px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .intake-fields label { display: flex; flex-direction: column; gap: 6px; margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--ink); }
-  .intake-fields input, .intake-fields select, .intake-fields textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 0.9rem; font-weight: 400; color: var(--ink); }
-  .intake-fields .intake-wide { grid-column: 1 / -1; }
+  .settlement-page .intake-fields, .sq-decision { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; margin: 0; padding: 20px; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: #f8fafc; }
+  .settlement-page .intake-fields legend, .sq-decision legend { float: none; width: auto; margin: 0; padding: 0 8px; font-size: 0.85rem; font-weight: 700; color: var(--ink); }
+  .settlement-page .intake-wide { grid-column: 1 / -1; }
+  .sq-decision { background: #fff; }
+  .sq-help { font-size: 0.8rem; font-weight: 400; color: var(--muted); line-height: 1.6; }
+  .sq-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .sq-actions p { flex: 1 1 260px; margin: 0; }
+  .sq-action-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+  .sq-facts { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin: 14px 0; }
+  .sq-facts div { padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: #f8fafc; min-width: 0; }
+  .sq-facts dt { font-size: 0.75rem; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+  .sq-facts dd { margin: 0; font-size: 0.9rem; color: var(--ink); }
+  .sq-payment-notice { padding: 12px 16px; margin-top: 14px; border: 1px solid #fde1a6; border-radius: 10px; background: #fff8e8; color: #785315; font-size: 0.85rem; line-height: 1.6; }
+  @media (max-width: 760px) {
+    .sq-facts { grid-template-columns: minmax(0, 1fr); }
+    .settlement-page .adm-head { flex-wrap: wrap; }
+  }
+  @media (max-width: 540px) {
+    .sq-side, .settlement-page .adm-panel-head { padding: 18px; }
+    .settlement-page .intake-fields, .sq-decision { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+    .sq-reservation-status { margin-left: 0; }
+    .sq-action-buttons { width: 100%; }
+    .sq-action-buttons .adm-btn { flex: 1; justify-content: center; }
+  }
 </style>
 
-<div class="adm-page">
+<div class="adm-page settlement-page">
   <a class="adm-back" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i> Admin dashboard</a>
   <div class="adm-head">
     <div>
@@ -43,9 +74,11 @@
         <div class="adm-panel-head">
           <div class="adm-panel-icon"><i class="bi bi-person"></i></div>
           <div>
+            <span class="sq-reference">Reservation #{{ reservation.id }}</span>
             <h2>Buyer: {{ reservation.user.username if reservation.user else '—' }}</h2>
             <p>Settlement window ends: {{ reservation.expires_at.strftime('%b %d, %Y %I:%M %p') }}</p>
           </div>
+          <span class="adm-pill info sq-reservation-status">{{ reservation.status|replace('_', ' ')|title }}</span>
         </div>
 
         {% for proposal in reservation.revaluations %}
@@ -89,11 +122,12 @@
         <div class="sq-side">
           <h3><i class="bi bi-truck"></i> Fulfillment: {{ reservation.delivery_method|replace('_', ' ')|title }}</h3>
           {% if reservation.delivery_method == 'home delivery' %}
-            <div class="sq-meta">
-              Address: {{ reservation.delivery_address }} · Fee status: {{ reservation.delivery_fee_status }}
-              {% if reservation.delivery_quote_naira %} · Home-service fee: ₦{{ '{:,.2f}'.format(reservation.delivery_quote_naira) }}{% endif %}
-              · Fee is non-refundable and required before pickup or dispatch.
-            </div>
+            <dl class="sq-facts">
+              <div><dt>Service address</dt><dd>{{ reservation.delivery_address }}</dd></div>
+              <div><dt>Payment status</dt><dd><span class="adm-pill {{ 'ok' if reservation.delivery_fee_status == 'paid' else 'info' }}">{{ reservation.delivery_fee_status|replace('_', ' ')|title }}</span></dd></div>
+              <div><dt>Home-service fee</dt><dd>{{ '₦{:,.2f}'.format(reservation.delivery_quote_naira) if reservation.delivery_quote_naira else 'Not yet issued' }}</dd></div>
+            </dl>
+            <p class="sq-help">Non-refundable and required before verification, pickup or dispatch. Separate from the completed-transaction fee.</p>
             {% if reservation.delivery_fee_status == 'quote_pending' %}
               <form method="POST" action="{{ url_for('admin.set_reservation_delivery_quote', reservation_id=reservation.id) }}" class="sq-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -118,13 +152,24 @@
               {% with inspection_item=reservation.item %}
                 {% include 'admin/_verification_intake_fields.html' %}
               {% endwith %}
-              <label>Revised BXC value (optional; both parties must accept)
-                <input type="number" name="revised_value" min="1" step="1">
-              </label>
-              <input type="text" name="notes" placeholder="Notes (optional)">
-              <button type="submit" name="result" value="pass" class="adm-btn success sm"><i class="bi bi-check-lg"></i> Passed</button>
-              <button type="submit" name="result" value="fail" class="adm-btn danger sm"><i class="bi bi-x-lg"></i> Failed</button>
+              <fieldset class="sq-decision">
+                <legend>Valuation &amp; review notes</legend>
+                <label>Revised BXC value (optional)
+                  <input type="number" name="revised_value" min="1" step="1">
+                  <span class="sq-help">Both parties must accept a revised value.</span>
+                </label>
+                <label>Review notes (optional)<textarea name="notes" rows="3" placeholder="Add context for this decision"></textarea></label>
+              </fieldset>
+              <div class="sq-actions">
+                <p class="sq-help">Confirm the inspection record before saving the outcome.</p>
+                <div class="sq-action-buttons">
+                  <button type="submit" name="result" value="pass" class="adm-btn success"><i class="bi bi-check-lg"></i> Passed</button>
+                  <button type="submit" name="result" value="fail" class="adm-btn danger"><i class="bi bi-x-lg"></i> Failed</button>
+                </div>
+              </div>
             </form>
+          {% elif reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted' and reservation.delivery_method == 'home delivery' %}
+            <div class="sq-payment-notice"><i class="bi bi-lock"></i> Waiting for the buyer to pay the home-service fee before pickup and verification.</div>
           {% endif %}
         </div>
 
@@ -144,16 +189,25 @@
                 {% with inspection_item=asset.item %}
                   {% include 'admin/_verification_intake_fields.html' %}
                 {% endwith %}
-                <label>Revised BXC value (optional; both parties must accept)
-                  <input type="number" name="revised_value" min="1" step="1">
-                </label>
-                <input type="text" name="notes" placeholder="Notes (optional)">
-                <button type="submit" name="result" value="pass" class="adm-btn success sm"><i class="bi bi-check-lg"></i> Passed</button>
-                <button type="submit" name="result" value="fail" class="adm-btn danger sm"><i class="bi bi-x-lg"></i> Failed</button>
+                <fieldset class="sq-decision">
+                  <legend>Valuation &amp; review notes</legend>
+                  <label>Revised BXC value (optional)
+                    <input type="number" name="revised_value" min="1" step="1">
+                    <span class="sq-help">Both parties must accept a revised value.</span>
+                  </label>
+                  <label>Review notes (optional)<textarea name="notes" rows="3" placeholder="Add context for this decision"></textarea></label>
+                </fieldset>
+                <div class="sq-actions">
+                  <p class="sq-help">Confirm the inspection record before saving the outcome.</p>
+                  <div class="sq-action-buttons">
+                    <button type="submit" name="result" value="pass" class="adm-btn success"><i class="bi bi-check-lg"></i> Passed</button>
+                    <button type="submit" name="result" value="fail" class="adm-btn danger"><i class="bi bi-x-lg"></i> Failed</button>
+                  </div>
+                </div>
               </form>
             {% elif reservation.status == 'active' and asset.verification_status == 'not_submitted'
                   and reservation.delivery_method == 'home delivery' %}
-              <div class="sq-meta">Waiting for the buyer to pay the home-service fee before pickup and verification.</div>
+              <div class="sq-payment-notice"><i class="bi bi-lock"></i> Waiting for the buyer to pay the home-service fee before pickup and verification.</div>
             {% endif %}
           </div>
         {% endfor %}

@@ -63,13 +63,14 @@ def _format_deadline(moment):
     return moment.strftime('%d %b %Y, %H:%M UTC')
 
 
-def _notice(user_id, message, subject):
+def _notice(user_id, message, subject, details=None):
     """In-app notification plus email about a reservation event."""
     return notify_user(
         user_id,
         message,
         subject=subject,
         heading=subject,
+        details=details,
         cta_endpoint='user.my_reservations',
         cta_label='View My Reservations',
         notification_type='reservation',
@@ -225,6 +226,12 @@ def _create_revaluation(reservation, item, original_value, proposed_value, admin
                 f"respond by {deadline:%b %d, %Y %I:%M %p}."
             ),
             "Revised valuation needs your response",
+            details=[
+                f"Item: {item.name}",
+                f"Proposed value: {normalized_value:,} BXC",
+                f"Respond by: {_format_deadline(deadline)}",
+                "Open your reservations to accept or decline. Both parties must respond.",
+            ],
         )
     logger.info(
         f"Reservation {reservation.id} revaluation proposed for item {item.id}: "
@@ -890,15 +897,14 @@ def create_reservation(
         if not company_inventory_item and not is_item_in_custody(item):
             notify_user(
                 item.user,
-                f"Your item '{item.name}' has been reserved by another user. Bring it to Barter Express "
-                f"for physical verification and confirmation within {RESERVATION_HOLD_HOURS} hours "
-                f"(by {deadline}). If you don't, the reservation is released and your reliability "
-                "score is reduced.",
+                f"Your item '{item.name}' has been reserved; physical verification is required "
+                f"within {RESERVATION_HOLD_HOURS} hours (by {deadline}).",
                 subject=f"Action required: bring '{item.name}' for verification within {RESERVATION_HOLD_HOURS} hours",
                 heading='Your item was reserved',
                 details=[
                     f"Item: {item.name} (#{item.item_number})",
                     f"Deadline: {deadline}",
+                    "Bring the item to Barter Express for physical inspection. For home service, wait for the buyer's fee payment before pickup and verification.",
                     "If it passes inspection, the exchange proceeds and the item moves to its new owner.",
                     "Missing the deadline or failing verification reduces your reliability score.",
                 ],
@@ -1417,7 +1423,7 @@ def verify_seller_item(
                 seller_id,
                 f"'{reservation.item.name}' did not pass physical verification"
                 + (f": {notes}" if notes else ".")
-                + " The reservation was cancelled and your reliability score was reduced.",
+                + "\n\nThe reservation was cancelled and your reliability score was reduced.",
                 "Your item did not pass physical verification",
             )
         elif reservation.item:

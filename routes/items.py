@@ -116,6 +116,31 @@ def report_stolen_item(item_id):
 
 # ==================== HELPER FUNCTIONS ====================
 
+def _trade_account_requirement():
+    if not current_user.is_profile_complete():
+        missing = ', '.join(current_user.get_incomplete_profile_fields())
+        return (
+            f'Complete your profile before trading an item. Missing: {missing}.',
+            url_for('user.settings', edit='profile') + '#profile',
+        )
+    if not current_user.has_submitted_identity():
+        return (
+            'Submit your NIN and government ID before trading an item.',
+            url_for('user.settings') + '#verification',
+        )
+    return None
+
+
+def _redirect_trade_account_requirement():
+    requirement = _trade_account_requirement()
+    if requirement:
+        message, target = requirement
+        logger.warning('Trade blocked by account requirements - User ID: %s, Reason: %s', current_user.id, message)
+        flash(message, 'warning')
+        return redirect(target)
+    return None
+
+
 @items_bp.route('/items/<int:item_id>/manual-custody', methods=['POST'])
 @login_required
 @handle_errors
@@ -125,6 +150,9 @@ def choose_manual_custody(item_id):
     if not FlaskForm().validate_on_submit():
         raise ValidationError('Invalid or expired form token. Refresh the page and try again.')
     item = Item.query.filter_by(id=item_id, user_id=current_user.id).with_for_update().first_or_404()
+    account_redirect = _redirect_trade_account_requirement()
+    if account_redirect:
+        return account_redirect
     choice = request.form.get('custody_choice')
     if item.status != 'manual_review_pending' or not item.manual_review_requested:
         raise ValidationError('This item is not awaiting manual physical review.')
@@ -243,18 +271,6 @@ def upload_item():
             flash('Your account has been banned.', 'danger')
             logout_user()
             return redirect(url_for('auth.login'))
-
-        # Check if user has completed their profile before allowing item upload
-        if not current_user.is_profile_complete():
-            incomplete_fields = current_user.get_incomplete_profile_fields()
-            logger.warning(f"User with incomplete profile attempted to upload item: {current_user.username}, Missing: {incomplete_fields}")
-            flash(f'Please complete your profile before uploading items. Missing: {", ".join(incomplete_fields)}', 'warning')
-            return redirect(url_for('user.settings'))
-
-        if not current_user.has_submitted_identity():
-            logger.warning(f"User without submitted identity documents attempted to upload item: {current_user.username}")
-            flash('Please submit your NIN and government ID before uploading items.', 'warning')
-            return redirect(url_for('user.settings'))
 
         form = UploadItemForm()
         
@@ -648,6 +664,10 @@ def trade_this_item(item_id):
         )),
     ).with_for_update().first_or_404()
 
+    account_redirect = _redirect_trade_account_requirement()
+    if account_redirect:
+        return account_redirect
+
     if not item.can_submit_activation_video():
         flash('This item is not available to trade right now.', 'info')
         return redirect(url_for('user.my_valuations'))
@@ -715,6 +735,11 @@ def request_activation_upload_url(item_id):
     )).first()
     if not item:
         return jsonify({'success': False, 'error': 'Item not found.'}), 404
+    requirement = _trade_account_requirement()
+    if requirement:
+        message, target = requirement
+        logger.warning('Activation upload blocked by account requirements - User ID: %s', current_user.id)
+        return jsonify({'success': False, 'error': message, 'redirect_url': target}), 403
     if not item.can_submit_activation_video():
         return jsonify({'success': False, 'error': 'This item is not ready for a verification video.'}), 400
 

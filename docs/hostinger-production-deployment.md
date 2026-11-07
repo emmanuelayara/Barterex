@@ -26,6 +26,69 @@ checks YouTube processing, activates items, and cleans up temporary storage.
 systemd starts the worker automatically at boot and restarts it after a crash.
 Users do not authorize YouTube: only the company's channel is authorized.
 
+### Home-service payment policy
+
+New home-service reservations use a fixed NGN 5,000 non-refundable fee and
+redirect to Paystack immediately on submission. Verification, settlement and
+dispatch require successful fee payment; Verification Station reservations
+require no home-service payment. This fee is separate from the published 5%
+completed-transaction fee (NGN 1,000 minimum / NGN 5,000 maximum), whose
+collection behavior is unchanged.
+
+No schema migration is needed for this pricing change. Previously issued
+quotes and paid charges retain their amounts; the admin action for older
+`quote_pending` reservations applies the standard NGN 5,000 fee.
+Payment initialization failures leave reservations saved with a retry action.
+An unknown Paystack initialization outcome requires support review before
+retrying; do not create a second charge blindly. A late payment for a closed
+reservation is recorded and flagged for support without reopening it.
+Before deployment, confirm live Paystack initialization/callback settings and
+test payment failure/retry, duplicate callbacks, station reservations and
+company-inventory purchases without charging real users.
+
+### Delivery and custody synchronization
+
+Marking an order Delivered (including station collection) appends a
+`released_to_buyer` custody event for each purchased item's most recent
+inspection before order creation, records the recipient and admin, and sets
+`actual_delivery_date`. The handoff and delivery status commit together.
+Backing items that are not part of the purchased order are not released.
+Repeating the action does not duplicate handoffs or delivery rewards.
+
+Verification Intake defaults to **Active custody**. Final handoffs, owner
+returns and superseded inspection cycles appear in **History / released**;
+**All records** retains the full audit trail. Closed intakes cannot accept
+another manual movement; a subsequent receipt requires a new intake.
+
+Use **Synchronize past deliveries** in Verification Intake after deploying
+to reconcile already-delivered orders. This adds history without changing
+old events or inventing an unknown delivery date. Reconciliation timestamps
+are explicitly labeled as such. Missing legacy intake records are reported
+for review rather than fabricated. No schema migration is required.
+
+### Automated email presentation
+
+For local validation, run pytest in a fresh process. The root `conftest.py`
+sets in-memory SQLite before application import, verifies the actual database
+engines before collection and each test, and suppresses outgoing email.
+It refuses to run if the application was already initialized with a persistent
+database. Never run destructive test setup against the development or production
+database; changing Flask configuration after engine creation does not retarget it.
+
+All automated email templates share `templates/emails/_base.html` and the
+inline-styled components in `templates/emails/_components.html`. Keep important
+layout, text and button styles inline: many email clients remove head styles.
+Use paragraphs for messages, separate detail sections and a specific action
+label. Do not shrink body text on mobile or rely on flex/grid for email layout.
+Dynamic messages and inspection notes remain escaped, and blank lines create
+separate paragraphs without truncating the email body.
+
+The shared layout includes one company logo, a copyable fallback action link,
+and a support link derived from `APP_URL`. Confirm `APP_URL` and
+`EMAIL_LOGO_URL` point to the public production website before deploying.
+Wishlist preference links and security-link expiry instructions must remain
+visible. Queued notification emails still send only after transaction commit.
+
 ## 1. Prepare and publish the local code
 
 Before deploying, review all changes in the release. The current work also

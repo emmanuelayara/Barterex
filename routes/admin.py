@@ -249,8 +249,6 @@ def verify_manual_item(item_id):
         raise ValidationError('Enter a finite positive verified value of at least 1 BXC.')
     try:
         details = _verification_intake_details_from_form()
-        if outcome == 'passed' and not item.serial_number and details.get('serial_check') == 'matched':
-            item.serial_number = (details.get('observed_serial_number') or '').strip() or None
         intake = create_verification_intake(
             item, session['admin_id'], details,
             workflow_type='manual_valuation', outcome=outcome,
@@ -1930,8 +1928,35 @@ def clearing_inventory():
 @admin_login_required
 @handle_errors
 def verification_intake_log():
+    from sqlalchemy.orm import aliased
+
     page = request.args.get('page', 1, type=int)
-    intakes = VerificationIntake.query.options(
+    view = request.args.get('view', 'active')
+    if view not in ('active', 'history', 'all'):
+        flash('Choose active custody, history, or all records.', 'warning')
+        return redirect(url_for('admin.verification_intake_log'))
+    newer = aliased(VerificationIntake)
+    latest_event = db.session.query(CustodyEvent.id).filter(
+        CustodyEvent.intake_id == VerificationIntake.id,
+    ).order_by(CustodyEvent.recorded_at.desc(), CustodyEvent.id.desc()).limit(1).correlate(VerificationIntake).scalar_subquery()
+    closed = db.session.query(CustodyEvent.id).filter(
+        CustodyEvent.id == latest_event,
+        db.or_(CustodyEvent.event_type == 'released_to_buyer', CustodyEvent.to_location == 'Returned to owner'),
+    ).exists()
+    superseded = db.session.query(newer.id).filter(
+        newer.item_id == VerificationIntake.item_id,
+        db.or_(
+            newer.received_at > VerificationIntake.received_at,
+            db.and_(newer.received_at == VerificationIntake.received_at, newer.id > VerificationIntake.id),
+        ),
+    ).exists()
+    active = db.and_(~closed, ~superseded)
+    query = VerificationIntake.query
+    if view == 'active':
+        query = query.filter(active)
+    elif view == 'history':
+        query = query.filter(~active)
+    intakes = query.options(
         joinedload(VerificationIntake.item),
         joinedload(VerificationIntake.received_by),
         joinedload(VerificationIntake.inspected_by),
@@ -1939,7 +1964,39 @@ def verification_intake_log():
     ).order_by(VerificationIntake.received_at.desc()).paginate(
         page=page, per_page=25, error_out=False
     )
-    return render_template('admin/verification_intake.html', intakes=intakes)
+    modifiable_intake_ids = {
+        row.id for row in VerificationIntake.query.with_entities(VerificationIntake.id).filter(
+            active, VerificationIntake.id.in_([intake.id for intake in intakes.items]),
+        ).all()
+    }
+    return render_template(
+        'admin/verification_intake.html', intakes=intakes, custody_view=view,
+        modifiable_intake_ids=modifiable_intake_ids,
+    )
+
+
+@admin_bp.route('/verification-intake/synchronize-deliveries', methods=['POST'])
+@admin_login_required
+@handle_errors
+def synchronize_delivered_custody():
+    from flask_wtf import FlaskForm
+    from services.verification_intake_service import reconcile_delivered_order_custody, IntakeValidationError
+
+    if not FlaskForm().validate_on_submit():
+        flash('Invalid or expired form token.', 'danger')
+        return redirect(url_for('admin.verification_intake_log'))
+    try:
+        recorded, missing = reconcile_delivered_order_custody(session['admin_id'])
+        db.session.commit()
+    except IntakeValidationError as error:
+        db.session.rollback()
+        flash(str(error), 'danger')
+        return redirect(url_for('admin.verification_intake_log'))
+    flash(f'Synchronized {recorded} delivered-item custody record(s).', 'success')
+    if missing:
+        logger.warning('Delivered orders without receipt records: %s', missing)
+        flash(f'{len(missing)} delivered item(s) have no matching physical intake. Review their order history; no inspection records were fabricated.', 'warning')
+    return redirect(url_for('admin.verification_intake_log', view='history'))
 
 
 @admin_bp.route('/verification-intake/<int:intake_id>/custody', methods=['POST'])
@@ -2561,18 +2618,32 @@ def manage_orders():
 @handle_errors
 @safe_database_operation("update_order_status")
 def update_order_status(order_id):
+    from services.verification_intake_service import record_order_delivery_custody, IntakeValidationError
+
     try:
         from trading_points import award_points_for_purchase, create_level_up_notification
         from audit_logger import log_audit_action
         
-        order = Order.query.get_or_404(order_id)
+        order = Order.query.filter_by(id=order_id).with_for_update().populate_existing().first_or_404()
         old_status = order.status
+        if order.cancelled or order.status == 'Cancelled':
+            flash('Cancelled orders cannot be dispatched or delivered.', 'warning')
+            return redirect(url_for('admin.manage_orders'))
+        if old_status == 'Delivered':
+            recorded, missing = record_order_delivery_custody(order, session['admin_id'], historical=True)
+            db.session.commit()
+            if missing:
+                logger.warning('Delivered order %s has items without intake records: %s', order.id, missing)
+                flash('This order is delivered, but some items have no matching physical intake record.', 'warning')
+            else:
+                flash('Delivery custody is synchronized. The order was already delivered.', 'info')
+            return redirect(url_for('admin.manage_orders'))
         
         if order.reservation and (
             order.reservation.delivery_method == 'home delivery'
             and order.reservation.delivery_fee_status != 'paid'
         ):
-            flash('This home-service order cannot be dispatched until the buyer pays the quoted fee.', 'danger')
+            flash('This home-service order cannot be dispatched until the buyer pays the home-service fee.', 'danger')
             return redirect(url_for('admin.manage_orders'))
 
         if order.reservation and order.delivery_method == 'pickup':
@@ -2586,6 +2657,12 @@ def update_order_status(order_id):
             order.status = "Out for Delivery"
         elif order.status == "Out for Delivery":
             order.status = "Delivered"
+
+        if order.status == 'Delivered':
+            recorded, missing = record_order_delivery_custody(order, session['admin_id'])
+            if missing:
+                logger.warning('Order %s delivered without intake records for items %s', order.id, missing)
+                flash('Delivery recorded, but some items have no physical intake record to synchronize.', 'warning')
 
         item_names = ", ".join([f"{oi.item.name}" for oi in order.items])
 
@@ -2603,13 +2680,13 @@ def update_order_status(order_id):
         db.session.add(note)
         
         # Award points when order is delivered
+        level_up_info = None
         if order.status == "Delivered" and old_status != "Delivered":
             user = order.user
             level_up_info = award_points_for_purchase(user, order.order_number)
             
             # Create level up notification if applicable
             if level_up_info:
-                create_level_up_notification(user, level_up_info)
                 # Add bonus to the status notification
                 note.message = (
                     f"{status_messages.get(order.status, f'Order status updated to {order.status}')} "
@@ -2635,6 +2712,8 @@ def update_order_status(order_id):
         )
 
         db.session.commit()
+        if level_up_info:
+            create_level_up_notification(order.user, level_up_info)
         
         # Log to audit log
         log_audit_action(
@@ -2651,7 +2730,13 @@ def update_order_status(order_id):
         flash(f"Order status updated to {order.status}", "success")
         return redirect(url_for('admin.manage_orders'))
         
+    except IntakeValidationError as error:
+        db.session.rollback()
+        logger.warning('Delivery custody validation failed for order %s: %s', order_id, error)
+        flash(str(error), 'danger')
+        return redirect(url_for('admin.manage_orders'))
     except Exception as e:
+        db.session.rollback()
         logger.error(f"Error updating order status: {str(e)}", exc_info=True)
         flash('An error occurred while updating the order status.', 'danger')
         return redirect(url_for('admin.manage_orders'))

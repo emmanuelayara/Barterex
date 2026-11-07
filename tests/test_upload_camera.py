@@ -8,6 +8,7 @@ from unittest.mock import patch
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from PIL import Image
+from flask import g
 from app import app, db, limiter
 from models import Item, User
 
@@ -68,8 +69,16 @@ class UploadCameraTests(unittest.TestCase):
         self.assertNotIn('handleMultipleFileUpload', html)
         self.assertNotIn('dataTransfer.files', html)
         self.assertIn('Submit for manual review instead', html)
+        self.assertIn('Upload and get valuations now.', html)
 
     def test_camera_jpegs_use_existing_upload_validation(self):
+        user = User.query.one()
+        user.phone_number = None
+        user.address = None
+        user.city = None
+        user.state = None
+        user.id_verification_status = 'not_submitted'
+        db.session.commit()
         def photo(index):
             data = io.BytesIO()
             Image.new('RGB', (30, 30), 'blue').save(data, 'JPEG')
@@ -96,3 +105,55 @@ class UploadCameraTests(unittest.TestCase):
             uploaded = Item.query.one()
             self.assertEqual(len(uploaded.images), 6)
             self.assertEqual(uploaded.status, 'manual_review_pending')
+
+    def test_registered_user_can_access_upload_and_valuations_without_account_completion(self):
+        user = User.query.one()
+        user.phone_number = None
+        user.id_verification_status = 'not_submitted'
+        db.session.commit()
+        self.assertEqual(self.client.get('/upload').status_code, 200)
+        self.assertEqual(self.client.get('/my_valuations').status_code, 200)
+        g.pop('_login_user', None)
+        response = app.test_client().get('/upload')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login', response.location)
+
+    def test_incomplete_account_can_reach_valuation_service(self):
+        user = User.query.one()
+        user.phone_number = None
+        user.id_verification_status = 'not_submitted'
+        db.session.commit()
+        with patch('valuator_client.is_enabled', return_value=False):
+            response = self.client.post('/items/estimate-value')
+        self.assertEqual(response.status_code, 503)
+        self.assertIn('AI valuation is not available', response.get_json()['error'])
+
+    def test_incomplete_account_receives_successful_ai_valuation_preview(self):
+        user = User.query.one()
+        user.phone_number = None
+        user.id_verification_status = 'not_submitted'
+        db.session.commit()
+        image = io.BytesIO()
+        Image.new('RGB', (30, 30), 'blue').save(image, 'JPEG')
+        image.seek(0)
+        with patch('valuator_client.is_enabled', return_value=True), \
+             patch('valuator_client.client.valuate', return_value={
+                 'success': True, 'fair_value': 500,
+                 'value_range': {'min': 450, 'max': 550},
+             }) as valuate:
+            response = self.client.post('/items/estimate-value', data={
+                'name': 'Camera test item', 'description': 'A test item.',
+                'condition': 'Brand New', 'category': 'Phones & Gadgets',
+                'images': [(image, 'item-camera.jpg')],
+            })
+        self.assertEqual(response.status_code, 200)
+        result = response.get_json()
+        self.assertTrue(result['success'])
+        self.assertEqual(result['estimated_value'], 500)
+        self.assertEqual(result['value_range'], {'low': 450, 'high': 550})
+        self.assertTrue(result['token'])
+        valuate.assert_called_once()
+        with self.client.session_transaction() as session:
+            self.assertEqual(session['pending_item_valuation']['token'], result['token'])
+            self.assertEqual(session['pending_item_valuation']['ai_fields']['ai_estimated_value'], 500)
+        self.assertEqual(Item.query.count(), 0)

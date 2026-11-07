@@ -245,7 +245,20 @@ class ReservationSettlementTests(unittest.TestCase):
         self.assertEqual(reservation.backing_assets, [])
         self.assertEqual(buyer.credits, 200)
         self.assertEqual(reservation.spendable_credits_held, 300)
-        self.assertEqual(reservation.delivery_fee_status, 'quote_pending')
+        self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
+        self.assertEqual(reservation.delivery_quote_naira, 5000)
+
+        ok, error = verify_seller_item(reservation, passed=True)
+        self.assertFalse(ok)
+        self.assertIn('must pay', error)
+        self.assertEqual(Order.query.filter_by(reservation_id=reservation.id).count(), 0)
+        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
+            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
+            payment = db.session.get(Payment, initiated['payment_id'])
+            verified = PaystackPaymentService.verify_payment(payment.paystack_reference)
+        self.assertTrue(verified['success'])
+        self.assertEqual(verified['credits_added'], 0)
+        self.assertEqual(reservation.status, 'active')
 
         ok, error = verify_seller_item(reservation, passed=True)
         self.assertTrue(ok, error)
@@ -332,7 +345,7 @@ class ReservationSettlementTests(unittest.TestCase):
         self.assertEqual(reservation.delivery_fee_status, 'paid')
         self.assertEqual(payment.purpose, 'reservation_delivery_fee')
 
-    def test_home_delivery_quote_and_dispatch_gate(self):
+    def test_home_delivery_fixed_fee_and_dispatch_gate(self):
         buyer = User(
             username='home-buyer',
             email='home-buyer@example.com',
@@ -372,7 +385,8 @@ class ReservationSettlementTests(unittest.TestCase):
         )
         self.assertIsNone(error)
         ok, error = verify_seller_item(reservation, passed=True)
-        self.assertTrue(ok, error)
+        self.assertFalse(ok)
+        self.assertEqual(Order.query.filter_by(reservation_id=reservation.id).count(), 0)
 
         admin = Admin(
             username='fulfillment-admin',
@@ -392,20 +406,19 @@ class ReservationSettlementTests(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 302)
             db.session.refresh(reservation)
-            self.assertEqual(reservation.delivery_quote_naira, 250.0)
+            self.assertEqual(reservation.delivery_quote_naira, 5000)
             self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-
-            order = Order.query.filter_by(reservation_id=reservation.id).one()
-            response = client.post(f'/admin/update_order_status/{order.id}')
-            self.assertEqual(response.status_code, 302)
-            db.session.refresh(order)
-            self.assertEqual(order.status, 'Pending')
 
         with patch.object(PaystackPaymentService, 'TEST_MODE', True):
             initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
             payment = Payment.query.get(initiated['payment_id'])
             verified = PaystackPaymentService.verify_payment(payment.paystack_reference)
         self.assertTrue(verified['success'])
+        ok, error = verify_seller_item(reservation, passed=True)
+        self.assertTrue(ok, error)
+        order = Order.query.filter_by(reservation_id=reservation.id).one()
+        self.assertEqual(order.logistics_fee_naira, 5000)
+        self.assertEqual(order.status, 'Pending')
 
         with app.test_client() as client:
             with client.session_transaction() as session:
@@ -437,6 +450,39 @@ class ReservationSettlementTests(unittest.TestCase):
         self.assertTrue(verified['success'])
         ok, error = verify_backing_asset(reservation.backing_assets[0], passed=True)
         self.assertTrue(ok, error)
+
+    def test_admin_legacy_fee_action_is_fixed_and_preserves_issued_amounts(self):
+        buyer, seller, item, reservation = self._create_reservation(300, [300])
+        reservation.delivery_method = 'home delivery'
+        reservation.delivery_address = '12 Test Street, Lagos'
+        reservation.delivery_fee_status = 'quote_pending'
+        admin = Admin(
+            username='fee-admin', email='fee-admin@example.com',
+            is_super_admin=True, password='test-hash',
+        )
+        db.session.add(admin)
+        db.session.commit()
+        with app.test_client() as client:
+            with client.session_transaction() as session:
+                session['admin_id'] = admin.id
+            response = client.post(
+                f'/admin/settlement-queue/{reservation.id}/delivery-quote',
+                data={'amount_naira': '100'},
+            )
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(reservation.delivery_quote_naira, 5000)
+            self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
+            for fee_status in ('awaiting_payment', 'paid'):
+                reservation.delivery_quote_naira = 250
+                reservation.delivery_fee_status = fee_status
+                db.session.commit()
+                response = client.post(
+                    f'/admin/settlement-queue/{reservation.id}/delivery-quote',
+                    data={'amount_naira': '100'},
+                )
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(reservation.delivery_quote_naira, 250)
+                self.assertEqual(reservation.delivery_fee_status, fee_status)
 
     def test_backing_title_waits_until_requested_item_passes(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
@@ -518,6 +564,40 @@ class ReservationSettlementTests(unittest.TestCase):
         self.assertEqual(reservation.status, 'cancelled')
         self.assertEqual(backing_item.owner_type, 'barterex')
         self.assertEqual(reservation.backing_asset_consent_version, LEGACY_BACKING_ASSET_CONSENT_VERSION)
+
+    def test_admin_registers_missing_serials_for_requested_and_backing_items(self):
+        buyer, seller, seller_item, reservation = self._create_reservation(100, [100])
+        admin = Admin(
+            username='serial-admin', email='serial-admin@example.com',
+            is_super_admin=True, password='test-hash',
+        )
+        db.session.add(admin)
+        db.session.commit()
+        asset = reservation.backing_assets[0]
+        with app.test_client() as client:
+            with client.session_transaction() as session:
+                session['admin_id'] = admin.id
+            page = client.get('/admin/settlement-queue').get_data(as_text=True)
+            self.assertIn('Record physically observed number', page)
+            for item, action, serial in (
+                (seller_item, f'/admin/settlement-queue/{reservation.id}/verify-seller-item', 'DEVICE-123'),
+                (asset.item, f'/admin/settlement-queue/asset/{asset.id}/verify', 'BACKING-123'),
+            ):
+                with self.subTest(item=item.name):
+                    self.assertIsNone(item.serial_number)
+                    response = client.post(action, data={
+                        'result': 'pass', 'received_location': 'Main Station',
+                        'observed_condition': 'Like New', 'serial_check': 'matched',
+                        'observed_serial_number': serial, 'identity_confirmed': 'yes',
+                        'accessories_received': 'None',
+                    })
+                    self.assertEqual(response.status_code, 302)
+                    db.session.refresh(item)
+                    self.assertEqual(item.serial_number, serial)
+                    intake = VerificationIntake.query.filter_by(item_id=item.id).one()
+                    self.assertEqual(intake.observed_serial_number, serial)
+                    self.assertEqual(intake.inspected_by_admin_id, admin.id)
+        self.assertEqual(reservation.status, 'completed')
 
     def test_excess_backing_is_credited_as_change_and_all_assets_settle(self):
         buyer, seller, seller_item, reservation = self._create_reservation(

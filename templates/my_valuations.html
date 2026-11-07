@@ -309,7 +309,17 @@
                 {% endif %}
               </div>
               <div class="valuation-actions">
-                {% if item.status == 'manual_review_pending' %}
+                {% if (item.status == 'manual_review_pending' or item.can_submit_activation_video()) and
+                      (not current_user.is_profile_complete() or not current_user.has_submitted_identity()) %}
+                  <div class="activate-help" role="status">
+                    <p>You can upload items and view valuations now. Before trading, complete your profile and submit your NIN and government ID.</p>
+                    {% if not current_user.is_profile_complete() %}
+                      <a class="trade-this-btn" href="{{ url_for('user.settings', edit='profile') }}#profile">Complete profile to trade</a>
+                    {% else %}
+                      <a class="trade-this-btn" href="{{ url_for('user.settings') }}#verification">Submit identity details to trade</a>
+                    {% endif %}
+                  </div>
+                {% elif item.status == 'manual_review_pending' %}
                   <form method="post" action="{{ url_for('items.choose_manual_custody', item_id=item.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <label>After physical verification
