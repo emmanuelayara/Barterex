@@ -91,20 +91,18 @@
           {% if reservation.delivery_method == 'home delivery' %}
             <div class="sq-meta">
               Address: {{ reservation.delivery_address }} · Fee status: {{ reservation.delivery_fee_status }}
-              {% if reservation.delivery_quote_naira %} · Quote: ₦{{ '{:,.2f}'.format(reservation.delivery_quote_naira) }}{% endif %}
+              {% if reservation.delivery_quote_naira %} · Home-service fee: ₦{{ '{:,.2f}'.format(reservation.delivery_quote_naira) }}{% endif %}
               · Fee is non-refundable and required before pickup or dispatch.
             </div>
             {% if reservation.delivery_fee_status == 'quote_pending' %}
               <form method="POST" action="{{ url_for('admin.set_reservation_delivery_quote', reservation_id=reservation.id) }}" class="sq-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <label>Home-service quote (NGN)
-                  <input type="number" name="amount_naira" min="100" max="1000000" step="0.01" required>
-                </label>
-                <button type="submit" class="adm-btn cta sm">Send quote</button>
+                <p>Legacy reservation: apply the standard ₦5,000 home-service fee. Existing issued quotes and payments are preserved.</p>
+                <button type="submit" class="adm-btn cta sm">Apply standard fee</button>
               </form>
             {% endif %}
           {% elif reservation.pickup_station %}
-            <div class="sq-meta">Pickup station: {{ reservation.pickup_station.name }}, {{ reservation.pickup_station.address }}</div>
+            <div class="sq-meta">Verification Station: {{ reservation.pickup_station.name }}, {{ reservation.pickup_station.address }}</div>
           {% endif %}
         </div>
 
@@ -113,7 +111,8 @@
             <span class="adm-pill {% if reservation.seller_item_verification_status == 'passed' %}ok{% elif reservation.seller_item_verification_status == 'failed' %}bad{% endif %}">{{ reservation.seller_item_verification_status|replace('_',' ') }}</span>
           </h3>
           <div class="sq-meta">Owner: {{ reservation.item.user.username if reservation.item and reservation.item.user else '—' }} · Value: ᗸ{{ '{:,.0f}'.format(reservation.item.value) if reservation.item and reservation.item.value else '—' }}</div>
-          {% if reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted' %}
+          {% if reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted'
+                and (reservation.delivery_method != 'home delivery' or reservation.delivery_fee_status == 'paid') %}
             <form method="POST" action="{{ url_for('admin.verify_seller_item_route', reservation_id=reservation.id) }}" class="sq-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               {% with inspection_item=reservation.item %}
@@ -154,7 +153,7 @@
               </form>
             {% elif reservation.status == 'active' and asset.verification_status == 'not_submitted'
                   and reservation.delivery_method == 'home delivery' %}
-              <div class="sq-meta">Waiting for the buyer to accept and pay the home-service fee before pickup and verification.</div>
+              <div class="sq-meta">Waiting for the buyer to pay the home-service fee before pickup and verification.</div>
             {% endif %}
           </div>
         {% endfor %}

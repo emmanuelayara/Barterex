@@ -943,7 +943,7 @@
                             {% if delivery_method == 'home delivery' %}
                                 🏠 Home Delivery
                             {% elif delivery_method == 'pickup' %}
-                                🏪 Pickup Station
+                                🏪 Verification Station
                             {% else %}
                                 {{ delivery_method|title }}
                             {% endif %}
@@ -960,7 +960,7 @@
                     {% if pickup_station_id %}
                     <div class="info-row">
                         <span class="info-label">
-                            <i class="fas fa-location-dot"></i> Pickup Station:
+                            <i class="fas fa-location-dot"></i> Verification Station:
                         </span>
                         <span class="info-value">
                             {% for station in stations %}

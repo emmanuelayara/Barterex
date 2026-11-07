@@ -705,7 +705,7 @@
                             <label class="delivery-option-card" id="pickup-card">
                                 <input type="radio" name="delivery_method" value="pickup" id="pickup_radio">
                                 <i class="fas fa-store option-icon"></i>
-                                <div class="option-title">Pickup Station</div>
+                                <div class="option-title">Verification Station</div>
                                 <div class="option-desc">Collect at a station</div>
                             </label>
                         </div>
@@ -740,7 +740,7 @@
                         </div>
                     </div>
 
-                    <!-- Pickup Station Field -->
+                    <!-- Verification Station Field -->
                     <div id="pickup_station_field" class="form-group" style="display:none;">
                         <label class="form-label">
                             <i class="fas fa-store"></i>
@@ -748,12 +748,12 @@
                         </label>
                         
                         {% if form.pickup_station.choices|length <= 1 %}
-                            <!-- No pickup stations available -->
+                            <!-- No Verification Stations available -->
                             <div class="no-station-alert">
                                 <i class="fas fa-exclamation-circle"></i>
                                 <div>
-                                    <strong>No pickup station available in your area</strong>
-                                    <p>Change your location to find a pickup station or use home delivery instead.</p>
+                                    <strong>No Verification Station available in your area</strong>
+                                    <p>Change your location to find a Verification Station or use home delivery instead.</p>
                                 </div>
                             </div>
                             {{ form.pickup_station(class="form-select", disabled="disabled") }}
@@ -810,7 +810,7 @@
                     addressInput.required = true;
                 }
                 
-                // Disable pickup station
+                // Disable Verification Station
                 const pickupSelect = pickupField.querySelector('select');
                 if (pickupSelect) {
                     pickupSelect.setAttribute('disabled', 'disabled');
@@ -829,7 +829,7 @@
                     addressInput.required = false;
                 }
                 
-                // Enable pickup station
+                // Enable Verification Station
                 const pickupSelect = pickupField.querySelector('select');
                 if (pickupSelect) {
                     pickupSelect.removeAttribute('disabled');

@@ -226,6 +226,27 @@ html.dark-mode .mp .final-value { color: #86efac; }
 @media (prefers-reduced-motion: reduce) { .mp .item-card, .mp .trade-card { transition: none; } }
 
 /* ---------- Reserve this purchase (choose_backing_assets) ---------- */
+.reserve-page { padding-bottom: calc(var(--bx-tab-h, 80px) + 40px + env(safe-area-inset-bottom, 0px)); }
+.reserve-page .page-header { padding-bottom: 32px; margin-bottom: 24px; }
+.reserve-page .main-content > .page-header + .target-banner { margin-top: 0; }
+.mp.reserve-page .target-banner { display: grid; gap: 8px; padding: 20px; }
+.reserve-summary-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--bx-muted); }
+.reserve-item-name { font-size: 1.1rem; line-height: 1.5; }
+.reserve-price { color: var(--bx-orange-dark); font-size: 1.15rem; }
+.reserve-page .action-hint { font-size: .85rem; font-weight: 400; line-height: 1.65; color: var(--bx-muted); }
+.mp.reserve-page #backingForm { gap: 20px; }
+.mp.reserve-page fieldset.surrender-consent { gap: 14px; padding: 20px; }
+.mp.reserve-page fieldset.surrender-consent legend { float: none; width: auto; margin: 0 0 8px; line-height: 1.5; }
+.mp.reserve-page fieldset.surrender-consent > label { padding: 14px; line-height: 1.6; }
+.reserve-page #pickupStationFields, .reserve-page #homeAddressFields { gap: 12px; padding-top: 10px; min-width: 0; }
+.reserve-page #backingForm p { line-height: 1.7; overflow-wrap: anywhere; }
+.reserve-page #backingForm input[type="text"], .reserve-page #backingForm select { min-width: 0; }
+.reserve-page #backingAssets { display: grid; gap: 16px; }
+.reserve-page #surrenderConsentLabel { gap: 12px; }
+.reserve-page #surrenderConsentLabel input { margin-top: 5px; }
+.reserve-page #surrenderConsentLabel span { min-width: 0; overflow-wrap: anywhere; }
+.reserve-page .asset-info { min-width: 0; }
+.mp.reserve-page .running-total { position: static; }
 .mp .target-banner {
     width: calc(100% - 28px); max-width: 760px; margin: 0 auto 14px; padding: 14px 16px; border-radius: var(--bx-radius-sm);
     background: var(--bx-surface); border: 1px solid var(--bx-border); border-left: 5px solid var(--bx-orange); box-shadow: var(--bx-shadow);

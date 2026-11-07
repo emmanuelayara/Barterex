@@ -87,6 +87,25 @@ class AdminPagesRenderTests(unittest.TestCase):
         response = app.test_client().get('/admin/login')
         self.assertEqual(response.status_code, 200)
 
+    def test_station_pages_use_verification_station_labels(self):
+        client = self._client()
+        for path in ('/admin/pickup-stations', f'/admin/pickup_stations/edit/{self.station.id}'):
+            with self.subTest(path=path):
+                response = client.get(path)
+                self.assertEqual(response.status_code, 200)
+                body = response.get_data(as_text=True)
+                self.assertIn('Verification Station', body)
+                self.assertNotIn('pickup station', body.lower())
+
+    def test_live_templates_use_new_station_terminology(self):
+        from pathlib import Path
+        import re
+
+        templates = Path(app.root_path) / 'templates'
+        for path in templates.rglob('*.html'):
+            with self.subTest(template=path.name):
+                self.assertIsNone(re.search(r'pickup\s+stations?', path.read_text(encoding='utf-8'), re.I))
+
     def test_top_navigation_only_has_dashboard_and_logout(self):
         from html.parser import HTMLParser
         from flask import url_for

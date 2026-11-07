@@ -35,6 +35,8 @@ no AI value is accepted, no credits are granted, and the item is not listed.
 Users select a custody option in **Valuations** and explicitly consent before
 staff can record physical inspection in **Manual Physical Review**
 (`items.manual_review` permission).
+The review page displays all submitted photos; select a thumbnail to open the
+full-size image in a new tab alongside the physical inspection.
 
 - **Take home:** inspection records return to the owner; ownership stays with
   them. Published, approved video activation grants provisional BXC.
@@ -58,6 +60,18 @@ valuation/consent fields and allows direct acquisitions without reservation
 references. Do not downgrade while manual review records or direct acquisitions exist.
 
 ## Durable unlisted publishing
+
+Valuations uses in-page camera recording (`getUserMedia` and `MediaRecorder`),
+not a gallery/file picker. Users record a silent walkthrough from different
+sides, preview it, or retake before sending it to the existing signed cloud
+upload. The rear camera is preferred. Recording stops automatically at 60
+seconds and is limited to 200 MB; camera access is released on stop/cancel,
+page hiding/navigation, or closing the item form. Interrupted recordings are
+discarded. Denied camera permission or an unsupported recorder requires another
+camera-enabled browser/device, with no gallery fallback. Production needs HTTPS.
+Camera recording is a form restriction, not authenticity proof; virtual cameras
+and crafted uploads remain possible. Admin video review and physical inspection
+are still required. No schema change is needed.
 
 `ItemVideo` is also the durable job record. The states are:
 

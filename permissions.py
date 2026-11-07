@@ -22,7 +22,7 @@ PERMISSION_GROUPS = [
         ('verification.intake', 'Verification intake', 'View the intake log and record custody of received items'),
         ('inventory.view', 'Clearing inventory', 'View clearing inventory'),
         ('orders.manage', 'Orders', 'View orders and update order statuses'),
-        ('pickup.manage', 'Pickup stations', 'Add, edit and delete pickup stations'),
+        ('pickup.manage', 'Verification Stations', 'Add, edit and delete Verification Stations'),
     ]),
     ('Users', 'bi-people', [
         ('users.view', 'View users', 'List users and view user profiles'),

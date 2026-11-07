@@ -403,7 +403,7 @@ def generate_pdf_receipt(order, user):
         if order.pickup_station:
             station = order.pickup_station
             delivery_rows.append((
-                'Pickup station', f'{station.name}, {station.address}, {station.city}, {station.state}',
+                'Verification Station', f'{station.name}, {station.address}, {station.city}, {station.state}',
             ))
         if order.estimated_delivery_date:
             delivery_rows.append((

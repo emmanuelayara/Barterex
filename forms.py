@@ -198,7 +198,7 @@ class OrderForm(FlaskForm):
         ("pickup", "Pickup")
     ])
     delivery_address = StringField("Delivery Address", validators=[Optional()])
-    pickup_station = SelectField("Pickup Station", choices=[], coerce=int, validators=[Optional()])
+    pickup_station = SelectField("Verification Station", choices=[], coerce=int, validators=[Optional()])
     submit = SubmitField("Place Order")
 
 
@@ -287,7 +287,7 @@ class PickupStationForm(FlaskForm):
         ('Zamfara', 'Zamfara')
     ], validators=[DataRequired()])
     city = StringField('City', validators=[DataRequired()])
-    submit = SubmitField('Add Pickup Station')
+    submit = SubmitField('Add Verification Station')
 
 
 # ==================== ACCOUNT MANAGEMENT FORMS ==================== #

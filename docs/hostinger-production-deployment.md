@@ -405,6 +405,10 @@ flow; the local manual 500-BXC test override is not part of this deployment.
       denying camera access prevents collecting photos. This form policy is
       not proof of authenticity; video review and physical checks remain required.
 - [ ] Browser upload to GCS succeeds; admin preview plays.
+- [ ] In Valuations, record the activation video using the live camera (no gallery
+      picker). Test preview, retake, camera denial, and automatic stopping at
+      60 seconds on a real phone. Recordings are silent; cloud upload, admin review
+      and publishing should work with the browser's recorded MP4 or WEBM format.
 - [ ] Admin approval returns promptly and queues the job.
 - [ ] Worker progresses through uploading and processing.
 - [ ] YouTube Studio shows the video on the company channel as **unlisted**.

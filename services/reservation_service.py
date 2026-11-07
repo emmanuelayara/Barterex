@@ -36,6 +36,7 @@ from logger_config import setup_logger
 from services.email_notifications import notify_admins, notify_user
 
 logger = setup_logger(__name__)
+HOME_SERVICE_FEE_NAIRA = 5000
 
 RESERVATION_HOLD_HOURS = 72
 RESERVATION_REMINDER_HOURS = (24, 6)
@@ -832,7 +833,8 @@ def create_reservation(
             delivery_method=delivery_method,
             delivery_address=delivery_address,
             pickup_station_id=pickup_station_id,
-            delivery_fee_status='quote_pending' if delivery_method == 'home delivery' else 'not_required',
+            delivery_fee_status='awaiting_payment' if delivery_method == 'home delivery' else 'not_required',
+            delivery_quote_naira=HOME_SERVICE_FEE_NAIRA if delivery_method == 'home delivery' else None,
             backing_asset_consent_at=(
                 datetime.utcnow() if funding_mode == 'item_backed' else None
             ),
@@ -911,7 +913,7 @@ def create_reservation(
             details = (
                 "The acquired item is already physically verified; verify any buyer backing items."
                 if funding_mode == 'item_backed' else
-                "The acquired item is already physically verified; issue the home-service quote."
+                "The acquired item is already physically verified; home service requires payment before fulfillment."
             )
             notify_admins(
                 'settlement.manage',
@@ -1390,6 +1392,8 @@ def verify_seller_item(
         return _reject_transition("This reservation is no longer active.")
     if reservation.seller_item_verification_status != 'not_submitted':
         return _reject_transition("The seller's item has already been verified.")
+    if reservation.delivery_method == 'home delivery' and reservation.delivery_fee_status != 'paid':
+        return _reject_transition("The buyer must pay the home-service fee before physical verification.")
 
     try:
         if intake_details is not None:
@@ -1468,7 +1472,7 @@ def verify_backing_asset(
         and reservation.delivery_fee_status != 'paid'
     ):
         return _reject_transition(
-            "The buyer must pay the quoted non-refundable home-service fee before backing-item pickup and verification."
+            "The buyer must pay the non-refundable home-service fee before backing-item pickup and verification."
         )
     if asset.verification_status != 'not_submitted':
         return _reject_transition("This backing item has already been verified.")
@@ -1528,6 +1532,9 @@ def _resolve_reservation(reservation):
     makes success impossible.
     """
     if reservation.status != 'active':
+        return False
+
+    if reservation.delivery_method == 'home delivery' and reservation.delivery_fee_status != 'paid':
         return False
 
     assets = reservation.backing_assets
@@ -1685,6 +1692,8 @@ def _resolve_reservation(reservation):
 
 def _settle_reservation(reservation):
     """Both sides passed: transfer ownership and apply all BXC changes atomically."""
+    if reservation.delivery_method == 'home delivery' and reservation.delivery_fee_status != 'paid':
+        raise ValueError('Home-service payment is required before settlement.')
     buyer = reservation.user
     seller_item = reservation.item
     company_owned_item = _is_company_inventory_item(seller_item)
@@ -1904,11 +1913,11 @@ def _settle_reservation(reservation):
         (
             f"Your purchase is verified and order {order_number} is ready for fulfillment."
             if reservation.delivery_method == 'pickup'
-            else f"Your purchase is verified. Accept and pay the home-service quote before dispatching order {order_number}."
+            else f"Your purchase is verified and the home-service fee is paid. Order {order_number} is ready for processing."
         ),
         "Your order is ready for fulfillment"
         if reservation.delivery_method == 'pickup'
-        else "Action needed: pay the home-service quote",
+        else "Your home-service order is ready for processing",
     )
     if seller:
         _notice(

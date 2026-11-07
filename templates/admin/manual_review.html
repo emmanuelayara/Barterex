@@ -1,22 +1,118 @@
 {% extends 'admin_base.html' %}
 {% block title %}Manual physical review{% endblock %}
 {% block content %}
-<div class="adm-page">
+<style>
+  .manual-page .manual-summary { align-items: flex-start; justify-content: space-between; flex-wrap: wrap; padding: 24px; gap: 16px; }
+  .manual-page .manual-summary h2 { font-size: 1.2rem; margin-bottom: 8px; }
+  .manual-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+  .manual-meta span { padding: 5px 10px; background: var(--tint); border-radius: 6px; font-size: 0.8rem; color: var(--primary-blue); overflow-wrap: anywhere; }
+  .manual-layout { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
+  .manual-overview, .manual-form { min-width: 0; padding: 24px; }
+  .manual-overview { background: #f8fafc; border-right: 1px solid var(--line); }
+  .manual-page h3 { font-size: 1rem; font-weight: 700; color: var(--ink); margin: 0 0 8px; }
+  .manual-help, .manual-description { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+  .manual-description { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 20px; }
+  .manual-custody { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; margin-bottom: 24px; }
+  .manual-custody strong { display: block; color: var(--primary-blue); font-size: 0.85rem; margin-bottom: 5px; }
+  .manual-custody p { margin: 0; }
+  .manual-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .manual-photo-grid a { color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 10px; background: #fff; overflow: hidden; transition: border-color 0.2s; }
+  .manual-photo-grid a:hover { border-color: var(--primary-blue); }
+  .manual-photo-grid a:focus-visible { outline: 3px solid var(--primary-blue); outline-offset: 3px; }
+  .manual-photo-grid img { display: block; width: 100%; height: 110px; object-fit: cover; }
+  .manual-photo-grid span { display: block; padding: 8px 10px; font-size: 0.75rem; font-weight: 600; }
+  .manual-form .intake-fields, .manual-decision { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; border: 0; padding: 0; margin: 0; min-width: 0; }
+  .manual-form .intake-fields legend, .manual-decision legend { float: none; width: 100%; grid-column: 1 / -1; font-size: 1rem; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .manual-form label { display: flex; flex-direction: column; gap: 8px; min-width: 0; color: var(--ink); font-size: 0.85rem; font-weight: 600; }
+  .manual-form input:not([type="hidden"]), .manual-form select, .manual-form textarea { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); padding: 11px 12px; font: inherit; font-weight: 400; }
+  .manual-form input:focus, .manual-form select:focus, .manual-form textarea:focus { outline: 2px solid var(--primary-blue); outline-offset: 1px; }
+  .manual-form textarea { min-height: 110px; resize: vertical; }
+  .manual-form .intake-wide { grid-column: 1 / -1; }
+  .manual-decision { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .manual-submit { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-top: 24px; }
+  .manual-submit p { flex: 1 1 200px; margin: 0; }
+  @media (max-width: 900px) {
+    .manual-layout { grid-template-columns: minmax(0, 1fr); }
+    .manual-overview { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+  @media (max-width: 540px) {
+    .manual-page .manual-summary, .manual-overview, .manual-form { padding: 18px; }
+    .manual-form .intake-fields, .manual-decision { grid-template-columns: minmax(0, 1fr); }
+    .manual-submit .adm-btn { width: 100%; justify-content: center; }
+  }
+</style>
+<div class="adm-page wide manual-page">
+  <a href="{{ url_for('admin.admin_dashboard') }}" class="adm-back"><i class="bi bi-arrow-left" aria-hidden="true"></i> Dashboard</a>
   <div class="adm-head"><div><h1>Manual physical review {{ pending_badge('manual_reviews') }}</h1>
     <p>Inspect the actual item and confirm identity before recording a value. No credits or listing until video publishing succeeds.</p></div></div>
   {% for item in items %}
   <article class="adm-panel">
-    <div class="adm-panel-head"><div><h2>{{ item.name }} &middot; {{ item.item_number }}</h2>
-      <p>{{ item.user.username }} &middot; {{ item.description }}</p>
-      <p>User choice: {{ item.manual_custody_choice or 'Not selected' }}. Company choice transfers ownership; home choice returns the item to its owner.</p></div></div>
-    <form method="post" action="{{ url_for('admin.verify_manual_item', item_id=item.id) }}" class="adm-panel-body">
+    <div class="adm-panel-head manual-summary">
+      <div><h2>{{ item.name }}</h2>
+        <div class="manual-meta">
+          <span>{{ item.item_number }}</span>
+          <span><i class="bi bi-person" aria-hidden="true"></i> {{ item.user.username }}</span>
+          <span>{{ item.category }}</span>
+          <span>{{ item.condition }}</span>
+        </div>
+      </div>
+      <span class="adm-pill info">Awaiting physical review</span>
+    </div>
+    <div class="manual-layout">
+    <section class="manual-overview" aria-label="Submitted photos for {{ item.name }}">
+      <h3>Item details</h3>
+      <p class="manual-description">{{ item.description or 'No description provided.' }}</p>
+      <div class="manual-custody">
+        <strong><i class="bi bi-box-seam" aria-hidden="true"></i> Custody preference</strong>
+        <p class="manual-help">{% if item.manual_custody_choice == 'company' %}Transfer ownership to Barter Express. Spendable credits follow approved video publishing.{% elif item.manual_custody_choice == 'home' %}Return the item to its owner. Provisional credits follow approved video publishing.{% else %}Not selected yet. The user must save a custody choice and consent before verification can be recorded.{% endif %}</p>
+      </div>
+      <h3>Submitted photos</h3>
+      <p class="manual-help">Select a photo to view it full size in a new tab.</p>
+      {% set photos = namespace(urls=[]) %}
+      {% for image in item.images|sort(attribute='order_index') %}
+        {% if image.image_url not in photos.urls %}
+          {% set _ = photos.urls.append(image.image_url) %}
+        {% endif %}
+      {% endfor %}
+      {% if item.image_url and item.image_url not in photos.urls %}
+        {% set _ = photos.urls.insert(0, item.image_url) %}
+      {% endif %}
+      {% if photos.urls %}
+      <div class="manual-photo-grid">
+        {% for photo in photos.urls %}
+        <a href="{{ photo | image_url }}" target="_blank" rel="noopener noreferrer"
+           aria-label="View {{ item.name }} photo {{ loop.index }} full size (opens in a new tab)">
+          <img src="{{ photo | image_url }}" alt="{{ item.name }} - submitted photo {{ loop.index }}" loading="lazy">
+          <span>Photo {{ loop.index }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="manual-help">No submitted photos are available for this item.</p>
+      {% endif %}
+    </section>
+    <form method="post" action="{{ url_for('admin.verify_manual_item', item_id=item.id) }}" class="manual-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       {% with inspection_item=item %}{% include 'admin/_verification_intake_fields.html' %}{% endwith %}
-      <label>Physically verified value (BXC)<input type="number" name="value" min="1" step="1" class="form-control"></label>
-      <label>Outcome<select name="outcome" class="form-select" required><option value="passed">Passed</option><option value="failed">Failed</option></select></label>
-      <button type="submit" class="adm-btn primary">Record physical review</button>
+      <fieldset class="manual-decision">
+        <legend>Valuation &amp; decision</legend>
+        <label>Physically verified value (BXC)<input type="number" name="value" min="1" step="1" placeholder="e.g. 5000" aria-describedby="manual-value-help-{{ item.id }}"></label>
+        <label>Outcome<select name="outcome" required><option value="passed">Passed</option><option value="failed">Failed</option></select></label>
+      </fieldset>
+      <p class="manual-help" id="manual-value-help-{{ item.id }}">Enter the physical valuation for a passed inspection. A failed inspection does not require a value.</p>
+      <div class="manual-submit">
+        <p class="manual-help"><i class="bi bi-shield-check" aria-hidden="true"></i> This records the inspection only. No credits or listing until video approval and publishing.</p>
+        <button type="submit" class="adm-btn primary">Record physical review</button>
+      </div>
     </form>
+    </div>
   </article>
-  {% else %}<p>No items awaiting manual physical review.</p>{% endfor %}
+  {% else %}
+  <div class="adm-panel adm-empty">
+    <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+    <h6>You're all caught up</h6>
+    <p>No items awaiting manual physical review.</p>
+  </div>
+  {% endfor %}
 </div>
 {% endblock %}

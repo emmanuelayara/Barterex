@@ -216,7 +216,9 @@ def _settlement_queue_filter():
 @admin_bp.route('/manual-review')
 @admin_login_required
 def manual_review_queue():
-    items = Item.query.filter_by(status='manual_review_pending').order_by(Item.id.asc()).all()
+    items = Item.query.filter_by(status='manual_review_pending').options(
+        joinedload(Item.images), joinedload(Item.user),
+    ).order_by(Item.id.asc()).all()
     return render_template('admin/manual_review.html', items=items)
 
 
@@ -1836,35 +1838,28 @@ def set_reservation_delivery_quote(reservation_id):
         flash('This reservation already has a delivery quote or payment.', 'warning')
         return redirect(url_for('admin.settlement_queue'))
 
-    try:
-        quote = float(request.form.get('amount_naira', '').strip())
-    except (TypeError, ValueError):
-        quote = 0
-    from paystack_payment_service import PaystackPaymentService
-    if not PaystackPaymentService.MIN_AMOUNT <= quote <= PaystackPaymentService.MAX_AMOUNT:
-        flash(
-            f"Enter a quote between ₦{PaystackPaymentService.MIN_AMOUNT:,.0f} "
-            f"and ₦{PaystackPaymentService.MAX_AMOUNT:,.0f}.",
-            'danger',
-        )
+    from flask_wtf import FlaskForm
+    if not FlaskForm().validate_on_submit():
+        flash('Invalid or expired form token.', 'danger')
         return redirect(url_for('admin.settlement_queue'))
+    from services.reservation_service import HOME_SERVICE_FEE_NAIRA
 
-    reservation.delivery_quote_naira = round(quote, 2)
+    reservation.delivery_quote_naira = HOME_SERVICE_FEE_NAIRA
     reservation.delivery_fee_status = 'awaiting_payment'
     notify_user(
         reservation.user_id,
         (
-            f"Barter Express quoted ₦{reservation.delivery_quote_naira:,.2f} for the non-refundable "
-            f"home service on reservation {reservation.id}. Accept and pay through Paystack before pickup or dispatch."
+            f"The standard non-refundable home-service fee is ₦{reservation.delivery_quote_naira:,.2f} "
+            f"for reservation {reservation.id}. Pay through Paystack before verification, pickup or dispatch. This excludes the transaction fee."
         ),
-        subject="Action needed: pay your home-service quote",
+        subject="Action needed: pay your home-service fee",
         cta_endpoint='user.my_reservations',
         cta_label='View My Reservations',
         notification_type='reservation',
         category='alert',
     )
     db.session.commit()
-    flash('Home-service quote sent to the buyer.', 'success')
+    flash('Standard home-service fee sent to the buyer.', 'success')
     return redirect(url_for('admin.settlement_queue'))
 
 
@@ -2364,11 +2359,11 @@ def add_pickup_station():
                 target_type='pickup_station',
                 target_id=station.id,
                 target_name=station.name,
-                description=f'Pickup station added: {station.name}, {station.city}, {station.state}'
+                description=f'Verification Station added: {station.name}, {station.city}, {station.state}'
             )
             
-            logger.info(f"Pickup station added - Name: {station.name}, State: {station.state}, Admin ID: {session.get('admin_id')}")
-            flash("Pickup station added successfully!", "success")
+            logger.info(f"Verification Station added - Name: {station.name}, State: {station.state}, Admin ID: {session.get('admin_id')}")
+            flash("Verification Station added successfully!", "success")
             return redirect(url_for('admin.manage_pickup_stations'))
 
         stations = PickupStation.query.all()
@@ -2379,8 +2374,8 @@ def add_pickup_station():
         )
         
     except Exception as e:
-        logger.error(f"Error adding pickup station: {str(e)}", exc_info=True)
-        flash('An error occurred while adding the pickup station.', 'danger')
+        logger.error(f"Error adding Verification Station: {str(e)}", exc_info=True)
+        flash('An error occurred while adding the Verification Station.', 'danger')
         return redirect(url_for('admin.manage_pickup_stations'))
 
 
@@ -2412,13 +2407,13 @@ def edit_pickup_station(station_id):
                 target_type='pickup_station',
                 target_id=station_id,
                 target_name=station.name,
-                description=f'Pickup station updated',
+                description=f'Verification Station updated',
                 before_value=old_data,
                 after_value=new_data
             )
             
-            logger.info(f"Pickup station updated - ID: {station_id}, Name: {station.name}, Admin ID: {session.get('admin_id')}")
-            flash('Pickup station updated successfully!', 'success')
+            logger.info(f"Verification Station updated - ID: {station_id}, Name: {station.name}, Admin ID: {session.get('admin_id')}")
+            flash('Verification Station updated successfully!', 'success')
             return redirect(url_for('admin.manage_pickup_stations'))
 
         return render_template(
@@ -2428,8 +2423,8 @@ def edit_pickup_station(station_id):
         )
         
     except Exception as e:
-        logger.error(f"Error editing pickup station {station_id}: {str(e)}", exc_info=True)
-        flash('An error occurred while editing the pickup station.', 'danger')
+        logger.error(f"Error editing Verification Station {station_id}: {str(e)}", exc_info=True)
+        flash('An error occurred while editing the Verification Station.', 'danger')
         return redirect(url_for('admin.manage_pickup_stations'))
 
 
@@ -2452,16 +2447,16 @@ def delete_pickup_station(station_id):
             target_type='pickup_station',
             target_id=station_id,
             target_name=station_name,
-            description=f'Pickup station deleted: {station_name}'
+            description=f'Verification Station deleted: {station_name}'
         )
         
-        logger.info(f"Pickup station deleted - ID: {station_id}, Name: {station_name}, Admin ID: {session.get('admin_id')}")
-        flash('Pickup Station deleted successfully!', 'danger')
+        logger.info(f"Verification Station deleted - ID: {station_id}, Name: {station_name}, Admin ID: {session.get('admin_id')}")
+        flash('Verification Station deleted successfully!', 'danger')
         return redirect(url_for('admin.manage_pickup_stations'))
         
     except Exception as e:
-        logger.error(f"Error deleting pickup station {station_id}: {str(e)}", exc_info=True)
-        flash('An error occurred while deleting the pickup station.', 'danger')
+        logger.error(f"Error deleting Verification Station {station_id}: {str(e)}", exc_info=True)
+        flash('An error occurred while deleting the Verification Station.', 'danger')
         return redirect(url_for('admin.manage_pickup_stations'))
 
 
@@ -2472,15 +2467,15 @@ def manage_pickup_stations():
     try:
         form = PickupStationForm()
         stations = PickupStation.query.all()
-        logger.info(f"Pickup stations management page accessed - Total stations: {len(stations)}")
+        logger.info(f"Verification Stations management page accessed - Total stations: {len(stations)}")
         return render_template(
             "admin/manage_pickup_stations.html",
             form=form,
             stations=stations
         )
     except Exception as e:
-        logger.error(f"Error loading pickup stations: {str(e)}", exc_info=True)
-        flash('An error occurred while loading pickup stations.', 'danger')
+        logger.error(f"Error loading Verification Stations: {str(e)}", exc_info=True)
+        flash('An error occurred while loading Verification Stations.', 'danger')
         return redirect(url_for('admin.admin_dashboard'))
 
 
@@ -2596,7 +2591,7 @@ def update_order_status(order_id):
 
         status_messages = {
             "Shipped": f"Your order for {item_names} has been shipped.",
-            "Ready for Pickup": f"Your order for {item_names} is ready for collection at your selected pickup station.",
+            "Ready for Pickup": f"Your order for {item_names} is ready for collection at your selected Verification Station.",
             "Out for Delivery": f"Your order for {item_names} is out for delivery.",
             "Delivered": f"Your order for {item_names} has been delivered. 🎉",
         }

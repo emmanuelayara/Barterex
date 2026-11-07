@@ -11,7 +11,7 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 from PIL import Image
 from flask import g
 from app import app, db, limiter
-from models import Admin, Item, ItemVideo, User, VerificationIntake, ReservationCreditEntry, ClearingInventoryItem, PickupStation, Reservation, Order
+from models import Admin, Item, ItemImage, ItemVideo, User, VerificationIntake, ReservationCreditEntry, ClearingInventoryItem, PickupStation, Reservation, Order
 from services.item_activation_service import activate_item
 
 
@@ -62,6 +62,59 @@ class ManualReviewTests(unittest.TestCase):
         return self.client.post(f'/items/{self.item.id}/manual-custody', data={
             'custody_choice': choice, 'consent': '1',
         })
+
+    def test_manual_review_displays_all_photos_with_full_size_links(self):
+        from html.parser import HTMLParser
+
+        class PhotoLinks(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.links = []
+                self.images = []
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'a' and attrs.get('aria-label', '').startswith('View Test phone photo'):
+                    self.links.append(attrs)
+                if tag == 'img' and attrs.get('alt', '').startswith('Test phone - submitted photo'):
+                    self.images.append(attrs)
+
+        self.item.image_url = 'front.jpg'
+        db.session.add_all([
+            ItemImage(item_id=self.item.id, image_url='back.jpg', order_index=1),
+            ItemImage(item_id=self.item.id, image_url='front.jpg', order_index=0, is_primary=True),
+            ItemImage(item_id=self.item.id, image_url='side.jpg', order_index=2),
+        ])
+        db.session.commit()
+        with tempfile.TemporaryDirectory() as folder, patch('app.get_upload_root_path', return_value=folder):
+            for filename in ('front.jpg', 'back.jpg', 'side.jpg'):
+                Image.new('RGB', (30, 30), 'blue').save(Path(folder) / filename, 'JPEG')
+            response = self.reviewer.get('/admin/manual-review')
+        self.assertEqual(response.status_code, 200)
+        parser = PhotoLinks()
+        parser.feed(response.get_data(as_text=True))
+        self.assertEqual(len(parser.links), 3)
+        self.assertEqual([link['href'] for link in parser.links], [img['src'] for img in parser.images])
+        self.assertTrue(parser.links[0]['href'].endswith('/front.jpg'))
+        self.assertTrue(parser.links[1]['href'].endswith('/back.jpg'))
+        self.assertTrue(parser.links[2]['href'].endswith('/side.jpg'))
+        for link in parser.links:
+            self.assertEqual(link['target'], '_blank')
+            self.assertIn('noopener', link['rel'])
+
+    def test_manual_review_supports_legacy_photo_and_empty_gallery(self):
+        self.item.image_url = 'legacy.jpg'
+        db.session.commit()
+        with tempfile.TemporaryDirectory() as folder, patch('app.get_upload_root_path', return_value=folder):
+            Image.new('RGB', (30, 30), 'blue').save(Path(folder) / 'legacy.jpg', 'JPEG')
+            response = self.reviewer.get('/admin/manual-review')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Test phone - submitted photo 1', response.data)
+        self.assertIn(b'legacy.jpg', response.data)
+        self.item.image_url = None
+        db.session.commit()
+        response = self.reviewer.get('/admin/manual-review')
+        self.assertIn(b'No submitted photos are available for this item.', response.data)
 
     def verify(self, value='500', outcome='passed'):
         return self.reviewer.post(f'/admin/manual-review/{self.item.id}/verify', data={

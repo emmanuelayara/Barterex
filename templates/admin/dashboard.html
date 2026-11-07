@@ -733,7 +733,7 @@
       <div class="link-card-title">Management</div>
       {% if can('users.view') %}<a href="{{ url_for('admin.manage_users') }}" class="link-row"><i class="bi bi-people"></i>Manage Users</a>{% endif %}
       {% if can('orders.manage') %}<a href="{{ url_for('admin.manage_orders') }}" class="link-row"><i class="bi bi-box-seam"></i>Manage Orders {{ pending_badge('orders') }}</a>{% endif %}
-      {% if can('pickup.manage') %}<a href="{{ url_for('admin.manage_pickup_stations') }}" class="link-row"><i class="bi bi-geo-alt"></i>Pickup Stations</a>{% endif %}
+      {% if can('pickup.manage') %}<a href="{{ url_for('admin.manage_pickup_stations') }}" class="link-row"><i class="bi bi-geo-alt"></i>Verification Stations</a>{% endif %}
       {% if current_admin.is_super_admin %}
       <a href="{{ url_for('admin.manage_admins') }}" class="link-row"><i class="bi bi-shield-lock"></i>Manage Admins</a>
       <a href="{{ url_for('admin.admin_register') }}" class="link-row"><i class="bi bi-person-plus"></i>Create Admin</a>

@@ -39,13 +39,17 @@ class PaystackPaymentService:
 
     @staticmethod
     def initiate_delivery_fee_payment(reservation, user):
-        """Create a Paystack charge for a quoted reservation delivery fee, not account credits."""
+        """Charge the reservation's home-service fee, never account credits."""
         if reservation.user_id != user.id:
             return {'success': False, 'error': 'You can only pay delivery fees for your own reservation.'}
         if reservation.delivery_method != 'home delivery':
             return {'success': False, 'error': 'This reservation does not require a home-service fee.'}
+        if reservation.status not in ('active', 'completed') or (
+            reservation.status == 'active' and reservation.expires_at <= datetime.utcnow()
+        ):
+            return {'success': False, 'error': 'This reservation is closed or expired; a new home-service payment cannot be started.'}
         if reservation.delivery_fee_status not in ('awaiting_payment', 'paid'):
-            return {'success': False, 'error': 'There is no accepted delivery quote to pay.'}
+            return {'success': False, 'error': 'There is no home-service fee ready for payment.'}
         if reservation.delivery_fee_status == 'paid':
             return {'success': False, 'error': 'The delivery fee has already been paid.'}
 
@@ -197,13 +201,20 @@ class PaystackPaymentService:
             payment.status = 'completed'
             payment.paid_at = payment.paid_at or datetime.utcnow()
             payment.payment_method = payment_method
-            return
+            return False
         if reservation.delivery_fee_status != 'awaiting_payment':
             raise ValueError('This reservation is not waiting for delivery-fee payment.')
         payment.status = 'completed'
         payment.paid_at = datetime.utcnow()
         payment.payment_method = payment_method
         reservation.delivery_fee_status = 'paid'
+        settled = False
+        if reservation.status == 'active':
+            from services.reservation_service import _resolve_reservation, _cancel_reservation
+            if reservation.expires_at <= datetime.utcnow():
+                _cancel_reservation(reservation, new_status='expired', relist_seller_item=True, relist_assets=True)
+            else:
+                settled = _resolve_reservation(reservation)
         notify_user(
             reservation.user_id,
             f"Your non-refundable home-service fee for reservation {reservation.id} is paid. "
@@ -213,6 +224,7 @@ class PaystackPaymentService:
             cta_label='View My Reservations',
             notification_type='reservation',
         )
+        return settled
     
     @staticmethod
     def get_auth_header():
@@ -409,12 +421,15 @@ class PaystackPaymentService:
             if PaystackPaymentService.TEST_MODE and reference.startswith('TEST_'):
                 if payment.status == 'test_pending':
                     if payment.purpose == 'reservation_delivery_fee':
-                        PaystackPaymentService._complete_delivery_fee_payment(payment, 'test_card')
+                        settled = PaystackPaymentService._complete_delivery_fee_payment(payment, 'test_card')
                         payment.payment_metadata = {
                             **(payment.payment_metadata or {}),
                             'verified': True,
                         }
                         db.session.commit()
+                        if settled:
+                            from services.reservation_service import _award_reservation_points
+                            _award_reservation_points(db.session.get(Reservation, payment.reservation_id))
                         user = User.query.get(payment.user_id)
                         return {
                             'success': True,
@@ -509,11 +524,14 @@ class PaystackPaymentService:
                                     'success': False,
                                     'error': payment.error_message,
                                 }
-                            PaystackPaymentService._complete_delivery_fee_payment(
+                            settled = PaystackPaymentService._complete_delivery_fee_payment(
                                 payment,
                                 response_data.get('channel', 'card'),
                             )
                             db.session.commit()
+                            if settled:
+                                from services.reservation_service import _award_reservation_points
+                                _award_reservation_points(db.session.get(Reservation, payment.reservation_id))
                             user = User.query.get(payment.user_id)
                             return {
                                 'success': True,

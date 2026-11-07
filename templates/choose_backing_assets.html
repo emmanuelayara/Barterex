@@ -100,7 +100,7 @@
   .empty-state { background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 30px 20px; text-align: center; color: #6b7280; }
 </style>
 
-<div class="page-container mp">
+<div class="page-container mp reserve-page">
   <div class="main-content">
     <div class="page-header">
       {{ fx.floaters('banner') }}
@@ -108,10 +108,14 @@
       <p class="page-subtitle">Choose how to fund "{{ item.name }}" and where you want it routed.</p>
     </div>
 
-    <div class="target-banner">Target: ᗸ{{ '{:,.0f}'.format(item.value) }} for "{{ item.name }}"</div>
+    <div class="target-banner">
+      <span class="reserve-summary-label">Purchase summary</span>
+      <strong class="reserve-item-name">{{ item.name }}</strong>
+      <span class="reserve-price">ᗸ{{ '{:,.0f}'.format(item.value) }} BXC</span>
     {% if item.owner_type == 'barterex' %}
     <p class="action-hint">Company inventory is already physically verified. Spendable BXC completes this purchase immediately; item-backed purchases wait for your backing items to pass inspection.</p>
     {% endif %}
+    </div>
 
     <form method="POST" action="{{ url_for('marketplace.reserve_item', item_id=item.id) }}" id="backingForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -147,6 +151,7 @@
 
         <label class="surrender-consent" id="surrenderConsentLabel">
           <input type="checkbox" name="surrender_consent" value="yes" id="surrenderConsent">
+          <span>
           I agree that each selected backing item that passes physical verification will become Barter Express
           {% if item.owner_type == 'barterex' %}
           property for resale. This company item is already verified. My backing items' verified BXC value
@@ -158,17 +163,18 @@
           title. If I decline or do not respond within 24 hours, my verified backing item(s) remain mine and their
           original provisional BXC is restored.
           {% endif %}
+          </span>
         </label>
         {% endif %}
       </div>
 
       <fieldset class="surrender-consent">
         <legend>Delivery or pickup</legend>
-        <label><input type="radio" name="delivery_method" value="pickup" {% if stations %}checked{% else %}disabled{% endif %}> Pickup station</label>
-        <label><input type="radio" name="delivery_method" value="home delivery" {% if not stations %}checked{% endif %}> Home service</label>
+        <label><input type="radio" name="delivery_method" value="pickup" {% if stations %}checked{% else %}disabled{% endif %}> Verification Station</label>
+        <label><input type="radio" name="delivery_method" value="home delivery" {% if not stations %}checked{% endif %}> Home service &mdash; ₦{{ '{:,.0f}'.format(home_service_fee_naira) }}</label>
         <div id="pickupStationFields">
           {% if stations %}
-            <label for="pickupStation">Pickup station</label>
+            <label for="pickupStation">Verification Station</label>
             <select name="pickup_station_id" id="pickupStation">
               <option value="">Choose a station</option>
               {% for station in stations %}
@@ -176,13 +182,13 @@
               {% endfor %}
             </select>
           {% else %}
-            <p>No pickup stations are available in your state; choose home service.</p>
+            <p>No Verification Stations are available in your state; choose home service.</p>
           {% endif %}
         </div>
         <div id="homeAddressFields" hidden>
           <label for="deliveryAddress">Home delivery address</label>
           <input type="text" name="delivery_address" id="deliveryAddress" value="{{ current_user.address or '' }}" maxlength="200">
-          <p>Barter Express will quote the non-refundable home-service fee after you submit this address. You must accept and pay the quote through Paystack before pickup or dispatch.</p>
+          <p>The standard non-refundable home-service fee is ₦{{ '{:,.0f}'.format(home_service_fee_naira) }}. Submitting this reservation takes you to Paystack to pay immediately, before home verification, pickup or dispatch. This is separate from the 5% completed-transaction fee (minimum ₦1,000, maximum ₦5,000).</p>
         </div>
       </fieldset>
 

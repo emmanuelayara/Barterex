@@ -230,7 +230,7 @@
                   {% if reservation.delivery_fee_status == 'paid' %}
                     · Non-refundable fee paid
                   {% elif reservation.delivery_fee_status == 'awaiting_payment' %}
-                    · Accept the quote and pay through Paystack before pickup or dispatch
+                    · Pay through Paystack before verification, pickup or dispatch. This excludes the transaction fee.
                   {% endif %}
                 {% elif reservation.pickup_station %}
                   · {{ reservation.pickup_station.name }} ({{ reservation.pickup_station.city }})
@@ -336,7 +336,7 @@
                 <form method="POST" action="{{ url_for('user.pay_reservation_delivery_fee', reservation_id=reservation.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <button type="submit" class="trade-btn">
-                    Accept &amp; pay ₦{{ '{:,.2f}'.format(reservation.delivery_quote_naira) }}
+                    Pay home-service fee ₦{{ '{:,.2f}'.format(reservation.delivery_quote_naira) }}
                   </button>
                 </form>
               {% endif %}

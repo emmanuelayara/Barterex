@@ -383,7 +383,7 @@ class AIItemValuator:
 4. Calculated estimated value based on current market trends
 
 **Next Step:**
-After physical verification at pickup station, full credit will be issued.
+After physical verification at Verification Station, full credit will be issued.
 Provisional credit already added to your account.
         """
         return analysis.strip()

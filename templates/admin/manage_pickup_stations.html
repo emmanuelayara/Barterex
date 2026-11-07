@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-{% block title %}Pickup Stations{% endblock %}
+{% block title %}Verification Stations{% endblock %}
 {% block content %}
 <style>
   .station-layout { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
@@ -11,7 +11,7 @@
 <div class="adm-page">
   <header class="adm-head">
     <div>
-      <h1>Pickup Stations</h1>
+      <h1>Verification Stations</h1>
       <p>Manage your pickup locations and stations.</p>
     </div>
     <div class="adm-head-actions">
@@ -68,7 +68,7 @@
       <div class="adm-panel-head">
         <span class="adm-panel-icon"><i class="bi bi-list-ul"></i></span>
         <div>
-          <h2>All pickup stations</h2>
+          <h2>All Verification Stations</h2>
           <p>Edit or remove existing locations</p>
         </div>
         {% if stations %}
@@ -107,8 +107,8 @@
       {% else %}
       <div class="adm-empty">
         <i class="bi bi-geo-alt"></i>
-        <h6>No pickup stations yet</h6>
-        <p class="mb-0">Get started by adding your first pickup station using the form.</p>
+        <h6>No Verification Stations yet</h6>
+        <p class="mb-0">Get started by adding your first Verification Station using the form.</p>
       </div>
       {% endif %}
     </section>

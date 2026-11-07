@@ -1179,7 +1179,7 @@ def finalize_purchase():
                 if pickup_station_id:
                     station = PickupStation.query.get(pickup_station_id)
                     if station:
-                        delivery_info = f"Pickup Station: {station.name} ({station.state})"
+                        delivery_info = f"Verification Station: {station.name} ({station.state})"
             
             # Build items list for notification
             items_list = "<br>".join([
@@ -1256,7 +1256,7 @@ def finalize_purchase():
                             <h3 style="margin-top: 0; color: #10b981;">🚚 Delivery Information</h3>
                             <p><strong>Delivery Method:</strong> {delivery_method.title()}</p>
                             {'<p><strong>Delivery Address:</strong> ' + pending_delivery.get('delivery_address', 'Not specified') + '</p>' if delivery_method == 'home delivery' else ''}
-                            {f'<p><strong>Pickup Station:</strong> {PickupStation.query.get(pending_delivery.get("pickup_station_id")).name} ({PickupStation.query.get(pending_delivery.get("pickup_station_id")).state})</p>' if delivery_method == 'pickup' and pending_delivery.get('pickup_station_id') else ''}
+                            {f'<p><strong>Verification Station:</strong> {PickupStation.query.get(pending_delivery.get("pickup_station_id")).name} ({PickupStation.query.get(pending_delivery.get("pickup_station_id")).state})</p>' if delivery_method == 'pickup' and pending_delivery.get('pickup_station_id') else ''}
                             <p><strong>Estimated Delivery:</strong> 7 business days from order date</p>
                         </div>
                         
@@ -1265,7 +1265,7 @@ def finalize_purchase():
                             <ol>
                                 <li><strong>Order Confirmation:</strong> Your order has been recorded and is being processed</li>
                                 <li><strong>Item Preparation:</strong> The seller(s) will prepare your items for delivery</li>
-                                <li><strong>Shipping:</strong> Your items will be shipped to your {'delivery address' if delivery_method == 'home delivery' else 'pickup station'}</li>
+                                <li><strong>Shipping:</strong> Your items will be shipped to your {'delivery address' if delivery_method == 'home delivery' else 'Verification Station'}</li>
                                 <li><strong>Tracking:</strong> You will receive updates about your order status</li>
                                 <li><strong>Delivery:</strong> Items will arrive within the estimated timeframe</li>
                             </ol>

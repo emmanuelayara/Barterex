@@ -118,9 +118,6 @@
     margin: 0;
   }
 
-  .activate-file-input {
-    font-size: 0.75rem;
-  }
 
   .activate-progress {
     font-size: 0.72rem;
@@ -244,6 +241,12 @@
     font-weight: 700;
   }
 </style>
+<style>
+  .activation-camera { width: 100%; max-height: 320px; background: #111827; border-radius: 10px; }
+  .recording-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .recording-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .video-submit-form [hidden] { display: none !important; }
+</style>
 
 <div class="page-container mp">
   <input type="hidden" id="globalCsrfToken" value="{{ csrf_token() }}">
@@ -328,11 +331,19 @@
                           data-max-video-duration="{{ max_video_duration_seconds }}">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                       <p class="activate-help">
-                        Upload a video showing the item's condition and functionality (up to
-                        {{ max_video_duration_seconds }} seconds). Use your camera or choose a video from your device.
+                        Record the actual item from different sides and show its functionality (up to
+                        {{ max_video_duration_seconds }} seconds). Camera recording only; gallery videos are not allowed.
+                        This recording has no audio.
                       </p>
-                      <input type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
-                             capture="environment" class="activate-file-input" required>
+                      <video class="activation-camera" autoplay muted playsinline hidden aria-label="Item video preview"></video>
+                      <div class="recording-actions">
+                        <button type="button" class="trade-submit-btn open-video-camera">Open Camera</button>
+                        <button type="button" class="trade-submit-btn start-recording" disabled>Start Recording</button>
+                        <button type="button" class="trade-submit-btn stop-recording" disabled>Stop Recording</button>
+                        <button type="button" class="trade-submit-btn close-video-camera" hidden>Cancel Camera</button>
+                      </div>
+                      <p class="activate-help recording-status" role="status" aria-live="polite">Allow camera access to record. You can preview and retake before submitting.</p>
+                      <noscript>JavaScript and a camera-enabled device are required to record your item video.</noscript>
                       <div class="activate-progress" hidden>Uploading… <span class="activate-progress-pct">0%</span></div>
                       <div class="activate-error" role="alert" hidden></div>
                       <label class="trade-checkbox">
@@ -378,7 +389,22 @@
   // Upload the verification video directly to cloud storage before submitting it for review.
   document.querySelectorAll('.video-submit-form').forEach(function (form) {
     const itemId = form.dataset.itemId;
-    const fileInput = form.querySelector('.activate-file-input');
+    const preview = form.querySelector('.activation-camera');
+    const openBtn = form.querySelector('.open-video-camera');
+    const startBtn = form.querySelector('.start-recording');
+    const stopBtn = form.querySelector('.stop-recording');
+    const closeBtn = form.querySelector('.close-video-camera');
+    const status = form.querySelector('.recording-status');
+    const maxDuration = Number(form.dataset.maxVideoDuration);
+    const maxSize = Number(form.dataset.maxVideoSize);
+    let stream = null;
+    let recorder = null;
+    let recordedFile = null;
+    let recordedDuration = 0;
+    let previewUrl = null;
+    let timer = null;
+    let generation = 0;
+    let uploading = false;
     const uploadBtn = form.querySelector('.activate-upload-btn');
     const progress = form.querySelector('.activate-progress') ||
       form.parentElement.querySelector('.activate-progress');
@@ -389,56 +415,221 @@
     function showError(message) {
       errorBox.textContent = message;
       errorBox.hidden = false;
-      uploadBtn.disabled = false;
+      uploading = false;
+      uploadBtn.disabled = !recordedFile;
+      openBtn.disabled = false;
       progress.hidden = true;
     }
 
-    function getDuration(file) {
-      return new Promise(function (resolve, reject) {
-        const video = document.createElement('video');
-        const objectUrl = URL.createObjectURL(file);
-        video.preload = 'metadata';
-        video.onloadedmetadata = function () {
-          const duration = video.duration;
-          URL.revokeObjectURL(objectUrl);
-          if (!Number.isFinite(duration) || duration <= 0) {
-            reject(new Error('Could not read the video duration. Please choose another video.'));
-          } else {
-            resolve(duration);
-          }
-        };
-        video.onerror = function () {
-          URL.revokeObjectURL(objectUrl);
-          reject(new Error('Could not read this video. Choose an MP4, MOV, WEBM or M4V file.'));
-        };
-        video.src = objectUrl;
-      });
+    uploadBtn.disabled = true;
+
+    function releaseCamera() {
+      clearInterval(timer);
+      timer = null;
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      stream = null;
+      preview.srcObject = null;
+      startBtn.disabled = true;
+      stopBtn.disabled = true;
+      closeBtn.hidden = true;
     }
 
+    function discardRecording() {
+      generation++;
+      if (recorder && recorder.state !== 'inactive') recorder.stop();
+      recorder = null;
+      releaseCamera();
+      recordedFile = null;
+      recordedDuration = 0;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+      preview.removeAttribute('src');
+      preview.hidden = true;
+      preview.controls = false;
+      uploadBtn.disabled = true;
+      openBtn.disabled = uploading;
+    }
+
+    async function openCamera() {
+      if (uploading) return;
+      if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia
+          || typeof MediaRecorder === 'undefined') {
+        showError('Camera recording requires HTTPS and a supported camera-enabled browser. Gallery uploads are not allowed.');
+        return;
+      }
+      const mime = ['video/mp4', 'video/webm;codecs=vp8', 'video/webm'].find(type => MediaRecorder.isTypeSupported(type));
+      if (!mime) {
+        showError('This browser cannot record a supported video. Use another camera-enabled browser or device.');
+        return;
+      }
+      discardRecording();
+      const token = generation;
+      openBtn.disabled = true;
+      errorBox.hidden = true;
+      closeBtn.hidden = false;
+      status.textContent = 'Allow camera permission to begin. Your previous recording has been cleared.';
+      try {
+        const camera = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}
+        });
+        if (token !== generation || document.hidden) {
+          camera.getTracks().forEach(track => track.stop());
+          if (token === generation) {
+            discardRecording();
+            status.textContent = 'Camera paused while the page was hidden. Open it again to record.';
+          }
+          return;
+        }
+        stream = camera;
+        camera.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
+          if (stream === camera) {
+            discardRecording();
+            showError('Camera access ended. Open the camera and record again.');
+          }
+        }));
+        preview.hidden = false;
+        preview.autoplay = true;
+        preview.muted = true;
+        preview.srcObject = camera;
+        await preview.play();
+        if (token !== generation) return;
+        recorder = new MediaRecorder(camera, {mimeType: mime, videoBitsPerSecond: 2500000});
+        startBtn.disabled = false;
+        status.textContent = 'Camera ready. Start recording, turn the item to show all sides, then stop to preview.';
+      } catch (error) {
+        if (token !== generation) return;
+        discardRecording();
+        console.error('Activation camera failed:', error.name);
+        const messages = {
+          NotAllowedError: 'Camera permission was denied. Allow access in browser settings and try again.',
+          NotFoundError: 'No camera was found. Use a camera-enabled phone or computer.',
+          NotReadableError: 'Camera is unavailable or in use. Close other camera apps and try again.'
+        };
+        showError(messages[error.name] || 'Camera could not start. Try another camera-enabled browser or device.');
+      }
+    }
+
+    openBtn.addEventListener('click', openCamera);
+    closeBtn.addEventListener('click', () => {
+      discardRecording();
+      status.textContent = 'Recording cancelled. Open the camera to record again.';
+    });
+    startBtn.addEventListener('click', () => {
+      if (!recorder || recorder.state !== 'inactive' || !stream) return;
+      const token = generation;
+      const chunks = [];
+      let size = 0;
+      let failed = false;
+      const started = performance.now();
+      recorder.ondataavailable = event => {
+        if (token !== generation || !event.data.size) return;
+        size += event.data.size;
+        if (size > maxSize) {
+          failed = true;
+          discardRecording();
+          showError(`Recording exceeds ${Math.round(maxSize / 1024 / 1024)} MB. Record a shorter video.`);
+          return;
+        }
+        chunks.push(event.data);
+      };
+      recorder.onerror = event => {
+        if (token !== generation) return;
+        failed = true;
+        console.error('Activation recording failed:', event.error);
+        discardRecording();
+        showError('Recording failed. Please open the camera and try again.');
+      };
+      recorder.onstop = () => {
+        if (token !== generation || failed) return;
+        const duration = (performance.now() - started) / 1000;
+        const mime = recorder.mimeType.split(';')[0];
+        releaseCamera();
+        recorder = null;
+        openBtn.disabled = false;
+        if (!chunks.length || duration <= 0 || duration > maxDuration + 1) {
+          discardRecording();
+          showError('No valid recording was saved, or it exceeded the duration limit. Please record again.');
+          return;
+        }
+        recordedDuration = Math.min(duration, maxDuration);
+        recordedFile = new File(chunks, `item-${itemId}-recording.${mime === 'video/mp4' ? 'mp4' : 'webm'}`, {type: mime});
+        previewUrl = URL.createObjectURL(recordedFile);
+        preview.src = previewUrl;
+        preview.autoplay = false;
+        preview.controls = true;
+        preview.hidden = false;
+        uploadBtn.disabled = false;
+        openBtn.textContent = 'Retake Video';
+        status.textContent = `Recording saved (${Math.ceil(recordedDuration)} seconds). Preview it, or retake before submitting.`;
+      };
+      try {
+        recorder.start(250);
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        timer = setInterval(() => {
+          const elapsed = (performance.now() - started) / 1000;
+          status.textContent = `Recording: ${Math.floor(elapsed)} / ${maxDuration} seconds. Show the item from different sides.`;
+          if (elapsed >= maxDuration && recorder && recorder.state === 'recording') {
+            stopBtn.disabled = true;
+            clearInterval(timer);
+            recorder.stop();
+          }
+        }, 100);
+      } catch (error) {
+        discardRecording();
+        console.error('Could not start item recording:', error);
+        showError('Recording could not start. Open the camera and try again.');
+      }
+    });
+    stopBtn.addEventListener('click', () => {
+      if (recorder && recorder.state === 'recording') {
+        stopBtn.disabled = true;
+        clearInterval(timer);
+        recorder.stop();
+      }
+    });
+    function pauseCamera() {
+      if (stream || (openBtn.disabled && !uploading)) {
+        discardRecording();
+        status.textContent = 'Camera closed while the page was hidden. Open it again to record.';
+      }
+    }
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pauseCamera(); });
+    window.addEventListener('pagehide', () => {
+      pauseCamera();
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    });
+    form.closest('details').addEventListener('toggle', event => {
+      if (!event.target.open) pauseCamera();
+    });
+
     function submitVideo() {
-      const file = fileInput.files[0];
+      const file = recordedFile;
       errorBox.hidden = true;
       if (!file) {
-        showError('Please record a video or choose one from your device.');
+        showError('Please use the camera to record your item video before submitting.');
         return;
       }
       const allowedTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'];
       if (file.type && !allowedTypes.includes(file.type)) {
-        showError('Please choose an MP4, MOV, WEBM or M4V video.');
+        showError('Unsupported recording format. Please record again with a supported browser.');
         return;
       }
       if (file.size > Number(form.dataset.maxVideoSize)) {
-        showError('The video must be smaller than 200 MB.');
+        showError(`The recording must be smaller than ${Math.round(maxSize / 1024 / 1024)} MB.`);
         return;
       }
 
       uploadBtn.disabled = true;
+      uploading = true;
+      openBtn.disabled = true;
       progress.hidden = false;
       progressPct.textContent = '0%';
 
-      getDuration(file).then(function (duration) {
-        if (duration > Number(form.dataset.maxVideoDuration)) {
-          throw new Error('The verification video must be no longer than 60 seconds.');
+      Promise.resolve(recordedDuration).then(function (duration) {
+        if (!Number.isFinite(duration) || duration <= 0 || duration > Number(form.dataset.maxVideoDuration)) {
+          throw new Error(`The verification video must be no longer than ${maxDuration} seconds.`);
         }
         return fetch(`/items/${itemId}/activate/request-upload-url`, {
           method: 'POST',
@@ -488,6 +679,10 @@
     }
 
     form.addEventListener('submit', function (event) {
+      if (uploading) {
+        event.preventDefault();
+        return;
+      }
       if (!form.querySelector('input[name="object_name"]')) {
         event.preventDefault();
         submitVideo();

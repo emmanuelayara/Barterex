@@ -1,7 +1,7 @@
 """
 Temporary video storage for the "Activate for Trade" verification video.
 
-Seller records/selects a video in the browser -> this module mints a short-lived
+Seller records a video in the browser -> this module mints a short-lived
 SIGNED URL so the browser can PUT the file straight into Google Cloud Storage
 (the web upload never passes through the Barterex VPS). After admin approval,
 the durable worker transfers the object from GCS to YouTube in memory without
