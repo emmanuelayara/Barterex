@@ -268,7 +268,12 @@
               <div class="valuation-info">
                 <h3>{{ item.name }}</h3>
                 <div class="valuation-meta">{{ item.category }} · {{ item.condition }}</div>
-                {% if item.ai_estimated_value %}
+                {% if item.manual_verified_at %}
+                  <div class="valuation-estimate">Admin verified value: ᗸ{{ '{:,.0f}'.format(item.manual_verified_value) }}</div>
+                  <p class="activate-help">{{ 'Company-owned item: spendable credits after video publishing.' if item.manual_custody_choice == 'company' else 'Item stays with you: provisional credits after video publishing.' }}</p>
+                {% elif item.manual_review_requested %}
+                  <p class="activate-help">Manual review requested. Arrange physical verification with Barter Express. Activation and credits are blocked until the item passes.</p>
+                {% elif item.ai_estimated_value %}
                   <div class="valuation-estimate">🤖 Estimated value: ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</div>
                 {% elif item.verification_status == 'pending_valuation' %}
                   <div class="valuation-estimate pending">AI valuation running… refresh in a minute</div>
@@ -281,6 +286,7 @@
                     Video approved &middot; {{ 'publishing delayed' if video.status == 'publish_failed' else 'publishing in progress' }}
                   {% else %}
                   {{ {'valuation_only': 'Not yet submitted',
+                      'manual_review_pending': 'Awaiting manual physical verification',
                       'pending_activation': 'Video submitted · awaiting admin review'}[item.status] }}
                   {% endif %}
                 </div>
@@ -300,7 +306,20 @@
                 {% endif %}
               </div>
               <div class="valuation-actions">
-                {% if item.status == 'valuation_only' %}
+                {% if item.status == 'manual_review_pending' %}
+                  <form method="post" action="{{ url_for('items.choose_manual_custody', item_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label>After physical verification
+                      <select name="custody_choice" class="trade-input" required>
+                        <option value="">Choose an option</option>
+                        <option value="home" {% if item.manual_custody_choice == 'home' %}selected{% endif %}>Take my item home (provisional BXC)</option>
+                        <option value="company" {% if item.manual_custody_choice == 'company' %}selected{% endif %}>Transfer ownership to Barter Express (spendable BXC)</option>
+                      </select>
+                    </label>
+                    <label class="trade-checkbox"><input type="checkbox" name="consent" value="1" required>I agree to this choice. Company custody transfers ownership; credits are granted only after video approval and publishing.</label>
+                    <button type="submit" class="trade-submit-btn">Save custody choice</button>
+                  </form>
+                {% elif item.can_submit_activation_video() %}
                   <details class="trade-details">
                     <summary class="trade-this-btn">Trade This Item</summary>
                     <form method="POST" action="{{ url_for('items.trade_this_item', item_id=item.id) }}"
@@ -318,9 +337,14 @@
                       <div class="activate-error" role="alert" hidden></div>
                       <label class="trade-checkbox">
                         <input type="checkbox" name="ownership_confirmed" value="1" required>
+                        {% if item.manual_review_requested and item.manual_custody_choice == 'company' %}
+                        I confirm I transferred this item to Barter Express and the video shows the physically verified item
+                        {% else %}
                         I confirm I own this item and it matches the description/photos
+                        {% endif %}
                       </label>
-                      <input type="text" name="serial_number" placeholder="Serial number / IMEI (optional)" class="trade-input">
+                      <input type="text" name="serial_number" placeholder="Serial number / IMEI (optional)" class="trade-input"
+                             value="{{ item.serial_number or '' }}" {% if item.manual_review_requested %}readonly{% endif %}>
                       <button type="submit" class="trade-submit-btn activate-upload-btn">Upload video &amp; submit for review</button>
                     </form>
                   </details>

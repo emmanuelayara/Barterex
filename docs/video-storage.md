@@ -1,12 +1,61 @@
 # Verification video storage
 
-Activation requires a finite, positive saved AI valuation that rounds to at
-least 1 BXC. Video approval sets the marketplace value and credits provisional
-BXC using that same rounded amount, recording an activation ledger entry.
-Missing or invalid AI estimates block approval before publishing to YouTube;
-an admin-entered value is not a substitute. Repeating approval must not grant
+Normal activation requires a finite, positive saved AI valuation that rounds to
+at least 1 BXC. Successful video publishing sets the marketplace value and
+credits provisional BXC using that same rounded amount, recording an activation
+ledger entry. Missing or invalid AI estimates block normal approval; the separate
+manual-review workflow below uses a physically verified admin valuation instead.
+Repeating approval must not grant
 credits again. Admin approval queues publishing; failed publishing never grants
 credits or lists the item.
+
+## Camera-only item photos
+
+The upload form takes 6-15 JPEG photos from an in-page camera preview using
+`getUserMedia`, preferring the rear camera. There is no image file picker,
+gallery fallback or drag-and-drop import. Users can remove unclear captures
+and take replacements, choose a primary photo, and show different sides,
+damage, serial numbers and accessories. Denied/missing camera access blocks
+photo collection; users must grant permission or use a camera-enabled device.
+Production requires HTTPS and browser camera permission. Camera tracks stop
+when closed, when the page is hidden/left, or when valuation submission starts.
+
+This is a capture-only **form policy**, not proof of authenticity: browsers
+can expose virtual cameras, users can photograph another image, and crafted
+HTTP clients can still send image bytes. Do not treat camera capture as a
+replacement for activation video review and physical inspection. Server-side
+image count/type/content validation remains in place; no database changes are
+required for camera capture.
+
+## Optional manual valuation
+
+The upload valuation modal offers **Submit for manual review instead**, including
+when an AI estimate cannot be obtained. These items enter `manual_review_pending`;
+no AI value is accepted, no credits are granted, and the item is not listed.
+Users select a custody option in **Valuations** and explicitly consent before
+staff can record physical inspection in **Manual Physical Review**
+(`items.manual_review` permission).
+
+- **Take home:** inspection records return to the owner; ownership stays with
+  them. Published, approved video activation grants provisional BXC.
+- **Company custody:** passing inspection transfers ownership to Barter Express
+  and creates clearing inventory in `awaiting_activation`, without credits.
+  The original uploader can still submit the verified item's video. Successful
+  publishing grants spendable BXC to that uploader and releases the company item
+  for resale. A rejected video may be replaced; it does not undo the consented
+  ownership transfer or grant credits.
+
+Both paths require recorded identity, condition and serial checks and a positive
+admin value (rounding to at least 1 BXC). Failed physical checks remain pending
+with feedback and block video activation. The physical serial identifier cannot
+be changed during video submission. Both paths still require video review,
+unlisted publishing and exactly one activation credit entry. Company inventory
+can be purchased through the reservation flow with spendable BXC or eligible
+backing assets; settlement does not pay its former owner a second time.
+
+Deploy `add_manual_item_review` after `add_stolen_item_reports`. It adds manual
+valuation/consent fields and allows direct acquisitions without reservation
+references. Do not downgrade while manual review records or direct acquisitions exist.
 
 ## Durable unlisted publishing
 
@@ -24,7 +73,7 @@ not necessarily processed or activated.
 
 The worker saves the resumable session before sending bytes. After a crash it
 probes the same session and resumes at YouTube's acknowledged offset. The
-YouTube ID is committed separately before activation. Activation, provisional
+YouTube ID is committed separately before activation. Activation, custody-appropriate
 credits, final status, audit, and notification queuing then commit together.
 Temporary cloud deletion runs only after approval/rejection commits and is
 retried independently, with a maximum six-hour delay between cleanup attempts.

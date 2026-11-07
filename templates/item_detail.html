@@ -972,6 +972,9 @@
             <div class="item-meta">
               <div class="meta-tag">⚡ {{ item.condition }}</div>
               <div class="meta-tag loc">📍 {{ item.location }}</div>
+              {% if item.owner_type == 'barterex' %}
+              <div class="meta-tag">Company inventory &middot; physically verified</div>
+              {% endif %}
             </div>
           </div>
 
@@ -1005,7 +1008,7 @@
                   <strong>🔖 You're acquiring this item</strong>
                   <span class="rb-line">Backed by ᗸ{{ '{:,.0f}'.format(active_reservation.provisional_credits_used) }} of your items</span>
                   <span class="rb-line">Settlement ends {{ active_reservation.expires_at.strftime('%b %d, %I:%M %p') }}</span>
-                  <span class="rb-note">Bring your chosen item(s) in for verification. The seller does the same with this item, and both must pass to complete the trade.</span>
+                  <span class="rb-note">{% if item.owner_type == 'barterex' %}This company-owned item is already verified. Bring your chosen backing items for verification to complete the purchase.{% else %}Bring your chosen item(s) in for verification. The seller does the same with this item, and both must pass to complete the trade.{% endif %}</span>
                 </div>
                 <form method="POST" action="{{ url_for('marketplace.cancel_item_reservation', item_id=item.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

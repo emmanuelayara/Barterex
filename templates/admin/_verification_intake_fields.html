@@ -24,7 +24,7 @@
     Serial check
     <select name="serial_check" required>
       <option value="">Select check result</option>
-      <option value="matched">Matches submitted number</option>
+      <option value="matched">{{ 'Record physically observed number' if inspection_item.manual_review_requested and not inspection_item.serial_number else 'Matches submitted number' }}</option>
       <option value="mismatch">Does not match</option>
       <option value="not_applicable">Not applicable / no serial</option>
     </select>

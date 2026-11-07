@@ -109,6 +109,9 @@
     </div>
 
     <div class="target-banner">Target: ᗸ{{ '{:,.0f}'.format(item.value) }} for "{{ item.name }}"</div>
+    {% if item.owner_type == 'barterex' %}
+    <p class="action-hint">Company inventory is already physically verified. Spendable BXC completes this purchase immediately; item-backed purchases wait for your backing items to pass inspection.</p>
+    {% endif %}
 
     <form method="POST" action="{{ url_for('marketplace.reserve_item', item_id=item.id) }}" id="backingForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -145,11 +148,16 @@
         <label class="surrender-consent" id="surrenderConsentLabel">
           <input type="checkbox" name="surrender_consent" value="yes" id="surrenderConsent">
           I agree that each selected backing item that passes physical verification will become Barter Express
+          {% if item.owner_type == 'barterex' %}
+          property for resale. This company item is already verified. My backing items' verified BXC value
+          will be credited to me and the displayed purchase price deducted when settlement completes.
+          {% else %}
           property for resale if "{{ item.name }}" also passes inspection. Its verified BXC value will be credited
           to me; ᗸ{{ '{:,.0f}'.format(item.value) }} for the displayed purchase price will be held until this
           reservation resolves. If "{{ item.name }}" fails inspection, you will ask me again before transferring
           title. If I decline or do not respond within 24 hours, my verified backing item(s) remain mine and their
           original provisional BXC is restored.
+          {% endif %}
         </label>
         {% endif %}
       </div>

@@ -309,7 +309,7 @@
               {% endif %}
               {% if reservation.status == 'active' %}
                 <div style="margin-top:6px;">
-                  <span class="verify-pill {{ reservation.seller_item_verification_status }}">Seller's item: {{ reservation.seller_item_verification_status|replace('_',' ') }}</span>
+                  <span class="verify-pill {{ reservation.seller_item_verification_status }}">{{ 'Company inventory (preverified)' if reservation.item and reservation.item.owner_type == 'barterex' else "Seller's item" }}: {{ reservation.seller_item_verification_status|replace('_',' ') }}</span>
                   {% for asset in reservation.backing_assets %}
                     <span class="verify-pill {{ asset.verification_status }}">
                       {{ asset.item.name if asset.item else 'Your item' }}:
@@ -357,7 +357,10 @@
                   </button>
                 </form>
               {% endif %}
-              {% if reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted'
+              {% if reservation.status == 'active' and (reservation.seller_item_verification_status == 'not_submitted'
+                    or (reservation.seller_item_verification_status == 'passed' and reservation.item
+                        and reservation.item.owner_type == 'barterex' and reservation.item.user_id is none
+                        and reservation.item.clearing_inventory and reservation.item.clearing_inventory.status == 'held_for_resale'))
                     and reservation.backing_assets|selectattr('verification_status', 'equalto', 'not_submitted')|list|length == reservation.backing_assets|length %}
                 <form method="POST" action="{{ url_for('marketplace.cancel_item_reservation', item_id=reservation.item_id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

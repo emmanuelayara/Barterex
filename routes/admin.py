@@ -165,6 +165,8 @@ def inject_admin_context():
         ).count()
     if admin_can('items.reconfirmation'):
         counts['reconfirmations'] = Item.query.filter_by(status='reconfirmation_review').count()
+    if admin_can('items.manual_review'):
+        counts['manual_reviews'] = Item.query.filter_by(status='manual_review_pending').count()
     if admin_can('settlement.manage'):
         counts['settlements'] = Reservation.query.filter(_settlement_queue_filter()).count()
     if admin_can('orders.manage'):
@@ -210,6 +212,82 @@ def _settlement_queue_filter():
     )
 
 # ==================== ROUTES ====================
+
+@admin_bp.route('/manual-review')
+@admin_login_required
+def manual_review_queue():
+    items = Item.query.filter_by(status='manual_review_pending').order_by(Item.id.asc()).all()
+    return render_template('admin/manual_review.html', items=items)
+
+
+@admin_bp.route('/manual-review/<int:item_id>/verify', methods=['POST'])
+@admin_login_required
+@handle_errors
+@safe_database_operation('verify_manual_item')
+def verify_manual_item(item_id):
+    import math
+    from flask_wtf import FlaskForm
+    from models import AuditLog
+    from services.verification_intake_service import (
+        create_verification_intake, record_custody_handoff, IntakeValidationError,
+    )
+    if not FlaskForm().validate_on_submit():
+        raise ValidationError('Invalid or expired form token.')
+    item = Item.query.filter_by(id=item_id).with_for_update().first_or_404()
+    if item.status != 'manual_review_pending' or not item.manual_review_requested:
+        raise ValidationError('This item is not awaiting manual physical review.')
+    if not item.manual_custody_consent_at or item.manual_custody_choice not in ('home', 'company'):
+        raise ValidationError('The user must save their custody choice and consent before verification.')
+    outcome = request.form.get('outcome')
+    try:
+        value = float(request.form.get('value', '')) if outcome == 'passed' else None
+        if outcome == 'passed' and (not math.isfinite(value) or round(value) < 1):
+            raise ValueError()
+    except ValueError:
+        raise ValidationError('Enter a finite positive verified value of at least 1 BXC.')
+    try:
+        details = _verification_intake_details_from_form()
+        if outcome == 'passed' and not item.serial_number and details.get('serial_check') == 'matched':
+            item.serial_number = (details.get('observed_serial_number') or '').strip() or None
+        intake = create_verification_intake(
+            item, session['admin_id'], details,
+            workflow_type='manual_valuation', outcome=outcome,
+        )
+        if outcome == 'failed' or item.manual_custody_choice == 'home':
+            record_custody_handoff(
+                intake, session['admin_id'], 'Returned to owner', item.user.username,
+                'Physical review completed; item returned to its owner.',
+            )
+    except IntakeValidationError as error:
+        raise ValidationError(str(error))
+    if outcome == 'passed':
+        item.manual_verified_value = int(round(value))
+        item.manual_verified_at = datetime.utcnow()
+        item.status = 'valuation_only'
+        item.rejection_reason = None
+        if item.manual_custody_choice == 'company':
+            source_user_id = item.user_id
+            db.session.add(ClearingInventoryItem(
+                item_id=item.id, source_user_id=source_user_id,
+                acquisition_value=item.manual_verified_value, status='awaiting_activation',
+            ))
+            item.user_id = None
+            item.owner_type = 'barterex'
+    else:
+        item.rejection_reason = request.form.get('intake_notes', '').strip() or 'Physical verification failed.'
+    db.session.add(AuditLog(
+        admin_id=session['admin_id'], action_type='manual_item_verification',
+        target_type='item', target_id=item.id,
+        description=f'Manual verification {outcome}; custody choice {item.manual_custody_choice}. No credits granted.',
+    ))
+    notify_user(
+        item.uploaded_by_id, f"Manual physical review of '{item.name}': {outcome}. "
+        + ('You can now submit your activation video. Credits follow successful publishing.' if outcome == 'passed'
+           else 'Your item has not been activated. Contact our team for next steps.'),
+        subject='Manual physical review update', cta_endpoint='user.my_valuations', cta_label='My Valuations',
+    )
+    flash('Physical review recorded. No credits have been granted.', 'success')
+    return redirect(url_for('admin.manual_review_queue'))
 
 @admin_bp.route('/stolen-reports')
 @admin_login_required
@@ -1297,6 +1375,8 @@ def approve_item(item_id):
         item = Item.query.get_or_404(item_id)
 
         # CRITICAL: Check if item is already approved to prevent double-crediting
+        if item.manual_review_requested:
+            raise ValidationError('Use Manual Physical Review for this item. Video publishing is required before activation.')
         if item.is_approved:
             logger.warning(f"Attempted to approve already-approved item - Item ID: {item_id}, Name: {item.name}, Admin ID: {session.get('admin_id')}")
             flash(f"Item '{item.name}' is already approved.", "info")
@@ -1461,6 +1541,9 @@ def reject_item(item_id):
         
         item = Item.query.get_or_404(item_id)
         reason = request.form.get("rejection_reason", "").strip()
+
+        if item.manual_review_requested:
+            raise ValidationError('Use Manual Physical Review or reservation verification for this item.')
 
         if not reason:
             logger.warning(f"Item rejection without reason - Item ID: {item_id}, Admin ID: {session.get('admin_id')}")
@@ -1696,7 +1779,7 @@ def reject_activation_video(video_id):
 
     if item:
         notify_user(
-            item.user_id,
+            item.activation_submitter_id(),
             f"⚠️ The verification video for '{item.name}' was not approved. Reason: {reason}. "
             f"Open it from My Valuations and submit a replacement video.",
             subject=f"The verification video for '{item.name}' was not approved",
@@ -2144,6 +2227,10 @@ def update_item_status():
 
         item = Item.query.get_or_404(item_id)
         old_status = item.status
+        if item.manual_review_requested and item.status in Item.LIFECYCLE_STATUSES:
+            logger.warning('Manual item %s status override refused', item.id)
+            flash('Complete physical review and video publishing instead of changing this item status.', 'danger')
+            return redirect(url_for('admin.admin_dashboard'))
         item.status = new_status
         db.session.commit()
         
@@ -2217,6 +2304,7 @@ def fix_missing_credits():
         items_to_fix = Item.query.filter(
             Item.is_approved == True,
             Item.credited == False,
+            Item.manual_review_requested == False,
             Item.is_available == True
         ).all()
 

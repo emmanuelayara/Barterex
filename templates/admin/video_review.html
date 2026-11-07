@@ -72,7 +72,10 @@
               <div class="adm-row-meta">
                 <span><i class="bi bi-person-circle"></i> Submitted by {{ video.uploaded_by.username if video.uploaded_by else 'unknown' }}</span>
                 <span><i class="bi bi-clock"></i> {{ video.submitted_at.strftime('%b %d, %Y %I:%M %p') }}</span>
-                {% if video.item %}<span><i class="bi bi-stars"></i> AI activation value ᗸ{{ '{:,.0f}'.format(video.item.ai_estimated_value) if video.item.ai_estimated_value else 'Unavailable - approval blocked' }}</span>{% endif %}
+                {% if video.item %}
+                  {% set activation_value = video.item.manual_verified_value if video.item.manual_review_requested else video.item.ai_estimated_value %}
+                  <span><i class="bi bi-stars"></i> {{ 'Physically verified' if video.item.manual_review_requested else 'AI' }} activation value ᗸ{{ '{:,.0f}'.format(activation_value) if activation_value else 'Unavailable - approval blocked' }}</span>
+                {% endif %}
               </div>
             </div>
 

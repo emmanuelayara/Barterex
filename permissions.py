@@ -13,6 +13,7 @@ PERMISSION_GROUPS = [
     ('Item Review', 'bi-search', [
         ('items.review', 'Review items', 'View the item queue and approve or reject submitted items'),
         ('items.video_review', 'Video review', 'Approve or reject activation videos'),
+        ('items.manual_review', 'Manual physical review', 'Physically verify and value items whose users declined AI valuation'),
         ('items.reconfirmation', 'Reconfirmations', 'Review failed-seller title reconfirmations'),
         ('items.manage', 'Manage items', 'Delete items and change or fix item statuses'),
     ]),
@@ -64,6 +65,8 @@ SUPER_ADMIN_ONLY = '__super_admin__'
 
 ENDPOINT_PERMISSIONS = {
     # Item review
+    'admin.manual_review_queue': 'items.manual_review',
+    'admin.verify_manual_item': 'items.manual_review',
     'admin.approve_items': 'items.review',
     'admin.approve_item': 'items.review',
     'admin.reject_item': 'items.review',

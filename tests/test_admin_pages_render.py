@@ -87,6 +87,46 @@ class AdminPagesRenderTests(unittest.TestCase):
         response = app.test_client().get('/admin/login')
         self.assertEqual(response.status_code, 200)
 
+    def test_top_navigation_only_has_dashboard_and_logout(self):
+        from html.parser import HTMLParser
+        from flask import url_for
+
+        class NavigationLinks(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.in_nav = False
+                self.links = []
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'nav' and attrs.get('class') == 'admin-navbar':
+                    self.in_nav = True
+                if self.in_nav and tag == 'a' and attrs.get('class') == 'nav-link':
+                    self.links.append(attrs.get('href'))
+
+            def handle_endtag(self, tag):
+                if tag == 'nav':
+                    self.in_nav = False
+
+        client = self._client()
+        with app.test_request_context():
+            expected = [url_for('admin.admin_dashboard'), url_for('admin.admin_logout')]
+            shortcut_urls = [
+                url_for('admin.stolen_reports'),
+                url_for('admin.clearing_inventory'),
+                url_for('admin.verification_intake_log'),
+            ]
+        for path in ('/admin/dashboard', '/admin/clearing-inventory'):
+            with self.subTest(path=path):
+                response = client.get(path)
+                self.assertEqual(response.status_code, 200)
+                parser = NavigationLinks()
+                parser.feed(response.get_data(as_text=True))
+                self.assertEqual(parser.links, expected)
+                if path == '/admin/dashboard':
+                    for shortcut in shortcut_urls:
+                        self.assertIn(f'href="{shortcut}"', response.get_data(as_text=True))
+
     def test_preverification_route_is_removed(self):
         response = self._client().get('/admin/pre-verification')
         self.assertEqual(response.status_code, 404)
@@ -148,6 +188,7 @@ class AdminPagesRenderTests(unittest.TestCase):
         expected = {
             'items': 1, 'videos': 2, 'reconfirmations': 1,
             'settlements': 3, 'orders': 4, 'appeals': 1, 'messages': 3, 'stolen_reports': 0,
+            'manual_reviews': 0,
         }
         with app.test_request_context('/admin/dashboard'):
             from flask import session

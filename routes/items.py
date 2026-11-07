@@ -116,6 +116,25 @@ def report_stolen_item(item_id):
 
 # ==================== HELPER FUNCTIONS ====================
 
+@items_bp.route('/items/<int:item_id>/manual-custody', methods=['POST'])
+@login_required
+@handle_errors
+@safe_database_operation('choose_manual_custody')
+def choose_manual_custody(item_id):
+    from flask_wtf import FlaskForm
+    if not FlaskForm().validate_on_submit():
+        raise ValidationError('Invalid or expired form token. Refresh the page and try again.')
+    item = Item.query.filter_by(id=item_id, user_id=current_user.id).with_for_update().first_or_404()
+    choice = request.form.get('custody_choice')
+    if item.status != 'manual_review_pending' or not item.manual_review_requested:
+        raise ValidationError('This item is not awaiting manual physical review.')
+    if choice not in ('home', 'company') or request.form.get('consent') != '1':
+        raise ValidationError('Choose custody and confirm your consent.')
+    item.manual_custody_choice = choice
+    item.manual_custody_consent_at = datetime.utcnow()
+    flash('Custody choice saved. Bring your item for physical verification; no credits have been granted.', 'success')
+    return redirect(url_for('user.my_valuations'))
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'})
 
@@ -279,6 +298,7 @@ def upload_item():
                 flash(error, 'danger')
         
         if form.validate_on_submit() and not image_validation_errors:
+            manual_review = request.form.get('manual_review') == '1'
             new_item = Item(
                 name=form.name.data,
                 description=form.description.data,
@@ -290,7 +310,8 @@ def upload_item():
                 location=current_user.state,
                 is_available=False,
                 is_approved=False,
-                status='valuation_only'  # private "My Valuations" stage - no commitment, no admin queue, no credits yet
+                status='manual_review_pending' if manual_review else 'valuation_only',
+                manual_review_requested=manual_review,
             )
             db.session.add(new_item)
             db.session.flush()
@@ -439,27 +460,38 @@ def upload_item():
                 usage_duration=form.usage_duration.data,
                 category=form.category.data,
             )
+            if manual_review:
+                accepted_ai_fields = None
 
             if accepted_ai_fields:
                 for field_name, field_value in accepted_ai_fields.items():
                     setattr(new_item, field_name, field_value)
                 new_item.ai_valuated_at = datetime.utcnow()
-            elif valuator_enabled():
+            elif not manual_review and valuator_enabled():
                 new_item.verification_status = 'pending_valuation'   # My Valuations shows "AI valuation running..."
 
             try:
+                if manual_review:
+                    notify_admins(
+                        'items.manual_review', 'Manual physical review requested',
+                        f'{current_user.username} requested manual valuation for {new_item.name}. No credits have been granted.',
+                        cta_endpoint='admin.manual_review_queue', cta_label='Review Items',
+                    )
                 db.session.commit()
                 logger.info(f"Item saved to My Valuations - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")
 
                 # Only queue the background valuator when there's no already-accepted preview result -
                 # never pay for a second AI valuation of the same submission.
-                if not accepted_ai_fields:
+                if not accepted_ai_fields and not manual_review:
                     try:
                         _upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
                         start_ai_valuation(new_item, current_user, _upload_root)
                     except Exception as ai_err:
                         logger.warning(f"Could not start AI valuation for item {new_item.id}: {ai_err}")
 
+                if manual_review:
+                    flash('Item submitted for manual review. Arrange physical verification with Barter Express before activation.', 'success')
+                    return redirect(url_for('user.my_valuations'))
                 flash(f'✅ Success! Your item was successfully saved to My Valuations with {len(uploaded_images)} image(s). '
                       f'When you\'re ready to exchange it, open it from My Valuations and select "Trade This Item".', "success")
                 return redirect(url_for('user.my_valuations'))
@@ -608,16 +640,25 @@ def trade_this_item(item_id):
     """
     Submits an item and its activation video directly to the admin video-review queue.
     """
-    item = Item.query.filter_by(
-        id=item_id, user_id=current_user.id,
+    item = Item.query.filter(
+        Item.id == item_id,
+        db.or_(Item.user_id == current_user.id, db.and_(
+            Item.manual_review_requested.is_(True), Item.uploaded_by_id == current_user.id,
+            Item.manual_custody_choice == 'company',
+        )),
     ).with_for_update().first_or_404()
 
-    if item.status != 'valuation_only':
+    if not item.can_submit_activation_video():
         flash('This item is not available to trade right now.', 'info')
         return redirect(url_for('user.my_valuations'))
 
     if not request.form.get('ownership_confirmed'):
-        flash('Please confirm you own this item before submitting it for trade.', 'danger')
+        flash('Please confirm the item ownership declaration before submitting it for trade.', 'danger')
+        return redirect(url_for('user.my_valuations'))
+
+    submitted_serial = (request.form.get('serial_number') or '').strip() or None
+    if item.manual_review_requested and submitted_serial != item.serial_number:
+        flash('The serial number must match the physical inspection. Contact the review team for corrections.', 'danger')
         return redirect(url_for('user.my_valuations'))
 
     object_name = (request.form.get('object_name') or '').strip()
@@ -632,7 +673,8 @@ def trade_this_item(item_id):
         return redirect(url_for('user.my_valuations'))
 
     item.ownership_confirmed = True
-    item.serial_number = (request.form.get('serial_number') or '').strip() or None
+    if not item.manual_review_requested:
+        item.serial_number = submitted_serial
     item.status = 'pending_activation'
     item.rejection_reason = None
     db.session.add(ItemVideo(
@@ -666,10 +708,14 @@ def request_activation_upload_url(item_id):
     """
     from services import video_service
 
-    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first()
+    item = Item.query.filter(Item.id == item_id, db.or_(
+        Item.user_id == current_user.id,
+        db.and_(Item.manual_review_requested.is_(True), Item.uploaded_by_id == current_user.id,
+                Item.manual_custody_choice == 'company'),
+    )).first()
     if not item:
         return jsonify({'success': False, 'error': 'Item not found.'}), 404
-    if item.status != 'valuation_only':
+    if not item.can_submit_activation_video():
         return jsonify({'success': False, 'error': 'This item is not ready for a verification video.'}), 400
 
     content_type = (request.get_json(silent=True) or {}).get('content_type', 'video/mp4')

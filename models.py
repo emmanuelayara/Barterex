@@ -317,15 +317,24 @@ class SecuritySettings(db.Model):
 
 class Item(db.Model):
     def activation_credit_amount(self):
-        """Use the saved AI estimate for listing and provisional-credit activation."""
+        """Use the accepted AI estimate or physically verified manual value."""
         import math
 
-        value = self.ai_estimated_value
+        if self.manual_review_requested:
+            if self.manual_verified_at is None or not any(
+                intake.workflow_type == 'manual_valuation' and intake.outcome == 'passed'
+                for intake in self.verification_intakes
+            ):
+                raise ValueError('Physical verification is required before manual-review activation.')
+            value = self.manual_verified_value
+        else:
+            value = self.ai_estimated_value
         if value is None or not math.isfinite(value) or value <= 0:
-            raise ValueError('A valid AI valuation is required before this item can be activated.')
+            raise ValueError('A valid verified valuation is required before this item can be activated.' if self.manual_review_requested
+                             else 'A valid AI valuation is required before this item can be activated.')
         amount = int(round(value))
         if amount <= 0:
-            raise ValueError('The AI valuation must round to at least 1 BXC before activation.')
+            raise ValueError('The valuation must round to at least 1 BXC before activation.')
         return amount
 
     id = db.Column(db.Integer, primary_key=True)
@@ -392,7 +401,20 @@ class Item(db.Model):
 
     # --- Staged non-custody lifecycle (valuation -> video review -> activation) ---
     # Legacy pre-verification statuses are normalized by the matching migration.
-    LIFECYCLE_STATUSES = ('valuation_only', 'pending_activation')
+    LIFECYCLE_STATUSES = ('valuation_only', 'manual_review_pending', 'pending_activation')
+    manual_review_requested = db.Column(db.Boolean, nullable=False, default=False)
+    manual_verified_value = db.Column(db.Float, nullable=True)
+    manual_verified_at = db.Column(db.DateTime, nullable=True)
+    manual_custody_choice = db.Column(db.String(20), nullable=True)
+    manual_custody_consent_at = db.Column(db.DateTime, nullable=True)
+
+    def can_submit_activation_video(self):
+        return self.status == 'valuation_only' and (
+            not self.manual_review_requested or self.manual_verified_at is not None
+        )
+
+    def activation_submitter_id(self):
+        return self.uploaded_by_id if self.manual_custody_choice == 'company' else self.user_id
     ownership_confirmed = db.Column(db.Boolean, default=False)
     serial_number = db.Column(db.String(100), nullable=True)  # serial/IMEI, where applicable
     activated_at = db.Column(db.DateTime, nullable=True)       # when "Activate for Trade" completed (video approved)
@@ -758,9 +780,9 @@ class ClearingInventoryItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False, unique=True)
-    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=False)
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservation.id'), nullable=True)
     reservation_asset_id = db.Column(
-        db.Integer, db.ForeignKey('reservation_asset.id'), nullable=False, unique=True
+        db.Integer, db.ForeignKey('reservation_asset.id'), nullable=True, unique=True
     )
     source_user_id = db.Column(
         db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True

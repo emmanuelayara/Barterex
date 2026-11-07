@@ -528,7 +528,10 @@ def my_valuations():
     try:
         page = request.args.get('page', 1, type=int)
         items = Item.query.filter(
-            Item.user_id == current_user.id,
+            db.or_(Item.user_id == current_user.id, db.and_(
+                Item.manual_review_requested.is_(True), Item.uploaded_by_id == current_user.id,
+                Item.manual_custody_choice == 'company',
+            )),
             Item.status.in_(Item.LIFECYCLE_STATUSES)
         ).options(joinedload(Item.images)).order_by(Item.id.desc()).paginate(page=page, per_page=10)
         from services.video_service import (

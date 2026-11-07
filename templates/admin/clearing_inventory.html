@@ -45,7 +45,7 @@
                 <td>{{ entry.item.category if entry.item else '—' }}</td>
                 <td>{{ entry.source_user.username if entry.source_user else '—' }}</td>
                 <td>ᗸ{{ '{:,.0f}'.format(entry.acquisition_value) }}</td>
-                <td>#{{ entry.reservation_id }}</td>
+                <td>{{ '#' ~ entry.reservation_id if entry.reservation_id else 'Manual acquisition' }}</td>
                 <td>{{ entry.acquired_at.strftime('%b %d, %Y %I:%M %p') }}</td>
                 <td><span class="adm-pill info">{{ entry.status|replace('_', ' ')|title }}</span></td>
               </tr>

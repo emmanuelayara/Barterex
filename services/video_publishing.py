@@ -240,8 +240,9 @@ def _publish(video_id, token):
              publish_error=None, publish_next_attempt_at=None)
     _audit(video, 'approve_activation_video', f'Unlisted video published: {video.youtube_url}')
     notify_user(
-        video.item.user_id,
-        f"'{video.item.name}' is now live. {amount:,} provisional BXC was added to your account. "
+        video.item.activation_submitter_id(),
+        f"'{video.item.name}' is now live. {amount:,} "
+        f"{'spendable' if video.item.manual_custody_choice == 'company' else 'provisional'} BXC was added to your account. "
         f'Watch the item video: {video.youtube_url}',
         subject=f"'{video.item.name}' is now live on the marketplace",
         cta_endpoint='user.user_items', cta_label='View My Items', notification_type='listing',

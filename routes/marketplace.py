@@ -318,7 +318,16 @@ def reserve_item(item_id: int) -> Response:
         logger.info(f"Reservation failed - Item: {item_id}, User: {current_user.username}, Reason: {error}")
         flash(error, 'danger')
         return redirect(url_for('marketplace.choose_backing_assets', item_id=item_id))
-    if funding_mode == 'spendable':
+    if reservation.status == 'completed':
+        flash(f"'{item.name}' was purchased with spendable BXC. Your order is ready for processing.", 'success')
+        return redirect(url_for('user.user_orders'))
+    if item.owner_type == 'barterex':
+        flash(
+            f"'{item.name}' is already physically verified and is on hold for {RESERVATION_HOLD_HOURS} hours. "
+            "Bring your chosen backing items for inspection to complete the purchase.",
+            'success',
+        )
+    elif funding_mode == 'spendable':
         flash(
             f"'{item.name}' is on hold for {RESERVATION_HOLD_HOURS} hours. Your spendable BXC is held "
             "until the requested item passes inspection.",
@@ -345,7 +354,7 @@ def cancel_item_reservation(item_id: int) -> Response:
     if error:
         flash(error, 'danger')
     else:
-        flash("Reservation cancelled - your provisional credits were refunded.", 'info')
+        flash("Reservation cancelled - held BXC was refunded and backing items were released.", 'info')
     return redirect(request.referrer or url_for('marketplace.view_item', item_id=item_id))
 
 

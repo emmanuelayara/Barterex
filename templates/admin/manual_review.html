@@ -1,0 +1,22 @@
+{% extends 'admin_base.html' %}
+{% block title %}Manual physical review{% endblock %}
+{% block content %}
+<div class="adm-page">
+  <div class="adm-head"><div><h1>Manual physical review {{ pending_badge('manual_reviews') }}</h1>
+    <p>Inspect the actual item and confirm identity before recording a value. No credits or listing until video publishing succeeds.</p></div></div>
+  {% for item in items %}
+  <article class="adm-panel">
+    <div class="adm-panel-head"><div><h2>{{ item.name }} &middot; {{ item.item_number }}</h2>
+      <p>{{ item.user.username }} &middot; {{ item.description }}</p>
+      <p>User choice: {{ item.manual_custody_choice or 'Not selected' }}. Company choice transfers ownership; home choice returns the item to its owner.</p></div></div>
+    <form method="post" action="{{ url_for('admin.verify_manual_item', item_id=item.id) }}" class="adm-panel-body">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% with inspection_item=item %}{% include 'admin/_verification_intake_fields.html' %}{% endwith %}
+      <label>Physically verified value (BXC)<input type="number" name="value" min="1" step="1" class="form-control"></label>
+      <label>Outcome<select name="outcome" class="form-select" required><option value="passed">Passed</option><option value="failed">Failed</option></select></label>
+      <button type="submit" class="adm-btn primary">Record physical review</button>
+    </form>
+  </article>
+  {% else %}<p>No items awaiting manual physical review.</p>{% endfor %}
+</div>
+{% endblock %}

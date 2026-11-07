@@ -310,9 +310,11 @@ run_app "$VENV/bin/flask" --app app:app db current
 run_app "$VENV/bin/flask" --app app:app db heads
 ```
 
-The current revision should match the deployed migration head. This release's
-queue migration is `add_durable_video_publishing`, following
-`remove_item_preverification_stage`. Do not use `db stamp` to bypass a failed
+The current revision should match the deployed migration head. The latest revision
+is `add_manual_item_review`, following `add_stolen_item_reports`; it adds manual
+physical valuation, custody consent and direct company acquisitions. The queue
+migration remains `add_durable_video_publishing`, following
+`remove_preverify_20261030`. Do not use `db stamp` to bypass a failed
 migration, and do not call `db.create_all()` as a replacement.
 
 ## 7. Check production Google access before opening the website
@@ -398,6 +400,10 @@ Use a controlled production account and test item. Use the normal valuation
 flow; the local manual 500-BXC test override is not part of this deployment.
 
 - [ ] Open the HTTPS site from a real phone and submit a short item video.
+- [ ] In Upload, allow camera access and take 6-15 photos from different sides.
+      Confirm there is no gallery picker, photos can be removed/retaken, and
+      denying camera access prevents collecting photos. This form policy is
+      not proof of authenticity; video review and physical checks remain required.
 - [ ] Browser upload to GCS succeeds; admin preview plays.
 - [ ] Admin approval returns promptly and queues the job.
 - [ ] Worker progresses through uploading and processing.
@@ -412,6 +418,15 @@ flow; the local manual 500-BXC test override is not part of this deployment.
 - [ ] On a controlled upload, restarting the worker resumes saved progress
       without duplicate uploads or credits; lease recovery can take five minutes.
 - [ ] In a scheduled reboot test, verify web and worker start automatically.
+- [ ] Submit a separate item with **Submit for manual review instead**. Confirm
+      it is neither listed nor credited and cannot submit an activation video
+      before passing **Manual Physical Review**.
+- [ ] Test both consented custody choices: take-home activation credits provisional
+      BXC; company acquisition credits spendable BXC only after video publishing.
+      Neither physical pass alone grants credits. Assign `items.manual_review`
+      to staff who perform this inspection.
+- [ ] Purchase the activated company item through Reservations. Confirm settlement
+      transfers ownership to the buyer without paying the former owner again.
 
 Do not declare production ready just because a local test worked.
 Unlisted is link-accessible, not private or restricted to your website.

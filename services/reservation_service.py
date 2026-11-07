@@ -82,6 +82,14 @@ def is_item_in_custody(item):
     ).scalar()
 
 
+def _is_company_inventory_item(item):
+    """Whether an item belongs to previously acquired company resale inventory."""
+    if not item or item.owner_type != 'barterex' or item.user_id is not None:
+        return False
+    inventory_item = ClearingInventoryItem.query.filter_by(item_id=item.id).first()
+    return bool(inventory_item and inventory_item.status == 'held_for_resale')
+
+
 def pending_physical_verification_item_ids():
     """
     Subquery of item ids reserved by another user whose owner still has them and
@@ -754,9 +762,10 @@ def create_reservation(
         return _reject_reservation(
             "Confirm the title-transfer terms for your backing items."
         )
-    if item.owner_type != 'user' or item.user_id is None:
+    company_inventory_item = _is_company_inventory_item(item)
+    if not company_inventory_item and (item.owner_type != 'user' or item.user_id is None):
         return _reject_reservation("This item is not owned by an eligible user.")
-    if item.user_id == user.id:
+    if item.user_id is not None and item.user_id == user.id:
         return _reject_reservation("You can't acquire your own item.")
     if not item.is_approved or not item.is_available:
         return _reject_reservation("This item is no longer available.")
@@ -832,6 +841,16 @@ def create_reservation(
             ),
             status='active',
             expires_at=expires_at,
+            seller_item_verification_status=(
+                'passed' if company_inventory_item else 'not_submitted'
+            ),
+            seller_item_verified_at=(
+                datetime.utcnow() if company_inventory_item else None
+            ),
+            seller_item_verification_notes=(
+                'Previously physically verified as company-owned inventory.'
+                if company_inventory_item else None
+            ),
         )
         db.session.add(reservation)
         db.session.flush()  # assigns reservation.id for the asset rows / item locks below
@@ -866,7 +885,7 @@ def create_reservation(
         item.reservation_expires_at = expires_at
         item.is_available = False
         deadline = _format_deadline(expires_at)
-        if not is_item_in_custody(item):
+        if not company_inventory_item and not is_item_in_custody(item):
             notify_user(
                 item.user,
                 f"Your item '{item.name}' has been reserved by another user. Bring it to Barter Express "
@@ -886,20 +905,39 @@ def create_reservation(
                 notification_type='reservation',
                 category='alert',
             )
-        notify_admins(
-            'settlement.manage',
-            f"New reservation awaiting verification: {item.name}",
-            f"'{item.name}' (#{item.item_number}) was reserved by {user.username}. Both sides must be "
-            f"physically verified by {deadline}.",
-            cta_endpoint='admin.settlement_queue',
-            cta_label='Open Settlement Queue',
-        )
+        if company_inventory_item and (
+            funding_mode == 'item_backed' or delivery_method == 'home delivery'
+        ):
+            details = (
+                "The acquired item is already physically verified; verify any buyer backing items."
+                if funding_mode == 'item_backed' else
+                "The acquired item is already physically verified; issue the home-service quote."
+            )
+            notify_admins(
+                'settlement.manage',
+                f"Company inventory order needs follow-up: {item.name}",
+                f"'{item.name}' (#{item.item_number}) was reserved by {user.username}. {details}",
+                cta_endpoint='admin.settlement_queue',
+                cta_label='Open Settlement Queue',
+            )
+        elif not company_inventory_item:
+            notify_admins(
+                'settlement.manage',
+                f"New reservation awaiting verification: {item.name}",
+                f"'{item.name}' (#{item.item_number}) was reserved by {user.username}. Both sides must be "
+                f"physically verified by {deadline}.",
+                cta_endpoint='admin.settlement_queue',
+                cta_label='Open Settlement Queue',
+            )
+        settled = _resolve_reservation(reservation) if company_inventory_item else False
         db.session.commit()
     except Exception:
         db.session.rollback()
         raise
     logger.info(f"Reservation created - Buyer: {user.username}, Item: {item.id}, "
                 f"Backing items: {backing_item_ids}, Total: {total_backing_value}")
+    if settled:
+        _award_reservation_points(reservation)
     return reservation, None
 
 
@@ -913,15 +951,18 @@ def cancel_reservation(reservation, user):
         return _reject_transition("You can only cancel your own reservations.")
     if reservation.status != 'active':
         return _reject_transition("This reservation is no longer active.")
-    if (reservation.seller_item_verification_status != 'not_submitted'
-            or any(a.verification_status != 'not_submitted' for a in reservation.backing_assets)):
+    company_inventory_item = _is_company_inventory_item(reservation.item)
+    if (
+        (reservation.seller_item_verification_status != 'not_submitted' and not company_inventory_item)
+        or any(a.verification_status != 'not_submitted' for a in reservation.backing_assets)
+    ):
         return _reject_transition(
             "Verification has already started on this purchase - contact support to cancel it."
         )
 
     try:
         _cancel_reservation(reservation, new_status='cancelled', relist_seller_item=True, relist_assets=True)
-        if reservation.item:
+        if reservation.item and reservation.item.user_id is not None:
             _notice(
                 reservation.item.user_id,
                 f"The buyer cancelled their reservation on '{reservation.item.name}'. You no longer need "
@@ -1101,7 +1142,7 @@ def release_expired_reservations(item_id=None):
                 _adjust_reliability(reservation.user, -RELIABILITY_PENALTY)
         try:
             _cancel_reservation(reservation, new_status='expired', relist_seller_item=True, relist_assets=True)
-            if reservation.item:
+            if reservation.item and reservation.item.user_id is not None:
                 _notice(
                     reservation.item.user_id,
                     (
@@ -1618,7 +1659,7 @@ def _resolve_reservation(reservation):
 
     if any_failed:
         _cancel_reservation(reservation, new_status='cancelled', relist_seller_item=True, relist_assets=True)
-        if reservation.item:
+        if reservation.item and reservation.item.user_id is not None:
             _notice(
                 reservation.item.user_id,
                 "⚠️ The buyer's collateral for your item failed verification. Your item is back on the marketplace.",
@@ -1646,8 +1687,11 @@ def _settle_reservation(reservation):
     """Both sides passed: transfer ownership and apply all BXC changes atomically."""
     buyer = reservation.user
     seller_item = reservation.item
-    seller = seller_item.user if seller_item else None
-    if not buyer or not seller_item or not seller or buyer.id == seller.id:
+    company_owned_item = _is_company_inventory_item(seller_item)
+    seller = seller_item.user if seller_item and not company_owned_item else None
+    if not buyer or not seller_item or (
+        not company_owned_item and (not seller or buyer.id == seller.id)
+    ):
         raise ValueError(f"Reservation {reservation.id} has invalid buyer or seller data.")
     participating_assets = [
         asset for asset in reservation.backing_assets
@@ -1687,7 +1731,11 @@ def _settle_reservation(reservation):
         return False
 
     seller_provisional_amount = 0
-    if seller_item.provisional_credit_amount and not seller_item.provisional_credit_settled:
+    if (
+        not company_owned_item
+        and seller_item.provisional_credit_amount
+        and not seller_item.provisional_credit_settled
+    ):
         seller_provisional_amount = int(round(seller_item.provisional_credit_amount))
         if (seller.provisional_credits or 0) < seller_provisional_amount:
             raise ValueError(
@@ -1703,8 +1751,12 @@ def _settle_reservation(reservation):
     seller_item.reserved_at = None
     seller_item.reservation_expires_at = None
 
-    db.session.add(Trade(sender_id=buyer.id, receiver_id=seller.id, item_id=seller_item.id,
-                          item_received_id=seller_item.id, status='completed'))
+    if seller:
+        db.session.add(Trade(sender_id=buyer.id, receiver_id=seller.id, item_id=seller_item.id,
+                              item_received_id=seller_item.id, status='completed'))
+    else:
+        inventory_item = ClearingInventoryItem.query.filter_by(item_id=seller_item.id).one()
+        inventory_item.status = 'sold'
 
     # Closes the earlier "Activate for Trade" gap: the seller's own provisional credit for
     # this item becomes real now that it has actually left their possession via a verified exchange.
@@ -1815,7 +1867,8 @@ def _settle_reservation(reservation):
                                   item_received_id=asset_item.id, status='completed'))
 
     _adjust_reliability(buyer, RELIABILITY_BONUS)
-    _adjust_reliability(seller, RELIABILITY_BONUS)
+    if seller:
+        _adjust_reliability(seller, RELIABILITY_BONUS)
 
     order_number = f"RSV-{datetime.utcnow():%Y%m%d}-{reservation.id:06d}"
     order = Order(
@@ -1857,11 +1910,12 @@ def _settle_reservation(reservation):
         if reservation.delivery_method == 'pickup'
         else "Action needed: pay the home-service quote",
     )
-    _notice(
-        seller.id,
-        f"🎉 '{seller_item.name}' has been exchanged! Thanks for trading on Barter Express.",
-        "Your item has been exchanged",
-    )
+    if seller:
+        _notice(
+            seller.id,
+            f"🎉 '{seller_item.name}' has been exchanged! Thanks for trading on Barter Express.",
+            "Your item has been exchanged",
+        )
 
     logger.info(f"Reservation {reservation.id} settled - Buyer: {buyer.username}, Item: {seller_item.id}")
     return True

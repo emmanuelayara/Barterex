@@ -109,7 +109,7 @@
         </div>
 
         <div class="sq-side">
-          <h3><i class="bi bi-tag"></i> Seller's item: {{ reservation.item.name if reservation.item else 'Item removed' }}
+          <h3><i class="bi bi-tag"></i> {{ 'Company inventory (preverified)' if reservation.item and reservation.item.owner_type == 'barterex' else "Seller's item" }}: {{ reservation.item.name if reservation.item else 'Item removed' }}
             <span class="adm-pill {% if reservation.seller_item_verification_status == 'passed' %}ok{% elif reservation.seller_item_verification_status == 'failed' %}bad{% endif %}">{{ reservation.seller_item_verification_status|replace('_',' ') }}</span>
           </h3>
           <div class="sq-meta">Owner: {{ reservation.item.user.username if reservation.item and reservation.item.user else '—' }} · Value: ᗸ{{ '{:,.0f}'.format(reservation.item.value) if reservation.item and reservation.item.value else '—' }}</div>

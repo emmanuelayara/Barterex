@@ -395,7 +395,10 @@ def inject_favorites_info():
                 Order.status.in_(('Pending', 'Processing', 'Shipped', 'Ready for Pickup')),
             ).count(),
             'pending_valuations_count': Item.query.filter(
-                Item.user_id == current_user.id,
+                db.or_(Item.user_id == current_user.id, db.and_(
+                    Item.manual_review_requested.is_(True), Item.uploaded_by_id == current_user.id,
+                    Item.manual_custody_choice == 'company',
+                )),
                 Item.status.in_(Item.LIFECYCLE_STATUSES),
             ).count(),
         })
