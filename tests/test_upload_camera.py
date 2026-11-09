@@ -69,7 +69,9 @@ class UploadCameraTests(unittest.TestCase):
         self.assertNotIn('handleMultipleFileUpload', html)
         self.assertNotIn('dataTransfer.files', html)
         self.assertIn('Submit for manual review instead', html)
-        self.assertIn('Upload and get valuations now.', html)
+        self.assertEqual(elements['uploadForm'][1].get('action'), '/upload')
+        self.assertNotIn('data-edit-item-id', elements['uploadForm'][1])
+        self.assertNotIn('hidden', elements['aiValuationManual'][1])
 
     def test_camera_jpegs_use_existing_upload_validation(self):
         user = User.query.one()
