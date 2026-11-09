@@ -196,6 +196,7 @@ class FakeItem:
     def __init__(self, **kw):
         self.id = 1
         self.valuator_valuation_id = None
+        self.ai_valuated_at = None
         self.status = 'pending'
         self.value = None
         self.rejection_reason = None
@@ -216,6 +217,12 @@ def fake_app(monkeypatch):
         def commit(self): store['commits'] += 1
         def rollback(self): pass
 
+    class Query:
+        def filter_by(self, **kwargs): return self
+        def with_for_update(self): return self
+        def first(self): return store['item']
+
+    monkeypatch.setattr(FakeItem, 'query', Query(), raising=False)
     app_mod = types.ModuleType('app')
     app_mod.app = types.SimpleNamespace(app_context=lambda: Ctx())
     app_mod.db = types.SimpleNamespace(session=Session())
@@ -253,6 +260,18 @@ def test_valuation_job_valuator_down_marks_unavailable(monkeypatch, fake_app):
     assert item.ai_valuated_at is not None
 
 
+def test_older_background_valuation_cannot_replace_new_edit(fake_server, fake_app):
+    item = fake_app['item']
+    item.ai_valuated_at = datetime.utcnow()
+    item.ai_estimated_value = 750
+    vc._run_valuation_job({
+        'item_id': 1, 'title': 'Old phone', 'description': '', 'condition': 'good',
+        'sale_type': 'second_hand', 'age_years': None, 'category': None,
+        'image_paths': [], 'account_days': 1, 'recorded_valuation_at': None,
+    })
+    assert item.ai_estimated_value == 750
+    assert fake_app['commits'] == 0
+
 def test_verification_job_reports_only_real_outcome(fake_server, fake_app):
     item = fake_app['item']
     item.valuator_valuation_id = 77
@@ -287,7 +306,8 @@ def test_build_valuation_job(monkeypatch):
     img = types.SimpleNamespace(image_url='b.jpg', order_index=2)
     img0 = types.SimpleNamespace(image_url='a.jpg', order_index=1)
     item = types.SimpleNamespace(id=9, name='Laptop', description='HP', condition='Brand New',
-                                 usage_duration='', category='Phones & Gadgets', images=[img, img0])
+                                 usage_duration='', category='Phones & Gadgets', images=[img, img0],
+                                 ai_valuated_at=None)
     user = types.SimpleNamespace(created_at=datetime.utcnow() - timedelta(days=5))
     job = vc.build_valuation_job(item, user, '/up')
     assert job['sale_type'] == 'new' and job['category'] == 'electronics'

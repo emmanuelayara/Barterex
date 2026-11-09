@@ -21,7 +21,7 @@ from models import (
     Trade,
     User,
 )
-from forms import UploadItemForm, ProfileUpdateForm, ChangePasswordForm, DeleteAccountForm
+from forms import ProfileUpdateForm, ChangePasswordForm, DeleteAccountForm
 from logger_config import setup_logger
 from exceptions import ResourceNotFoundError, ValidationError, AuthorizationError, FileUploadError
 from error_handlers import handle_errors, safe_database_operation
@@ -180,68 +180,15 @@ def user_items() -> Union[str, Response]:
 @user_bp.route('/edit/<int:item_id>', methods=['GET', 'POST'])
 @login_required
 @handle_errors
-@safe_database_operation("edit_item")
 def edit_item(item_id: int) -> Union[str, Response]:
-    try:
-        item = Item.query.get_or_404(item_id)
-        
-        if item.user_id != current_user.id:
-            logger.warning(f"Unauthorized edit attempt - User: {current_user.username}, Item: {item_id}")
-            raise AuthorizationError("You do not have permission to edit this item")
-
-        if item.is_approved:
-            logger.info(f"Edit denied for approved item - User: {current_user.username}, Item: {item_id}")
-            flash("This item has already been approved by the admin and cannot be edited.", "warning")
-            return redirect(url_for('user.dashboard'))
-
-        form = UploadItemForm(obj=item)
-
-        if form.validate_on_submit():
-            item.name = form.name.data
-            item.description = form.description.data
-            item.condition = form.condition.data
-            item.usage_duration = form.usage_duration.data.strip() if form.condition.data == 'Fairly Used' and form.usage_duration.data else None
-            item.category = form.category.data
-
-            # Handle image if provided
-            if form.images.data and len(form.images.data) > 0:
-                file = form.images.data[0]
-                if file and file.filename:
-                    try:
-                        # Comprehensive file upload validation with STRICT security checks
-                        validate_upload(
-                            file, 
-                            max_size=app.config.get('FILE_UPLOAD_MAX_SIZE', 10*1024*1024),
-                            allowed_extensions=app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'}),
-                            enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
-                        )
-                        
-                        if item.image_url:
-                            old_path = os.path.join(app.root_path, item.image_url.strip("/"))
-                            if os.path.exists(old_path):
-                                os.remove(old_path)
-
-                        unique_filename = generate_safe_filename(file, current_user.id)
-                        upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
-                        new_path = os.path.join(upload_root, unique_filename)
-                        os.makedirs(os.path.dirname(new_path), exist_ok=True)
-                        file.save(new_path)
-                        item.image_url = unique_filename
-                        logger.info(f"Item image updated - Item: {item_id}, File: {unique_filename}")
-                    except FileUploadError as e:
-                        logger.warning(f"File validation failed: {str(e)}")
-                        flash(f"Image upload failed: {str(e)}", 'danger')
-
-            logger.info(f"Item updated successfully - Item: {item_id}, User: {current_user.username}")
-            flash("Item updated successfully!", "success")
-            return redirect(url_for('user.user_items', item_id=item.id))
-
-        return render_template('edit_item.html', form=form, item=item)
-        
-    except AuthorizationError as e:
-        logger.warning(f"Authorization error in edit_item: {str(e)}")
-        flash(str(e.message), 'danger')
-        return redirect(url_for('user.dashboard'))
+    item = Item.query.filter_by(id=item_id, user_id=current_user.id).first()
+    if item is None:
+        raise ResourceNotFoundError('Item', item_id)
+    if not item.can_edit_upload():
+        logger.warning('Edit denied for submitted or locked item - Item: %s, User: %s', item.id, current_user.id)
+        flash('Only items not yet submitted for trade can be edited.', 'warning')
+        return redirect(url_for('user.user_items'))
+    return redirect(url_for('items.upload_item', edit=item.id), code=307 if request.method == 'POST' else 302)
 
 
 @user_bp.route('/my-trades')
@@ -527,12 +474,14 @@ def my_valuations():
     """
     try:
         page = request.args.get('page', 1, type=int)
+        valuation_now = datetime.utcnow()
         items = Item.query.filter(
             db.or_(Item.user_id == current_user.id, db.and_(
                 Item.manual_review_requested.is_(True), Item.uploaded_by_id == current_user.id,
                 Item.manual_custody_choice == 'company',
             )),
-            Item.status.in_(Item.LIFECYCLE_STATUSES)
+            Item.status.in_(Item.LIFECYCLE_STATUSES),
+            Item.unexpired_valuation_filter(valuation_now),
         ).options(joinedload(Item.images)).order_by(Item.id.desc()).paginate(page=page, per_page=10)
         from services.video_service import (
             MAX_VIDEO_DURATION_SECONDS,
@@ -543,6 +492,7 @@ def my_valuations():
         return render_template(
             'my_valuations.html',
             items=items,
+            valuation_now=valuation_now,
             max_video_duration_seconds=MAX_VIDEO_DURATION_SECONDS,
             max_video_size_bytes=MAX_VIDEO_SIZE_BYTES,
         )

@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% import '_floaters.html' as fx %}
-{% block title %}Upload Item{% endblock %}
+{% block title %}{{ 'Edit Item' if edit_item else 'Upload Item' }}{% endblock %}
 
 {% block content %}
 <style>
+  #aiValuationManual[hidden], #aiValuationSubmitAnyway[hidden] { display: none !important; }
   :root {
     --primary-gradient: linear-gradient(135deg, #ff7a00 0%, #ff7a00 100%);
     --secondary-gradient: linear-gradient(135deg, #ff7a00 0%, #ffb366 100%);
@@ -1564,10 +1565,12 @@
       {{ fx.floaters('banner') }}
       <h1>
         <div class="upload-icon">📤</div>
-        Upload Your Item
+        {{ 'Edit Your Item' if edit_item else 'Upload Your Item' }}
       </h1>
       <p class="upload-subtitle">Share what you have and discover what you need</p>
-      <p class="upload-subtitle">Upload and get valuations now. Complete your profile and submit your NIN and government ID before trading.</p>
+      {% if edit_item %}
+        <p class="upload-subtitle">Take 6-15 new camera photos and accept a fresh AI valuation to save your changes. Your original item stays unchanged until saving succeeds.</p>
+      {% endif %}
     </div>
 
     <!-- Guidelines -->
@@ -1615,7 +1618,8 @@
 
     <!-- Form -->
     <div class="form-container fade-in">
-      <form method="POST" enctype="multipart/form-data" id="uploadForm" class="no-loading">
+      <form method="POST" action="{{ url_for('items.upload_item', edit=edit_item.id) if edit_item else url_for('items.upload_item') }}" enctype="multipart/form-data" id="uploadForm" class="no-loading"
+            {% if edit_item %}data-edit-item-id="{{ edit_item.id }}"{% endif %}>
         {{ form.hidden_tag() }}
 
         <div class="form-group">
@@ -1669,7 +1673,7 @@
               <span class="file-upload-text">Open Camera</span>
               <span class="file-upload-subtext">Take 6 to 15 photos of the actual item. No gallery selection.</span>
             </button>
-            <p class="camera-status" id="cameraStatus" role="status" aria-live="polite">Allow camera access, then photograph the front, back, left, right, top and bottom. Add close-ups of damage, serial numbers and accessories.</p>
+            <p class="camera-status" id="cameraStatus" role="status" aria-live="polite">Photograph the front, back, left, right, top and bottom. Add close-ups of damage, serial numbers and accessories.</p>
             <noscript><p>JavaScript and camera access are required to take item photos. Use a camera-enabled device and enable JavaScript.</p></noscript>
             <div class="camera-panel" id="cameraPanel" hidden>
               <video class="camera-preview" id="cameraPreview" autoplay muted playsinline aria-label="Live item camera preview"></video>
@@ -1754,13 +1758,13 @@
 
     <div class="ai-valuation-actions" id="aiValuationActions" style="display:none;">
       <button type="button" class="ai-valuation-btn secondary" id="aiValuationReject">Edit details</button>
-      <button type="button" class="ai-valuation-btn secondary" id="aiValuationManual">Submit for manual review instead</button>
-      <button type="button" class="ai-valuation-btn primary" id="aiValuationAccept">Accept &amp; submit</button>
+      <button type="button" class="ai-valuation-btn secondary" id="aiValuationManual" {% if edit_item %}hidden{% endif %}>Submit for manual review instead</button>
+      <button type="button" class="ai-valuation-btn primary" id="aiValuationAccept">{{ 'Accept & save changes' if edit_item else 'Accept & submit' }}</button>
     </div>
-    <p class="ai-valuation-disclaimer">Manual review requires physical verification before activation. You may take the verified item home or transfer ownership to Barter Express; credits follow approved video publishing.</p>
+    <p class="ai-valuation-disclaimer">{% if edit_item %}A fresh AI valuation is required. If it is unavailable, cancel and retry later; your original item will not change.{% else %}Manual review requires physical verification before activation. You may take the verified item home or transfer ownership to Barter Express; credits follow approved video publishing.{% endif %}</p>
     <div class="ai-valuation-actions" id="aiValuationFallbackActions" style="display:none;">
       <button type="button" class="ai-valuation-btn secondary" id="aiValuationCancel">Cancel</button>
-      <button type="button" class="ai-valuation-btn primary" id="aiValuationSubmitAnyway">Submit for manual review</button>
+      <button type="button" class="ai-valuation-btn primary" id="aiValuationSubmitAnyway" {% if edit_item %}hidden{% endif %}>Submit for manual review</button>
     </div>
   </div>
 </div>
@@ -2118,6 +2122,7 @@
 
   // Form validation and submission
   const form = document.getElementById('uploadForm');
+  const editItemId = form.dataset.editItemId;
 
   form.addEventListener('submit', function(e) {
     e.preventDefault(); // Always handled via AJAX, after the AI valuation step below
@@ -2181,6 +2186,7 @@
     // XMLHttpRequest exposes upload progress while the multipart request is sent.
     const xhr = new XMLHttpRequest();
     xhr.open('POST', form.action, true);
+    if (editItemId) xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
     xhr.upload.addEventListener('progress', function(event) {
       if (!event.lengthComputable) {
@@ -2193,6 +2199,21 @@
     });
 
     xhr.addEventListener('load', function() {
+      if (editItemId) {
+        let result;
+        try {
+          result = JSON.parse(xhr.responseText);
+        } catch (error) {
+          handleUploadError(new Error('The server could not save your changes. Refresh the page and retry.'));
+          return;
+        }
+        if (xhr.status !== 200 || !result.success) {
+          handleUploadError(new Error(result.error || 'Changes were not saved. Please try again.'));
+          return;
+        }
+        window.location.href = result.redirect_url;
+        return;
+      }
       const uploadComplete = xhr.status >= 200 && xhr.status < 400;
       if (!uploadComplete) {
         handleUploadError(new Error(`Upload failed with status ${xhr.status}`));
@@ -2234,9 +2255,9 @@
         hideLoading();
       }
       if (typeof errorToast !== 'undefined') {
-        errorToast('Error uploading item. Please try again.');
+        errorToast(error.message || 'Error uploading item. Please try again.');
       } else {
-        alert('Error uploading item. Please try again.');
+        alert(error.message || 'Error uploading item. Please try again.');
       }
       resetSubmitButton();
       uploadProgress.hidden = true;
@@ -2542,7 +2563,8 @@
       previewData.append('csrf_token', csrfToken.value);
     }
     // Only a few photos are needed for the AI to judge the item (see MAX_IMAGES_SENT).
-    selectedFiles.slice(0, 3).forEach(file => previewData.append('images', file));
+    if (editItemId) previewData.append('edit_item_id', editItemId);
+    (editItemId ? selectedFiles : selectedFiles.slice(0, 3)).forEach(file => previewData.append('images', file));
 
     fetch('{{ url_for("items.estimate_value") }}', {
       method: 'POST',

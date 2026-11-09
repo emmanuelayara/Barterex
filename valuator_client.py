@@ -421,6 +421,7 @@ def build_valuation_job(item, user, upload_root: str) -> dict:
 
     return {
         'item_id': item.id,
+        'recorded_valuation_at': item.ai_valuated_at,
         'title': item.name,
         'description': description,
         'condition': map_condition_to_valuator(item.condition),
@@ -459,9 +460,12 @@ def _run_valuation_job(job: dict):
         fields = extract_item_ai_fields(response)
 
         with app.app_context():
-            item = db.session.get(Item, job['item_id'])
+            item = Item.query.filter_by(id=job['item_id']).with_for_update().first()
             if item is None:
                 logger.info(f"Valuator: item {job['item_id']} no longer exists; dropping result")
+                return
+            if item.ai_valuated_at != job.get('recorded_valuation_at'):
+                logger.info('Valuator: dropping superseded result for item %s', item.id)
                 return
             for name, value in fields.items():
                 setattr(item, name, value)

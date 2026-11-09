@@ -1441,7 +1441,7 @@
     <div class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
       {{ fx.floaters('banner') }}
       <div>
-        <h1 class="welcome-title">Welcome back, {{ current_user.username }}!</h1>
+        <h1 class="welcome-title" title="Welcome back, {{ current_user.username }}!">Welcome back, {{ current_user.username }}!</h1>
       </div>
       <div style="display: flex; gap: 12px; align-items: center;">
         <a href="{{ url_for('user.settings') }}" class="settings-btn-dashboard">

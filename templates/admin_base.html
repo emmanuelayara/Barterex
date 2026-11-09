@@ -517,7 +517,7 @@
   {% endif %}
 {%- endmacro %}
 
-<body>
+<body class="mobile-ui mobile-admin">
   <!-- Enhanced Top Navbar -->
   <nav class="admin-navbar">
     <div class="navbar-container">
@@ -728,5 +728,6 @@
   </script>
 
   {% block extra_js %}{% endblock %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
 </body>
 </html>

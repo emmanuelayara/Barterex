@@ -400,6 +400,7 @@ def inject_favorites_info():
                     Item.manual_custody_choice == 'company',
                 )),
                 Item.status.in_(Item.LIFECYCLE_STATUSES),
+                Item.unexpired_valuation_filter(now),
             ).count(),
         })
     else:

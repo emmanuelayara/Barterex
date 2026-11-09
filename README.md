@@ -31,6 +31,16 @@ Barterex/
 
 ## Setup Instructions
 
+### Responsive interface
+
+The public/user shell, admin shell and standalone service screens load
+`static/css/mobile.css` after their page styles. Its rules apply only at widths
+up to 767px: compact headings, cards, media and spacing, with 44px action targets
+and 16px form inputs to avoid mobile focus zoom. Desktop styling is unchanged.
+Keep tables horizontally scrollable inside their own wrappers rather than
+clipping content or scaling the whole page. Validate new pages at 320px, 375px
+and 430px, including expanded forms, dialogs and long labels.
+
 ### 1. Environment Variables
 Copy `.env.example` to `.env` and fill in your configuration:
 ```bash

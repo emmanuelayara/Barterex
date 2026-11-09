@@ -1129,7 +1129,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app-shell.css') }}">
     {% block head_extra %}{% endblock %}
 </head>
-<body class="{{ 'bx-auth' if current_user.is_authenticated else 'bx-guest' }}">
+<body class="mobile-ui {{ 'bx-auth' if current_user.is_authenticated else 'bx-guest' }}">
 
 <!-- TOP NAVBAR -->
 <header id="navbar" class="bx-nav{% if not current_user.is_authenticated %} bx-nav--guest{% endif %}">
@@ -2255,5 +2255,6 @@ if (document.readyState === 'loading') {
     setupAutoFadeAlerts();
 }</script>
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
 </body>
 </html>

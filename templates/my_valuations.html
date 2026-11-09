@@ -248,17 +248,17 @@
   .video-submit-form [hidden] { display: none !important; }
 </style>
 
-<div class="page-container mp">
+<div class="page-container mp valuations-page">
   <input type="hidden" id="globalCsrfToken" value="{{ csrf_token() }}">
   <div class="main-content">
     <div class="page-header">
       {{ fx.floaters('banner') }}
       <h1 class="page-title">📊 My Valuations</h1>
-      <p class="page-subtitle">Discover what your items are worth - no commitment until you choose to trade them.</p>
+      <p class="page-subtitle">Saved valuations expire after 30 days. Upload the item again for current value.</p>
     </div>
 
     {% if items.items %}
-      <div class="valuations-list">
+      <div class="valuations-list" data-server-now="{{ valuation_now.isoformat() }}Z">
         {% for item in items.items %}
           {% set thumb = item.image_url or (item.images[0].image_url if item.images else None) %}
           <div class="valuation-card-wrap">
@@ -277,11 +277,20 @@
                 {% elif item.manual_review_requested %}
                   <p class="activate-help">Manual review requested. Arrange physical verification with Barter Express. Activation and credits are blocked until the item passes.</p>
                 {% elif item.ai_estimated_value %}
-                  <div class="valuation-estimate">🤖 Estimated value: ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</div>
+                  <div class="valuation-estimate">Estimated value: ᗸ{{ '{:,.0f}'.format(item.ai_estimated_value) }}</div>
                 {% elif item.verification_status == 'pending_valuation' %}
                   <div class="valuation-estimate pending">AI valuation running… refresh in a minute</div>
                 {% else %}
                   <div class="valuation-estimate pending">No AI estimate available for this item</div>
+                {% endif %}
+                {% if item.valuation_expires_at %}
+                  <div class="valuation-expiry">
+                    <span class="valuation-countdown" data-valuation-expires="{{ item.valuation_expires_at.isoformat() }}Z"
+                          title="Expires {{ item.valuation_expires_at.strftime('%d %b %Y at %H:%M') }} UTC">
+                      {% set seconds_left = (item.valuation_expires_at - valuation_now).total_seconds()|int %}
+                      Expires in {{ seconds_left // 86400 }}d {{ (seconds_left % 86400) // 3600 }}h {{ (seconds_left % 3600) // 60 }}m
+                    </span>
+                  </div>
                 {% endif %}
                 {% set video = item.videos|sort(attribute='submitted_at', reverse=true)|first %}
                 <div class="stage-pill stage-{{ item.status }}">
@@ -388,7 +397,7 @@
       {% endif %}
     {% else %}
       <div class="empty-state">
-        <p>You haven't valuated any items yet.</p>
+        <p>No current valuations to show.</p>
         <p><a href="{{ url_for('items.upload_item') }}">Upload an item</a> to discover its estimated value.</p>
       </div>
     {% endif %}
@@ -396,6 +405,32 @@
 </div>
 
 <script>
+  (function () {
+    const list = document.querySelector('.valuations-list');
+    if (!list) return;
+    const countdowns = list.querySelectorAll('[data-valuation-expires]');
+    if (!countdowns.length) return;
+    const serverNow = Date.parse(list.dataset.serverNow);
+    const started = performance.now();
+    function updateCountdowns() {
+      const now = serverNow + performance.now() - started;
+      for (const countdown of countdowns) {
+        const remaining = Math.ceil((Date.parse(countdown.dataset.valuationExpires) - now) / 1000);
+        if (remaining <= 0) {
+          window.location.replace({{ url_for('user.my_valuations')|tojson }});
+          return;
+        }
+        const days = Math.floor(remaining / 86400);
+        const hours = Math.floor((remaining % 86400) / 3600);
+        const minutes = Math.floor((remaining % 3600) / 60);
+        countdown.textContent = `Expires in ${days}d ${hours}h ${minutes}m`;
+      }
+    }
+    updateCountdowns();
+    setInterval(updateCountdowns, 1000);
+    document.addEventListener('visibilitychange', updateCountdowns);
+  })();
+
   // Upload the verification video directly to cloud storage before submitting it for review.
   document.querySelectorAll('.video-submit-form').forEach(function (form) {
     const itemId = form.dataset.itemId;

@@ -3,6 +3,9 @@ from flask_login import login_required, current_user, logout_user
 from flask_wtf.csrf import generate_csrf
 import os
 import time
+import hashlib
+import math
+import secrets
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 
@@ -12,7 +15,7 @@ from forms import UploadItemForm, OrderForm, StolenItemReportForm
 from routes.auth import send_email_async
 from services.email_notifications import notify_admins
 from logger_config import setup_logger
-from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailableError, FileUploadError, DatabaseError, CheckoutError
+from exceptions import ValidationError, InsufficientCreditsError, ItemNotAvailableError, FileUploadError, DatabaseError, CheckoutError, ResourceNotFoundError
 from error_handlers import handle_errors, handle_api_errors, safe_database_operation, retry_operation
 from transaction_clarity import calculate_estimated_delivery, generate_transaction_explanation
 from file_upload_validator import validate_upload, generate_safe_filename, optimize_image_for_storage
@@ -226,14 +229,14 @@ def create_notification(user_id, message):
             html_body=html
         )
 
-def consume_accepted_ai_valuation(name, description, condition, usage_duration, category):
+def consume_accepted_ai_valuation(name, description, condition, usage_duration, category, edit_item=None):
     """
     Checks the AI-valuation preview the user accepted on the upload page (see
     POST /items/estimate-value) against the session and the just-submitted item
     fields. One-time use: always removed from the session, whether it turns out
     valid or not. Returns the stored ai_* field dict, or None if there's no
-    valid, unexpired, matching preview to use (the upload then falls back to
-    the normal background-valuation flow with no provisional credit).
+    valid, unexpired, matching preview to use. New uploads may fall back to
+    background valuation; edits must reject missing or invalid previews.
     """
     pending = session.pop('pending_item_valuation', None)
     token = request.form.get('ai_valuation_token')
@@ -243,6 +246,19 @@ def consume_accepted_ai_valuation(name, description, condition, usage_duration, 
     if pending.get('token') != token:
         logger.warning(f"AI valuation token mismatch - User: {current_user.username}")
         return None
+
+    edit_item_id = edit_item.id if edit_item else None
+    if pending.get('edit_item_id') != edit_item_id:
+        logger.warning('AI valuation edit target mismatch - User: %s', current_user.id)
+        return None
+    if edit_item_id is not None and pending.get('image_signature') != _valuation_image_signature():
+        logger.warning('AI valuation photos changed since preview - User: %s', current_user.id)
+        return None
+    if edit_item is not None:
+        recorded_at = edit_item.ai_valuated_at.isoformat() if edit_item.ai_valuated_at else None
+        if pending.get('edit_valuation_at') != recorded_at:
+            logger.warning('Item valuation changed during edit - Item: %s', edit_item.id)
+            return None
 
     try:
         expires_at = datetime.fromisoformat(pending['expires_at'])
@@ -259,12 +275,35 @@ def consume_accepted_ai_valuation(name, description, condition, usage_duration, 
 
     return pending.get('ai_fields')
 
+
+def _valuation_image_signature():
+    digest = hashlib.sha256()
+    for image in request.files.getlist('images'):
+        if image and image.filename:
+            image.seek(0)
+            data = image.read()
+            image.seek(0)
+            digest.update(len(data).to_bytes(8, 'big'))
+            digest.update(data)
+    return digest.hexdigest()
+
 # ==================== ROUTES ====================
 
 @items_bp.route('/upload', methods=['GET', 'POST'])
 @login_required
 @handle_errors
 def upload_item():
+    saved_image_paths = []
+    edit_committed = False
+    edit_item = None
+    edit_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' and 'edit' in request.args
+
+    def edit_failure(message, status=400):
+        if edit_ajax:
+            return jsonify({'success': False, 'error': message}), status
+        flash(message, 'danger')
+        return render_template('upload.html', form=form, edit_item=edit_item), status
+
     try:
         if current_user.is_banned:
             logger.warning(f"Banned user attempted to upload item: {current_user.username}")
@@ -272,7 +311,20 @@ def upload_item():
             logout_user()
             return redirect(url_for('auth.login'))
 
-        form = UploadItemForm()
+        edit_id = request.args.get('edit', type=int)
+        if 'edit' in request.args:
+            edit_item = Item.query.filter_by(id=edit_id, user_id=current_user.id).with_for_update().first()
+            if edit_item is None:
+                raise ResourceNotFoundError('Item', edit_id)
+            if not edit_item.can_edit_upload():
+                logger.warning('Upload edit denied - Item: %s, User: %s', edit_item.id, current_user.id)
+                flash('Only items not yet submitted for trade can be edited.', 'warning')
+                if edit_ajax:
+                    return jsonify({'success': False, 'error': 'This item is already submitted or locked and cannot be edited.'}), 409
+                return redirect(url_for('user.user_items'))
+        form = UploadItemForm(obj=edit_item)
+        if edit_item:
+            form.submit.label.text = 'Revalue & save changes'
         
         # Debug: Log what we received
         logger.info(f"Upload request received - User: {current_user.username}")
@@ -315,7 +367,17 @@ def upload_item():
         
         if form.validate_on_submit() and not image_validation_errors:
             manual_review = request.form.get('manual_review') == '1'
-            new_item = Item(
+            accepted_ai_fields = consume_accepted_ai_valuation(
+                name=form.name.data, description=form.description.data,
+                condition=form.condition.data, usage_duration=form.usage_duration.data,
+                category=form.category.data, edit_item=edit_item,
+            )
+            if edit_item:
+                estimate = (accepted_ai_fields or {}).get('ai_estimated_value')
+                if manual_review or not isinstance(estimate, (int, float)) or not math.isfinite(estimate) or estimate <= 0:
+                    logger.warning('Edit requires fresh successful AI valuation - Item: %s', edit_item.id)
+                    return edit_failure('Changes were not saved. Get and accept a fresh AI valuation with your new photos first.')
+            new_item = edit_item or Item(
                 name=form.name.data,
                 description=form.description.data,
                 condition=form.condition.data,
@@ -329,6 +391,13 @@ def upload_item():
                 status='manual_review_pending' if manual_review else 'valuation_only',
                 manual_review_requested=manual_review,
             )
+            if edit_item:
+                new_item.name = form.name.data
+                new_item.description = form.description.data
+                new_item.condition = form.condition.data
+                new_item.usage_duration = form.usage_duration.data.strip() if form.condition.data == 'Fairly Used' and form.usage_duration.data else None
+                new_item.category = form.category.data
+                new_item.images.clear()
             db.session.add(new_item)
             db.session.flush()
             
@@ -381,8 +450,12 @@ def upload_item():
                             # Upload image to local storage
                             try:
                                 unique_filename = generate_safe_filename(file, current_user.id, item_id=new_item.id, index=index)
+                                if edit_item:
+                                    unique_filename = f'{secrets.token_hex(8)}_{unique_filename}'
                                 upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
                                 image_path = os.path.join(upload_root, unique_filename)
+                                if edit_item:
+                                    saved_image_paths.append(image_path)
                                 os.makedirs(os.path.dirname(image_path), exist_ok=True)
                                 file.seek(0)
                                 optimized_data = optimize_image_for_storage(
@@ -445,6 +518,8 @@ def upload_item():
             if upload_error_occurred:
                 db.session.rollback()
                 logger.warning(f"Item upload aborted due to image errors - User: {current_user.username}")
+                if edit_item:
+                    return edit_failure('Changes were not saved. ' + ' '.join(validation_errors))
                 
                 # Flash all validation errors for user visibility
                 if validation_errors:
@@ -459,6 +534,8 @@ def upload_item():
             
             if not uploaded_images:
                 db.session.rollback()
+                if edit_item:
+                    return edit_failure('Changes were not saved. Please take 6-15 new camera photos.')
                 flash('No images were successfully uploaded. Please try again.', 'danger')
                 return redirect(url_for('items.upload_item'))
             
@@ -469,13 +546,6 @@ def upload_item():
             # "My Valuations" is a private, no-commitment stage: this only stores the estimate for
             # display here - no credits are granted and nothing is queued for admin review yet.
             # That happens later, when the user selects "Trade This Item".
-            accepted_ai_fields = consume_accepted_ai_valuation(
-                name=form.name.data,
-                description=form.description.data,
-                condition=form.condition.data,
-                usage_duration=form.usage_duration.data,
-                category=form.category.data,
-            )
             if manual_review:
                 accepted_ai_fields = None
 
@@ -483,6 +553,10 @@ def upload_item():
                 for field_name, field_value in accepted_ai_fields.items():
                     setattr(new_item, field_name, field_value)
                 new_item.ai_valuated_at = datetime.utcnow()
+                if edit_item:
+                    new_item.value = None
+                    new_item.rejection_reason = None
+                    new_item.ownership_confirmed = False
             elif not manual_review and valuator_enabled():
                 new_item.verification_status = 'pending_valuation'   # My Valuations shows "AI valuation running..."
 
@@ -494,7 +568,13 @@ def upload_item():
                         cta_endpoint='admin.manual_review_queue', cta_label='Review Items',
                     )
                 db.session.commit()
+                edit_committed = True
                 logger.info(f"Item saved to My Valuations - Item: {new_item.id}, User: {current_user.username}, Images: {len(uploaded_images)}")
+                if edit_item:
+                    flash('Item changes and fresh AI valuation saved successfully.', 'success')
+                    if edit_ajax:
+                        return jsonify({'success': True, 'redirect_url': url_for('user.my_valuations')})
+                    return redirect(url_for('user.my_valuations'))
 
                 # Only queue the background valuator when there's no already-accepted preview result -
                 # never pay for a second AI valuation of the same submission.
@@ -515,6 +595,8 @@ def upload_item():
                 db.session.rollback()
                 logger.error(f"Error committing item upload: {str(e)}", exc_info=True)
                 flash('There was a problem saving your item. Please try again.', 'danger')
+                if edit_item:
+                    return edit_failure('Changes were not saved. There was a problem saving your item. Please try again.', 500)
                 return redirect(url_for('items.upload_item'))
         else:
             # Log form validation errors and show user-friendly messages
@@ -533,13 +615,24 @@ def upload_item():
                         field_display = field_names.get(field, field)
                         flash(f"{field_display}: {error}", "danger")
 
-        return render_template('upload.html', form=form)
+        if edit_item and request.method == 'POST':
+            errors = image_validation_errors + [error for errors in form.errors.values() for error in errors]
+            return edit_failure('Changes were not saved. ' + ' '.join(errors))
+        return render_template('upload.html', form=form, edit_item=edit_item)
         
     except (FileUploadError, DatabaseError) as e:
         logger.warning(f"Upload error: {str(e)}")
         user_message = get_user_friendly_error_message(str(e))
         flash(user_message, 'danger')
+        if edit_item:
+            return edit_failure(user_message)
         return redirect(url_for('items.upload_item'))
+    finally:
+        if edit_item and not edit_committed:
+            db.session.rollback()
+            for path in saved_image_paths:
+                if os.path.isfile(path):
+                    os.remove(path)
 
 
 @items_bp.route('/items/estimate-value', methods=['POST'])
@@ -564,6 +657,20 @@ def estimate_value():
         account_days_old, encode_image_bytes_to_base64, extract_item_ai_fields,
         item_fields_signature, MAX_IMAGES_SENT,
     )
+
+    edit_id = request.form.get('edit_item_id', type=int)
+    edit_valuation_at = None
+    if 'edit_item_id' in request.form:
+        item = Item.query.filter_by(id=edit_id, user_id=current_user.id).first()
+        if item is None:
+            raise ResourceNotFoundError('Item', edit_id)
+        if not item.can_edit_upload():
+            return jsonify({'success': False, 'error': 'This item is already submitted or locked and cannot be edited.'}), 409
+        edit_valuation_at = item.ai_valuated_at.isoformat() if item.ai_valuated_at else None
+        valid_images = [f for f in request.files.getlist('images') if f and f.filename]
+        valid_count, count_error = validate_image_count(len(valid_images))
+        if not valid_count:
+            return jsonify({'success': False, 'error': count_error}), 400
 
     if not valuator_is_enabled():
         return jsonify({'success': False, 'error': 'AI valuation is not available right now.'}), 503
@@ -622,6 +729,9 @@ def estimate_value():
         'expires_at': expires_at.isoformat(),
         'fields_signature': item_fields_signature(name, description, condition, usage_duration, category),
         'ai_fields': fields,
+        'edit_item_id': edit_id,
+        'edit_valuation_at': edit_valuation_at,
+        'image_signature': _valuation_image_signature() if edit_id is not None else None,
     }
 
     logger.info(f"AI valuation preview generated - User: {current_user.username}, Value: {fields.get('ai_estimated_value')}")
@@ -667,6 +777,11 @@ def trade_this_item(item_id):
     account_redirect = _redirect_trade_account_requirement()
     if account_redirect:
         return account_redirect
+
+    if item.valuation_is_expired():
+        logger.info('Trade blocked by expired valuation - Item ID: %s, User ID: %s', item.id, current_user.id)
+        flash('This valuation has expired after 30 days. Upload the item again for a current valuation before trading.', 'warning')
+        return redirect(url_for('items.upload_item'))
 
     if not item.can_submit_activation_video():
         flash('This item is not available to trade right now.', 'info')
@@ -740,6 +855,13 @@ def request_activation_upload_url(item_id):
         message, target = requirement
         logger.warning('Activation upload blocked by account requirements - User ID: %s', current_user.id)
         return jsonify({'success': False, 'error': message, 'redirect_url': target}), 403
+    if item.valuation_is_expired():
+        logger.info('Activation upload blocked by expired valuation - Item ID: %s', item.id)
+        return jsonify({
+            'success': False,
+            'error': 'This valuation has expired after 30 days. Upload the item again for a current valuation before trading.',
+            'redirect_url': url_for('items.upload_item'),
+        }), 403
     if not item.can_submit_activation_video():
         return jsonify({'success': False, 'error': 'This item is not ready for a verification video.'}), 400
 

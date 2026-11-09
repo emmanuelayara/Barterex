@@ -1,0 +1,242 @@
+/* Shared phone density layer, loaded after page styles. Desktop layouts stay unchanged. */
+@media (max-width: 767px) {
+    body.mobile-ui {
+        --bx-radius: 14px;
+        --bx-radius-sm: 10px;
+        --spacing-lg: 18px;
+        --spacing-xl: 24px;
+        --spacing-2xl: 32px;
+        --spacing-3xl: 40px;
+        font-size: 14px;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    .mobile-ui :is(h1, h2, h3, h4, p, label, dd, a, button) { overflow-wrap: anywhere; }
+    .mobile-ui :is(h1, .page-title, .welcome-title, .ac-title) { font-size: 1.4rem; line-height: 1.25; }
+    .mobile-ui h2 { font-size: 1.15rem; line-height: 1.35; }
+    .mobile-ui h3 { font-size: 1rem; line-height: 1.35; }
+    .mobile-ui :is(img, video, canvas) { max-width: 100%; }
+    .mobile-ui :is(input, select, textarea) { min-width: 0; max-width: 100%; box-sizing: border-box; }
+    /* Keep fields at 16px to prevent iOS focus zoom; never scale the whole page. */
+    .mobile-ui :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]), select, textarea) {
+        font-size: 16px; min-height: 44px;
+    }
+    .mobile-ui :is(button, input[type="submit"], .btn, .adm-btn, .page-link, .pagination-btn) {
+        min-width: 44px; min-height: 44px; max-width: 100%; white-space: normal;
+    }
+    .mobile-ui :is(.btn, .adm-btn, .trade-btn, .trade-this-btn, .trade-submit-btn, .submit-btn, .action-btn, .au-submit, .st-btn, .hm-btn, .pp-btn) {
+        min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: .85rem; line-height: 1.4;
+    }
+    .mobile-ui :is(.form-group, .form-field) { margin-bottom: 12px; min-width: 0; }
+    .mobile-ui :is(.form-label, .au-label, .st-label) { font-size: .82rem; margin-bottom: 6px; }
+    .mobile-ui :is(.form-control, .form-input, .form-select, .form-textarea, .au-input, .st-input, .st-select) {
+        padding-top: 9px; padding-bottom: 9px; border-radius: 10px;
+    }
+    .mobile-ui :is(.badge, .stage-pill, .adm-pill, .status-badge, .meta-tag) {
+        max-width: 100%; white-space: normal; font-size: .72rem; line-height: 1.4;
+    }
+    .mobile-ui :is(.table-responsive, .adm-table-wrap, .table-container, .table-wrapper) {
+        max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain;
+    }
+    .mobile-ui :is(table th, table td) { padding: 9px 10px; font-size: .8rem; }
+    .mobile-ui :is(.pagination, .pagination-container, .pagination-wrapper) { flex-wrap: wrap; gap: 4px; }
+    .mobile-ui :is(.modal-dialog, .modal-content, .ai-valuation-modal) { max-width: calc(100vw - 24px); }
+    .mobile-ui :is(.modal-body, .modal-header, .modal-footer) { padding: 12px; }
+    .mobile-ui .modal-dialog { margin: 12px auto; }
+    .mobile-ui :is(.modal-content, .ai-valuation-modal) { max-height: calc(100dvh - 24px); overflow-y: auto; }
+    .mobile-ui :is(.modal-actions, .modal-footer, .ai-valuation-actions) { flex-wrap: wrap; gap: 8px; }
+    .mobile-ui :is(.alert, .flash-messages .alert) { font-size: .85rem; padding: 12px 44px 12px 12px; animation: none; }
+    .mobile-ui .alert:not(.alert-dismissible) { padding-right: 12px; }
+    .mobile-ui .flash-messages .alert { padding-left: 40px; }
+
+    /* Public information, authentication and home. */
+    .mobile-ui .pp { --pp-radius: 14px; --pp-radius-sm: 10px; font-size: .875rem; }
+    .mobile-ui .pp-hero { padding: 24px 16px 52px; border-radius: 0 0 20px 20px; }
+    .mobile-ui .pp-hero h1 { font-size: 1.5rem; }
+    .mobile-ui .pp-hero p { font-size: .875rem; margin-top: 8px; }
+    .mobile-ui .pp-kicker { padding: 4px 10px; font-size: .75rem; margin-bottom: 10px; }
+    .mobile-ui .pp-main { padding-left: 12px; padding-right: 12px; }
+    .mobile-ui :is(.pp-card, .hm-card) { padding: 16px; }
+    .mobile-ui :is(.pp-stack, .pp-grid, .pp-two-col, .hm-grid) { gap: 12px; }
+    .mobile-ui .pp-card h2 { font-size: 1.1rem; }
+    .mobile-ui :is(.pp-card p, .pp-card li, .hm-card p) { font-size: .875rem; line-height: 1.6; }
+    .mobile-ui .pp-actions { gap: 8px; }
+    .mobile-ui .au-side { padding: 24px 16px 64px; }
+    .mobile-ui .au-side h1 { font-size: 1.5rem; }
+    .mobile-ui :is(.au-side > p, .au-card-head p, .au-highlight) { font-size: .875rem; }
+    .mobile-ui .au-card { padding: 18px 14px; margin-left: 12px; margin-right: 12px; }
+    .mobile-ui .au-card-head { margin-bottom: 14px; }
+    .mobile-ui .au-fields { gap: 12px; }
+    .mobile-ui .au-input { min-height: 44px; }
+    .mobile-ui .hm-hero { min-height: 65svh; padding: 36px 16px; border-radius: 0 0 24px 24px; }
+    .mobile-ui.bx-auth .hm-hero { padding-bottom: calc(var(--bx-tab-h) + 24px); }
+    .mobile-ui .hm-hero h1 { font-size: clamp(1.8rem, 7.5vw, 2.5rem); }
+    .mobile-ui .hm-hero__sub { font-size: .95rem; margin-top: 12px; }
+    .mobile-ui .hm-section { padding-top: 28px; }
+    .mobile-ui .hm-head { margin-bottom: 14px; }
+    .mobile-ui .hm-head h2 { font-size: 1.3rem; }
+    .mobile-ui .hm-start { padding: 16px 12px; margin-top: 18px; }
+    .mobile-ui :is(.hm-ico, .pp-icon) { width: 38px; height: 38px; font-size: 1rem; margin-bottom: 10px; }
+
+    /* Shared user banners and content gutters. Preserve their overlap offsets. */
+    .mobile-ui :is(.mp .page-header, .upload-page .upload-header, .dash .welcome-section, .ac-banner) {
+        padding: 20px 14px 48px; gap: 8px; border-radius: 0 0 20px 20px;
+    }
+    .mobile-ui :is(.page-subtitle, .ac-sub, .upload-page .upload-subtitle) { font-size: .82rem; line-height: 1.5; }
+    .mobile-ui :is(.mp .page-title, .upload-page .upload-header h1, .dash .welcome-title) { font-size: 1.4rem; }
+    .mobile-ui .mp :is(.items-container, .trades-section, .notifications-container, .reservations-list, .valuations-list, .rv-list, .orders-container, .credits-banner) {
+        width: calc(100% - 24px);
+    }
+    .mobile-ui .mp :is(.reservation-card, .valuation-card) { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 12px; }
+    .mobile-ui .mp :is(.reservation-thumb, .valuation-thumb) { width: 52px; height: 52px; border-radius: 10px; }
+    .mobile-ui .mp :is(.reservation-actions, .valuation-actions) { grid-column: 1 / -1; min-width: 0; max-width: none; }
+    .mobile-ui .mp :is(.valuation-info, .reservation-info) { gap: 4px; }
+    .mobile-ui .mp :is(.valuation-info h3, .reservation-info h3) { font-size: .95rem; }
+    .mobile-ui .mp :is(.valuation-meta, .reservation-meta, .activate-help) { font-size: .8rem; line-height: 1.5; }
+    .mobile-ui .mp :is(.valuations-list, .reservations-list, .rv-list, .orders-grid, .items-grid, .trades-grid) { gap: 10px; }
+    .mobile-ui .mp :is(.trade-form, .rv-card, .notification-item, .order-content) { padding: 12px; gap: 8px; min-width: 0; }
+    .mobile-ui .mp :is(.item-card-content, .trade-content, .order-card .order-header) { padding: 12px; }
+    .mobile-ui .mp .item-content { padding: 12px; gap: 8px; }
+    .mobile-ui .mp :is(.item-image, .trade-card-image) { aspect-ratio: 16 / 9; max-height: 180px; }
+    .mobile-ui .mp .valuation-expiry { padding: 3px 7px; font-size: .75rem; }
+    .mobile-ui .mp .order-card .order-number { font-size: .9rem; }
+    .mobile-ui .mp .detail-value { font-size: .85rem; }
+    .mobile-ui .mp .empty-state { padding: 28px 16px; }
+    .mobile-ui .dash > *:not(.welcome-section) { width: calc(100% - 24px); }
+    .mobile-ui .dash .welcome-section { flex-direction: row; flex-wrap: nowrap; align-items: center !important; text-align: left; }
+    .mobile-ui .dash .welcome-title { font-size: .475rem; line-height: 1.3; }
+    .mobile-ui .dash .welcome-section > :not(.bx-floaters) { flex: 1; min-width: 0; max-width: 100%; }
+    .mobile-ui .dash .welcome-section > div:last-child { flex: 0 0 auto; }
+    .mobile-ui .dash :is(.stat-card, .progress-card, .referral-card, .notifications-section, .recommendations-card, .level-card) { padding: 14px; }
+    .mobile-ui .dash .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .mobile-ui .dash .stats-grid > .stat-card:last-child { grid-column: auto; }
+    .mobile-ui .dash .stat-card-balance { grid-column: 1 / -1; }
+    .mobile-ui .dash .widgets-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .mobile-ui .dash .stat-icon { width: 34px; height: 34px; border-radius: 10px; font-size: 1rem; }
+    .mobile-ui .dash .stat-value { font-size: 1.35rem; }
+    .mobile-ui .dash .stat-card-balance .stat-value { font-size: 1.8rem; }
+    .mobile-ui .dash .stat-title { font-size: .72rem; }
+    .mobile-ui .dash .stat-description { font-size: .8rem; line-height: 1.45; }
+    .mobile-ui .dash .stat-description small { font-size: .75rem !important; }
+    .mobile-ui .dash .stat-card .stat-value[style] { font-size: .85rem !important; line-height: 1.45 !important; }
+    .mobile-ui .dash :is(.fund-account-btn, .settings-btn-dashboard, .referral-button) { min-height: 44px; font-size: .82rem; padding: 8px 12px; }
+    .mobile-ui .dash .settings-btn-dashboard { width: auto; gap: 4px; padding: 4px 6px; font-size: .65rem; line-height: 1.2; white-space: nowrap; overflow-wrap: normal; }
+    .mobile-ui .dash .settings-btn-dashboard span { white-space: nowrap; overflow-wrap: normal; }
+    .mobile-ui .dash .settings-btn-dashboard i { font-size: .7rem; }
+    .mobile-ui .dash .progress-item { flex-direction: row; text-align: left; gap: 12px; }
+    .mobile-ui .dash :is(.progress-label, .referral-subtitle, .referral-stat-label) { font-size: .78rem; }
+    .mobile-ui .dash .progress-info div[style] { font-size: .75rem !important; }
+    .mobile-ui .dash .recommendations-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mobile-ui .dash :is(.recommendation-name, .recommendation-view) { font-size: .82rem; }
+    .mobile-ui .dash .progress-ring-container { width: 70px; height: 70px; }
+    .mobile-ui .dash .progress-percentage { font-size: 1.5rem; }
+    .mobile-ui .dash .level-number { width: 48px; height: 48px; font-size: 1.4rem; border-radius: 14px; }
+
+    /* Camera upload: less chrome, without shrinking the actual capture controls. */
+    .mobile-ui .upload-page :is(.form-container, .guidelines-section) { width: calc(100% - 24px); }
+    .mobile-ui .upload-page .form-container { padding: 16px 12px; }
+    .mobile-ui .upload-page .upload-icon { width: 34px; height: 34px; font-size: 1rem; border-radius: 10px; }
+    .mobile-ui .upload-page .guidelines-header { padding: 10px 12px; gap: 8px; }
+    .mobile-ui .upload-page .guidelines-title { font-size: .85rem; }
+    .mobile-ui .upload-page .warning-icon { width: 30px; height: 30px; font-size: .9rem; }
+    .mobile-ui .upload-page .guidelines-list { padding: 0 12px 12px; gap: 8px; }
+    .mobile-ui .upload-page .guideline-text { font-size: .82rem; }
+    .mobile-ui .upload-page .form-group { margin-bottom: 14px; }
+    .mobile-ui .upload-page .form-label { font-size: .82rem; gap: 6px; }
+    .mobile-ui .upload-page .label-icon { width: 24px; height: 24px; font-size: .8rem; }
+    .mobile-ui .upload-page :is(.form-input, .form-select) { min-height: 44px; }
+    .mobile-ui .upload-page .file-upload-area { min-height: 140px; padding: 16px 12px; }
+    .mobile-ui .upload-page .file-upload-icon { width: 44px; height: 44px; font-size: 1.35rem; border-radius: 12px; }
+    .mobile-ui .upload-page .file-upload-text { font-size: .9rem; }
+    .mobile-ui .upload-page .camera-preview { max-height: 260px; }
+
+    /* Search, product lists, item details, favorites and wishlist. */
+    .mobile-ui :is(.marketplace-container, .favorites-container) { padding-left: 12px; padding-right: 12px; }
+    .mobile-ui :is(.marketplace-header, .favorites-header, .wishlist-header) { padding: 22px 14px 48px; }
+    .mobile-ui :is(.marketplace-header h1, .favorites-header h1, .wishlist-header h1) { font-size: 1.4rem; }
+    .mobile-ui :is(.filter-section, .wishlist-create, .wishlist-card, .bulk-actions) { padding: 12px; }
+    .mobile-ui :is(.filter-form, .wishlists-grid, .favorites-grid, .items-grid) { gap: 10px; }
+    .mobile-ui :is(.filter-toggle-btn, .filter-btn, .clear-filters-btn, .view-btn, .toggle-btn) { min-height: 44px; font-size: .8rem; }
+    .mobile-ui :is(.marketplace-page .item-content, .favorite-content, .wishlist-card .card-body) { padding: 12px; gap: 6px; }
+    .mobile-ui :is(.marketplace-page .item-name, .favorite-name, .wishlist-title h3) { font-size: .95rem; }
+    .mobile-ui .favorite-image-container { aspect-ratio: 16 / 9; max-height: 180px; }
+    .mobile-ui .page-container:not(.mp) .main-content { padding-left: 12px; padding-right: 12px; }
+    .mobile-ui .item-layout .info-section { padding: 14px 12px; gap: 12px; }
+    .mobile-ui .item-layout .item-title { font-size: 1.2rem; }
+    .mobile-ui .item-layout .item-title-row { flex-wrap: wrap; }
+    .mobile-ui .item-layout .price-section { padding: 12px; }
+    .mobile-ui .item-layout .price-value { font-size: 1.5rem; }
+    .mobile-ui .item-layout .description-text { font-size: .875rem; line-height: 1.6; }
+    .mobile-ui .item-layout .slideshow-wrapper { aspect-ratio: 4 / 3; }
+    .mobile-ui .item-layout .thumbnail { flex-basis: 48px; height: 48px; }
+
+    /* Settings, account security and payments. */
+    .mobile-ui .st { --st-radius: 14px; --st-radius-sm: 10px; }
+    .mobile-ui .st-shell { padding: 14px 12px 24px; }
+    .mobile-ui .st-mobilebar { margin-left: -12px; margin-right: -12px; padding: 8px 12px; }
+    .mobile-ui :is(.st-chip, .st-menu-btn) { font-size: .8rem; padding-left: 12px; padding-right: 12px; }
+    .mobile-ui :is(.st-card, .st-card-body, .st-panel, .ac .card-body) { padding: 14px; }
+    .mobile-ui .st-title h1 { font-size: 1.4rem; }
+    .mobile-ui :is(.st-title p, .st-help, .ac p) { font-size: .875rem; }
+    .mobile-ui .ac :is(.card-header, .card-footer, .list-group-item) { padding: 12px; }
+    .mobile-ui :is(.fund-container, .history-container, .order-details-container) { padding: 12px 12px 24px; }
+    .mobile-ui :is(.fund-header, .history-header, .order-details-container > .order-header) { padding: 18px 14px; border-radius: 16px; }
+    .mobile-ui :is(.fund-header h1, .history-header h1) { font-size: 1.4rem; }
+    .mobile-ui :is(.fund-container .form-card, .order-details-container .section-card, .success-card, .error-card, .cancelled-card) { padding: 16px 14px; }
+    .mobile-ui .fund-container .credits-display { padding: 12px; }
+    .mobile-ui .fund-container .amount-input { min-height: 50px; font-size: 1.2rem; }
+    .mobile-ui .fund-container .credits-display-value { font-size: 1.5rem; }
+
+    /* Legacy forms and transaction summaries not yet using the component kit. */
+    .mobile-ui :is(.checkout-container, .review-container, .transaction-container, .main-container, .cart-container) { padding: 16px 12px; max-width: 100%; }
+    .mobile-ui :is(.glass-container, .content-card, .section-card, .profile-container, .settings-container) { padding: 16px 12px; min-width: 0; max-width: 100%; }
+    .mobile-ui :is(.checkout-header, .review-header, .transaction-header) { margin-bottom: 16px; padding: 16px 12px; }
+    .mobile-ui :is(.checkout-header h1, .review-header h1, .transaction-header h1) { font-size: 1.4rem; }
+
+    /* Admin: compact panels, wrap actions, and scroll data tables locally. */
+    .mobile-ui.mobile-admin { --border-radius: 12px; }
+    .mobile-admin :is(.adm-page, .dashboard-container, .create-admin) { padding: 16px 12px 28px; }
+    .mobile-admin .adm-head { gap: 10px; margin-bottom: 14px; }
+    .mobile-admin .adm-head h1 { font-size: 1.3rem; }
+    .mobile-admin .adm-head p { font-size: .82rem; }
+    .mobile-admin :is(.adm-head-actions, .adm-panel-actions, .adm-row-side) { flex-wrap: wrap; min-width: 0; }
+    .mobile-admin .adm-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .mobile-admin .adm-stat { padding: 10px; gap: 8px; min-width: 0; flex-wrap: wrap; }
+    .mobile-admin .adm-stat-icon { width: 30px; height: 30px; border-radius: 8px; font-size: .9rem; }
+    .mobile-admin .adm-stat-value { font-size: 1.2rem; overflow-wrap: anywhere; }
+    .mobile-admin .adm-stat-label { font-size: .75rem; }
+    .mobile-admin .adm-panel { margin-bottom: 12px; }
+    .mobile-admin :is(.adm-panel-head, .adm-panel-body, .adm-panel-foot, .adm-toolbar, .adm-row, .card-body) { padding: 12px; }
+    .mobile-admin .adm-panel-head { gap: 8px; flex-wrap: wrap; }
+    .mobile-admin .adm-panel-head :is(h2, h3) { font-size: .95rem; }
+    .mobile-admin .adm-panel-head .adm-panel-icon { width: 30px; height: 30px; font-size: .9rem; }
+    .mobile-admin .adm-row { gap: 10px; }
+    .mobile-admin .adm-thumb { width: 44px; height: 44px; }
+    .mobile-admin .adm-row-title { font-size: .875rem; }
+    .mobile-admin .adm-row-meta { font-size: .78rem; }
+    .mobile-admin .adm-tabs { gap: 4px; }
+    .mobile-admin .adm-tab { min-height: 44px; font-size: .8rem; padding: 7px 10px; }
+    .mobile-admin :is(.form-control, .form-select) { min-height: 44px; font-size: 16px; }
+    .mobile-admin :is(.adm-field, .adm-form-grid > *, .settlement-grid > *) { min-width: 0; }
+    .mobile-admin .adm-table-wrap { width: 100%; }
+    .mobile-admin .adm-table { min-width: 560px; }
+    .mobile-admin .dash-head { margin-bottom: 14px; gap: 10px; }
+    .mobile-admin .dash-head h1 { font-size: 1.3rem; }
+    .mobile-admin .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .mobile-admin .stat-card { min-width: 0; padding: 12px; gap: 8px; flex-wrap: wrap; }
+    .mobile-admin .stat-icon { width: 30px; height: 30px; font-size: .9rem; }
+    .mobile-admin .stat-value { font-size: 1.2rem; }
+
+    /* Standalone service/error screens do not inherit either application shell. */
+    .mobile-standalone { padding: 16px 12px; }
+    .mobile-standalone :is(.banned-container, .maintenance-container, .container-custom) {
+        width: 100%; max-width: 520px; margin: auto; padding: 16px; box-sizing: border-box;
+    }
+    .mobile-standalone :is(.banned-card, .banned-header, .banned-content, .message-box) { padding: 16px; }
+    .mobile-standalone h1 { font-size: 1.5rem; }
+    .mobile-standalone p { font-size: .875rem; line-height: 1.6; }
+
+    @media (min-width: 480px) {
+        .mobile-ui .dash .widgets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+}

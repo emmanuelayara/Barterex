@@ -7,6 +7,17 @@
 
     <form method="POST" enctype="multipart/form-data" class="card shadow p-4 border-0">
         {{ form.hidden_tag() }}
+        {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+                <ul>
+                    {% for field_name, errors in form.errors.items() %}
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
 
         <!-- Item Name -->
         <div class="mb-3">
@@ -40,8 +51,8 @@
 
         <!-- Image Upload -->
         <div class="mb-3">
-            <label for="image" class="form-label">Replace Image</label>
-            {{ form.image(class="form-control", id="image") }}
+            <label for="images" class="form-label">Replace Image (optional)</label>
+            {{ form.images(class="form-control", id="images", multiple=false, accept="image/png,image/jpeg,image/gif,image/webp") }}
             {% if item.image_url %}
                 <div class="mt-2">
                     <p class="mb-1">Current Image:</p>

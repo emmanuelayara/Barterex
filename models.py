@@ -1,11 +1,12 @@
 from app import db
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import secrets
 import json
 from urllib.parse import urlparse
 from sqlalchemy.orm import validates
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class User(db.Model, UserMixin):
@@ -408,8 +409,65 @@ class Item(db.Model):
     manual_custody_choice = db.Column(db.String(20), nullable=True)
     manual_custody_consent_at = db.Column(db.DateTime, nullable=True)
 
+    VALUATION_VALIDITY_DAYS = 30
+
+    def can_edit_upload(self):
+        return (
+            self.status == 'valuation_only' and not self.is_approved and not self.is_available
+            and not self.manual_review_requested and not self.videos
+            and not self.credited and not self.provisional_credit_granted_at
+            and not self.reserved_by_id and not self.locked_for_reservation_id
+            and self.owner_type != 'company'
+        )
+
+    @hybrid_property
+    def has_expiring_valuation(self):
+        return (
+            self.status == 'valuation_only'
+            and not (self.manual_review_requested and self.manual_custody_choice == 'company')
+            and (self.manual_verified_at is not None or self.ai_estimated_value is not None)
+            and not self.videos
+        )
+
+    @has_expiring_valuation.expression
+    def has_expiring_valuation(cls):
+        return db.and_(
+            cls.status == 'valuation_only',
+            db.or_(cls.manual_review_requested.is_not(True),
+                   cls.manual_custody_choice.is_(None), cls.manual_custody_choice != 'company'),
+            db.or_(cls.manual_verified_at.is_not(None), cls.ai_estimated_value.is_not(None)),
+            ~cls.videos.any(),
+        )
+
+    @hybrid_property
+    def valuation_recorded_at(self):
+        return self.manual_verified_at or self.ai_valuated_at
+
+    @valuation_recorded_at.expression
+    def valuation_recorded_at(cls):
+        return db.func.coalesce(cls.manual_verified_at, cls.ai_valuated_at)
+
+    @property
+    def valuation_expires_at(self):
+        if self.has_expiring_valuation and self.valuation_recorded_at is not None:
+            return self.valuation_recorded_at + timedelta(days=self.VALUATION_VALIDITY_DAYS)
+        return None
+
+    def valuation_is_expired(self, now=None):
+        expires_at = self.valuation_expires_at
+        return self.has_expiring_valuation and (
+            expires_at is None or expires_at <= (now or datetime.utcnow())
+        )
+
+    @classmethod
+    def unexpired_valuation_filter(cls, now):
+        return db.or_(
+            ~cls.has_expiring_valuation,
+            cls.valuation_recorded_at > now - timedelta(days=cls.VALUATION_VALIDITY_DAYS),
+        )
+
     def can_submit_activation_video(self):
-        return self.status == 'valuation_only' and (
+        return self.status == 'valuation_only' and not self.valuation_is_expired() and (
             not self.manual_review_requested or self.manual_verified_at is not None
         )
 

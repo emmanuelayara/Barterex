@@ -750,7 +750,7 @@
                     <div class="recon-banner">Your reconfirmation photo is awaiting admin review.</div>
                   {% else %}
                     <div class="item-actions">
-                      {% if not item.is_approved %}
+                      {% if item.can_edit_upload() %}
                         <a href="{{ url_for('user.edit_item', item_id=item.id) }}" class="btn btn-edit">
                           ✏️ Edit Item
                         </a>

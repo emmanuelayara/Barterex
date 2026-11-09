@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
@@ -47,6 +48,7 @@ class ActivationVideoFlowTests(unittest.TestCase):
             user_id=self.owner.id,
             value=125,
             ai_estimated_value=125,
+            ai_valuated_at=datetime.utcnow(),
             status='valuation_only',
             is_approved=False,
             is_available=False,
@@ -106,6 +108,169 @@ class ActivationVideoFlowTests(unittest.TestCase):
         db.session.refresh(self.item)
         self.assertEqual(self.item.status, 'valuation_only')
         self.assertEqual(ItemVideo.query.count(), 0)
+
+    def test_valuation_expiry_boundary_matches_database_filter(self):
+        now = datetime(2026, 11, 9, 12, 0)
+        for age, expired in (
+            (timedelta(days=30) - timedelta(microseconds=1), False),
+            (timedelta(days=30), True),
+            (timedelta(days=30) + timedelta(microseconds=1), True),
+        ):
+            with self.subTest(age=age):
+                self.item.ai_valuated_at = now - age
+                db.session.commit()
+                self.assertEqual(self.item.valuation_is_expired(now), expired)
+                self.assertEqual(
+                    Item.query.filter(Item.unexpired_valuation_filter(now)).count(),
+                    0 if expired else 1,
+                )
+                self.assertEqual(self.item.valuation_expires_at,
+                                 self.item.ai_valuated_at + timedelta(days=30))
+
+    def test_valuation_page_shows_countdown_and_hides_expired_records(self):
+        client = app.test_client()
+        self._login_owner(client)
+        response = client.get('/my_valuations')
+        page = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.item.name, page)
+        self.assertIn('data-valuation-expires=', page)
+        self.assertIn('Expires in 29d', page)
+        self.assertIn('data-server-now=', page)
+        self.assertIn('class="page-container mp valuations-page"', page)
+        self.assertIn('title="Expires ', page)
+        self.assertIn('Saved valuations expire after 30 days.', page)
+        self.assertIn('aria-label="Valuations, 1 pending"', page)
+
+        self.item.ai_valuated_at = datetime.utcnow() - timedelta(days=31)
+        db.session.commit()
+        page = client.get('/my_valuations').get_data(as_text=True)
+        self.assertNotIn(self.item.name, page)
+        self.assertNotIn('data-valuation-expires=', page)
+        self.assertIn('No current valuations to show.', page)
+        self.assertNotIn('aria-label="Valuations, 1 pending"', page)
+        db.session.refresh(self.item)
+        self.assertEqual(self.item.status, 'valuation_only')
+        self.assertEqual(self.item.ai_estimated_value, 125)
+        self.assertEqual(Item.query.count(), 1)
+
+    def test_expired_valuation_cannot_get_video_url_or_submit_trade(self):
+        client = app.test_client()
+        self._login_owner(client)
+        self.item.ai_valuated_at = datetime.utcnow() - timedelta(days=30)
+        db.session.commit()
+        self.assertFalse(self.item.can_submit_activation_video())
+        with patch('services.video_service.generate_upload_url') as signed, patch(
+            'services.video_service.validate_uploaded_object'
+        ) as validate:
+            response = client.post(
+                f'/items/{self.item.id}/activate/request-upload-url',
+                json={'content_type': 'video/mp4'},
+            )
+            self.assertEqual(response.status_code, 403)
+            self.assertIn('valuation has expired', response.get_json()['error'])
+            self.assertEqual(response.get_json()['redirect_url'], '/upload')
+            response = client.post(
+                f'/items/{self.item.id}/trade-this-item',
+                data={'ownership_confirmed': '1', 'object_name': 'test'},
+            )
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.location, '/upload')
+            signed.assert_not_called()
+            validate.assert_not_called()
+        db.session.refresh(self.item)
+        self.assertEqual(self.item.status, 'valuation_only')
+        self.assertFalse(self.item.ownership_confirmed)
+        self.assertEqual(ItemVideo.query.count(), 0)
+
+    def test_expiry_does_not_change_submitted_or_pending_items(self):
+        client = app.test_client()
+        self._login_owner(client)
+        self.item.ai_valuated_at = datetime.utcnow() - timedelta(days=90)
+        for status in ('pending_activation', 'manual_review_pending', 'approved'):
+            with self.subTest(status=status):
+                self.item.status = status
+                db.session.commit()
+                self.assertIsNone(self.item.valuation_expires_at)
+                self.assertFalse(self.item.valuation_is_expired())
+                self.assertEqual(Item.query.filter(
+                    Item.unexpired_valuation_filter(datetime.utcnow())
+                ).count(), 1)
+                if status in Item.LIFECYCLE_STATUSES:
+                    page = client.get('/my_valuations').get_data(as_text=True)
+                    self.assertIn(self.item.name, page)
+                    self.assertNotIn('data-valuation-expires=', page)
+        self.item.status = 'valuation_only'
+        self.item.ai_estimated_value = None
+        self.item.verification_status = 'pending_valuation'
+        db.session.commit()
+        self.assertFalse(self.item.valuation_is_expired())
+        self.assertIn(self.item.name, client.get('/my_valuations').get_data(as_text=True))
+
+    def test_manual_valuation_uses_inspection_date_and_preserves_company_acquisition(self):
+        now = datetime.utcnow()
+        self.item.manual_review_requested = True
+        self.item.manual_custody_choice = 'home'
+        self.item.ai_valuated_at = now - timedelta(days=90)
+        self.item.manual_verified_at = now - timedelta(days=1)
+        db.session.commit()
+        self.assertEqual(self.item.valuation_expires_at, now + timedelta(days=29))
+        self.assertFalse(self.item.valuation_is_expired(now))
+        self.item.manual_verified_at = now - timedelta(days=30)
+        db.session.commit()
+        self.assertTrue(self.item.valuation_is_expired(now))
+        self.item.manual_custody_choice = 'company'
+        db.session.commit()
+        self.assertIsNone(self.item.valuation_expires_at)
+        self.assertFalse(self.item.valuation_is_expired(now))
+        self.assertTrue(self.item.can_submit_activation_video())
+        self.assertEqual(Item.query.filter(Item.unexpired_valuation_filter(now)).count(), 1)
+
+    def test_undated_legacy_valuation_requires_fresh_upload(self):
+        self.item.ai_valuated_at = None
+        db.session.commit()
+        self.assertTrue(self.item.valuation_is_expired())
+        self.assertFalse(self.item.can_submit_activation_video())
+        self.assertEqual(Item.query.filter(
+            Item.unexpired_valuation_filter(datetime.utcnow())
+        ).count(), 0)
+
+    def test_previously_submitted_item_can_replace_rejected_video_after_30_days(self):
+        self.item.ai_valuated_at = datetime.utcnow() - timedelta(days=45)
+        db.session.add(ItemVideo(
+            item_id=self.item.id, uploaded_by_id=self.owner.id,
+            temp_video_url='rejected-test-video', status='rejected',
+        ))
+        db.session.commit()
+        self.assertFalse(self.item.valuation_is_expired())
+        self.assertTrue(self.item.can_submit_activation_video())
+        self.assertEqual(Item.query.filter(
+            Item.unexpired_valuation_filter(datetime.utcnow())
+        ).count(), 1)
+        client = app.test_client()
+        self._login_owner(client)
+        page = client.get('/my_valuations').get_data(as_text=True)
+        self.assertIn(self.item.name, page)
+        self.assertIn('<details class="trade-details">', page)
+        self.assertNotIn('data-valuation-expires=', page)
+
+    def test_expired_records_are_filtered_before_pagination(self):
+        for index in range(12):
+            db.session.add(Item(
+                name=f'Expired saved item {index}', category='Electronics',
+                user_id=self.owner.id, status='valuation_only',
+                ai_estimated_value=125, ai_valuated_at=datetime.utcnow() - timedelta(days=31),
+            ))
+        db.session.commit()
+        client = app.test_client()
+        self._login_owner(client)
+        with patch('routes.user.render_template', return_value='ok') as render:
+            self.assertEqual(client.get('/my_valuations').status_code, 200)
+        pagination = render.call_args.kwargs['items']
+        self.assertEqual(pagination.total, 1)
+        self.assertEqual(pagination.pages, 1)
+        self.assertEqual(pagination.items, [self.item])
+        self.assertEqual(Item.query.count(), 13)
 
     def test_trade_and_signed_upload_require_profile_then_identity_submission(self):
         client = app.test_client()

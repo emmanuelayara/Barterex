@@ -19,6 +19,34 @@ not a new admin-approval requirement). The Valuations UI, activation signed-URL
 endpoint, final trade submission and manual custody-consent submission enforce
 these checks. Browsing saved valuations remains available.
 
+Saved, unsubmitted valuations expire exactly 30 days after the recorded AI or
+manual valuation time. Legacy values without a recorded valuation date also
+require a fresh upload; no new date is invented. Valuations shows a live
+countdown and expiry date, and filters expired
+records before pagination. Both the signed video-upload URL and final trade
+submission reject expired values, even from a stale browser tab. Expired records
+and photos are retained internally; users upload the item again for a new value.
+Existing records use their original dates, with no grace-period reset. Pending
+valuations without a value, manual reviews in progress, items already submitted
+for video review (including replacement videos after rejection) and
+company-custody acquisitions are unchanged. This is separate from
+marketplace freshness reconfirmation.
+
+On mobile, Valuations uses compact cards and a days/hours/minutes expiry badge.
+Trade and camera controls retain a 44px minimum touch height; text-entry fields
+remain 16px to avoid automatic zoom on mobile browsers.
+
+Editing an unsubmitted item opens Upload with its saved name, description,
+category, condition and usage duration prefilled. Each save requires 6-15 new
+camera photos and an accepted, successful AI preview tied to that item, its
+details and all submitted photos. The existing item and image records are
+replaced atomically only after validation; failed AI calls or uploads leave the
+original unchanged. The new valuation restarts the 30-day validity period and
+grants no credits. Manual fallback is unavailable while editing. Items already
+submitted for trade, manual review, approval or reservation are locked against
+editing. Expired, otherwise unsubmitted items can be edited for a fresh value.
+Older background valuation jobs cannot overwrite an accepted replacement value.
+
 The upload form takes 6-15 JPEG photos from an in-page camera preview using
 `getUserMedia`, preferring the rear camera. There is no image file picker,
 gallery fallback or drag-and-drop import. Users can remove unclear captures

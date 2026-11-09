@@ -193,6 +193,45 @@ html.dark-mode .mp .final-value { color: #86efac; }
 .mp .activate-progress[hidden], .mp .activate-error[hidden] { display: none; }
 .mp .rejection-note { padding: 12px 14px; border-radius: var(--bx-radius-sm); border-left: 4px solid var(--bx-danger); background: var(--bx-danger-soft); color: var(--bx-text); font-size: .88rem; line-height: 1.5; }
 
+/* ---------- Compact valuation layout ---------- */
+.valuations-page .valuation-expiry {
+    display: inline-flex; max-width: 100%; padding: 3px 7px; border: 1px solid var(--bx-border);
+    border-radius: 6px; background: var(--bx-tint); font-size: .75rem; line-height: 1.4;
+}
+.valuations-page .valuation-countdown { font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.valuations-page .valuation-actions { min-width: 0; }
+.valuations-page .valuation-actions:empty { display: none; }
+.valuations-page .trade-checkbox { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; line-height: 1.5; }
+.valuations-page .trade-checkbox input { flex-shrink: 0; margin-top: 3px; }
+.valuations-page .valuation-actions > form { display: grid; gap: 10px; }
+.valuations-page .valuation-actions select {
+    width: 100%; min-width: 0; min-height: 44px; margin-top: 6px; padding: 8px;
+    border: 1px solid var(--bx-border); border-radius: 10px; background: var(--bx-surface); color: var(--bx-text); font-size: 16px;
+}
+@media (max-width: 639px) {
+    .valuations-page .page-header { padding: 20px 16px 44px; gap: 6px; border-radius: 0 0 20px 20px; }
+    .valuations-page .page-title { font-size: 1.35rem; }
+    .valuations-page .page-subtitle { max-width: 360px; font-size: .8rem; line-height: 1.45; }
+    .valuations-page .valuations-list { width: calc(100% - 20px); gap: 10px; }
+    .valuations-page .valuation-card { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 12px; border-radius: 14px; }
+    .valuations-page .valuation-thumb { width: 52px; height: 52px; border-radius: 10px; }
+    .valuations-page .valuation-info { gap: 4px; }
+    .valuations-page .valuation-info h3 { font-size: .95rem; }
+    .valuations-page .valuation-meta { font-size: .75rem; line-height: 1.4; }
+    .valuations-page .valuation-estimate { font-size: .85rem; }
+    .valuations-page .stage-pill { padding: 3px 7px; font-size: .7rem; line-height: 1.4; }
+    .valuations-page .activate-help, .valuations-page .rejection-note { font-size: .78rem; line-height: 1.45; }
+    .valuations-page .trade-this-btn, .valuations-page .trade-submit-btn {
+        min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: .82rem; white-space: normal;
+    }
+    .valuations-page .trade-form { min-width: 0; padding: 10px; gap: 8px; margin-top: 8px; }
+    .valuations-page input.trade-input { min-height: 44px; padding: 8px 10px; border-radius: 10px; }
+    .valuations-page .recording-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .valuations-page .activation-camera { max-height: 220px; }
+    .valuations-page .valuation-actions > form > label { min-width: 0; font-size: .82rem; }
+    .valuations-page .rejection-note { padding: 10px; }
+}
+
 /* ---------- Revaluation proposals ---------- */
 .mp .rv-card { grid-template-columns: 1fr; }
 .mp .rv-card h2 { font-size: 1.1rem; font-weight: 800; }
