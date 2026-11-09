@@ -188,7 +188,7 @@
         <div id="homeAddressFields" hidden>
           <label for="deliveryAddress">Home delivery address</label>
           <input type="text" name="delivery_address" id="deliveryAddress" value="{{ current_user.address or '' }}" maxlength="200">
-          <p>The standard non-refundable home-service fee is ₦{{ '{:,.0f}'.format(home_service_fee_naira) }}. Submitting this reservation takes you to Paystack to pay immediately, before home verification, pickup or dispatch. This is separate from the 5% completed-transaction fee (minimum ₦1,000, maximum ₦5,000).</p>
+          <p>The standard non-refundable home-service fee is ₦{{ '{:,.0f}'.format(home_service_fee_naira) }}. Submitting this reservation takes you to Paystack to pay immediately, before home verification, pickup or dispatch. This is separate from the 5% completed-transaction fee (minimum ₦1,000, maximum ₦10,000).</p>
         </div>
       </fieldset>
 

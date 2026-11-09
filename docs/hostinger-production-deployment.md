@@ -32,7 +32,7 @@ New home-service reservations use a fixed NGN 5,000 non-refundable fee and
 redirect to Paystack immediately on submission. Verification, settlement and
 dispatch require successful fee payment; Verification Station reservations
 require no home-service payment. This fee is separate from the published 5%
-completed-transaction fee (NGN 1,000 minimum / NGN 5,000 maximum), whose
+completed-transaction fee (NGN 1,000 minimum / NGN 10,000 maximum), whose
 collection behavior is unchanged.
 
 No schema migration is needed for this pricing change. Previously issued
