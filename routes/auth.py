@@ -12,6 +12,7 @@ from exceptions import AuthenticationError, UserBannedError, EmailSendError
 from error_handlers import handle_errors, safe_database_operation
 from app import db
 from services.email_branding import add_email_logo
+from referral_rewards import REFERRAL_MILESTONE_BONUS
 
 logger = setup_logger(__name__)
 
@@ -123,7 +124,7 @@ def register():
                     # Create notification for referrer that someone signed up with their code
                     notification = Notification(
                         user_id=referrer.id,
-                        message=f'👤 {user.username} signed up using your referral code! They need to complete their profile to earn the ₦100 bonus.',
+                        message=f'👤 {user.username} signed up using your referral code! You will earn {REFERRAL_MILESTONE_BONUS} BXC when they complete their profile.',
                         notification_type='referral',
                         category='info'
                     )

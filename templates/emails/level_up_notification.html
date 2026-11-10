@@ -8,6 +8,9 @@
   {{ email.paragraph('Your trading activity has earned you a new level. Your reward and updated balance are shown below.') }}
   {% call email.section('Your achievement') %}
     {{ email.facts([('Level', level ~ ' / 30'), ('Tier', tier), ('BXC reward', credits_awarded ~ ' BXC'), ('Total trading points', total_points), ('New balance', '{:,.0f} BXC'.format(new_balance))]) }}
+    {% if tier_bonus %}
+      {{ email.paragraph('Your reward includes ' ~ tier_bonus ~ ' BXC for entering a new tier, in addition to your normal level-up reward.') }}
+    {% endif %}
   {% endcall %}
   {{ email.action(config['APP_URL'].rstrip('/') ~ '/dashboard', 'View your dashboard') }}
 {% endblock %}

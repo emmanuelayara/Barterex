@@ -1441,7 +1441,7 @@ def approve_item(item_id):
         level_up_info = award_points_for_upload(item.user, item.name)
         
         # Award referral bonus if user was referred
-        referral_result = award_referral_bonus(item.user_id, 'item_upload', amount=100)
+        referral_result = award_referral_bonus(item.user_id, 'item_upload')
         if referral_result['success']:
             logger.info(f"Referral bonus awarded: {referral_result['message']}")
         

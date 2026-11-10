@@ -1240,7 +1240,7 @@ def finalize_purchase():
         
         # Award referral bonus for purchase (after commit)
         try:
-            referral_result = award_referral_bonus(current_user.id, 'purchase', amount=100)
+            referral_result = award_referral_bonus(current_user.id, 'purchase')
             if referral_result['success']:
                 logger.info(f"[TXN:{transaction_id}] Referral bonus awarded: {referral_result['message']}")
         except Exception as e:
@@ -1576,7 +1576,7 @@ def finalize_purchase():
         
         # Award referral bonus for purchase (after commit)
         try:
-            referral_result = award_referral_bonus(current_user.id, 'purchase', amount=100)
+            referral_result = award_referral_bonus(current_user.id, 'purchase')
             if referral_result['success']:
                 logger.info(f"[TXN:{transaction_id}] Referral bonus awarded: {referral_result['message']}")
         except Exception as e:

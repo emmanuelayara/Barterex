@@ -7,15 +7,17 @@ from datetime import datetime
 from app import db
 from models import User, Referral, CreditTransaction, Notification
 
+REFERRAL_MILESTONE_BONUS = 500
 
-def award_referral_bonus(referred_user_id, bonus_type, amount=100):
+
+def award_referral_bonus(referred_user_id, bonus_type, amount=REFERRAL_MILESTONE_BONUS):
     """
     Award referral bonus credits to the referrer.
     
     Args:
         referred_user_id (int): ID of the user who was referred
         bonus_type (str): Type of bonus - 'signup', 'item_upload', or 'purchase'
-        amount (int): Amount of credits to award (default 100)
+        amount (int): Amount of credits to award (default 500)
     
     Returns:
         dict: {

@@ -61,9 +61,13 @@ the form with captured photos retained. The preview fills the viewport behind
 overlaid controls using a centered cover crop, without stretching.
 The shutter and guidance sit on a solid dark panel that covers the preview
 behind them, including in landscape mode. Saved photos
-retain the full camera frame and still use the stream resolution, capped at
-1920px on the longest edge, rather than the displayed preview size. Portrait
-and landscape layouts respect device safe areas. This fills the browser's
+retain the full camera frame, using native still capture (`ImageCapture.takePhoto`)
+where supported, otherwise the live stream. Photo previews request up to 4K;
+JPEGs retain up to 4096px on the longest edge without upscaling, starting at
+95% quality. Encoding quality drops to 90%, then 85% only if needed to stay
+within 9 MB per photo (below the server's 10 MB limit and 150 MB request limit).
+If still too large, capture reports an error instead of adding an invalid file.
+Portrait and landscape layouts respect device safe areas. This fills the browser's
 viewport, not the native camera app; browser chrome may remain visible.
 
 This is a capture-only **form policy**, not proof of authenticity: browsers
@@ -130,9 +134,28 @@ The video is limited to 200 MB; camera access is released on stop/cancel,
 page hiding/navigation, or closing the item form. Interrupted recordings are
 discarded. Denied camera permission or an unsupported recorder requires another
 camera-enabled browser/device, with no gallery fallback. Production needs HTTPS.
+Video requests 1080p at up to 30 fps and an 8 Mbps recording bitrate, falling
+back to the browser bitrate if that encoding option is unsupported. Shared
+`static/js/camera.js` requests continuous focus, exposure and white balance
+only when advertised by the camera. Unsupported adjustments keep device defaults.
+Resolution requests are preferences, so browsers can select a lower supported
+size automatically; constraint failures retry lower resolutions (down to 720p,
+then device defaults). Permission/device errors are not retried. Fallbacks log
+warnings, and failed setup releases tracks. Cancelling during setup prevents
+further retries and releases late streams. Native still capture also falls
+back to the live frame for supported compatibility errors. Device/browser
+capabilities and lighting still determine actual quality.
+
 Camera recording is a form restriction, not authenticity proof; virtual cameras
 and crafted uploads remain possible. Admin video review and physical inspection
 are still required. No schema change is needed.
+
+To run the dependency-free browser quality regression checks, serve the repository
+locally (for example, `.\.venv\Scripts\python.exe -m http.server 5065 --bind 127.0.0.1`).
+On that local origin, load `static/js/camera.js` followed by
+`tests/camera_quality.browser.js`, then await `runCameraQualityTests()` in the
+browser console. These checks use mocked camera capabilities and real JPEG
+encoding; they do not replace testing autofocus or clarity on a physical phone.
 
 `ItemVideo` is also the durable job record. The states are:
 

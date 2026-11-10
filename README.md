@@ -9,6 +9,26 @@ settlement, and fulfillment, not a cart or combined checkout. Legacy cart and
 checkout URLs redirect to Favorites or the relevant item without purchasing
 or deleting historical cart records. Cart notification controls are retired.
 
+## Trading-level rewards
+
+Approved uploads earn 10 trading points and purchases earn 20. Level-ups
+continue to award 300 BXC. Entering Novice (level 6), Intermediate (level 11),
+Advanced (level 16), or Expert (level 21) additionally awards 1,000 BXC,
+recorded separately in the credit ledger. A normal tier-entry level-up therefore
+awards 1,300 BXC total. Starting in Beginner does not award a tier bonus;
+levels within the same tier do not repeat it. Bonuses apply to future tier
+advances, not tiers already reached. No database migration is needed.
+
+## Referral rewards
+
+Referrers earn 500 BXC for each referred user's profile completion, first
+approved item upload, and first purchase: up to 1,500 BXC per referral.
+Each milestone pays only once. The shared amount is
+`REFERRAL_MILESTONE_BONUS` in `referral_rewards.py`. Newly earned milestones,
+including pending milestones on existing referrals, use this amount;
+previously paid rewards and historical transactions remain unchanged.
+No database migration is required.
+
 ## Project Structure
 
 ```

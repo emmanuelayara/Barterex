@@ -419,6 +419,7 @@
   </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
 <script>
   (function () {
     const list = document.querySelector('.valuations-list');
@@ -550,10 +551,8 @@
       document.body.classList.add('item-camera-open');
       setRecordingStatus('Allow camera permission to begin. Your previous recording has been cleared.');
       try {
-        const camera = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}
-        });
+        const camera = await ItemCamera.openStream('video', () => token === generation && !document.hidden);
+        if (!camera) return;
         if (token !== generation || document.hidden) {
           camera.getTracks().forEach(track => track.stop());
           if (token === generation) {
@@ -575,7 +574,7 @@
         preview.srcObject = camera;
         await preview.play();
         if (token !== generation) return;
-        recorder = new MediaRecorder(camera, {mimeType: mime, videoBitsPerSecond: 2500000});
+        recorder = ItemCamera.createRecorder(camera, mime);
         startBtn.disabled = false;
         setRecordingStatus('Hold steady and show the item from different sides. Start recording when ready.');
       } catch (error) {

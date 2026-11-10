@@ -4,6 +4,7 @@ Referral and bonus management utilities
 
 from models import User, Referral, CreditTransaction, Notification
 from app import db
+from referral_rewards import REFERRAL_MILESTONE_BONUS
 from datetime import datetime
 import logging
 
@@ -48,7 +49,7 @@ def is_profile_complete(user):
 
 def award_referral_signup_bonus(referred_user):
     """
-    Award 100 BXC referral bonus to the user who referred the given user,
+    Award 500 BXC referral bonus to the user who referred the given user,
     when the referred user completes their profile.
     
     Args:
@@ -96,7 +97,7 @@ def award_referral_signup_bonus(referred_user):
             }
         
         # Award the bonus
-        BONUS_AMOUNT = 100
+        BONUS_AMOUNT = REFERRAL_MILESTONE_BONUS
         referrer.credits += BONUS_AMOUNT
         referrer.referral_bonus_earned += BONUS_AMOUNT
         

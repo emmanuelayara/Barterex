@@ -7,7 +7,7 @@ from app import db
 from models import CreditTransaction, User, Notification
 from datetime import datetime, timezone
 from logger_config import setup_logger
-from rank_rewards import get_tier_info, get_tier_badge
+from rank_rewards import RANK_TIERS, get_tier_info, get_tier_badge
 from routes.auth import send_email_async
 from flask import render_template
 
@@ -58,6 +58,28 @@ LEVEL_THRESHOLDS = {
 
 # Reward per level (credits)
 CREDITS_PER_LEVEL_UP = 300
+CREDITS_PER_TIER_UP = 1000
+
+
+def award_tier_entry_bonuses(user, old_level, new_level):
+    """Record a separate reward for each newly crossed tier boundary."""
+    tiers_entered = []
+    for tier, details in RANK_TIERS.items():
+        entry_level = details['level_range'][0]
+        if old_level < entry_level <= new_level:
+            balance_before = int(user.credits or 0)
+            user.credits += CREDITS_PER_TIER_UP
+            db.session.add(CreditTransaction(
+                user_id=user.id,
+                amount=CREDITS_PER_TIER_UP,
+                transaction_type='tier_entry_bonus',
+                description=f'Tier-entry reward for reaching {tier}',
+                reason='tier_entry_reward',
+                balance_before=balance_before,
+                balance_after=user.credits,
+            ))
+            tiers_entered.append(tier)
+    return tiers_entered
 
 # Level ranges for tier names
 def get_level_tier(level):
@@ -135,12 +157,16 @@ def award_points_for_upload(user, item_name):
                 balance_after=user.credits,
             ))
             
+            tiers_entered = award_tier_entry_bonuses(user, old_level, new_level)
+            tier_bonus = len(tiers_entered) * CREDITS_PER_TIER_UP
             level_up_info = {
                 'old_level': old_level,
                 'new_level': new_level,
                 'old_tier': old_tier,
                 'new_tier': new_tier,
-                'credits_awarded': CREDITS_PER_LEVEL_UP,
+                'credits_awarded': CREDITS_PER_LEVEL_UP + tier_bonus,
+                'tier_bonus': tier_bonus,
+                'tiers_entered': tiers_entered,
                 'points': user.trading_points
             }
             
@@ -148,7 +174,7 @@ def award_points_for_upload(user, item_name):
                 f"User leveled up! User ID: {user.id}, Username: {user.username}, "
                 f"Level: {old_level} → {new_level} ({new_tier}), "
                 f"Points: {old_points} → {user.trading_points}, "
-                f"Credits Awarded: {CREDITS_PER_LEVEL_UP}"
+                f"Credits Awarded: {level_up_info['credits_awarded']}"
             )
         else:
             logger.info(
@@ -207,12 +233,16 @@ def award_points_for_purchase(user, order_number):
                 balance_after=user.credits,
             ))
             
+            tiers_entered = award_tier_entry_bonuses(user, old_level, new_level)
+            tier_bonus = len(tiers_entered) * CREDITS_PER_TIER_UP
             level_up_info = {
                 'old_level': old_level,
                 'new_level': new_level,
                 'old_tier': old_tier,
                 'new_tier': new_tier,
-                'credits_awarded': CREDITS_PER_LEVEL_UP,
+                'credits_awarded': CREDITS_PER_LEVEL_UP + tier_bonus,
+                'tier_bonus': tier_bonus,
+                'tiers_entered': tiers_entered,
                 'points': user.trading_points
             }
             
@@ -220,7 +250,7 @@ def award_points_for_purchase(user, order_number):
                 f"User leveled up! User ID: {user.id}, Username: {user.username}, "
                 f"Level: {old_level} → {new_level} ({new_tier}), "
                 f"Points: {old_points} → {user.trading_points}, "
-                f"Credits Awarded: {CREDITS_PER_LEVEL_UP}"
+                f"Credits Awarded: {level_up_info['credits_awarded']}"
             )
         else:
             logger.info(
@@ -261,6 +291,13 @@ def create_level_up_notification(user, level_up_info):
             f"{tier_badge} Congratulations! You've reached Level {new_level} ({new_tier})! "
             f"You earned {credits_awarded} BXC as a reward. Keep trading to reach higher levels!"
         )
+        tier_bonus = level_up_info.get('tier_bonus', 0)
+        if tier_bonus:
+            message = (
+                f"{tier_badge} Level {new_level} ({new_tier}) reached! "
+                f"You earned {credits_awarded} BXC: {CREDITS_PER_LEVEL_UP} for leveling up "
+                f"plus {tier_bonus} for entering a new tier. Keep trading!"
+            )
         
         notification = Notification(
             user_id=user.id,
@@ -273,6 +310,8 @@ def create_level_up_notification(user, level_up_info):
                 'tier': new_tier,
                 'badge': tier_badge,
                 'credits_awarded': credits_awarded,
+                'tier_bonus': tier_bonus,
+                'tiers_entered': level_up_info.get('tiers_entered', []),
                 'total_points': level_up_info['points']
             }
         )
@@ -286,6 +325,7 @@ def create_level_up_notification(user, level_up_info):
             'level': new_level,
             'tier': new_tier,
             'credits_awarded': credits_awarded,
+            'tier_bonus': tier_bonus,
             'total_points': level_up_info['points'],
             'new_balance': user.credits,
             'now': datetime.now(timezone.utc)

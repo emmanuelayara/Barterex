@@ -1167,10 +1167,10 @@ class Referral(db.Model):
     referral_code_used = db.Column(db.String(20), nullable=False)  # The code that was used
     
     # Bonus tracking
-    signup_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 after referred user completes profile
+    signup_bonus_earned = db.Column(db.Boolean, default=False)  # 500 BXC after referred user completes profile
     signup_bonus_earned_at = db.Column(db.DateTime, nullable=True)  # When bonus was awarded
-    item_upload_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on approved item upload
-    purchase_bonus_earned = db.Column(db.Boolean, default=False)  # ₦100 on friend's purchase
+    item_upload_bonus_earned = db.Column(db.Boolean, default=False)  # 500 BXC on approved item upload
+    purchase_bonus_earned = db.Column(db.Boolean, default=False)  # 500 BXC on friend's purchase
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # When referred user signed up
