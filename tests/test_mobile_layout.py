@@ -74,6 +74,25 @@ class MobileLayoutTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assert_mobile_shell(response.get_data(as_text=True), admin=True)
 
+    def test_funding_form_has_accessible_summary_and_help(self):
+        client = app.test_client()
+        with client.session_transaction() as session:
+            session['_user_id'] = str(self.user_id)
+            session['_fresh'] = True
+        response = client.get('/payments/fund-account')
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn('for="amount-input"', html)
+        self.assertIn('aria-describedby="funding-limits"', html)
+        self.assertIn('id="credits-value" role="status"', html)
+        self.assertIn('id="error-message" role="alert"', html)
+        for content_id in ('funding-how-content', 'funding-faq-content'):
+            with self.subTest(content_id=content_id):
+                self.assertIn(f'aria-expanded="false" aria-controls="{content_id}"', html)
+                self.assertIn(f'class="info-content" id="{content_id}"', html)
+        self.assertIn('onsubmit="handleSubmit(event)"', html)
+        self.assertIn('oninput="updateCreditsDisplay()"', html)
+
     def test_standalone_pages_use_mobile_layer(self):
         with app.test_request_context():
             for name in ('banned.html', 'maintenance_page.html', 'marketplace_disabled.html'):

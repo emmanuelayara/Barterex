@@ -59,8 +59,8 @@ html.dark-mode .fund-container .credits-display-value { color: #ffb066; }
 .fund-container .submit-btn:disabled { opacity: .6; cursor: progress; }
 
 .fund-container .info-section { overflow: hidden; }
-.fund-container .info-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; padding: 12px 16px; cursor: pointer; }
-.fund-container .info-header h3 { font-size: 1rem; font-weight: 800; }
+.fund-container .info-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 58px; padding: 12px 16px; border: 0; background: transparent; color: var(--bx-text); font: inherit; text-align: left; cursor: pointer; }
+.fund-container .info-title { font-size: 1rem; font-weight: 800; }
 .fund-container .toggle-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--bx-tint); color: var(--bx-blue); font-size: .7rem; transition: transform .25s ease; }
 html.dark-mode .fund-container .toggle-icon { color: #9cc7f5; }
 .fund-container .info-section:not(.collapsed) .toggle-icon { transform: rotate(180deg); }

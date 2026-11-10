@@ -104,7 +104,7 @@
     .mobile-ui .mp .empty-state { padding: 28px 16px; }
     .mobile-ui .dash > *:not(.welcome-section) { width: calc(100% - 24px); }
     .mobile-ui .dash .welcome-section { flex-direction: row; flex-wrap: nowrap; align-items: center !important; text-align: left; }
-    .mobile-ui .dash .welcome-title { font-size: .475rem; line-height: 1.3; }
+    .mobile-ui .dash .welcome-section .welcome-title { font-size: 14px; font-weight: 700; line-height: 1.4; letter-spacing: normal; }
     .mobile-ui .dash .welcome-section > :not(.bx-floaters) { flex: 1; min-width: 0; max-width: 100%; }
     .mobile-ui .dash .welcome-section > div:last-child { flex: 0 0 auto; }
     .mobile-ui .dash :is(.stat-card, .progress-card, .referral-card, .notifications-section, .recommendations-card, .level-card) { padding: 14px; }
@@ -178,14 +178,67 @@
     .mobile-ui :is(.st-card, .st-card-body, .st-panel, .ac .card-body) { padding: 14px; }
     .mobile-ui .st-title h1 { font-size: 1.4rem; }
     .mobile-ui :is(.st-title p, .st-help, .ac p) { font-size: .875rem; }
+    .mobile-ui .st-layout { margin-top: 8px; }
+    .mobile-ui .st-content { padding-top: 8px; }
+    .mobile-ui .st-panel[data-panel="profile"] .st-card { padding: 16px 14px; box-shadow: none; }
+    .mobile-ui .st-panel[data-panel="profile"] .st-hero { flex-direction: row; align-items: flex-start; gap: 12px; text-align: left; }
+    .mobile-ui .st-hero > div { flex: 1; min-width: 0; }
+    .mobile-ui .st-avatar-form { flex: 0 0 64px; }
+    .mobile-ui .st-avatar { width: 64px; height: 64px; }
+    .mobile-ui .st-avatar-img, .mobile-ui .st-avatar-initial { border-width: 2px; font-size: 1.5rem; box-shadow: none; }
+    .mobile-ui .st-avatar-cam { width: 26px; height: 26px; border-width: 2px; font-size: .7rem; }
+    .mobile-ui .st-hero h2 { font-size: 1rem; line-height: 1.4; overflow-wrap: anywhere; }
+    .mobile-ui .st-hero .st-hero-sub { margin-top: 4px; font-size: .8rem; line-height: 1.6; }
+    .mobile-ui .st-badges { justify-content: flex-start; margin-top: 8px; gap: 6px; }
+    .mobile-ui .st-badge { padding: 4px 8px; font-size: .7rem; }
+    .mobile-ui .st .st-hint { margin-top: 8px; font-size: .75rem; line-height: 1.6; }
+    .mobile-ui #profileCard .st-card-head { align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+    .mobile-ui #profileCard .st-card-head > div { flex: 1; min-width: 0; }
+    .mobile-ui #profileCard .st-card-head h2 { font-size: 1rem; line-height: 1.4; }
+    .mobile-ui #profileCard .st-card-head p { margin-top: 6px; font-size: .8rem; line-height: 1.6; }
+    .mobile-ui #editProfileBtn { flex: 0 0 auto; gap: 6px; padding: 8px 10px; font-size: .8rem; }
+    .mobile-ui #profileCard .st-details li { gap: 10px; padding: 14px 0; }
+    .mobile-ui #profileCard .st-details li > div { flex: 1; min-width: 0; }
+    .mobile-ui #profileCard .st-details .st-ico { width: 28px; height: 28px; border-radius: 8px; font-size: .8rem; }
+    .mobile-ui #profileCard .st-k { margin-bottom: 4px; font-size: .68rem; letter-spacing: .04em; }
+    .mobile-ui #profileCard .st-v { font-size: .875rem; font-weight: 500; line-height: 1.65; overflow-wrap: anywhere; }
+    .mobile-ui #profileEditForm .st-form-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .mobile-ui #profileEditForm .st-sub { margin-bottom: 14px; font-size: .72rem; }
+    .mobile-ui #profileEditForm .st-sub:not(:first-child) { margin-top: 24px; }
+    .mobile-ui #profileEditForm .st-label { margin-bottom: 8px; font-size: .8rem; }
+    .mobile-ui #profileEditForm .st-lead { display: none; }
+    .mobile-ui #profileEditForm .st-input { min-height: 46px; padding: 11px 12px; border-radius: 10px; font-size: 16px; }
+    .mobile-ui #profileEditForm select.st-input { padding-right: 36px; }
+    .mobile-ui #profileEditForm textarea.st-input { min-height: 104px; line-height: 1.6; }
+    .mobile-ui #profileEditForm .st-savebar { position: static; margin: 24px 0 0; padding: 16px 0 0; border-radius: 0; background: transparent; backdrop-filter: none; }
+    .mobile-ui #profileEditForm .st-savebar .st-btn { min-width: 0; min-height: 46px; padding: 10px 8px; gap: 6px; font-size: .8rem; white-space: normal; box-shadow: none; }
     .mobile-ui .ac :is(.card-header, .card-footer, .list-group-item) { padding: 12px; }
     .mobile-ui :is(.fund-container, .history-container, .order-details-container) { padding: 12px 12px 24px; }
     .mobile-ui :is(.fund-header, .history-header, .order-details-container > .order-header) { padding: 18px 14px; border-radius: 16px; }
     .mobile-ui :is(.fund-header h1, .history-header h1) { font-size: 1.4rem; }
     .mobile-ui :is(.fund-container .form-card, .order-details-container .section-card, .success-card, .error-card, .cancelled-card) { padding: 16px 14px; }
-    .mobile-ui .fund-container .credits-display { padding: 12px; }
-    .mobile-ui .fund-container .amount-input { min-height: 50px; font-size: 1.2rem; }
-    .mobile-ui .fund-container .credits-display-value { font-size: 1.5rem; }
+    .mobile-ui .fund-container .fund-header { padding: 18px 14px; text-align: center; box-shadow: none; }
+    .mobile-ui .fund-container .fund-header h1 { font-size: 1.2rem; }
+    .mobile-ui .fund-container .conversion-info { margin-top: 8px; padding: 0; border: 0; border-radius: 0; background: transparent; backdrop-filter: none; font-size: .8rem; font-weight: 400; line-height: 1.6; }
+    .mobile-ui .fund-container .form-card { padding: 18px 14px; box-shadow: none; }
+    .mobile-ui .fund-container .form-group { margin-bottom: 20px; }
+    .mobile-ui .fund-container .form-label { margin-bottom: 10px; font-size: .875rem; line-height: 1.5; }
+    .mobile-ui .fund-container .input-group { display: block; min-width: 0; }
+    .mobile-ui .fund-container .currency-symbol { left: 12px; font-size: 1rem; }
+    .mobile-ui .fund-container .amount-input { min-height: 50px; padding: 12px 12px 12px 34px; border-radius: 10px; font-size: 16px; font-weight: 600; }
+    .mobile-ui .fund-container .input-info { flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; font-size: .75rem; line-height: 1.5; }
+    .mobile-ui .fund-container .credits-display { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 20px; padding: 14px 12px; text-align: left; }
+    .mobile-ui .fund-container .credits-display-label { font-size: .8rem; font-weight: 500; letter-spacing: normal; text-transform: none; }
+    .mobile-ui .fund-container .credits-display-value { min-width: 0; max-width: 100%; margin-top: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+    .mobile-ui .fund-container .submit-btn { min-height: 46px; padding: 10px 12px; gap: 8px; border-radius: 10px; font-size: .875rem; font-weight: 700; box-shadow: none; }
+    .mobile-ui .fund-container .info-section { box-shadow: none; }
+    .mobile-ui .fund-container .info-header { min-height: 48px; padding: 10px 12px; gap: 8px; }
+    .mobile-ui .fund-container .info-title { font-size: .85rem; font-weight: 600; }
+    .mobile-ui .fund-container .toggle-icon { flex: 0 0 24px; width: 24px; height: 24px; font-size: .6rem; }
+    .mobile-ui .fund-container .info-content { padding: 0 12px 12px; font-size: .82rem; }
+    .mobile-ui .fund-container .info-content li { padding: 10px 0; line-height: 1.65; }
+    .mobile-ui .fund-container .info-content strong { display: block; margin-bottom: 4px; }
+    .mobile-ui .fund-container .error-message { padding: 12px; font-size: .82rem; line-height: 1.6; }
 
     /* Legacy forms and transaction summaries not yet using the component kit. */
     .mobile-ui :is(.checkout-container, .review-container, .transaction-container, .main-container, .cart-container) { padding: 16px 12px; max-width: 100%; }

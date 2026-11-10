@@ -40,6 +40,11 @@ and 16px form inputs to avoid mobile focus zoom. Desktop styling is unchanged.
 Keep tables horizontally scrollable inside their own wrappers rather than
 clipping content or scaling the whole page. Validate new pages at 320px, 375px
 and 430px, including expanded forms, dialogs and long labels.
+For Fund Account, also check empty and maximum funding amounts, the live BXC
+summary, expanded help sections and payment errors in light and dark modes.
+For Profile Settings, check long saved contact/address details and the prefilled
+single-column edit form. Mobile save/cancel actions stay in the document flow
+instead of floating over the fields.
 
 ### 1. Environment Variables
 Copy `.env.example` to `.env` and fill in your configuration:

@@ -479,7 +479,6 @@
     <div class="fund-header">
       {{ fx.floaters('banner') }}
       <h1>Fund Your Account</h1>
-      <p>Buy ᗸ BXC (Barter Express Credits) to purchase items</p>
       <div class="conversion-info">
         💡 ₦1 Naira = ᗸ1 BXC | Pay exactly what you want to trade!
       </div>
@@ -487,12 +486,12 @@
 
     <!-- Payment Form Card -->
     <div class="form-card">
-      <div class="error-message" id="error-message"></div>
+      <div class="error-message" id="error-message" role="alert"></div>
 
       <form id="payment-form" onsubmit="handleSubmit(event)">
         <!-- Amount Input -->
         <div class="form-group">
-          <label class="form-label">How much do you want to fund?</label>
+          <label class="form-label" for="amount-input">How much do you want to fund?</label>
           <div class="input-group">
             <span class="currency-symbol">₦</span>
             <input
@@ -503,11 +502,13 @@
               min="{{ min_amount }}"
               max="{{ max_amount }}"
               step="10"
+              inputmode="decimal"
+              aria-describedby="funding-limits"
               required
               oninput="updateCreditsDisplay()"
             >
           </div>
-          <div class="input-info">
+          <div class="input-info" id="funding-limits">
             <div class="input-info-item">
               <span>Min: ₦{{ "{:,}".format(min_amount) }}</span>
             </div>
@@ -520,7 +521,7 @@
         <!-- Credits Display -->
         <div class="credits-display">
           <div class="credits-display-label">You will receive</div>
-          <div class="credits-display-value" id="credits-value">ᗸ0 BXC</div>
+          <div class="credits-display-value" id="credits-value" role="status" aria-live="polite" aria-atomic="true">ᗸ0 BXC</div>
         </div>
 
         <!-- Submit Button -->
@@ -533,11 +534,11 @@
 
     <!-- Info Section -->
     <div class="info-section collapsible collapsed" id="how-it-works">
-      <div class="info-header" onclick="toggleCollapse(this)">
-        <h3>How It Works</h3>
-        <span class="toggle-icon">▼</span>
-      </div>
-      <div class="info-content">
+      <button type="button" class="info-header" onclick="toggleCollapse(this)" aria-expanded="false" aria-controls="funding-how-content">
+        <span class="info-title">How It Works</span>
+        <span class="toggle-icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="info-content" id="funding-how-content">
         <ul>
           <li>Enter the amount you want to fund</li>
           <li>See exactly how many BXC you'll get (1:1 ratio)</li>
@@ -551,11 +552,11 @@
 
     <!-- FAQ Section -->
     <div class="info-section collapsible collapsed" id="faq">
-      <div class="info-header" onclick="toggleCollapse(this)">
-        <h3>Frequently Asked Questions</h3>
-        <span class="toggle-icon">▼</span>
-      </div>
-      <div class="info-content">
+      <button type="button" class="info-header" onclick="toggleCollapse(this)" aria-expanded="false" aria-controls="funding-faq-content">
+        <span class="info-title">Frequently Asked Questions</span>
+        <span class="toggle-icon" aria-hidden="true">▼</span>
+      </button>
+      <div class="info-content" id="funding-faq-content">
         <ul>
           <li><strong>Why ₦1 Naira = ᗸ1 BXC?</strong> We believe in fair value - pay exactly what you trade!</li>
           <li><strong>Are my payments secure?</strong> Yes, we use Paystack for secure payment processing.</li>
@@ -603,7 +604,8 @@
 
   function toggleCollapse(header) {
     const section = header.closest('.info-section');
-    section.classList.toggle('collapsed');
+    const collapsed = section.classList.toggle('collapsed');
+    header.setAttribute('aria-expanded', String(!collapsed));
   }
 
   async function handleSubmit(event) {
