@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer
 from threading import Thread
 from datetime import datetime, timedelta
+import hashlib
 
 from models import User, CreditTransaction, Notification
 from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm
@@ -49,15 +50,21 @@ def send_email_async(subject, recipients, html_body, sender=None):
 
 def generate_reset_token(email, expires_sec=3600):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
-    return s.dumps(email, salt='password-reset-salt')
+    user = User.query.filter_by(email=email).one()
+    return s.dumps({'email': email, 'credential': hashlib.sha256(user.password_hash.encode()).hexdigest(), 'auth': user.get_id()}, salt='password-reset-salt')
 
 def verify_reset_token(token, expires_sec=3600):
     s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
     try:
-        email = s.loads(token, salt='password-reset-salt', max_age=expires_sec)
+        data = s.loads(token, salt='password-reset-salt', max_age=expires_sec)
     except Exception:
         return None
-    return email
+    if not isinstance(data, dict):
+        return None
+    user = User.query.filter_by(email=data.get('email')).first()
+    if not user or data.get('credential') != hashlib.sha256(user.password_hash.encode()).hexdigest() or data.get('auth') != user.get_id():
+        return None
+    return user.email
 
 # ==================== ROUTES ====================
 
@@ -124,7 +131,7 @@ def register():
                     # Create notification for referrer that someone signed up with their code
                     notification = Notification(
                         user_id=referrer.id,
-                        message=f'👤 {user.username} signed up using your referral code! You will earn {REFERRAL_MILESTONE_BONUS} BXC when they complete their profile.',
+                        message=f'👤 {user.username} used your referral code. The {REFERRAL_MILESTONE_BONUS} BXC profile reward becomes payable after their identity is verified and first purchase settles.',
                         notification_type='referral',
                         category='info'
                     )
@@ -309,7 +316,15 @@ def login():
                 flash(f'Account temporarily locked due to failed login attempts. Try again in {int(remaining_time)} minutes.', 'danger')
                 return redirect(url_for('auth.login', next=next_page))
 
-            if user and user.is_banned:
+            if user and user.is_banned and check_password_hash(user.password_hash, password):
+                if user.two_factor_enabled:
+                    from services.email_two_factor import start_challenge
+                    logout_user()
+                    success, error = start_challenge(user, 'login')
+                    if not success:
+                        flash(error, 'danger')
+                        return redirect(url_for('auth.login'))
+                    return redirect(url_for('two_factor.verify'))
                 logger.warning(f"Banned user attempted login: {credential}")
                 # ✅ FIX: Log them in so they can submit unban appeals
                 if user and check_password_hash(user.password_hash, password):
@@ -335,6 +350,14 @@ def login():
                     logger.info(f"Unverified email login attempt: {user.username}")
                     flash('❌ Please verify your email address before logging in. Check your inbox for the verification link.', 'warning')
                     return render_template('login.html', form=form, show_resend=True, email=user.email)
+                if user.two_factor_enabled:
+                    from services.email_two_factor import start_challenge
+                    logout_user()
+                    success, error = start_challenge(user, 'login', next_page)
+                    if not success:
+                        flash(error, 'danger')
+                        return redirect(url_for('auth.login'))
+                    return redirect(url_for('two_factor.verify'))
                 
                 # Successful login - reset failed attempts and update last login
                 user.failed_login_attempts = 0
@@ -394,6 +417,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    session.pop('email_2fa_pending', None)
     return redirect(url_for('marketplace.marketplace'))
 
 
@@ -436,12 +460,35 @@ def reset_password(token):
     if form.validate_on_submit():
         user = User.query.filter_by(email=email).first()
         if user:
-            user.password_hash = generate_password_hash(form.password.data)
+            import secrets
+            claimed = User.query.filter_by(id=user.id, password_hash=user.password_hash, auth_token=user.auth_token).update({
+                'password_hash': generate_password_hash(form.password.data),
+                'auth_token': secrets.token_urlsafe(32),
+                'last_password_change': datetime.utcnow(),
+            }, synchronize_session=False)
+            if not claimed:
+                db.session.rollback()
+                flash('The reset link was already used. Request a new link.', 'danger')
+                return redirect(url_for('auth.forgot_password'))
             db.session.commit()
+            logout_user()
             flash('Your password has been updated! Please log in.', 'success')
             return redirect(url_for('auth.login'))
 
     return render_template('reset_password.html', form=form)
+
+
+@auth_bp.route('/confirm-email-change/<token>', methods=['GET', 'POST'])
+def confirm_email_change(token):
+    if request.method == 'GET':
+        return render_template('confirm_email_change.html')
+    from services.account_security import confirm_email_change as confirm_change
+    if not confirm_change(token):
+        flash('This email change link is invalid, expired or already used.', 'danger')
+        return redirect(url_for('auth.login'))
+    logout_user()
+    flash('Your email has been verified and changed. Please sign in again.', 'success')
+    return redirect(url_for('auth.login'))
 
 
 @auth_bp.route('/banned')

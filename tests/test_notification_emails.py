@@ -6,6 +6,7 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db
 from models import Admin, ContactMessage, Item, Notification, User
+from services.email_two_factor import fingerprint
 
 
 class NotificationEmailRouteTests(unittest.TestCase):
@@ -38,6 +39,7 @@ class NotificationEmailRouteTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as flask_session:
             flask_session['admin_id'] = self.admin.id
+            flask_session['admin_mfa'] = fingerprint(self.admin)
         return client
 
     def _recipients(self, send_email):

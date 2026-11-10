@@ -6,6 +6,7 @@ from unittest.mock import patch
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db, limiter
+from services.email_two_factor import fingerprint
 from models import Admin, Item, ItemVideo, ReservationCreditEntry, User
 from services.video_service import build_object_name
 from services.video_publishing import run_next_job
@@ -401,6 +402,7 @@ class ActivationVideoFlowTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as session:
             session['admin_id'] = self.admin.id
+            session['admin_mfa'] = fingerprint(self.admin)
         return client, video
 
     def test_approval_lists_at_ai_value_and_grants_credits_once(self):

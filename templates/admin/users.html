@@ -238,14 +238,14 @@
                                 {% if not user.is_banned %}
                                     <!-- Ban Button -->
                                     <button class="action-btn btn-ban adm-btn sm danger"
-                                            onclick="showBanModal('{{ user.id }}', '{{ user.username }}')"
+                                            data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-user-action="ban"
                                             data-bs-toggle="tooltip" title="Ban User">
                                         <i class="bi bi-ban"></i>
                                     </button>
                                 {% else %}
                                     <!-- Unban Button -->
                                     <button class="action-btn btn-unban adm-btn sm success"
-                                            onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
+                                            data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-user-action="unban"
                                             data-bs-toggle="tooltip" title="Unban User">
                                         <i class="bi bi-check-circle"></i>
                                     </button>
@@ -253,7 +253,7 @@
 
                                 <!-- Delete Button -->
                                 <button class="action-btn btn-delete adm-btn sm danger"
-                                        onclick="showDeleteModal('{{ user.id }}', '{{ user.username }}')"
+                                        data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-user-action="delete"
                                         data-bs-toggle="tooltip" title="Delete User Account">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -415,7 +415,7 @@
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="action-btn btn-unban adm-btn sm success"
-                                        onclick="unbanUser('{{ user.id }}', '{{ user.username }}')"
+                                        data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-user-action="unban"
                                         data-bs-toggle="tooltip" title="Unban User">
                                     <i class="bi bi-check-circle"></i>
                                 </button>
@@ -548,6 +548,12 @@
 </style>
 
 <script>
+    document.querySelectorAll('[data-user-action]').forEach(button => {
+        button.addEventListener('click', () => {
+            const actions = {ban: showBanModal, unban: unbanUser, delete: showDeleteModal};
+            actions[button.dataset.userAction](button.dataset.userId, button.dataset.username, button);
+        });
+    });
     // Enhanced JavaScript functionality
     let currentUserId = null;
     let currentUsername = null;
@@ -717,13 +723,12 @@
     });
 
     // Unban user with confirmation
-    function unbanUser(userId, username) {
+    function unbanUser(userId, username, button) {
         if (confirm(`Are you sure you want to unban user "${username}"?`)) {
             const form = document.getElementById(`unban-form-${userId}`) || 
                         document.getElementById(`unban-form-banned-${userId}`);
             if (form) {
                 // Add loading state
-                const button = event.target.closest('.action-btn');
                 button.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
                 button.classList.add('loading');
                 

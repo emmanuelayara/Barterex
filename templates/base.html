@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+{% include '_csrf.html' %}
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1477,10 +1478,12 @@ window.showToast = function(message, type = 'info', duration = 3000) {
     if (type === 'warning') icon = '⚠';
     if (type === 'info') icon = 'ⓘ';
     
-    toast.innerHTML = `
-        <span class="toast-icon">${icon}</span>
-        <span>${message}</span>
-    `;
+    const iconElement = document.createElement('span');
+    iconElement.className = 'toast-icon';
+    iconElement.textContent = icon;
+    const textElement = document.createElement('span');
+    textElement.textContent = message;
+    toast.append(iconElement, textElement);
     
     container.appendChild(toast);
     

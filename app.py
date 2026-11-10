@@ -1,6 +1,6 @@
 import os
 import click
-from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,6 +8,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
+from flask_wtf.csrf import CSRFProtect
 
 try:
     from flask_limiter import Limiter
@@ -33,7 +34,14 @@ app.config['FILE_UPLOAD_MAX_SIZE'] = 10 * 1024 * 1024  # 10MB default per file
 app.config['FILE_UPLOAD_ENABLE_VIRUS_SCAN'] = False  # Set to True if ClamAV is available (apt-get install clamav)
 
 # ✅ Load config from environment variables
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
+secret_key = os.getenv('SECRET_KEY')
+if not secret_key or len(secret_key) < 32 or secret_key == 'dev-key-change-in-production':
+    raise RuntimeError('SECRET_KEY must be a deployment-specific random value of at least 32 characters.')
+app.config['SECRET_KEY'] = secret_key
+identity_hash_key = os.getenv('IDENTITY_HASH_KEY')
+if not identity_hash_key or len(identity_hash_key) < 32 or identity_hash_key == secret_key:
+    raise RuntimeError('IDENTITY_HASH_KEY must be a separate, stable random value of at least 32 characters.')
+app.config['IDENTITY_HASH_KEY'] = identity_hash_key
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///barter.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -47,6 +55,8 @@ app.config['REMEMBER_COOKIE_SECURE'] = True  # HTTPS only for remember cookie
 app.config['REMEMBER_COOKIE_HTTPONLY'] = True  # No JavaScript access to remember cookie
 app.config['WTF_CSRF_ENABLED'] = True  # Enable CSRF protection
 app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # CSRF tokens expire after 1 hour (security best practice)
+app.config['IDENTITY_DOCUMENT_FOLDER'] = os.path.join(app.instance_path, 'identity_documents')
+app.config['TWO_FACTOR_AVAILABLE'] = True
 
 # ✅ Mail config from environment
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -75,6 +85,7 @@ login_manager.remember_cookie_secure = True  # HTTPS only
 login_manager.remember_cookie_httponly = True  # No JavaScript access
 migrate = Migrate(app, db)
 mail = Mail(app)
+csrf = CSRFProtect(app)
 
 # ✅ Initialize rate limiter BEFORE importing routes (to avoid circular import)
 if LIMITER_AVAILABLE:
@@ -96,6 +107,8 @@ from routes.wishlist import wishlist_bp
 from routes_account import account_bp
 from routes.payments import payment_bp
 from notifications import NotificationService
+from routes.two_factor import two_factor_bp
+csrf.exempt('routes.payments.webhook')
 
 
 @app.cli.command("reconcile-legacy-direct-checkouts")
@@ -128,6 +141,13 @@ def maintenance_sweep_command():
     )
 
 
+@app.cli.command('secure-identity-documents')
+def secure_identity_documents_command():
+    """Move registered identity documents out of publicly served storage."""
+    from services.identity_documents import relocate_legacy_documents
+    click.echo(f'Moved {relocate_legacy_documents()} identity document(s) to private storage.')
+
+
 # ✅ User loader for Flask-Login
 @app.cli.command("video-publishing-worker")
 @click.option('--once', is_flag=True, help='Process one due job and exit.')
@@ -149,7 +169,22 @@ def video_publishing_worker_command(once, poll_seconds):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    if not isinstance(user_id, str):
+        return None
+    if user_id.isdecimal():
+        return User.query.filter_by(id=int(user_id), auth_token=None).first()
+    return User.query.filter_by(auth_token=user_id).first()
+
+
+@app.before_request
+def enforce_security_boundaries():
+    if request.endpoint == 'static' and (request.view_args or {}).get('filename', '').replace('\\', '/').lower().startswith('uploads/verification/'):
+        abort(404)
+    if current_user.is_authenticated and current_user.is_banned:
+        if request.endpoint not in {'auth.banned', 'auth.request_unban', 'auth.logout', 'static'}:
+            if request.is_json or request.path.startswith('/api/'):
+                return jsonify({'error': 'This account is banned. Only appeals are permitted.'}), 403
+            return redirect(url_for('auth.banned'))
 
 
 def get_upload_root_path():
@@ -327,7 +362,7 @@ def check_maintenance_mode():
     settings = SystemSettings.get_settings()
     if settings.maintenance_mode:
         # Allow only essential user routes (login, etc.)
-        allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'static']
+        allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'two_factor.verify', 'static']
         current_route = request.endpoint
         
         if current_route not in allowed_routes:
@@ -425,6 +460,7 @@ app.register_blueprint(wishlist_bp)
 app.register_blueprint(account_bp)
 app.register_blueprint(contact_bp)
 app.register_blueprint(payment_bp)
+app.register_blueprint(two_factor_bp)
 
 # ✅ Error Handlers
 from logger_config import setup_logger

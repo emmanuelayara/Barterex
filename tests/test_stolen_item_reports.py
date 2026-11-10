@@ -14,6 +14,7 @@ from alembic.migration import MigrationContext
 from alembic.operations import Operations
 
 from app import app, db, limiter
+from services.email_two_factor import fingerprint
 from models import Admin, AuditLog, Item, StolenItemReport, StolenReportEvidence, User
 
 
@@ -77,6 +78,7 @@ class StolenItemReportTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as session:
             session['admin_id'] = (admin or self.admin).id
+            session['admin_mfa'] = fingerprint(admin or self.admin)
         return client
 
     def create_report(self):

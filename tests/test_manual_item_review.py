@@ -11,6 +11,7 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 from PIL import Image
 from flask import g
 from app import app, db, limiter
+from services.email_two_factor import fingerprint
 from models import Admin, Item, ItemImage, ItemVideo, User, VerificationIntake, ReservationCreditEntry, ClearingInventoryItem, PickupStation, Reservation, Order
 from services.item_activation_service import activate_item
 
@@ -45,6 +46,7 @@ class ManualReviewTests(unittest.TestCase):
         self.reviewer = app.test_client()
         with self.reviewer.session_transaction() as session:
             session['admin_id'] = self.admin.id
+            session['admin_mfa'] = fingerprint(self.admin)
         self.email = patch('routes.auth.send_email_async').start()
         if limiter:
             self.previous_limiter = limiter.enabled

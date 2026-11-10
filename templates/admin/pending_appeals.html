@@ -94,8 +94,9 @@
         <!-- Admin Actions -->
         <div class="adm-panel-foot d-flex gap-2 flex-wrap align-items-center">
             <form action="{{ url_for('admin.unban_user', user_id=user.id) }}" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="adm-btn sm success"
-                        onclick="return confirm('Approve this appeal and unban {{ user.username }}?');">
+                        data-username="{{ user.username }}" data-appeal-action="approve">
                     <i class="bi bi-check-circle"></i>
                     <span class="d-none d-sm-inline">Approve Appeal &amp; Unban</span>
                     <span class="d-sm-none">Approve</span>
@@ -103,7 +104,7 @@
             </form>
 
             <button type="button" class="adm-btn sm danger"
-                    onclick="showRejectModal('{{ user.id }}', '{{ user.username }}');">
+                    data-user-id="{{ user.id }}" data-username="{{ user.username }}" data-appeal-action="reject">
                 <i class="bi bi-x-circle"></i>
                 <span class="d-none d-sm-inline">Reject Appeal</span>
                 <span class="d-sm-none">Reject</span>
@@ -182,6 +183,15 @@
 </style>
 
 <script>
+    document.querySelectorAll('[data-appeal-action]').forEach(button => {
+        button.addEventListener('click', event => {
+            if (button.dataset.appealAction === 'approve') {
+                if (!confirm(`Approve this appeal and unban ${button.dataset.username}?`)) event.preventDefault();
+            } else {
+                showRejectModal(button.dataset.userId, button.dataset.username);
+            }
+        });
+    });
     function showRejectModal(userId, username) {
         const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
         document.getElementById('rejectUsername').textContent = username;

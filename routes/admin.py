@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash, send_file, jsonify, abort, make_response
+from flask import Blueprint, render_template, redirect, url_for, request, session, flash, send_file, jsonify, abort, make_response, current_app
 from flask_wtf.csrf import generate_csrf
 from functools import wraps
 from datetime import datetime
@@ -75,7 +75,9 @@ def current_admin():
         return None
     if 'barterex.admin' not in request.environ:
         request.environ['barterex.admin'] = db.session.get(Admin, session['admin_id'])
-    return request.environ['barterex.admin']
+    admin = request.environ['barterex.admin']
+    from services.email_two_factor import fingerprint
+    return admin if admin and admin.is_active and session.get('admin_mfa') == fingerprint(admin) else None
 
 
 def admin_can(permission):
@@ -86,6 +88,7 @@ def admin_can(permission):
 def _clear_admin_session():
     session.pop('admin_id', None)
     session.pop('admin_username', None)
+    session.pop('admin_mfa', None)
 
 
 def admin_login_required(f):
@@ -118,7 +121,6 @@ def enforce_admin_permissions():
             flash('Please log in as admin.', 'warning')
         _clear_admin_session()
         return redirect(url_for('admin.admin_login'))
-
     if endpoint in AUTHENTICATED_ENDPOINTS or admin.is_super_admin:
         return None
 
@@ -585,27 +587,15 @@ def admin_login():
                     flash('This admin account has been deactivated.', 'danger')
                     return render_template('admin/login.html', form=form)
 
-                # Successful login - reset failed attempts
-                admin.failed_login_attempts = 0
-                admin.account_locked_until = None
-                db.session.commit()
-                
-                session['admin_id'] = admin.id
-                session['admin_username'] = admin.username
-                
-                # Log admin login
-                from audit_logger import log_audit_action
-                log_audit_action(
-                    action_type='admin_login',
-                    target_type='admin',
-                    target_id=admin.id,
-                    target_name=admin.username,
-                    description=f'Admin {admin.username} logged in'
-                )
-                
-                logger.info(f"Admin logged in successfully: {admin.username}")
-                flash('Logged in successfully!', 'success')
-                return redirect(url_for('admin.admin_dashboard'))
+                from services.email_two_factor import start_challenge
+                from flask_login import logout_user
+                logout_user()
+                _clear_admin_session()
+                success, error = start_challenge(admin, 'login')
+                if not success:
+                    flash(error, 'danger')
+                    return render_template('admin/login.html', form=form)
+                return redirect(url_for('two_factor.verify'))
             else:
                 # Failed login attempt
                 if admin:
@@ -649,8 +639,8 @@ def admin_logout():
         )
         logger.info(f"Admin logged out - Admin ID: {admin_id}")
     
-    session.pop('admin_id', None)
-    session.pop('admin_username', None)
+    _clear_admin_session()
+    session.pop('email_2fa_pending', None)
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin.admin_login'))
 
@@ -865,6 +855,60 @@ def pending_appeals():
         logger.error(f"Error loading pending appeals: {str(e)}", exc_info=True)
         flash('An error occurred while loading pending appeals.', 'danger')
         return redirect(url_for('admin.admin_dashboard'))
+
+
+@admin_bp.route('/users/<int:user_id>/identity-document')
+@admin_login_required
+def identity_document(user_id):
+    from flask import send_file, abort
+    from services.identity_documents import document_path
+    user = User.query.get_or_404(user_id)
+    try:
+        path = document_path(user.government_id_document)
+    except ValueError:
+        abort(404)
+    if not path.is_file():
+        abort(404)
+    response = send_file(path, as_attachment=True, download_name=path.name)
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Cache-Control'] = 'private, no-store'
+    return response
+
+
+@admin_bp.route('/users/<int:user_id>/verify-identity', methods=['POST'])
+@admin_login_required
+def verify_user_identity(user_id):
+    import hashlib
+    import hmac
+    from sqlalchemy.exc import IntegrityError
+    user = User.query.filter_by(id=user_id).with_for_update().first_or_404()
+    if request.form.get('identity_checked') != 'yes' or not user.nin or not user.government_id_document or not user.email_verified:
+        flash('Inspect the identity document and confirm it matches this email-verified customer.', 'danger')
+        return redirect(url_for('admin.view_user', user_id=user.id))
+    from services.identity_documents import document_path
+    if not document_path(user.government_id_document).is_file():
+        flash('The private identity document is unavailable. Relocate legacy documents or request a new submission.', 'danger')
+        return redirect(url_for('admin.view_user', user_id=user.id))
+    normalized_nin = ''.join(user.nin.split()).upper()
+    # Keep this deduplication key stable if the session signing key is rotated.
+    key = current_app.config['IDENTITY_HASH_KEY']
+    identity_hash = hmac.new(key.encode(), normalized_nin.encode(), hashlib.sha256).hexdigest()
+    user.verified_identity_hash = identity_hash
+    user.id_verified_at = datetime.utcnow()
+    try:
+        db.session.flush()
+        from referral_rewards import award_pending_referral_bonuses
+        award_pending_referral_bonuses(user)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        flash('This identity is already verified for another account.', 'danger')
+        return redirect(url_for('admin.view_user', user_id=user_id))
+    from audit_logger import log_audit_action
+    log_audit_action(action_type='identity_verified', target_type='user', target_id=user.id,
+                     target_name=user.username, description='Customer identity verified against private documentation.')
+    flash('Customer identity verified.', 'success')
+    return redirect(url_for('admin.view_user', user_id=user.id))
 
 
 @admin_bp.route('/view_user/<int:user_id>')

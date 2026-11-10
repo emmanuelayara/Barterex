@@ -5,6 +5,8 @@ import os
 import pytest
 
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+os.environ.setdefault('SECRET_KEY', 'isolated-pytest-secret-not-for-deployments-12345')
+os.environ.setdefault('IDENTITY_HASH_KEY', 'isolated-pytest-identity-key-not-for-deployments-67890')
 
 
 def _require_in_memory_database():

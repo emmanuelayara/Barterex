@@ -1,0 +1,10 @@
+{% extends 'emails/_base.html' %}
+{% block title %}Your verification code{% endblock %}
+{% block heading %}Verify your account{% endblock %}
+{% block preheader %}Your verification code expires in five minutes.{% endblock %}
+{% block content %}
+<p>Use this code to {{ 'enable email two-step verification' if purpose == 'enable' else 'disable email two-step verification' if purpose == 'disable' else 'finish signing in' }}:</p>
+<p style="font-size:32px;font-weight:bold;letter-spacing:6px">{{ code }}</p>
+<p>This code expires in five minutes and works only in the browser that requested it. Never share it, including with support.</p>
+<p>If you did not request this code, do not approve the request. Change your password and contact support.</p>
+{% endblock %}

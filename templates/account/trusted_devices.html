@@ -20,7 +20,7 @@
                 </div>
                 <div class="card-body">
                     <p class="text-muted">
-                        Manage the devices you trust with your account. Trusted devices won't require additional security verification.
+                        Manage your saved device labels. Trusted devices do not bypass sign-in or email two-step verification.
                     </p>
 
                     {% if devices %}
@@ -34,11 +34,12 @@
                                         <div class="col-md-7">
                                             <h6 class="mb-0">{{ device.name }}</h6>
                                             <small class="text-muted">
-                                                Added on {{ device.date }}
+                                                Added on {{ device.added_date }}
                                             </small>
                                         </div>
                                         <div class="col-md-4 text-right">
                                             <form method="POST" action="{{ url_for('account.remove_device', index=loop.index0) }}" style="display: inline;">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remove this device?')">
                                                     <i class="fas fa-trash"></i> Remove
                                                 </button>
@@ -56,6 +57,7 @@
 
                     <h6 class="mt-4"><strong>Add Current Device as Trusted</strong></h6>
                     <form method="POST" action="{{ url_for('account.add_device') }}" id="trustDeviceForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group">
                             <label for="device_name">Device Name</label>
                             <input type="text" id="device_name" name="name" class="form-control" placeholder="e.g., My Laptop, iPhone, etc." required>
@@ -84,10 +86,9 @@
             <div class="alert alert-info mt-4">
                 <h6><i class="fas fa-shield-alt"></i> Security Information</h6>
                 <ul class="mb-0">
-                    <li>Trusted devices skip additional verification steps</li>
+                    <li>Saved devices do not skip password or email-code verification</li>
                     <li>You can remove devices at any time</li>
-                    <li>Remove a device if it's lost or stolen</li>
-                    <li>Each device gets a unique fingerprint for security</li>
+                    <li>Removing a saved device does not sign it out; change your password if it is lost or stolen</li>
                 </ul>
             </div>
 

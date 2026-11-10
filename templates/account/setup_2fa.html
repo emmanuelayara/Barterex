@@ -1,140 +1,17 @@
-{% extends "base.html" %}
-{% import '_floaters.html' as fx %}
-
-{% block title %}Setup Two-Factor Authentication{% endblock %}
-
+{% extends 'base.html' %}
+{% block title %}Enable email two-step verification{% endblock %}
 {% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">{% endblock %}
-
 {% block content %}
-<div class="container py-5 ac">
-    <div class="ac-banner">
-        {{ fx.floaters('banner') }}
-        <h1 class="ac-title">Two-Factor Setup</h1>
-        <p class="ac-sub">Add a second step to your sign-in with an authenticator app.</p>
-    </div>
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-mobile-alt"></i> Setup Two-Factor Authentication</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> 
-                        Two-factor authentication adds an extra layer of security to your account. 
-                        You'll need to enter a code from your authenticator app in addition to your password.
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6><strong>Step 1: Download an Authenticator App</strong></h6>
-                            <p class="small text-muted">
-                                If you don't already have one, download an authenticator app:
-                            </p>
-                            <ul class="small">
-                                <li><strong>Google Authenticator</strong> - iOS, Android</li>
-                                <li><strong>Microsoft Authenticator</strong> - iOS, Android, Windows</li>
-                                <li><strong>Authy</strong> - iOS, Android, Mac, Windows</li>
-                                <li><strong>FreeOTP</strong> - iOS, Android</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6><strong>Step 2: Scan QR Code</strong></h6>
-                            <p class="small text-muted">
-                                Open your authenticator app and scan this QR code, or enter the secret manually:
-                            </p>
-                            <div class="text-center bg-light p-3 rounded">
-                                <div id="qr-code" style="display: inline-block;"></div>
-                                <p class="mt-3 mb-0">
-                                    <code class="bg-white p-2 rounded">{{ temp_secret[:4] }} {{ temp_secret[4:8] }} {{ temp_secret[8:12] }} {{ temp_secret[12:] }}</code>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <h6><strong>Step 3: Verify Your Authenticator</strong></h6>
-                    <p class="text-muted">Enter the 6-digit code from your authenticator app to complete setup.</p>
-
-                    <form method="POST" novalidate>
-                        {{ form.hidden_tag() }}
-
-                        <div class="form-group">
-                            {{ form.verification_code.label }}
-                            {% if form.verification_code.errors %}
-                                {{ form.verification_code(class="form-control form-control-lg is-invalid", placeholder="000000", maxlength="6") }}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.verification_code.errors %}
-                                        {{ error }}<br>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ form.verification_code(class="form-control form-control-lg", placeholder="000000", maxlength="6") }}
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                Enter the 6-digit code displayed in your authenticator app
-                            </small>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <strong>Important:</strong> Save your backup codes somewhere safe. 
-                            You can use these codes if you lose access to your authenticator app.
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-success flex-fill">
-                                <i class="fas fa-check"></i> Enable 2FA
-                            </button>
-                            <a href="{{ url_for('account.security_settings') }}" class="btn btn-secondary flex-fill">
-                                Cancel
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Backup Codes Section -->
-            <div class="card mt-4">
-                <div class="card-header bg-warning text-dark">
-                    <h6 class="mb-0"><i class="fas fa-download"></i> Backup Codes</h6>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted">
-                        Save these backup codes in a safe place. You can use them to sign in if you lose access to your authenticator app.
-                        Each code can only be used once.
-                    </p>
-                    <div class="bg-light p-3 rounded" style="font-family: monospace;">
-                        <code>
-                            {% for i in range(8) %}
-                                {{ '%08d' % (range(10000000, 99999999) | random) }}<br>
-                            {% endfor %}
-                        </code>
-                    </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm mt-3">
-                        <i class="fas fa-copy"></i> Copy Codes
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm mt-3">
-                        <i class="fas fa-download"></i> Download
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-// Generate QR code
-new QRCode(document.getElementById("qr-code"), {
-    text: "otpauth://totp/Barter Express:{{ current_user.email }}?secret={{ temp_secret }}&issuer=Barter Express",
-    width: 200,
-    height: 200
-});
-
-// Format verification code input
-document.querySelector('input[name="verification_code"]').addEventListener('input', function(e) {
-    this.value = this.value.replace(/\D/g, '').slice(0, 6);
-});
-</script>
+<section class="page-container ac" style="max-width:560px;margin:32px auto;padding:20px">
+  <h1>Enable email two-step verification</h1>
+  <p>After your password, each new sign-in will require a code emailed to your verified account address. Keep your inbox secure; email codes are weaker than an authenticator app or security key.</p>
+  <p>Setup is complete only after you enter the email code. This signs out your existing sessions. Remember Me will not bypass the code.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="current-password">Current password</label>
+    <input class="form-control" id="current-password" name="current_password" type="password" autocomplete="current-password" required>
+    <button class="btn btn-primary mt-3" type="submit">Email verification code</button>
+    <a class="btn btn-secondary mt-3" href="{{ url_for('account.security_settings') }}">Cancel</a>
+  </form>
+</section>
 {% endblock %}

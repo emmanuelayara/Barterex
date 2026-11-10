@@ -742,6 +742,8 @@ def create_reservation(
     user = User.query.filter_by(id=user.id).with_for_update().populate_existing().first()
     if not user:
         return _reject_reservation("This item or account is no longer available.")
+    if user.is_banned:
+        return _reject_reservation("Banned accounts cannot reserve or purchase items.")
 
     if funding_mode not in ('item_backed', 'spendable'):
         return _reject_reservation("Choose a valid BXC funding method.")
@@ -1704,6 +1706,8 @@ def _settle_reservation(reservation):
     seller_item = reservation.item
     company_owned_item = _is_company_inventory_item(seller_item)
     seller = seller_item.user if seller_item and not company_owned_item else None
+    if (buyer and buyer.is_banned) or (seller and seller.is_banned):
+        raise ValueError('Banned accounts cannot complete a settlement.')
     if not buyer or not seller_item or (
         not company_owned_item and (not seller or buyer.id == seller.id)
     ):
@@ -1940,6 +1944,8 @@ def _award_reservation_points(reservation):
     from trading_points import award_points_for_purchase, create_level_up_notification
 
     try:
+        from referral_rewards import award_pending_referral_bonuses
+        award_pending_referral_bonuses(reservation.user)
         level_up_info = award_points_for_purchase(reservation.user, f"reservation-{reservation.id}")
         if level_up_info:
             create_level_up_notification(reservation.user, level_up_info)

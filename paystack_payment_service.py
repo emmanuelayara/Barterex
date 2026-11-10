@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from models import Payment, Reservation, User, CreditTransaction
 from app import db
 from services.email_notifications import notify_user, notify_admins
+from flask import current_app
 
 load_dotenv()
 
@@ -426,10 +427,10 @@ class PaystackPaymentService:
             if not payment:
                 return {'success': False, 'error': 'Payment record not found'}
 
-            if payment.purpose == 'reservation_delivery_fee' and payment.status == 'completed':
+            if payment.status == 'completed':
                 return {
                     'success': True,
-                    'message': 'Delivery fee payment already verified',
+                    'message': 'Payment already verified',
                     'credits_added': 0,
                     'new_balance': User.query.get(payment.user_id).credits,
                 }
@@ -437,6 +438,8 @@ class PaystackPaymentService:
             # TEST MODE: Auto-complete test payments
             if PaystackPaymentService.TEST_MODE and reference.startswith('TEST_'):
                 if payment.status == 'test_pending':
+                    if not PaystackPaymentService._claim_payment(payment):
+                        return {'success': False, 'error': 'Payment is already being processed. Check its status.'}
                     if payment.purpose == 'reservation_delivery_fee':
                         settled = PaystackPaymentService._complete_delivery_fee_payment(payment, 'test_card')
                         payment.payment_metadata = {
@@ -472,7 +475,8 @@ class PaystackPaymentService:
                         reason='test_payment',
                         description=f'[TEST] Purchased {payment.credits_purchased} credits for ₦{payment.amount_naira:,.0f}',
                         balance_before=old_balance,
-                        balance_after=user.credits
+                        balance_after=user.credits,
+                        payment_id=payment.id,
                     )
                     
                     db.session.add(transaction)
@@ -517,7 +521,6 @@ class PaystackPaymentService:
             )
             
             print(f'[PAYSTACK VERIFY] Response Status: {response.status_code}')
-            print(f'[PAYSTACK VERIFY] Response Body: {response.text}')
             
             if response.status_code == 200:
                 data = response.json()
@@ -528,19 +531,22 @@ class PaystackPaymentService:
                     
                     # Check if payment was successful
                     if pay_status == 'success':
+                        expected_amount = int(round(float(payment.amount_naira) * 100))
+                        if (
+                            response_data.get('currency') != 'NGN'
+                            or int(response_data.get('amount') or 0) != expected_amount
+                            or response_data.get('reference') != reference
+                        ):
+                            current_app.logger.error('Payment verification mismatch for payment %s', payment.id)
+                            return {'success': False, 'error': 'Verified transaction reference, amount or currency does not match the payment.'}
+                        if not PaystackPaymentService._claim_payment(payment):
+                            db.session.rollback()
+                            existing = db.session.get(Payment, payment.id)
+                            if existing.status == 'completed':
+                                return {'success': True, 'message': 'Payment already verified', 'credits_added': 0,
+                                        'new_balance': db.session.get(User, existing.user_id).credits}
+                            return {'success': False, 'error': 'Payment is already being processed. Check its status.'}
                         if payment.purpose == 'reservation_delivery_fee':
-                            expected_amount = int(round(float(payment.amount_naira) * 100))
-                            if (
-                                response_data.get('currency') != 'NGN'
-                                or int(response_data.get('amount') or 0) != expected_amount
-                            ):
-                                payment.status = 'failed'
-                                payment.error_message = 'Verified transaction amount or currency does not match the delivery quote.'
-                                db.session.commit()
-                                return {
-                                    'success': False,
-                                    'error': payment.error_message,
-                                }
                             settled = PaystackPaymentService._complete_delivery_fee_payment(
                                 payment,
                                 response_data.get('channel', 'card'),
@@ -574,7 +580,8 @@ class PaystackPaymentService:
                             reason='paystack_payment',
                             description=f'Purchased {payment.credits_purchased} credits for ₦{payment.amount_naira:,.0f}',
                             balance_before=old_balance,
-                            balance_after=user.credits
+                            balance_after=user.credits,
+                            payment_id=payment.id,
                         )
                         
                         db.session.add(transaction)
@@ -601,9 +608,7 @@ class PaystackPaymentService:
                             'new_balance': user.credits
                         }
                     else:
-                        payment.status = 'failed'
-                        payment.error_message = f'Payment status: {pay_status}'
-                        db.session.commit()
+                        db.session.rollback()
                         
                         return {
                             'success': False,
@@ -623,9 +628,27 @@ class PaystackPaymentService:
                 }
                 
         except requests.RequestException as e:
+            db.session.rollback()
+            current_app.logger.exception('Payment verification request failed')
             return {'success': False, 'error': f'Verification request failed: {str(e)}'}
         except Exception as e:
-            return {'success': False, 'error': f'Verification error: {str(e)}'}
+            db.session.rollback()
+            current_app.logger.exception('Payment verification failed')
+            return {'success': False, 'error': 'Payment verification failed. Please retry or contact support.'}
+
+    @staticmethod
+    def _claim_payment(payment):
+        """Only one transaction may claim and credit a pending payment."""
+        claimed = Payment.query.filter(
+            Payment.id == payment.id,
+            Payment.status.in_(['pending', 'test_pending', 'failed']),
+        ).update({'status': 'processing'}, synchronize_session=False)
+        if not claimed:
+            return False
+        db.session.expire(payment)
+        # Serialize balance changes across different payments for this user, too.
+        User.query.filter_by(id=payment.user_id).with_for_update().populate_existing().one()
+        return True
     
     @staticmethod
     def verify_webhook_signature(signature, payload_string):

@@ -26,6 +26,7 @@ PERMISSION_GROUPS = [
     ]),
     ('Users', 'bi-people', [
         ('users.view', 'View users', 'List users and view user profiles'),
+        ('users.verify_identity', 'Verify identity', 'Inspect private identity documents and confirm unique customer identity'),
         ('users.edit', 'Adjust credits', 'Edit user credits and run credit corrections'),
         ('users.ban', 'Ban / unban users', 'Ban and unban users and view banned users'),
         ('users.appeals', 'Unban appeals', 'Review and decide unban appeals and requests'),
@@ -64,6 +65,8 @@ AUTHENTICATED_ENDPOINTS = frozenset({
 SUPER_ADMIN_ONLY = '__super_admin__'
 
 ENDPOINT_PERMISSIONS = {
+    'admin.identity_document': 'users.verify_identity',
+    'admin.verify_user_identity': 'users.verify_identity',
     # Item review
     'admin.manual_review_queue': 'items.manual_review',
     'admin.verify_manual_item': 'items.manual_review',

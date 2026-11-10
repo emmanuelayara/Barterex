@@ -7,6 +7,7 @@ from flask import render_template
 
 from app import app, db, limiter
 from models import Admin, User
+from services.email_two_factor import fingerprint
 
 
 class MobileLayoutTests(unittest.TestCase):
@@ -67,12 +68,25 @@ class MobileLayoutTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as session:
             session['admin_id'] = self.admin_id
+            session['admin_mfa'] = fingerprint(db.session.get(Admin, self.admin_id))
         for path in ('/admin/dashboard', '/admin/users', '/admin/approvals', '/admin/settlement-queue',
                      '/admin/verification-intake', '/admin/clearing-inventory', '/admin/system_settings'):
             with self.subTest(path=path):
                 response = client.get(path)
                 self.assertEqual(response.status_code, 200)
                 self.assert_mobile_shell(response.get_data(as_text=True), admin=True)
+
+    def test_manage_account_sidebar_links_to_security_page(self):
+        client = app.test_client()
+        with client.session_transaction() as session:
+            session['_user_id'] = str(self.user_id)
+            session['_fresh'] = True
+        response = client.get('/settings')
+        self.assertEqual(response.status_code, 200)
+        sidebar = response.get_data(as_text=True).split('<aside class="st-sidebar"', 1)[1].split('</aside>', 1)[0]
+        self.assertIn('href="/account/security" class="st-nav-item"', sidebar)
+        self.assertIn('</span> Security ', sidebar)
+        self.assertEqual(client.get('/account/security').status_code, 200)
 
     def test_funding_form_has_accessible_summary_and_help(self):
         client = app.test_client()

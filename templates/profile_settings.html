@@ -776,6 +776,9 @@
             </div>
             <div class="input-wrapper">
               {{ form.email(class="form-control", placeholder="your.email@example.com") }}
+              <label for="email_change_password">Current password (only for email changes)</label>
+              <input class="form-control" type="password" id="email_change_password" name="email_change_password" autocomplete="current-password">
+              <p>Email changes require password confirmation and verification through the new inbox.</p>
             </div>
           </div>
 

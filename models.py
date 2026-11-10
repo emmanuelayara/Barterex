@@ -19,10 +19,12 @@ class User(db.Model, UserMixin):
     government_id_document = db.Column(db.String(255), nullable=True)  # Uploaded government-issued ID path
     id_verification_status = db.Column(db.String(30), default='not_submitted', nullable=False)  # not_submitted, submitted
     id_verified_at = db.Column(db.DateTime, nullable=True)
+    verified_identity_hash = db.Column(db.String(64), nullable=True, unique=True)
     address = db.Column(db.String(255))
     city = db.Column(db.String(50))
     state = db.Column(db.String(50))
     password_hash = db.Column(db.Text, nullable=False)
+    auth_token = db.Column(db.String(64), nullable=True, unique=True)
     
     # Credits & first login flag
     credits = db.Column(db.Integer, default=0)
@@ -109,6 +111,13 @@ class User(db.Model, UserMixin):
             code = f"REF{self.id}{random.randint(1000, 9999)}"
             self.referral_code = code
         return self.referral_code
+
+    def get_id(self):
+        return self.auth_token or str(self.id)
+
+    def revoke_authentication(self):
+        self.auth_token = secrets.token_urlsafe(32)
+        self.last_password_change = datetime.utcnow()
 
     def generate_email_verification_token(self):
         """Generate a secure email verification token"""
@@ -203,6 +212,24 @@ class Admin(db.Model):
         if not self.is_active:
             return False
         return bool(self.is_super_admin) or key in self.permission_list
+
+
+class EmailLoginChallenge(db.Model):
+    """One current challenge and shared abuse budget per user/admin account."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    principal = db.Column(db.String(80), nullable=False, unique=True)
+    challenge_token = db.Column(db.String(64), nullable=False)
+    binding_hash = db.Column(db.String(64), nullable=False)
+    code_hash = db.Column(db.String(64), nullable=True)
+    credential_hash = db.Column(db.String(64), nullable=False)
+    purpose = db.Column(db.String(20), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    window_started_at = db.Column(db.DateTime, nullable=False)
+    last_sent_at = db.Column(db.DateTime, nullable=False)
+    sends = db.Column(db.Integer, nullable=False, default=0)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    consumed = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class ActivityLog(db.Model):
@@ -1076,6 +1103,7 @@ class Notification(db.Model):
 class CreditTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    payment_id = db.Column(db.Integer, db.ForeignKey('payment.id'), nullable=True, unique=True)
     amount = db.Column(db.Integer, nullable=False)
     transaction_type = db.Column(db.String(50))  # e.g., 'credit', 'debit', 'purchase', 'referral_bonus'
     description = db.Column(db.String(255), nullable=True)  # Detailed description for user
@@ -1171,6 +1199,7 @@ class Referral(db.Model):
     signup_bonus_earned_at = db.Column(db.DateTime, nullable=True)  # When bonus was awarded
     item_upload_bonus_earned = db.Column(db.Boolean, default=False)  # 500 BXC on approved item upload
     purchase_bonus_earned = db.Column(db.Boolean, default=False)  # 500 BXC on friend's purchase
+    item_upload_qualified = db.Column(db.Boolean, default=False, nullable=False)
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # When referred user signed up

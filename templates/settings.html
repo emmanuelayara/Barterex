@@ -47,6 +47,7 @@
           <p class="st-nav-label">Account</p>
           <button type="button" class="st-nav-item" data-tab="profile"><span class="st-ico"><i class="fas fa-user"></i></span> Profile</button>
           <button type="button" class="st-nav-item" data-tab="password"><span class="st-ico"><i class="fas fa-lock"></i></span> Password</button>
+          <a href="{{ url_for('account.security_settings') }}" class="st-nav-item"><span class="st-ico"><i class="fas fa-shield-halved"></i></span> Security <i class="fas fa-chevron-right st-chev"></i></a>
           <button type="button" class="st-nav-item" data-tab="verification"><span class="st-ico"><i class="fas fa-id-card"></i></span> Verification</button>
 
           <a href="{{ url_for('payments.fund_account') }}" class="st-fund"><i class="fas fa-coins"></i> Fund Account</a>
@@ -116,7 +117,7 @@
               <p class="st-hero-sub">Keep your details up to date for smooth trading &amp; delivery.</p>
               <div class="st-badges">
                 {% if id_done %}
-                  <span class="st-badge ok"><i class="fas fa-circle-check"></i> ID submitted</span>
+                  <span class="st-badge ok"><i class="fas fa-circle-check"></i> {{ 'Identity verified' if current_user.id_verified_at else 'ID submitted' }}</span>
                 {% else %}
                   <span class="st-badge warn"><i class="fas fa-triangle-exclamation"></i> ID not submitted</span>
                 {% endif %}
@@ -173,6 +174,9 @@
                     {{ profile_form.email(class="st-input", placeholder="your.email@example.com", autocomplete="email", inputmode="email") }}
                   </div>
                   {% for err in profile_form.email.errors %}<p class="st-error">{{ err }}</p>{% endfor %}
+                  <label class="st-label" for="email_change_password">Current password (only for email changes)</label>
+                  <input class="st-input" type="password" id="email_change_password" name="email_change_password" autocomplete="current-password">
+                  <p class="st-help">Email changes require your password and confirmation through your new inbox. If email two-step verification is enabled, first disable it using your current inbox, then re-enable it after confirming the new email.</p>
                 </div>
                 <div class="st-field{% if profile_form.phone_number.errors %} has-error{% endif %}">
                   {{ profile_form.phone_number.label(class="st-label") }}
@@ -228,6 +232,7 @@
             <div class="st-card-head">
               <div>
                 <h2>Change password</h2>
+                <a href="{{ url_for('account.security_settings', _anchor='two-factor') }}">Email two-step verification: {{ 'Enabled' if current_user.two_factor_enabled else 'Disabled' }}</a>
                 <p>Use a strong password you don't use anywhere else.</p>
               </div>
               <span class="st-ico"><i class="fas fa-key"></i></span>
@@ -297,7 +302,7 @@
                 <span class="st-ico"><i class="fas fa-check"></i></span>
                 <div>
                   <strong>Submitted</strong>
-                  <p>Your NIN and government ID have been submitted and added to your account records.</p>
+                  <p>{% if current_user.id_verified_at %}Your identity has been verified by staff.{% else %}Your NIN and government ID have been submitted. Staff must verify your identity before referral rewards can be released.{% endif %}</p>
                 </div>
               </div>
             {% else %}

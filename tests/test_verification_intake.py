@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db
+from services.email_two_factor import fingerprint
 from models import Admin, CustodyEvent, Item, Order, OrderItem, Reservation, User, VerificationIntake
 from services.verification_intake_service import (
     IntakeValidationError,
@@ -99,6 +100,7 @@ class VerificationIntakeTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as flask_session:
             flask_session['admin_id'] = self.admin.id
+            flask_session['admin_mfa'] = fingerprint(self.admin)
             flask_session['admin_username'] = self.admin.username
 
         with patch('trading_points.award_points_for_upload', return_value=None), \
@@ -250,6 +252,7 @@ class VerificationIntakeTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as flask_session:
             flask_session['admin_id'] = self.admin.id
+            flask_session['admin_mfa'] = fingerprint(self.admin)
             flask_session['admin_username'] = self.admin.username
 
         response = client.post(
@@ -314,6 +317,7 @@ class VerificationIntakeTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as session:
             session['admin_id'] = self.admin.id
+            session['admin_mfa'] = fingerprint(self.admin)
         return client, order, intake, buyer
 
     def _assert_delivery_closes_custody(self, method):

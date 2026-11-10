@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db
+from services.email_two_factor import fingerprint
 from models import Admin, AuditLog, ContactMessage, Item, ItemVideo, Order, PickupStation, Reservation, ReservationAsset, User
 
 
@@ -43,6 +44,7 @@ class AdminPagesRenderTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as s:
             s['admin_id'] = self.admin.id
+            s['admin_mfa'] = fingerprint(self.admin)
             s['admin_username'] = self.admin.username
         return client
 
@@ -225,6 +227,7 @@ class AdminPagesRenderTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as s:
             s['admin_id'] = limited.id
+            s['admin_mfa'] = fingerprint(limited)
         response = client.get('/admin/users')
         self.assertEqual(response.status_code, 403)
         self.assertIn('Access denied', response.get_data(as_text=True))
@@ -279,6 +282,7 @@ class AdminPagesRenderTests(unittest.TestCase):
         with app.test_request_context('/admin/dashboard'):
             from flask import session
             session['admin_id'] = self.admin.id
+            session['admin_mfa'] = fingerprint(self.admin)
             context = inject_admin_context()
             self.assertEqual(context['admin_pending_counts'], expected)
             self.assertEqual(context['admin_pending_total'], sum(expected.values()))
@@ -319,12 +323,14 @@ class AdminPagesRenderTests(unittest.TestCase):
         db.session.commit()
         with app.test_request_context('/admin/dashboard'):
             session['admin_id'] = limited.id
+            session['admin_mfa'] = fingerprint(limited)
             context = inject_admin_context()
             self.assertEqual(context['admin_pending_counts'], {'messages': 1})
             self.assertEqual(context['admin_pending_total'], 1)
         client = app.test_client()
         with client.session_transaction() as s:
             s['admin_id'] = limited.id
+            s['admin_mfa'] = fingerprint(limited)
         body = client.get('/admin/dashboard').get_data(as_text=True)
         self.assertIn('data-pending-queue="messages"', body)
         self.assertNotIn('data-pending-queue="items"', body)

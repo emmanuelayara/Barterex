@@ -151,7 +151,15 @@
                                 <div class="vu-value">
                                     <i class="bi bi-file-earmark-text"></i>
                                     {% if user.government_id_document %}
-                                    <a href="{{ url_for('static', filename='uploads/verification/' + user.government_id_document) }}" target="_blank" rel="noopener" class="text-truncate">View submitted document</a>
+                                    {% if admin_can('users.verify_identity') %}
+                                    <a href="{{ url_for('admin.identity_document', user_id=user.id) }}" class="text-truncate">Download private identity document</a>
+                                    <form method="post" action="{{ url_for('admin.verify_user_identity', user_id=user.id) }}">
+                                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                      <label><input type="checkbox" name="identity_checked" value="yes" required> I inspected the document and verified this customer's identity and NIN.</label>
+                                      <button type="submit" class="adm-btn sm">Confirm customer identity</button>
+                                    </form>
+                                    {% endif %}
+                                    {% if user.id_verified_at %}<span>Identity verified {{ user.id_verified_at.strftime('%Y-%m-%d') }}</span>{% endif %}
                                     {% else %}
                                     <span>Not Provided</span>
                                     {% endif %}

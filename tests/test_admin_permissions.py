@@ -5,6 +5,7 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db
 from models import Admin
+from services.email_two_factor import fingerprint
 from permissions import ALL_PERMISSIONS, ENDPOINT_PERMISSIONS, SUPER_ADMIN_ONLY, PUBLIC_ENDPOINTS, AUTHENTICATED_ENDPOINTS
 
 
@@ -43,6 +44,7 @@ class AdminPermissionTests(unittest.TestCase):
         client = app.test_client()
         with client.session_transaction() as s:
             s['admin_id'] = admin.id
+            s['admin_mfa'] = fingerprint(admin)
             s['admin_username'] = admin.username
         return client
 

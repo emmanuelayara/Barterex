@@ -376,7 +376,13 @@ def profile_settings() -> Union[str, Response]:
                     flash(f"Invalid address: {error_msg}", 'danger')
                     return render_template('profile_settings.html', user=current_user, form=form)
             
-            current_user.email = email
+            from services.account_security import request_email_change
+            requested, email_error = request_email_change(current_user, email, request.form.get('email_change_password'))
+            if email_error:
+                flash(email_error, 'danger')
+                return render_template('profile_settings.html', user=current_user, form=form)
+            if requested:
+                flash('Check your new email inbox to confirm the change. Your current email remains active until confirmation.', 'info')
             current_user.phone_number = phone or None
             current_user.address = address or None
             current_user.city = city or None
@@ -880,6 +886,7 @@ def cancel_order(order_id):
 @handle_errors
 def settings():
     """Central settings page for profile, password, and account management"""
+    settings_user_id = current_user.id
     try:
         profile_form = ProfileUpdateForm(obj=current_user)
         password_form = ChangePasswordForm()
@@ -928,6 +935,9 @@ def settings():
                 if len(nin) < 11 or not nin.replace(' ', '').isalnum():
                     flash('❌ Please enter a valid NIN.', 'danger')
                     return redirect(url_for('user.settings'))
+                if current_user.verified_identity_hash and ''.join(nin.split()).upper() != ''.join((current_user.nin or '').split()).upper():
+                    flash('A verified NIN cannot be replaced through self-service. Contact support.', 'danger')
+                    return redirect(url_for('user.settings'))
 
                 gov_id_file = request.files.get('government_id')
                 if not gov_id_file or not gov_id_file.filename:
@@ -942,18 +952,20 @@ def settings():
                         enable_virus_scan=app.config.get('FILE_UPLOAD_ENABLE_VIRUS_SCAN', False)
                     )
 
-                    verification_dir = os.path.join(app.root_path, 'static', 'uploads', 'verification')
+                    verification_dir = app.config['IDENTITY_DOCUMENT_FOLDER']
                     os.makedirs(verification_dir, exist_ok=True)
-                    safe_name = generate_safe_filename(gov_id_file, current_user.id)
+                    import secrets
+                    safe_name = secrets.token_hex(24) + os.path.splitext(gov_id_file.filename)[1].lower()
                     file_path = os.path.join(verification_dir, safe_name)
                     gov_id_file.save(file_path)
 
                     current_user.nin = nin
                     current_user.government_id_document = safe_name
                     current_user.id_verification_status = 'submitted'
+                    current_user.id_verified_at = None
 
                     db.session.commit()
-                    logger.info(f"Identity details submitted - User: {current_user.username}, NIN: {nin}")
+                    logger.info("Identity details submitted - User ID: %s", current_user.id)
                     flash('✅ Your NIN and government ID have been submitted and added to your account.', 'success')
                     return redirect(url_for('user.settings'))
                 except FileUploadError as e:
@@ -963,14 +975,22 @@ def settings():
 
             # ========== PROFILE UPDATE ==========
             if form_type == 'profile':
-                current_user.email = request.form['email']
+                email = (request.form.get('email') or '').strip()
+                valid_email, email_error = validate_email(email)
+                if not valid_email:
+                    flash(f'Invalid email: {email_error}', 'danger')
+                    return redirect(url_for('user.settings'))
+                from services.account_security import request_email_change
+                requested, email_error = request_email_change(current_user, email, request.form.get('email_change_password'))
+                if email_error:
+                    flash(email_error, 'danger')
+                    return redirect(url_for('user.settings'))
+                if requested:
+                    flash('Check your new inbox to confirm your email change. Your existing email remains active until confirmation.', 'info')
                 current_user.phone_number = request.form['phone_number']
                 current_user.address = request.form['address']
                 current_user.city = request.form['city']
                 current_user.state = request.form['state']
-
-                if request.form.get('nin'):
-                    current_user.nin = request.form.get('nin').strip()
 
                 db.session.commit()
                 logger.info(f"Profile updated successfully - User: {current_user.username}, Email: {current_user.email}")
@@ -1005,10 +1025,13 @@ def settings():
                 
                 # Update password
                 current_user.password_hash = generate_password_hash(new_password)
+                current_user.revoke_authentication()
                 db.session.commit()
-                logger.info(f"Password changed successfully - User: {current_user.username}")
+                from flask_login import logout_user
+                logout_user()
+                logger.info("Password changed successfully - User ID: %s", settings_user_id)
                 flash('✅ Password changed successfully', 'success')
-                return redirect(url_for('user.settings'))
+                return redirect(url_for('auth.login'))
             
             # ========== ACCOUNT DELETION ==========
             elif form_type == 'delete':
@@ -1110,6 +1133,6 @@ def settings():
                              user=current_user)
         
     except Exception as e:
-        logger.error(f"Error in settings for user {current_user.username}: {str(e)}", exc_info=True)
+        logger.error("Error in settings for user ID %s: %s", settings_user_id, e, exc_info=True)
         flash('An error occurred. Please try again.', 'danger')
         return redirect(url_for('user.dashboard'))

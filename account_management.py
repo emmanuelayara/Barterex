@@ -4,7 +4,7 @@ Handles password changes, 2FA, GDPR compliance, activity logging, and security f
 """
 
 from datetime import datetime, timedelta
-from flask import request
+from flask import request, current_app
 import secrets
 import json
 import csv
@@ -146,7 +146,7 @@ def change_password(user_id, current_password, new_password, strength_level='med
     
     # Update password
     user.password_hash = generate_password_hash(new_password)
-    user.last_password_change = datetime.utcnow()
+    user.revoke_authentication()
     user.password_change_required = False
     db.session.commit()
     
@@ -162,32 +162,15 @@ def generate_2fa_secret():
 
 
 def enable_2fa(user_id):
-    """Enable 2FA for a user"""
-    user = User.query.get(user_id)
-    if not user:
-        return False, "User not found"
-    
-    secret = generate_2fa_secret()
-    user.two_factor_secret = secret
-    user.two_factor_enabled = True
-    db.session.commit()
-    
-    log_activity(user_id, 'two_factor_enabled', '2FA enabled on account')
-    return True, secret
+    """Direct toggles cannot bypass the password/email verification flow."""
+    current_app.logger.warning('Rejected unverified 2FA enrollment for user %s', user_id)
+    return False, "Confirm your password and email code through account security settings."
 
 
 def disable_2fa(user_id):
-    """Disable 2FA for a user"""
-    user = User.query.get(user_id)
-    if not user:
-        return False, "User not found"
-    
-    user.two_factor_enabled = False
-    user.two_factor_secret = None
-    db.session.commit()
-    
-    log_activity(user_id, 'two_factor_disabled', '2FA disabled on account')
-    return True, "2FA disabled"
+    """Direct toggles cannot bypass the existing second factor."""
+    current_app.logger.warning('Rejected unverified 2FA disable request for user %s', user_id)
+    return False, "Confirm your password and email code through account security settings."
 
 
 # ==================== GDPR COMPLIANCE ==================== #
@@ -365,7 +348,7 @@ def add_trusted_device(user_id, device_fingerprint, device_name=''):
         init_security_settings(user_id)
         settings = SecuritySettings.query.filter_by(user_id=user_id).first()
     
-    devices = settings.trusted_devices or []
+    devices = list(settings.trusted_devices or [])
     
     # Add new device
     device = {
@@ -419,7 +402,7 @@ def get_security_score(user_id):
             score -= 10
     
     # 2FA bonus
-    if user.two_factor_enabled:
+    if user.two_factor_enabled and current_app.config.get('TWO_FACTOR_AVAILABLE', False):
         score += 20
     
     # Activity logging (regular activity is good)

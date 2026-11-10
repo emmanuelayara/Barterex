@@ -9,13 +9,12 @@ from datetime import datetime
 import json
 import io
 
-from app import db
+from app import db, limiter
 from models import User, ActivityLog, SecuritySettings
-from forms import ChangePasswordForm, SecuritySettingsForm, TwoFactorSetupForm, ExportDataForm, DeleteAccountForm
+from forms import ChangePasswordForm, SecuritySettingsForm, ExportDataForm, DeleteAccountForm
 from account_management import (
     log_activity, get_activity_history, get_client_ip, get_user_agent,
     change_password, validate_password_strength, 
-    enable_2fa, disable_2fa,
     request_data_export, export_user_data, export_user_data_csv,
     request_account_deletion, cancel_account_deletion, delete_user_account,
     init_security_settings, update_security_settings, 
@@ -76,8 +75,9 @@ def change_password_page():
         )
         
         if success:
+            logout_user()
             flash(message, 'success')
-            return redirect(url_for('account.security_settings'))
+            return redirect(url_for('auth.login'))
         else:
             flash(message, 'danger')
     
@@ -88,44 +88,42 @@ def change_password_page():
 
 @account_bp.route('/2fa/setup', methods=['GET', 'POST'])
 @login_required
+@limiter.limit('5 per minute', methods=['POST'])
 def setup_2fa():
-    """Setup 2FA"""
+    """Confirm password and email ownership before enabling the second factor."""
     if current_user.two_factor_enabled:
-        flash('2FA is already enabled. Disable it first if you want to change settings.', 'info')
+        flash('Email two-step verification is already enabled.', 'info')
         return redirect(url_for('account.security_settings'))
-    
-    # Generate temporary secret for setup
-    if '2fa_temp_secret' not in session:
-        import secrets
-        session['2fa_temp_secret'] = secrets.token_hex(16)
-    
-    form = TwoFactorSetupForm()
-    if form.validate_on_submit():
-        # In a real app, verify the code against the secret
-        # For now, just enable it
-        success, secret = enable_2fa(current_user.id)
-        if success:
-            flash('2FA enabled successfully!', 'success')
-            session.pop('2fa_temp_secret', None)
-            return redirect(url_for('account.security_settings'))
-    
-    return render_template('account/setup_2fa.html', form=form, temp_secret=session.get('2fa_temp_secret'))
+    if request.method == 'POST':
+        return _start_two_factor_change('enable')
+    return render_template('account/setup_2fa.html')
+
+
+def _start_two_factor_change(purpose):
+    from werkzeug.security import check_password_hash
+    from services.email_two_factor import start_challenge
+    if not current_user.email_verified:
+        flash('Verify your account email before setting up email two-step verification.', 'danger')
+        return redirect(url_for('account.security_settings'))
+    if not check_password_hash(current_user.password_hash, request.form.get('current_password', '')):
+        flash('Confirm your current password before changing security settings.', 'danger')
+        return redirect(url_for('account.security_settings'))
+    success, error = start_challenge(current_user._get_current_object(), purpose)
+    if not success:
+        flash(error, 'danger')
+        return redirect(url_for('account.security_settings'))
+    return redirect(url_for('two_factor.verify'))
 
 
 @account_bp.route('/2fa/disable', methods=['POST'])
 @login_required
+@limiter.limit('5 per minute', methods=['POST'])
 def disable_2fa_endpoint():
-    """Disable 2FA"""
+    """Disabling protection requires password and the existing email factor."""
     if not current_user.two_factor_enabled:
-        return jsonify({'success': False, 'message': '2FA not enabled'}), 400
-    
-    success, message = disable_2fa(current_user.id)
-    if success:
-        flash('2FA disabled', 'success')
-    else:
-        flash(message, 'danger')
-    
-    return redirect(url_for('account.security_settings'))
+        flash('Email two-step verification is not enabled.', 'warning')
+        return redirect(url_for('account.security_settings'))
+    return _start_two_factor_change('disable')
 
 
 # ==================== ACTIVITY LOG ==================== #
@@ -281,7 +279,7 @@ def remove_device(index):
     """Remove a trusted device"""
     settings = current_user.security_settings
     if settings and 0 <= index < len(settings.trusted_devices or []):
-        devices = settings.trusted_devices
+        devices = list(settings.trusted_devices)
         device_name = devices[index].get('name', 'Device')
         devices.pop(index)
         settings.trusted_devices = devices
@@ -289,6 +287,8 @@ def remove_device(index):
         
         flash(f'Removed {device_name} from trusted devices', 'success')
         log_activity(current_user.id, 'device_untrusted', f'Removed trusted device: {device_name}')
+    else:
+        flash('This trusted device was not found. Refresh the list and try again.', 'warning')
     
     return redirect(url_for('account.trusted_devices'))
 

@@ -27,7 +27,85 @@ Each milestone pays only once. The shared amount is
 `REFERRAL_MILESTONE_BONUS` in `referral_rewards.py`. Newly earned milestones,
 including pending milestones on existing referrals, use this amount;
 previously paid rewards and historical transactions remain unchanged.
-No database migration is required.
+All rewards remain pending until the referred account has a staff-verified,
+unique identity, verified email and a positive-value, non-cancelled settled
+reservation purchase. Profile completion and approved uploads alone no longer
+grant spendable BXC. Settlement and staff identity review release eligible
+pending rewards. Approval qualification is retained even while payout is pending.
+
+## Security deployment
+
+The security hardening release requires deployment work before serving traffic:
+
+1. Back up the database and identity-document directory; pause web and worker traffic.
+2. Set separate, cryptographically random `SECRET_KEY` and `IDENTITY_HASH_KEY`
+   environment values (at least 32 characters each). Startup fails if missing or
+   invalid. Generate each using `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+   Keep `IDENTITY_HASH_KEY` stable across session-key rotations; it deduplicates
+   staff-verified NINs without storing another plaintext identifier.
+   Rotate an exposed/default `SECRET_KEY` to invalidate existing user/admin
+   sessions and signed links. Never put real keys in source control.
+3. Run `flask db upgrade` to apply `harden_security_20261110` and `email_2fa_20261110`. These add revocable
+   user authentication tokens, unique payment-to-credit ledger links, a unique
+   verified-identity hash and pending approval qualification. Previously paid
+   rewards/credits are not rewritten. Existing unsupported 2FA flags are cleared
+   by the hardening migration; users can now enroll using the verified email flow.
+   The email migration adds persistent verification challenges and abuse budgets.
+4. Configure the reverse proxy/CDN to deny `/static/uploads/verification/` and
+   purge any cached identity-document URLs. Flask also denies this path, but
+   Flask cannot protect files served directly by a proxy or revoke downloaded copies.
+   Run `flask secure-identity-documents` to relocate registered documents to
+   `instance/identity_documents`, outside the public tree. Reconcile any missing,
+   duplicate or unregistered legacy files before reopening traffic. Protect private
+   storage/backups with deployment filesystem permissions and encryption.
+5. Grant the new **Verify identity** permission only to appropriate staff. They
+   must download and inspect a customer's private document and confirm the NIN
+   through the user-detail screen. Uploading an ID does not verify its owner;
+   item-intake `identity_confirmed` checks identify an item, not a person.
+6. Restart all web/worker processes. Check payment verification/replay, profile
+   email confirmation, password recovery, appeals and staff document access.
+
+### Email two-step verification
+
+Email codes are **optional for users and mandatory for every administrator**,
+including super admins. Existing administrator sessions must sign in again.
+Configure working `MAIL_SERVER`, `MAIL_PORT`, TLS/SSL, `MAIL_USERNAME`,
+`MAIL_PASSWORD` and `MAIL_DEFAULT_SENDER` before deployment. Keep `MAIL_DEBUG`
+and `MAIL_SUPPRESS_SEND` off in production; verify actual delivery to staff inboxes.
+Code delivery is synchronous and failures do not grant access.
+
+Users enable it at Settings > Password > Email two-step verification (or
+`/account/security`). Enabling/disabling requires the current password and an
+email code, then revokes all old user sessions. Codes last five minutes, are
+browser-bound and single-use; only keyed hashes are stored. Resends wait 60
+seconds; five attempts and five emails per account are allowed in a 15-minute
+window, including across browsers and restarted sign-ins. Resends preserve the
+attempt budget and invalidate earlier codes.
+Changing an enrolled user's recovery email requires disabling verification with
+the current inbox first; after confirming the new address, enroll again. Older
+email-change links cannot bypass enrollment or session revocation.
+
+Users without enrollment retain the existing sign-in flow. Enrolled users must
+verify each new sign-in; Remember Me does not bypass this check. Password resets
+do not disable verification. Trusted-device/IP labels do not bypass it either.
+Keep inboxes secure: email codes are weaker than authenticator apps/security keys.
+There are no generated recovery codes or password-only fallback. Lost inbox access
+requires support and verified account recovery; this release adds no bypass endpoint.
+
+Payment verification checks gateway reference, NGN currency and exact amount
+before an atomic pending-payment claim. A unique ledger constraint additionally
+prevents duplicate crediting. Review historical payment credits for earlier
+duplicates; this change does not automatically reverse balances or orders.
+Password resets are credential-bound and single-use; recovery and password
+changes revoke existing login and remember sessions. Email changes require the
+current password and confirmation through the new inbox before replacing the
+old recovery address. Banned sessions are restricted to appeals/logout.
+
+CSRF protection applies globally, with the signed Paystack webhook as the only
+exemption. Shared `static/js/csrf.js` supplies tokens to local forms and
+same-origin fetch/XHR mutations; it never sends tokens to signed cloud upload
+URLs. New forms should still include an explicit hidden CSRF token for non-JS
+operation. Native form submissions without a token fail closed.
 
 ## Project Structure
 

@@ -6,6 +6,7 @@ from unittest.mock import patch
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db
+from services.email_two_factor import fingerprint
 from models import (
     Admin,
     ClearingInventoryItem,
@@ -400,6 +401,7 @@ class ReservationSettlementTests(unittest.TestCase):
         with app.test_client() as client:
             with client.session_transaction() as session:
                 session['admin_id'] = admin.id
+                session['admin_mfa'] = fingerprint(admin)
             response = client.post(
                 f'/admin/settlement-queue/{reservation.id}/delivery-quote',
                 data={'amount_naira': '250.00'},
@@ -423,6 +425,7 @@ class ReservationSettlementTests(unittest.TestCase):
         with app.test_client() as client:
             with client.session_transaction() as session:
                 session['admin_id'] = admin.id
+                session['admin_mfa'] = fingerprint(admin)
             response = client.post(f'/admin/update_order_status/{order.id}')
         self.assertEqual(response.status_code, 302)
         db.session.refresh(order)
@@ -465,6 +468,7 @@ class ReservationSettlementTests(unittest.TestCase):
         with app.test_client() as client:
             with client.session_transaction() as session:
                 session['admin_id'] = admin.id
+                session['admin_mfa'] = fingerprint(admin)
             response = client.post(
                 f'/admin/settlement-queue/{reservation.id}/delivery-quote',
                 data={'amount_naira': '100'},
@@ -577,6 +581,7 @@ class ReservationSettlementTests(unittest.TestCase):
         with app.test_client() as client:
             with client.session_transaction() as session:
                 session['admin_id'] = admin.id
+                session['admin_mfa'] = fingerprint(admin)
             page = client.get('/admin/settlement-queue').get_data(as_text=True)
             self.assertIn('Record physically observed number', page)
             for item, action, serial in (
@@ -1420,6 +1425,7 @@ class ReservationSettlementTests(unittest.TestCase):
             with app.test_client() as client:
                 with client.session_transaction() as flask_session:
                     flask_session['admin_id'] = admin.id
+                    flask_session['admin_mfa'] = fingerprint(admin)
                 response = client.get(f'/admin/dashboard?status={status}')
             self.assertEqual(response.status_code, 200)
             html = response.get_data(as_text=True)

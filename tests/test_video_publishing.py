@@ -10,6 +10,7 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 from app import app, db
 from flask import g
 from models import Admin, AuditLog, Item, ItemVideo, ReservationCreditEntry, User
+from services.email_two_factor import fingerprint
 from services import video_publishing as jobs
 from services import youtube_publisher as youtube
 
@@ -54,6 +55,7 @@ class VideoPublishingTests(unittest.TestCase):
         g.pop('_login_user', None)
         with client.session_transaction() as session:
             session['admin_id'] = self.admin_id
+            session['admin_mfa'] = fingerprint(db.session.get(Admin, self.admin_id))
         if not allowed:
             admin = db.session.get(Admin, self.admin_id)
             admin.is_super_admin = False
