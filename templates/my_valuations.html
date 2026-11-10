@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 {% import '_floaters.html' as fx %}
 {% block title %}My Valuations{% endblock %}
-{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
+{% endblock %}
 {% block content %}
 <style media="not all">
   .page-container {
@@ -357,11 +360,23 @@
                       <video class="activation-camera" autoplay muted playsinline hidden aria-label="Item video preview"></video>
                       <div class="recording-actions">
                         <button type="button" class="trade-submit-btn open-video-camera">Open Camera</button>
-                        <button type="button" class="trade-submit-btn start-recording" disabled>Start Recording</button>
-                        <button type="button" class="trade-submit-btn stop-recording" disabled>Stop Recording</button>
-                        <button type="button" class="trade-submit-btn close-video-camera" hidden>Cancel Camera</button>
                       </div>
                       <p class="activate-help recording-status" role="status" aria-live="polite">Allow camera access to record. You can preview and retake before submitting.</p>
+                      <dialog class="item-camera-dialog activation-camera-dialog" aria-labelledby="video-camera-title-{{ item.id }}" aria-describedby="video-camera-status-{{ item.id }}">
+                        <div class="camera-toolbar">
+                          <h2 id="video-camera-title-{{ item.id }}">Item video</h2>
+                          <span class="camera-count recording-time">0 / {{ max_video_duration_seconds }}s</span>
+                          <button type="button" class="camera-close close-video-camera" autofocus>Cancel</button>
+                        </div>
+                        <div class="camera-viewfinder"></div>
+                        <div class="camera-controls">
+                          <p class="camera-guidance" id="video-camera-status-{{ item.id }}" role="status" aria-live="polite">Getting the camera ready...</p>
+                          <div class="camera-record-actions">
+                            <button type="button" class="start-recording" disabled>Start Recording</button>
+                            <button type="button" class="stop-recording" disabled hidden>Stop &amp; Review</button>
+                          </div>
+                        </div>
+                      </dialog>
                       <noscript>JavaScript and a camera-enabled device are required to record your item video.</noscript>
                       <div class="activate-progress" hidden>Uploading… <span class="activate-progress-pct">0%</span></div>
                       <div class="activate-error" role="alert" hidden></div>
@@ -440,6 +455,11 @@
     const stopBtn = form.querySelector('.stop-recording');
     const closeBtn = form.querySelector('.close-video-camera');
     const status = form.querySelector('.recording-status');
+    const cameraDialog = form.querySelector('.activation-camera-dialog');
+    const cameraGuidance = cameraDialog.querySelector('.camera-guidance');
+    const recordingTime = cameraDialog.querySelector('.recording-time');
+    const previewHome = document.createComment('Video preview position');
+    preview.before(previewHome);
     const maxDuration = Number(form.dataset.maxVideoDuration);
     const maxSize = Number(form.dataset.maxVideoSize);
     let stream = null;
@@ -456,6 +476,11 @@
     const progressPct = progress.querySelector('.activate-progress-pct');
     const errorBox = form.querySelector('.activate-error');
     const csrfToken = document.getElementById('globalCsrfToken');
+
+    function setRecordingStatus(message) {
+      status.textContent = message;
+      cameraGuidance.textContent = message;
+    }
 
     function showError(message) {
       errorBox.textContent = message;
@@ -476,7 +501,12 @@
       preview.srcObject = null;
       startBtn.disabled = true;
       stopBtn.disabled = true;
-      closeBtn.hidden = true;
+      stopBtn.hidden = true;
+      startBtn.hidden = false;
+      if (cameraDialog.open) cameraDialog.close();
+      previewHome.after(preview);
+      preview.classList.remove('camera-preview');
+      if (!document.querySelector('.item-camera-dialog[open]')) document.body.classList.remove('item-camera-open');
     }
 
     function discardRecording() {
@@ -493,6 +523,7 @@
       preview.controls = false;
       uploadBtn.disabled = true;
       openBtn.disabled = uploading;
+      if (!document.hidden && !uploading) openBtn.focus({preventScroll: true});
     }
 
     async function openCamera() {
@@ -511,8 +542,13 @@
       const token = generation;
       openBtn.disabled = true;
       errorBox.hidden = true;
-      closeBtn.hidden = false;
-      status.textContent = 'Allow camera permission to begin. Your previous recording has been cleared.';
+      recordingTime.textContent = `0 / ${maxDuration}s`;
+      cameraDialog.querySelector('.camera-viewfinder').appendChild(preview);
+      preview.classList.add('camera-preview');
+      preview.hidden = false;
+      cameraDialog.showModal();
+      document.body.classList.add('item-camera-open');
+      setRecordingStatus('Allow camera permission to begin. Your previous recording has been cleared.');
       try {
         const camera = await navigator.mediaDevices.getUserMedia({
           audio: false,
@@ -522,7 +558,7 @@
           camera.getTracks().forEach(track => track.stop());
           if (token === generation) {
             discardRecording();
-            status.textContent = 'Camera paused while the page was hidden. Open it again to record.';
+            setRecordingStatus('Camera paused while the page was hidden. Open it again to record.');
           }
           return;
         }
@@ -541,7 +577,7 @@
         if (token !== generation) return;
         recorder = new MediaRecorder(camera, {mimeType: mime, videoBitsPerSecond: 2500000});
         startBtn.disabled = false;
-        status.textContent = 'Camera ready. Start recording, turn the item to show all sides, then stop to preview.';
+        setRecordingStatus('Hold steady and show the item from different sides. Start recording when ready.');
       } catch (error) {
         if (token !== generation) return;
         discardRecording();
@@ -558,7 +594,14 @@
     openBtn.addEventListener('click', openCamera);
     closeBtn.addEventListener('click', () => {
       discardRecording();
-      status.textContent = 'Recording cancelled. Open the camera to record again.';
+      setRecordingStatus('Recording cancelled. Open the camera to record again.');
+    });
+    cameraDialog.addEventListener('cancel', event => {
+      event.preventDefault();
+      closeBtn.click();
+    });
+    cameraDialog.addEventListener('close', () => {
+      if (!cameraDialog.open && cameraDialog.contains(preview)) closeBtn.click();
     });
     startBtn.addEventListener('click', () => {
       if (!recorder || recorder.state !== 'inactive' || !stream) return;
@@ -592,6 +635,7 @@
         releaseCamera();
         recorder = null;
         openBtn.disabled = false;
+        if (!document.hidden) openBtn.focus({preventScroll: true});
         if (!chunks.length || duration <= 0 || duration > maxDuration + 1) {
           discardRecording();
           showError('No valid recording was saved, or it exceeded the duration limit. Please record again.');
@@ -611,10 +655,15 @@
       try {
         recorder.start(250);
         startBtn.disabled = true;
+        startBtn.hidden = true;
         stopBtn.disabled = false;
+        stopBtn.hidden = false;
+        recordingTime.textContent = `0 / ${maxDuration}s`;
+        setRecordingStatus('Recording started. Show all sides and demonstrate the item.');
         timer = setInterval(() => {
           const elapsed = (performance.now() - started) / 1000;
-          status.textContent = `Recording: ${Math.floor(elapsed)} / ${maxDuration} seconds. Show the item from different sides.`;
+          recordingTime.textContent = `${Math.floor(elapsed)} / ${maxDuration}s`;
+          setRecordingStatus(`Recording: ${Math.floor(elapsed)} / ${maxDuration} seconds. Show the item from different sides.`);
           if (elapsed >= maxDuration && recorder && recorder.state === 'recording') {
             stopBtn.disabled = true;
             clearInterval(timer);

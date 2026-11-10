@@ -1556,6 +1556,7 @@
 </style>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
 
 <div class="upload-page">
   <div class="upload-container">
@@ -1707,18 +1708,18 @@
   </div>
 </div>
 
-<dialog class="camera-panel" id="cameraPanel" aria-labelledby="cameraTitle" aria-describedby="cameraCaptureStatus">
+<dialog class="camera-panel item-camera-dialog" id="cameraPanel" aria-labelledby="cameraTitle" aria-describedby="cameraCaptureStatus">
   <div class="camera-toolbar">
     <h2 id="cameraTitle">Item camera</h2>
-    <span id="cameraPhotoCount">0 / 15 photos</span>
-    <button type="button" id="stopCameraBtn" autofocus>Done</button>
+    <span class="camera-count" id="cameraPhotoCount">0 / 15 photos</span>
+    <button type="button" class="camera-close" id="stopCameraBtn" autofocus>Done</button>
   </div>
   <div class="camera-viewfinder">
     <video class="camera-preview" id="cameraPreview" autoplay muted playsinline aria-label="Live item camera preview"></video>
   </div>
   <div class="camera-controls">
-    <p id="cameraCaptureStatus" role="status" aria-live="polite">Getting the camera ready...</p>
-    <button type="button" id="capturePhotoBtn" aria-label="Take photo" disabled><span aria-hidden="true"></span></button>
+    <p class="camera-guidance" id="cameraCaptureStatus" role="status" aria-live="polite">Getting the camera ready...</p>
+    <button type="button" class="camera-shutter" id="capturePhotoBtn" aria-label="Take photo" disabled><span aria-hidden="true"></span></button>
     <span class="camera-capture-label">Take photo</span>
   </div>
 </dialog>

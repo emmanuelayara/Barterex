@@ -119,7 +119,14 @@ Valuations uses in-page camera recording (`getUserMedia` and `MediaRecorder`),
 not a gallery/file picker. Users record a silent walkthrough from different
 sides, preview it, or retake before sending it to the existing signed cloud
 upload. The rear camera is preferred. Recording stops automatically at 60
-seconds and is limited to 200 MB; camera access is released on stop/cancel,
+seconds. Capture uses the same full-viewport dialog and solid dark controls
+panel as Upload, with a live timer, Start Recording, Stop & Review and Cancel.
+Stopping returns the saved video to the item's inline playback preview;
+Cancel or Escape discards the current take. The shared `static/css/camera.css`
+controls portrait/landscape framing and device safe areas on both pages.
+The live view fills the screen using a cropped preview; the recording retains
+the camera's original frame and is shown uncropped for review.
+The video is limited to 200 MB; camera access is released on stop/cancel,
 page hiding/navigation, or closing the item form. Interrupted recordings are
 discarded. Denied camera permission or an unsupported recorder requires another
 camera-enabled browser/device, with no gallery fallback. Production needs HTTPS.
