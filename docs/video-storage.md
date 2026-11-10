@@ -47,7 +47,7 @@ submitted for trade, manual review, approval or reservation are locked against
 editing. Expired, otherwise unsubmitted items can be edited for a fresh value.
 Older background valuation jobs cannot overwrite an accepted replacement value.
 
-The upload form takes 6-15 JPEG photos from an in-page camera preview using
+The upload form takes 6-15 JPEG photos from a full-viewport camera dialog using
 `getUserMedia`, preferring the rear camera. There is no image file picker,
 gallery fallback or drag-and-drop import. Users can remove unclear captures
 and take replacements, choose a primary photo, and show different sides,
@@ -55,6 +55,16 @@ damage, serial numbers and accessories. Denied/missing camera access blocks
 photo collection; users must grant permission or use a camera-enabled device.
 Production requires HTTPS and browser camera permission. Camera tracks stop
 when closed, when the page is hidden/left, or when valuation submission starts.
+The dialog hides the application navigation, locks background scrolling and
+contains a live photo count, shutter and Done button. Done or Escape returns to
+the form with captured photos retained. The preview fills the viewport behind
+overlaid controls using a centered cover crop, without stretching.
+The shutter and guidance sit on a solid dark panel that covers the preview
+behind them, including in landscape mode. Saved photos
+retain the full camera frame and still use the stream resolution, capped at
+1920px on the longest edge, rather than the displayed preview size. Portrait
+and landscape layouts respect device safe areas. This fills the browser's
+viewport, not the native camera app; browser chrome may remain visible.
 
 This is a capture-only **form policy**, not proof of authenticity: browsers
 can expose virtual cameras, users can photograph another image, and crafted

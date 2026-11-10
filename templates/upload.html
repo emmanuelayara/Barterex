@@ -1675,13 +1675,6 @@
             </button>
             <p class="camera-status" id="cameraStatus" role="status" aria-live="polite">Photograph the front, back, left, right, top and bottom. Add close-ups of damage, serial numbers and accessories.</p>
             <noscript><p>JavaScript and camera access are required to take item photos. Use a camera-enabled device and enable JavaScript.</p></noscript>
-            <div class="camera-panel" id="cameraPanel" hidden>
-              <video class="camera-preview" id="cameraPreview" autoplay muted playsinline aria-label="Live item camera preview"></video>
-              <div class="camera-actions">
-                <button type="button" class="upload-action-btn add-more-btn" id="capturePhotoBtn" disabled>Take Photo</button>
-                <button type="button" class="upload-action-btn clear-all-btn" id="stopCameraBtn">Close Camera</button>
-              </div>
-            </div>
             
             <div class="images-preview-container" id="imagesPreviewContainer" style="display: none;">
               <div class="upload-counter">
@@ -1713,6 +1706,22 @@
     </div>
   </div>
 </div>
+
+<dialog class="camera-panel" id="cameraPanel" aria-labelledby="cameraTitle" aria-describedby="cameraCaptureStatus">
+  <div class="camera-toolbar">
+    <h2 id="cameraTitle">Item camera</h2>
+    <span id="cameraPhotoCount">0 / 15 photos</span>
+    <button type="button" id="stopCameraBtn" autofocus>Done</button>
+  </div>
+  <div class="camera-viewfinder">
+    <video class="camera-preview" id="cameraPreview" autoplay muted playsinline aria-label="Live item camera preview"></video>
+  </div>
+  <div class="camera-controls">
+    <p id="cameraCaptureStatus" role="status" aria-live="polite">Getting the camera ready...</p>
+    <button type="button" id="capturePhotoBtn" aria-label="Take photo" disabled><span aria-hidden="true"></span></button>
+    <span class="camera-capture-label">Take photo</span>
+  </div>
+</dialog>
 
 <!-- AI Valuation Modal: shown when the user submits, before the item is actually sent -->
 <div class="ai-valuation-overlay" id="aiValuationOverlay" hidden>
@@ -1905,6 +1914,9 @@
   const cameraStatus = document.getElementById('cameraStatus');
   const capturePhotoBtn = document.getElementById('capturePhotoBtn');
   const stopCameraBtn = document.getElementById('stopCameraBtn');
+  const cameraCaptureStatus = document.getElementById('cameraCaptureStatus');
+  const cameraPhotoCount = document.getElementById('cameraPhotoCount');
+  let cameraOpener = null;
   let cameraStream = null;
   let cameraRequest = 0;
   let capturingPhoto = false;
@@ -1924,8 +1936,14 @@
   const uploadProgressStatus = document.getElementById('uploadProgressStatus');
 
   function updateCaptureButton() {
+    cameraPhotoCount.textContent = `${selectedFiles.length} / ${maxImages} photos`;
     capturePhotoBtn.disabled = capturingPhoto || !cameraStream || cameraPreview.readyState < 2
       || !cameraPreview.videoWidth || selectedFiles.length >= maxImages;
+  }
+
+  function setCameraStatus(message) {
+    cameraStatus.textContent = message;
+    cameraCaptureStatus.textContent = message;
   }
 
   function stopCamera() {
@@ -1936,10 +1954,16 @@
     }
     cameraPreview.srcObject = null;
     cameraPreview.pause();
-    cameraPanel.hidden = true;
+    if (cameraPanel.open) cameraPanel.close();
+    document.body.classList.remove('item-camera-open');
     fileUploadArea.disabled = false;
     addMoreBtn.disabled = false;
     updateCaptureButton();
+    if (cameraOpener && !document.hidden) {
+      const target = selectedFiles.length ? addMoreBtn : cameraOpener;
+      target.focus({preventScroll: true});
+    }
+    cameraOpener = null;
   }
 
   async function openCamera() {
@@ -1948,7 +1972,6 @@
       return;
     }
     if (cameraStream) {
-      cameraPanel.scrollIntoView({behavior: 'smooth', block: 'center'});
       return;
     }
     if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -1956,10 +1979,12 @@
       return;
     }
     const requestId = ++cameraRequest;
+    cameraOpener = document.activeElement;
+    cameraPanel.showModal();
+    document.body.classList.add('item-camera-open');
     fileUploadArea.disabled = true;
     addMoreBtn.disabled = true;
-    cameraPanel.hidden = false;
-    cameraStatus.textContent = 'Waiting for camera permission. Please allow access to take your item photos.';
+    setCameraStatus('Waiting for camera permission. Please allow access to take your item photos.');
     let stream = null;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -1974,15 +1999,14 @@
       stream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
         if (cameraStream === stream) {
           stopCamera();
-          cameraStatus.textContent = 'Camera access ended. Open the camera again to continue taking photos.';
+          setCameraStatus('Camera access ended. Open the camera again to continue taking photos.');
         }
       }));
       cameraPreview.srcObject = stream;
       await cameraPreview.play();
       if (requestId !== cameraRequest) return;
-      cameraStatus.textContent = 'Camera ready. Take each photo from a different side. Remove any unclear photo and capture it again.';
+      setCameraStatus('Keep the item in frame and hold steady. Take photos from different sides.');
       updateCaptureButton();
-      cameraPanel.scrollIntoView({behavior: 'smooth', block: 'center'});
     } catch (error) {
       if (requestId !== cameraRequest) return;
       stopCamera();
@@ -1993,8 +2017,8 @@
         NotReadableError: 'The camera is unavailable or in use by another app. Close that app and try again.',
         OverconstrainedError: 'This camera cannot provide a supported preview. Try another camera-enabled device.'
       };
-      cameraStatus.textContent = (messages[error.name] || 'The camera could not start. Check camera permissions or try another browser on a camera-enabled device.')
-        + ' Gallery uploads are not allowed.';
+      setCameraStatus((messages[error.name] || 'The camera could not start. Check camera permissions or try another browser on a camera-enabled device.')
+        + ' Gallery uploads are not allowed.');
     } finally {
       if (requestId === cameraRequest) {
         fileUploadArea.disabled = false;
@@ -2007,7 +2031,14 @@
   addMoreBtn.addEventListener('click', openCamera);
   stopCameraBtn.addEventListener('click', () => {
     stopCamera();
-    cameraStatus.textContent = 'Camera closed. Your captured photos are kept; open the camera to take more.';
+    setCameraStatus('Camera closed. Your captured photos are kept; open the camera to take more.');
+  });
+  cameraPanel.addEventListener('cancel', event => {
+    event.preventDefault();
+    stopCameraBtn.click();
+  });
+  cameraPanel.addEventListener('close', () => {
+    if (!cameraPanel.open && (cameraStream || document.body.classList.contains('item-camera-open'))) stopCamera();
   });
   cameraPreview.addEventListener('loadeddata', updateCaptureButton);
   cameraPreview.addEventListener('playing', updateCaptureButton);
@@ -2015,7 +2046,7 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       stopCamera();
-      cameraStatus.textContent = 'Camera paused while the page was hidden. Open it again to continue.';
+      setCameraStatus('Camera paused while the page was hidden. Open it again to continue.');
     }
   });
 
@@ -2038,14 +2069,14 @@
       if (requestId !== cameraRequest) return;
       selectedFiles.push(new File([blob], `item-camera-${++photoSequence}.jpg`, {type: 'image/jpeg'}));
       updateImagePreviews();
-      cameraStatus.textContent = `Photo ${selectedFiles.length} saved. ${selectedFiles.length < minImages ? `Take at least ${minImages - selectedFiles.length} more from different angles.` : 'You can take more photos or close the camera and submit.'}`;
+      setCameraStatus(`Photo ${selectedFiles.length} saved. ${selectedFiles.length < minImages ? `Take at least ${minImages - selectedFiles.length} more from different angles.` : 'Take more photos or tap Done to review them.'}`);
       if (selectedFiles.length === maxImages) {
         stopCamera();
-        cameraStatus.textContent = `All ${maxImages} photos taken. Remove any photo to retake it, or submit your item.`;
+        setCameraStatus(`All ${maxImages} photos taken. Remove any photo to retake it, or submit your item.`);
       }
     } catch (error) {
       console.error('Item photo capture failed:', error);
-      cameraStatus.textContent = 'Photo capture failed. No photo was added. Please try again or reopen the camera.';
+      setCameraStatus('Photo capture failed. No photo was added. Please try again or reopen the camera.');
     } finally {
       capturingPhoto = false;
       updateCaptureButton();
