@@ -69,9 +69,9 @@ FILE_SIZE_LIMITS = {
 # Global max file size (safety limit)
 GLOBAL_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB absolute maximum
 
-# Listing images do not need the full resolution produced by most cameras.
-STORED_IMAGE_MAX_DIMENSION = 1920
-STORED_IMAGE_QUALITY = 85
+# Preserve fine item details while bounding stored dimensions and file size.
+STORED_IMAGE_MAX_DIMENSION = 4096
+STORED_IMAGE_QUALITY = 95
 
 
 def optimize_image_for_storage(file_data, file_type):

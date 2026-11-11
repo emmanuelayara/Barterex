@@ -366,6 +366,7 @@
                         <div class="camera-toolbar">
                           <h2 id="video-camera-title-{{ item.id }}">Item video</h2>
                           <span class="camera-count recording-time">0 / {{ max_video_duration_seconds }}s</span>
+                          <button type="button" class="camera-flash" aria-pressed="false" title="Continuous camera light, where supported" hidden disabled>Flash off</button>
                           <button type="button" class="camera-close close-video-camera" autofocus>Cancel</button>
                         </div>
                         <div class="camera-viewfinder"></div>
@@ -482,6 +483,7 @@
       status.textContent = message;
       cameraGuidance.textContent = message;
     }
+    const videoTorch = ItemCamera.bindTorch(cameraDialog.querySelector('.camera-flash'), setRecordingStatus);
 
     function showError(message) {
       errorBox.textContent = message;
@@ -495,6 +497,7 @@
     uploadBtn.disabled = true;
 
     function releaseCamera() {
+      videoTorch.reset();
       clearInterval(timer);
       timer = null;
       if (stream) stream.getTracks().forEach(track => track.stop());
@@ -562,6 +565,7 @@
           return;
         }
         stream = camera;
+        videoTorch.attach(camera);
         camera.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
           if (stream === camera) {
             discardRecording();

@@ -33,6 +33,26 @@ reservation purchase. Profile completion and approved uploads alone no longer
 grant spendable BXC. Settlement and staff identity review release eligible
 pending rewards. Approval qualification is retained even while payout is pending.
 
+## Item camera quality and light
+
+Photo and video previews request up to 4K/30fps, with lower-resolution/device
+defaults when unsupported. Native still capture requests the maximum photo
+dimensions advertised by the camera. Native JPEGs up to the server's 5 MiB JPEG limit are not re-encoded
+in the browser; other photos use high-quality JPEG encoding with a 4096-pixel
+long-edge limit. Saved item images now retain up to 4096 pixels at quality 95
+instead of 1920 pixels at quality 85. Smaller images are never enlarged. This
+affects new uploads, edits and reconfirmation photos, not existing stored images.
+Storage and upload times may increase. Video encoding requests 20 Mbps for
+above-1080p streams or 10 Mbps otherwise, keeping the existing duration/size limits.
+
+The **Flash off/on** control appears in both fullscreen cameras only when the
+browser exposes a hardware torch. It is a continuous light, not a synchronized
+native-camera flash. Closing/cancelling the camera stops its tracks and releases
+the light. Unsupported devices (including many iPhone browsers) need external
+lighting; there is no simulated screen-flash fallback. Native camera HDR,
+multi-frame processing and lens selection may not be exposed to a website, so
+matching the device's camera app cannot be guaranteed.
+
 ## Security deployment
 
 The security hardening release requires deployment work before serving traffic:

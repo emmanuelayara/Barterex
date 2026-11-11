@@ -37,9 +37,9 @@ window.runCameraQualityTests = async function () {
     requests = [];
     stream = camera();
     await ItemCamera.openStream('video', () => true);
-    assert(requests[0].video.width.ideal === 1920 && requests[0].video.height.ideal === 1080
-      && requests[0].video.frameRate.max === 30, 'Video must request 1080p/30fps');
-    passed.push('1080p video preferences with unsupported autofocus omitted');
+    assert(requests[0].video.width.ideal === 3840 && requests[0].video.height.ideal === 2160
+      && requests[0].video.frameRate.max === 30, 'Video must request 4K/30fps');
+    passed.push('4K video preferences with unsupported autofocus omitted');
 
     requests = [];
     media.getUserMedia = async constraints => {
@@ -54,13 +54,13 @@ window.runCameraQualityTests = async function () {
     requests = [];
     media.getUserMedia = async constraints => {
       requests.push(constraints);
-      if (requests.length < 3) throw new DOMException('Resolution unavailable', 'OverconstrainedError');
+      if (requests.length < 4) throw new DOMException('Resolution unavailable', 'OverconstrainedError');
       return stream;
     };
     await ItemCamera.openStream('video', () => true);
-    assert(requests[0].video.width.ideal === 1920 && requests[1].video.width.ideal === 1280
-      && !requests[2].video.width, 'Video defaults fallback incorrect');
-    passed.push('Video resolution fallback through 720p to device defaults');
+    assert(requests[0].video.width.ideal === 3840 && requests[1].video.width.ideal === 1920
+      && requests[2].video.width.ideal === 1280 && !requests[3].video.width, 'Video defaults fallback incorrect');
+    passed.push('Video resolution fallback through 1080p/720p to device defaults');
 
     requests = [];
     media.getUserMedia = async constraints => {
@@ -104,8 +104,11 @@ window.runCameraQualityTests = async function () {
       constructor(input, options) { recorderOptions.push(options); this.stream = input; }
     };
     ItemCamera.createRecorder(stream, 'video/mp4');
-    assert(recorderOptions[0].videoBitsPerSecond === 8000000 && recorderOptions[0].mimeType === 'video/mp4', 'Video quality incorrect');
-    passed.push('8 Mbps encoding requested');
+    assert(recorderOptions[0].videoBitsPerSecond === 10000000 && recorderOptions[0].mimeType === 'video/mp4', 'Video quality incorrect');
+    stream.getVideoTracks()[0].getSettings = () => ({width: 3840, height: 2160});
+    ItemCamera.createRecorder(stream, 'video/mp4');
+    assert(recorderOptions[1].videoBitsPerSecond === 20000000, '4K bitrate incorrect');
+    passed.push('10 Mbps HD and 20 Mbps 4K encoding requested');
     recorderOptions.length = 0;
     window.MediaRecorder = class {
       constructor(input, options) {
@@ -151,6 +154,29 @@ window.runCameraQualityTests = async function () {
     assert(canvas.width === 4096 && canvas.height === 2731 && draws[0][0] !== preview, 'Native still frame not used/capped proportionally');
     passed.push('Native still capture preserves full frame up to 4096px');
 
+    const nativeJpeg = new Blob(['native JPEG'], {type: 'image/jpeg'});
+    let photoSettings;
+    window.ImageCapture = class {
+      async getPhotoCapabilities() { return {imageWidth: {max: 8000}, imageHeight: {max: 6000}}; }
+      async takePhoto(settings) { photoSettings = settings; return nativeJpeg; }
+    };
+    const original = await ItemCamera.capturePhoto(preview, camera());
+    assert(original === nativeJpeg, 'Native JPEG must not be re-encoded in the browser');
+    assert(photoSettings.imageWidth === 8000 && photoSettings.imageHeight === 6000, 'Maximum still dimensions not requested');
+    passed.push('Maximum still resolution requested and native JPEG preserved');
+    let nativeAttempts = 0;
+    window.ImageCapture = class {
+      async getPhotoCapabilities() { return {imageWidth: {max: 8000}, imageHeight: {max: 6000}}; }
+      async takePhoto(settings) {
+        nativeAttempts++;
+        if (settings) throw new DOMException('Unavailable resolution', 'OverconstrainedError');
+        return nativeJpeg;
+      }
+    };
+    assert(await ItemCamera.capturePhoto(preview, camera()) === nativeJpeg && nativeAttempts === 2,
+      'Rejected maximum still settings must retry default native capture');
+    passed.push('Unsupported maximum photo resolution retries native defaults');
+
     window.ImageCapture = class { async takePhoto() { throw new DOMException('Unavailable', 'NotSupportedError'); } };
     sizes = [100];
     await ItemCamera.capturePhoto(preview, camera());
@@ -158,7 +184,7 @@ window.runCameraQualityTests = async function () {
     passed.push('Unsupported native still capture falls back to live frame');
 
     window.ImageCapture = undefined;
-    sizes = [10 * 1024 * 1024, 9 * 1024 * 1024 + 1, 100];
+    sizes = [6 * 1024 * 1024, 5 * 1024 * 1024 + 1, 100];
     qualities = [];
     await ItemCamera.capturePhoto(preview, camera());
     assert(qualities.join(',') === '0.95,0.9,0.85', 'Size-based JPEG fallback incorrect');
@@ -179,6 +205,44 @@ window.runCameraQualityTests = async function () {
     assert(jpeg.type === 'image/jpeg' && decoded.width === 640 && decoded.height === 480, 'Real JPEG failed or was upscaled');
     decoded.close();
     passed.push('Real JPEG encoding, decoding and no upscaling');
+
+    const flash = document.createElement('button');
+    const flashErrors = [];
+    const torch = ItemCamera.bindTorch(flash, message => flashErrors.push(message));
+    torch.attach(camera());
+    assert(flash.hidden && flash.disabled, 'Unsupported torch must remain hidden');
+    const torchStream = camera();
+    const torchTrack = torchStream.getVideoTracks()[0];
+    let lit = false;
+    torchTrack.getCapabilities = () => ({torch: true});
+    torchTrack.getSettings = () => ({torch: lit});
+    torchTrack.applyConstraints = async constraints => { lit = constraints.advanced[0].torch; };
+    torch.attach(torchStream);
+    assert(!flash.hidden && !flash.disabled, 'Supported torch not enabled');
+    flash.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert(lit && flash.getAttribute('aria-pressed') === 'true', 'Torch failed to turn on');
+    flash.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert(!lit && flash.getAttribute('aria-pressed') === 'false', 'Torch failed to turn off');
+    torchTrack.applyConstraints = async () => { throw new DOMException('Denied', 'NotAllowedError'); };
+    flash.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert(flashErrors.length === 1 && !flash.disabled && flash.getAttribute('aria-pressed') === 'false',
+      'Torch failures must be visible and not claim success');
+    let completeTorch;
+    torchTrack.applyConstraints = () => new Promise(resolve => { completeTorch = resolve; });
+    flash.click();
+    torch.reset();
+    completeTorch();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert(flash.hidden && flash.disabled && flash.getAttribute('aria-pressed') === 'false',
+      'Late torch completion must not re-enable a closed camera');
+    passed.push('Torch capability detection, on/off, explicit errors and late-operation cleanup');
     assert(warnings.length >= 8, 'Compatibility fallbacks must log warnings');
     return {passed, count: passed.length};
   } finally {

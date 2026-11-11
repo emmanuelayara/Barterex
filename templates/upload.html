@@ -1712,6 +1712,7 @@
   <div class="camera-toolbar">
     <h2 id="cameraTitle">Item camera</h2>
     <span class="camera-count" id="cameraPhotoCount">0 / 15 photos</span>
+    <button type="button" class="camera-flash" id="photoFlashBtn" aria-pressed="false" title="Continuous camera light, where supported" hidden disabled>Flash off</button>
     <button type="button" class="camera-close" id="stopCameraBtn" autofocus>Done</button>
   </div>
   <div class="camera-viewfinder">
@@ -1947,9 +1948,11 @@
     cameraStatus.textContent = message;
     cameraCaptureStatus.textContent = message;
   }
+  const photoTorch = ItemCamera.bindTorch(document.getElementById('photoFlashBtn'), setCameraStatus);
 
   function stopCamera() {
     cameraRequest++;
+    photoTorch.reset();
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
       cameraStream = null;
@@ -1996,6 +1999,7 @@
         return;
       }
       cameraStream = stream;
+      photoTorch.attach(stream);
       stream.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
         if (cameraStream === stream) {
           stopCamera();
