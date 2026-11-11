@@ -28,11 +28,11 @@ window.runCameraQualityTests = async function () {
     stream.getVideoTracks()[0].applyConstraints = async constraints => { adjustments = constraints; };
     media.getUserMedia = async constraints => { requests.push(constraints); return stream; };
     assert(await ItemCamera.openStream('photo', () => true) === stream, 'Photo stream not returned');
-    assert(requests[0].video.width.ideal === 3840 && requests[0].video.height.ideal === 2160, 'Photos must request 4K');
+    assert(requests[0].video.width.ideal === 4096 && requests[0].video.height.ideal === 3072, 'Photos must request 4096x3072');
     assert(requests[0].audio === false && requests[0].video.facingMode.ideal === 'environment', 'Rear camera/no audio changed');
     assert(adjustments.advanced[0].focusMode === 'continuous' && adjustments.advanced[0].exposureMode === 'continuous'
       && adjustments.advanced[0].whiteBalanceMode === 'continuous', 'Continuous adjustments not requested');
-    passed.push('4K photos, rear camera, no audio and continuous adjustments');
+    passed.push('12 MP photo preview preference, rear camera, no audio and continuous adjustments');
 
     requests = [];
     stream = camera();
@@ -48,8 +48,8 @@ window.runCameraQualityTests = async function () {
       return stream;
     };
     await ItemCamera.openStream('photo', () => true);
-    assert(requests.map(r => r.video.width.ideal).join(',') === '3840,1920,1280', 'Photo resolution fallback incorrect');
-    passed.push('Photo resolution fallback to 720p');
+    assert(requests.map(r => r.video.width.ideal).join(',') === '4096,3840,1920', 'Photo resolution fallback incorrect');
+    passed.push('Photo resolution fallback to 1080p');
 
     requests = [];
     media.getUserMedia = async constraints => {
@@ -151,8 +151,16 @@ window.runCameraQualityTests = async function () {
     sizes = [100];
     draws = [];
     await ItemCamera.capturePhoto(preview, camera());
-    assert(canvas.width === 4096 && canvas.height === 2731 && draws[0][0] !== preview, 'Native still frame not used/capped proportionally');
-    passed.push('Native still capture preserves full frame up to 4096px');
+    assert(canvas.width === 6000 && canvas.height === 4000 && draws[0][0] !== preview, 'Native still frame not preserved');
+    passed.push('Native still capture retains 6000px detail under the 6144px cap');
+    window.Image = class {
+      constructor() { this.naturalWidth = 8000; this.naturalHeight = 6000; }
+      set src(value) { this.onload(); }
+    };
+    sizes = [100];
+    await ItemCamera.capturePhoto(preview, camera());
+    assert(canvas.width === 6144 && canvas.height === 4608, 'Oversized still dimensions must be bounded proportionally');
+    passed.push('Large stills are bounded to 6144px with aspect ratio preserved');
 
     const nativeJpeg = new Blob(['native JPEG'], {type: 'image/jpeg'});
     let photoSettings;

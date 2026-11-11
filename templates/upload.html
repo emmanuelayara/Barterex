@@ -1611,7 +1611,7 @@
         <li>
           <div class="guideline-icon">📸</div>
           <div class="guideline-text">
-            Take <strong>6 to 15 clear photos using your camera</strong> from different angles. Gallery uploads are not available.
+            Take <strong>6 to 15 clear photos using the in-app camera</strong> from different angles. Gallery uploads are not allowed.
           </div>
         </li>
       </ul>
@@ -1671,8 +1671,8 @@
           <div class="file-upload-container">
             <button type="button" class="file-upload-area" id="fileUploadArea">
               <span class="file-upload-icon" id="uploadIcon">📷</span>
-              <span class="file-upload-text">Open Camera</span>
-              <span class="file-upload-subtext">Take 6 to 15 photos of the actual item. No gallery selection.</span>
+              <span class="file-upload-text">Open In-Page Camera</span>
+              <span class="file-upload-subtext">Take 6 to 15 photos of the actual item.</span>
             </button>
             <p class="camera-status" id="cameraStatus" role="status" aria-live="polite">Photograph the front, back, left, right, top and bottom. Add close-ups of damage, serial numbers and accessories.</p>
             <noscript><p>JavaScript and camera access are required to take item photos. Use a camera-enabled device and enable JavaScript.</p></noscript>
@@ -1713,6 +1713,7 @@
     <h2 id="cameraTitle">Item camera</h2>
     <span class="camera-count" id="cameraPhotoCount">0 / 15 photos</span>
     <button type="button" class="camera-flash" id="photoFlashBtn" aria-pressed="false" title="Continuous camera light, where supported" hidden disabled>Flash off</button>
+    <button type="button" class="camera-flash" id="photoFocusBtn" title="Request focus at the centre of the frame" hidden disabled>Focus</button>
     <button type="button" class="camera-close" id="stopCameraBtn" autofocus>Done</button>
   </div>
   <div class="camera-viewfinder">
@@ -1921,6 +1922,7 @@
   const cameraPhotoCount = document.getElementById('cameraPhotoCount');
   let cameraOpener = null;
   let cameraStream = null;
+  let photoReady = false;
   let cameraRequest = 0;
   let capturingPhoto = false;
   let photoSequence = 0;
@@ -1940,7 +1942,7 @@
 
   function updateCaptureButton() {
     cameraPhotoCount.textContent = `${selectedFiles.length} / ${maxImages} photos`;
-    capturePhotoBtn.disabled = capturingPhoto || !cameraStream || cameraPreview.readyState < 2
+    capturePhotoBtn.disabled = capturingPhoto || !photoReady || !cameraStream || cameraPreview.readyState < 2
       || !cameraPreview.videoWidth || selectedFiles.length >= maxImages;
   }
 
@@ -1949,10 +1951,14 @@
     cameraCaptureStatus.textContent = message;
   }
   const photoTorch = ItemCamera.bindTorch(document.getElementById('photoFlashBtn'), setCameraStatus);
+  const photoReadiness = ItemCamera.bindReadiness(cameraPreview, document.getElementById('photoFocusBtn'),
+    ready => { photoReady = ready; updateCaptureButton(); }, setCameraStatus);
+  document.getElementById('photoFlashBtn').addEventListener('click', () => photoReadiness.settle());
 
   function stopCamera() {
     cameraRequest++;
     photoTorch.reset();
+    photoReadiness.reset();
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
       cameraStream = null;
@@ -1980,7 +1986,7 @@
       return;
     }
     if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      cameraStatus.textContent = 'Camera capture requires HTTPS and a supported browser. Open the secure site on a camera-enabled phone or computer. Gallery uploads are not allowed.';
+      cameraStatus.textContent = 'In-app capture requires HTTPS and a supported browser. Open the secure site on a camera-enabled device.';
       return;
     }
     const requestId = ++cameraRequest;
@@ -2009,7 +2015,7 @@
       cameraPreview.srcObject = stream;
       await cameraPreview.play();
       if (requestId !== cameraRequest) return;
-      setCameraStatus('Keep the item in frame and hold steady. Take photos from different sides.');
+      photoReadiness.attach(stream);
       updateCaptureButton();
     } catch (error) {
       if (requestId !== cameraRequest) return;
@@ -2022,7 +2028,7 @@
         OverconstrainedError: 'This camera cannot provide a supported preview. Try another camera-enabled device.'
       };
       setCameraStatus((messages[error.name] || 'The camera could not start. Check camera permissions or try another browser on a camera-enabled device.')
-        + ' Gallery uploads are not allowed.');
+        + ' Try another supported browser if the problem continues.');
     } finally {
       if (requestId === cameraRequest) {
         fileUploadArea.disabled = false;
@@ -2055,7 +2061,7 @@
   });
 
   capturePhotoBtn.addEventListener('click', async () => {
-    if (capturePhotoBtn.disabled || !cameraStream || !cameraStream.getVideoTracks().some(track => track.readyState === 'live')) return;
+    if (capturePhotoBtn.disabled || !photoReadiness.isReady() || !cameraStream || !cameraStream.getVideoTracks().some(track => track.readyState === 'live')) return;
     const requestId = cameraRequest;
     capturingPhoto = true;
     updateCaptureButton();

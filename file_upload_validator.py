@@ -70,7 +70,7 @@ FILE_SIZE_LIMITS = {
 GLOBAL_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB absolute maximum
 
 # Preserve fine item details while bounding stored dimensions and file size.
-STORED_IMAGE_MAX_DIMENSION = 4096
+STORED_IMAGE_MAX_DIMENSION = 6144
 STORED_IMAGE_QUALITY = 95
 
 

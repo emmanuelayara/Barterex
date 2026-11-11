@@ -35,15 +35,26 @@ pending rewards. Approval qualification is retained even while payout is pending
 
 ## Item camera quality and light
 
-Photo and video previews request up to 4K/30fps, with lower-resolution/device
+Upload/edit photos use only the in-app camera, not a file/gallery picker.
+Photos request a 4096x3072 preview; videos request up to 4K/30fps, with lower-resolution/device
 defaults when unsupported. Native still capture requests the maximum photo
 dimensions advertised by the camera. Native JPEGs up to the server's 5 MiB JPEG limit are not re-encoded
-in the browser; other photos use high-quality JPEG encoding with a 4096-pixel
-long-edge limit. Saved item images now retain up to 4096 pixels at quality 95
-instead of 1920 pixels at quality 85. Smaller images are never enlarged. This
+in the browser; other photos use high-quality JPEG encoding with a 6144-pixel
+long-edge limit and a 5 MiB upload budget. Saved item images retain up to 6144 pixels at quality 95.
+Smaller images are never enlarged. This
 affects new uploads, edits and reconfirmation photos, not existing stored images.
 Storage and upload times may increase. Video encoding requests 20 Mbps for
 above-1080p streams or 10 Mbps otherwise, keeping the existing duration/size limits.
+
+Both cameras offer tap-to-focus and an accessible centre **Focus** button only
+when the browser advertises focus modes and points-of-interest constraints.
+Tap coordinates account for the cropped fullscreen preview. A marker indicates
+the requested point, not confirmation of sharp focus. Unsupported browsers retain
+camera defaults. Capture/start waits for advancing, unmuted live frames and an
+800 ms settling period at startup and after focus/light changes; stalled frames
+disable capture. This does not measure optical focus lock or guarantee sharpness,
+because browsers do not reliably expose that state. Close/cancel clears readiness
+timers and pending focus UI. More detail increases storage and processing costs.
 
 The **Flash off/on** control appears in both fullscreen cameras only when the
 browser exposes a hardware torch. It is a continuous light, not a synchronized

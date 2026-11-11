@@ -2,7 +2,9 @@
   'use strict';
 
   async function openStream(kind, isCurrent) {
-    const sizes = [[3840, 2160], [1920, 1080], [1280, 720]];
+    const sizes = kind === 'photo'
+      ? [[4096, 3072], [3840, 2160], [1920, 1080], [1280, 720]]
+      : [[3840, 2160], [1920, 1080], [1280, 720]];
     const profiles = sizes.map(([width, height]) => ({
       facingMode: {ideal: 'environment'}, width: {ideal: width}, height: {ideal: height},
       frameRate: {ideal: 30, max: 30}
@@ -99,7 +101,7 @@
       const width = photo ? source.naturalWidth : preview.videoWidth;
       const height = photo ? source.naturalHeight : preview.videoHeight;
       if (!width || !height) throw new Error('The camera is not ready to take a photo.');
-      const scale = Math.min(1, 4096 / Math.max(width, height));
+      const scale = Math.min(1, 6144 / Math.max(width, height));
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(width * scale);
       canvas.height = Math.round(height * scale);
@@ -193,5 +195,140 @@
     return {attach, reset};
   }
 
-  window.ItemCamera = {openStream, capturePhoto, createRecorder, bindTorch};
+  function bindReadiness(preview, focusButton, changed, report) {
+    let track = null;
+    let timer = null;
+    let generation = 0;
+    let settleUntil = 0;
+    let lastTime = 0;
+    let lastFrameAt = 0;
+    let startedAt = 0;
+    let focusing = false;
+    let canFocus = false;
+    let capabilities = {};
+    let warned = false;
+    let ready = false;
+    const marker = document.createElement('span');
+    marker.className = 'camera-focus-marker';
+    marker.hidden = true;
+    preview.parentElement.appendChild(marker);
+
+    function check() {
+      const now = performance.now();
+      const wasReady = ready;
+      if (preview.currentTime !== lastTime) {
+        lastTime = preview.currentTime;
+        lastFrameAt = now;
+      }
+      ready = Boolean(track && track.readyState === 'live' && !track.muted && !preview.paused
+        && preview.readyState >= 2 && preview.videoWidth && preview.videoHeight
+        && lastFrameAt && now - lastFrameAt < 1500 && now >= settleUntil && !focusing);
+      changed(ready);
+      if (ready && !wasReady) {
+        marker.hidden = true;
+        report('Camera frames ready. Hold steady and keep the item in good light.');
+      }
+      if (track && !ready && !warned && now - startedAt > 10000) {
+        warned = true;
+        report('The camera is not delivering ready frames. Hold steady or close and reopen the camera.');
+      }
+      return ready;
+    }
+
+    function settle() {
+      settleUntil = performance.now() + 800;
+      ready = false;
+      changed(false);
+    }
+
+    function reset() {
+      generation++;
+      clearInterval(timer);
+      timer = null;
+      track = null;
+      focusing = false;
+      canFocus = false;
+      ready = false;
+      marker.hidden = true;
+      focusButton.hidden = true;
+      focusButton.disabled = true;
+      changed(false);
+    }
+
+    function attach(stream) {
+      reset();
+      preview.parentElement.appendChild(marker);
+      track = stream.getVideoTracks()[0];
+      capabilities = {};
+      if (track && typeof track.getCapabilities === 'function') {
+        try {
+          capabilities = track.getCapabilities();
+        } catch (error) {
+          console.warn('Focus capabilities unavailable:', error);
+        }
+      }
+      const supported = typeof navigator.mediaDevices.getSupportedConstraints === 'function'
+        ? navigator.mediaDevices.getSupportedConstraints() : {};
+      canFocus = Boolean(track && typeof track.applyConstraints === 'function'
+        && supported.pointsOfInterest && capabilities.focusMode
+        && capabilities.focusMode.some(mode => ['single-shot', 'continuous'].includes(mode)));
+      focusButton.hidden = !canFocus;
+      focusButton.disabled = !canFocus;
+      startedAt = performance.now();
+      lastTime = preview.currentTime;
+      lastFrameAt = 0;
+      warned = false;
+      settle();
+      timer = setInterval(check, 100);
+      report(canFocus
+        ? 'Hold steady while the camera settles. Tap the item to request focus, or use Focus for the centre.'
+        : 'Hold steady while the camera settles. Tap-to-focus is not available in this browser; using camera defaults.');
+    }
+
+    async function focus(clientX, clientY) {
+      if (!track || focusing || !canFocus) return;
+      const bounds = preview.getBoundingClientRect();
+      if (!bounds.width || !bounds.height || !preview.videoWidth || !preview.videoHeight) return;
+      // Map the cropped object-fit: cover preview back to normalized sensor coordinates.
+      const scale = Math.max(bounds.width / preview.videoWidth, bounds.height / preview.videoHeight);
+      const displayWidth = preview.videoWidth * scale;
+      const displayHeight = preview.videoHeight * scale;
+      const x = Math.max(0, Math.min(1, (clientX - bounds.left + (displayWidth - bounds.width) / 2) / displayWidth));
+      const y = Math.max(0, Math.min(1, (clientY - bounds.top + (displayHeight - bounds.height) / 2) / displayHeight));
+      const token = generation;
+      const activeTrack = track;
+      focusing = true;
+      focusButton.disabled = true;
+      settle();
+      marker.hidden = false;
+      marker.style.left = `${clientX - bounds.left}px`;
+      marker.style.top = `${clientY - bounds.top}px`;
+      try {
+        const mode = capabilities.focusMode.includes('single-shot') ? 'single-shot' : 'continuous';
+        await activeTrack.applyConstraints({advanced: [{focusMode: mode, pointsOfInterest: [{x, y}]}]});
+        if (token !== generation) return;
+        report('Focus requested at this point. Hold steady before taking the photo or starting the video.');
+      } catch (error) {
+        if (token !== generation) return;
+        console.warn('Tap-to-focus request failed:', error);
+        report('This camera could not focus at that point. Try again or move farther from the item.');
+      } finally {
+        if (token === generation) {
+          focusing = false;
+          focusButton.disabled = false;
+          settle();
+        }
+      }
+    }
+
+    preview.addEventListener('click', event => { focus(event.clientX, event.clientY); });
+    focusButton.addEventListener('click', () => {
+      const bounds = preview.getBoundingClientRect();
+      focus(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+    });
+    reset();
+    return {attach, reset, settle, isReady: check};
+  }
+
+  window.ItemCamera = {openStream, capturePhoto, createRecorder, bindTorch, bindReadiness};
 })();

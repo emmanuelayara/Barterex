@@ -13,16 +13,20 @@ class CameraStorageTests(unittest.TestCase):
         source.save(data, format=extension)
         return optimize_image_for_storage(data.getvalue(), extension)
 
-    def test_large_photo_preserves_4096_pixels_instead_of_1920(self):
+    def test_large_photo_preserves_6000_pixels_instead_of_4096(self):
         stored = Image.open(io.BytesIO(self.encode((6000, 4000))))
-        self.assertEqual(stored.size, (4096, 2731))
+        self.assertEqual(stored.size, (6000, 4000))
         self.assertEqual(stored.format, 'JPEG')
         # Pillow's standard quality-95 luminance quantization table begins at 2.
         self.assertEqual(stored.quantization[0][0], 2)
 
     def test_portrait_photo_preserves_aspect_ratio(self):
         stored = Image.open(io.BytesIO(self.encode((3000, 4500))))
-        self.assertEqual(stored.size, (2731, 4096))
+        self.assertEqual(stored.size, (3000, 4500))
+
+    def test_very_large_photo_is_bounded_to_6144_pixels(self):
+        stored = Image.open(io.BytesIO(self.encode((7000, 3500))))
+        self.assertEqual(stored.size, (6144, 3072))
 
     def test_smaller_photos_are_not_upscaled(self):
         for extension in ('jpeg', 'png', 'webp'):
