@@ -1035,45 +1035,31 @@
     color: var(--aiv-muted);
   }
 
-  .ai-valuation-confidence {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 2px 10px;
+  .ai-valuation-disclosure {
+    margin-top: 10px;
     border: 1px solid var(--aiv-border);
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
+    border-radius: 10px;
+    font-size: .82rem;
     color: var(--aiv-text);
   }
-
-  .ai-valuation-confidence.low {
-    border-color: var(--aiv-orange);
-    color: var(--aiv-orange);
+  .ai-valuation-disclosure[hidden] { display: none; }
+  .ai-valuation-disclosure summary {
+    padding: 11px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    line-height: 1.4;
   }
-
-  .ai-valuation-meta {
-    list-style: none;
-    margin: 12px 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 0.8rem;
+  .ai-valuation-disclosure summary:focus-visible { outline: 2px solid var(--aiv-orange); outline-offset: 2px; }
+  .ai-valuation-disclosure-content {
+    padding: 0 12px 12px;
     color: var(--aiv-muted);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
-
-  .ai-valuation-meta:empty {
-    display: none;
-  }
-
-  .ai-valuation-meta strong {
-    color: var(--aiv-text);
-    font-weight: 600;
-  }
-
-  .ai-valuation-meta .is-warning strong {
-    color: var(--aiv-orange);
-  }
+  .ai-valuation-disclosure-content p { margin: 0; }
+  .ai-valuation-disclosure-content ul { margin: 0; padding-left: 18px; }
+  .ai-valuation-disclosure-content li + li,
+  .ai-valuation-disclosure-content ul + p { margin-top: 6px; }
 
   .ai-valuation-credit {
     margin: 12px 0 0;
@@ -1772,16 +1758,24 @@
         <div class="ai-valuation-label">Suggested value</div>
         <div class="ai-valuation-amount" id="aiValueAmount">ᗸ0</div>
         <div class="ai-valuation-range" id="aiValueRange"></div>
-        <span class="ai-valuation-confidence" id="aiConfidenceBadge"></span>
       </div>
 
-      <ul class="ai-valuation-meta" id="aiValuationDetails"></ul>
+      <details class="ai-valuation-disclosure" id="aiComparableDetails" hidden>
+        <summary>Comparable listings</summary>
+        <div class="ai-valuation-disclosure-content" id="aiComparableContent"></div>
+      </details>
+      <details class="ai-valuation-disclosure" id="aiRiskDetails" hidden>
+        <summary id="aiRiskSummary">Review details</summary>
+        <div class="ai-valuation-disclosure-content">
+          <ul id="aiRiskFlags"></ul>
+          <p id="aiValuationNotes" hidden></p>
+        </div>
+      </details>
 
       <p class="ai-valuation-credit">
         Accepting saves this estimate. After your activation video is approved and published, you receive <strong id="aiProvisionalCredits">ᗸ0</strong> in provisional credits to reserve marketplace items.
       </p>
 
-      <p class="ai-valuation-disclaimer" id="aiValuationNotes" style="display:none;"></p>
       <p class="ai-valuation-disclaimer">AI estimate only. An admin confirms the final value at physical verification.</p>
     </div>
 
@@ -2350,9 +2344,12 @@
   let manualStationUpdating = false;
   const aiValueAmount = document.getElementById('aiValueAmount');
   const aiValueRange = document.getElementById('aiValueRange');
-  const aiConfidenceBadge = document.getElementById('aiConfidenceBadge');
   const aiProvisionalCredits = document.getElementById('aiProvisionalCredits');
-  const aiValuationDetails = document.getElementById('aiValuationDetails');
+  const aiComparableDetails = document.getElementById('aiComparableDetails');
+  const aiComparableContent = document.getElementById('aiComparableContent');
+  const aiRiskDetails = document.getElementById('aiRiskDetails');
+  const aiRiskSummary = document.getElementById('aiRiskSummary');
+  const aiRiskFlags = document.getElementById('aiRiskFlags');
   const aiValuationNotes = document.getElementById('aiValuationNotes');
   const aiValuationClose = document.getElementById('aiValuationClose');
 
@@ -2751,40 +2748,39 @@
       : '';
     aiProvisionalCredits.textContent = formatCredits(data.estimated_value);
 
-    const confidence = (data.confidence || 'n/a').replace('_', ' ');
-    aiConfidenceBadge.textContent = `Confidence: ${confidence.charAt(0).toUpperCase() + confidence.slice(1)}`;
-    aiConfidenceBadge.className = 'ai-valuation-confidence' + (confidence.includes('low') ? ' low' : '');
-
-    const escapeHtml = (text) => String(text).replace(/[&<>"']/g, ch => (
-      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
-    ));
-
-    let detailsHtml = '';
+    aiComparableDetails.open = false;
+    aiRiskDetails.open = false;
     const listingCount = data.market_listings;
-    const sources = (data.sources_used || []).map(escapeHtml).join(', ');
-    if (listingCount || sources) {
-      const parts = [];
-      if (listingCount) parts.push(`<strong>${listingCount}</strong> comparable listing${listingCount === 1 ? '' : 's'}`);
-      if (sources) parts.push(sources);
-      detailsHtml += `<li>${parts.join(' · ')}</li>`;
+    const sources = (data.sources_used || []).join(', ');
+    const listingParts = [];
+    if (listingCount !== null && listingCount !== undefined) {
+      listingParts.push(`${listingCount} comparable listing${listingCount === 1 ? '' : 's'}`);
     }
-    // Low risk is the expected case, so only surface medium/high risk to the user.
-    if (data.risk && (data.risk.level === 'HIGH' || data.risk.level === 'MEDIUM')) {
-      const flagMessages = (data.risk.flags || [])
-        .map(flag => (flag && typeof flag === 'object') ? (flag.message || flag.check) : flag)
-        .filter(Boolean)
-        .map(escapeHtml);
-      detailsHtml += `<li class="is-warning"><strong>${data.risk.level === 'HIGH' ? 'High' : 'Medium'} risk</strong>` +
-        (flagMessages.length ? ` · ${flagMessages.join('; ')}` : '') + '</li>';
-    }
-    aiValuationDetails.innerHTML = detailsHtml;
+    if (sources) listingParts.push(sources);
+    aiComparableContent.textContent = listingParts.join(' · ');
+    aiComparableDetails.hidden = listingParts.length === 0;
 
-    if (data.notes) {
-      aiValuationNotes.style.display = 'block';
-      aiValuationNotes.textContent = data.notes;
-    } else {
-      aiValuationNotes.style.display = 'none';
-    }
+    const level = data.risk && data.risk.level;
+    const flagMessages = (data.risk && data.risk.flags || [])
+      .map(flag => (flag && typeof flag === 'object') ? (flag.message || flag.check) : flag)
+      .filter(Boolean);
+    aiRiskFlags.replaceChildren();
+    flagMessages.forEach(message => {
+      const item = document.createElement('li');
+      item.textContent = message;
+      aiRiskFlags.appendChild(item);
+    });
+    aiRiskFlags.hidden = flagMessages.length === 0;
+    const notes = data.notes || '';
+    const flagIndex = notes.indexOf(' | Flags: ');
+    const displayNotes = flagMessages.length
+      ? (flagIndex >= 0 ? notes.slice(0, flagIndex) : (notes.startsWith('Flags: ') ? '' : notes))
+      : notes;
+    aiValuationNotes.textContent = displayNotes;
+    aiValuationNotes.hidden = !displayNotes;
+    aiRiskSummary.textContent = level === 'MEDIUM' ? 'Medium risk details'
+      : level === 'HIGH' ? 'High risk details' : 'Review details';
+    aiRiskDetails.hidden = !flagMessages.length && !displayNotes && level !== 'MEDIUM' && level !== 'HIGH';
   }
 
   function showAiValuationFallback(message) {
