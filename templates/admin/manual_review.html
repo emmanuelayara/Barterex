@@ -63,6 +63,8 @@
       <h3>Item details</h3>
       <p class="manual-description">{{ item.description or 'No description provided.' }}</p>
       <div class="manual-custody">
+        <strong><i class="bi bi-geo-alt" aria-hidden="true"></i> Verification station</strong>
+        <p class="manual-help">{% if item.manual_station %}{{ item.manual_station.name }} — {{ item.manual_station.address }}, {{ item.manual_station.city }}, {{ item.manual_station.state }}{% else %}Not selected. The user must choose a station before verification can be recorded.{% endif %}</p>
         <strong><i class="bi bi-box-seam" aria-hidden="true"></i> Custody preference</strong>
         <p class="manual-help">{% if item.manual_custody_choice == 'company' %}Transfer ownership to Barter Express. Spendable credits follow approved video publishing.{% elif item.manual_custody_choice == 'home' %}Return the item to its owner. Provisional credits follow approved video publishing.{% else %}Not selected yet. The user must save a custody choice and consent before verification can be recorded.{% endif %}</p>
       </div>
@@ -102,7 +104,7 @@
       <p class="manual-help" id="manual-value-help-{{ item.id }}">Enter the physical valuation for a passed inspection. A failed inspection does not require a value.</p>
       <div class="manual-submit">
         <p class="manual-help"><i class="bi bi-shield-check" aria-hidden="true"></i> This records the inspection only. No credits or listing until video approval and publishing.</p>
-        <button type="submit" class="adm-btn primary">Record physical review</button>
+        <button type="submit" class="adm-btn primary" {% if not item.manual_station %}disabled{% endif %}>Record physical review</button>
       </div>
     </form>
     </div>

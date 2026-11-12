@@ -10,7 +10,7 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 from PIL import Image
 from flask import g
 from app import app, db, limiter
-from models import Item, User
+from models import Item, User, PickupStation
 
 
 class FormElements(HTMLParser):
@@ -36,6 +36,7 @@ class UploadCameraTests(unittest.TestCase):
                     phone_number='12345', address='Office', city='Lagos', state='Lagos',
                     id_verification_status='submitted')
         db.session.add(user)
+        db.session.add(PickupStation(name='Lagos Office', state='Lagos', city='Lagos', address='Office'))
         db.session.commit()
         self.client = app.test_client()
         with self.client.session_transaction() as session:
@@ -88,6 +89,10 @@ class UploadCameraTests(unittest.TestCase):
         self.assertNotIn('handleMultipleFileUpload', html)
         self.assertNotIn('dataTransfer.files', html)
         self.assertIn('Submit for manual review instead', html)
+        self.assertIn('id="manualStationChoice"', html)
+        self.assertNotIn('id="manualStationRefresh"', html)
+        self.assertNotIn('Bring your item to a station in your profile state.', html)
+        self.assertNotIn('Manual review requires physical verification before activation.', html)
         self.assertEqual(elements['uploadForm'][1].get('action'), '/upload')
         self.assertNotIn('data-edit-item-id', elements['uploadForm'][1])
         self.assertNotIn('hidden', elements['aiValuationManual'][1])
@@ -97,7 +102,6 @@ class UploadCameraTests(unittest.TestCase):
         user.phone_number = None
         user.address = None
         user.city = None
-        user.state = None
         user.id_verification_status = 'not_submitted'
         db.session.commit()
         def photo(index):
@@ -109,6 +113,7 @@ class UploadCameraTests(unittest.TestCase):
         fields = {
             'name': 'Camera test item', 'description': 'A detailed description of this camera test item.',
             'category': 'Phones & Gadgets', 'condition': 'Brand New', 'manual_review': '1',
+            'manual_station_id': str(PickupStation.query.one().id),
         }
         with tempfile.TemporaryDirectory() as folder, \
              patch.dict(app.config, {'UPLOAD_FOLDER': folder}), \

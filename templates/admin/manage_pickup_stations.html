@@ -12,7 +12,7 @@
   <header class="adm-head">
     <div>
       <h1>Verification Stations</h1>
-      <p>Manage your pickup locations and stations.</p>
+      <p>Manage your pickup locations and stations. Stations referenced by manual verification records cannot be edited or deleted; create a new station if details change.</p>
     </div>
     <div class="adm-head-actions">
       <span class="adm-pill info"><i class="bi bi-geo-alt"></i>{{ stations|length if stations else 0 }} station{{ '' if stations and stations|length == 1 else 's' }}</span>

@@ -21,6 +21,10 @@ body.item-camera-open { overflow: hidden; }
 }
 .item-camera-dialog .camera-flash[aria-pressed="true"] { background: #854d0e; border-color: #facc15; }
 .item-camera-dialog .camera-flash[hidden] { display: none; }
+.item-camera-dialog .camera-light-unavailable {
+    color: #e2e8f0; font-size: .75rem; line-height: 1.4;
+}
+.item-camera-dialog .camera-light-unavailable[hidden] { display: none; }
 .item-camera-dialog .camera-focus-marker {
     position: absolute; width: 52px; height: 52px; transform: translate(-50%, -50%);
     border: 2px solid #facc15; border-radius: 12px; pointer-events: none;

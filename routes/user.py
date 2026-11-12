@@ -487,6 +487,7 @@ def my_valuations():
                 Item.manual_custody_choice == 'company',
             )),
             Item.status.in_(Item.LIFECYCLE_STATUSES),
+            Item.status != 'manual_review_pending',
             Item.unexpired_valuation_filter(valuation_now),
         ).options(joinedload(Item.images)).order_by(Item.id.desc()).paginate(page=page, per_page=10)
         from services.video_service import (
@@ -506,6 +507,25 @@ def my_valuations():
         logger.error(f"Error loading valuations for user {current_user.username}: {str(e)}", exc_info=True)
         flash('An error occurred while loading your valuations.', 'danger')
         return redirect(url_for('user.dashboard'))
+
+
+@user_bp.route('/my-manual-verifications')
+@login_required
+@handle_errors
+def my_manual_verifications():
+    from models import PickupStation, VerificationIntake
+    page = request.args.get('page', 1, type=int)
+    items = Item.query.filter_by(
+        uploaded_by_id=current_user.id, manual_review_requested=True, status='manual_review_pending',
+    ).options(joinedload(Item.images), joinedload(Item.manual_station)).order_by(Item.id.desc()).paginate(page=page, per_page=10)
+    reviewed_ids = {row[0] for row in db.session.query(VerificationIntake.item_id).filter(
+        VerificationIntake.item_id.in_([item.id for item in items.items]),
+        VerificationIntake.workflow_type == 'manual_valuation',
+    ).all()}
+    stations = PickupStation.query.filter_by(state=current_user.state).order_by(
+        PickupStation.name, PickupStation.id,
+    ).all() if current_user.state else []
+    return render_template('my_manual_verifications.html', items=items, stations=stations, reviewed_ids=reviewed_ids)
 
 
 @user_bp.route('/my_reservations')

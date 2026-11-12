@@ -435,6 +435,8 @@ class Item(db.Model):
     manual_verified_at = db.Column(db.DateTime, nullable=True)
     manual_custody_choice = db.Column(db.String(20), nullable=True)
     manual_custody_consent_at = db.Column(db.DateTime, nullable=True)
+    manual_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id', name='fk_item_manual_station'), nullable=True)
+    manual_station = db.relationship('PickupStation', foreign_keys=[manual_station_id])
 
     VALUATION_VALIDITY_DAYS = 30
 

@@ -1151,6 +1151,25 @@
     outline-offset: 2px;
   }
 
+  .manual-station-choice label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--aiv-text);
+    font-size: .85rem;
+    font-weight: 700;
+  }
+  .manual-station-choice select { width: 100%; }
+  .manual-station-message {
+    margin: 10px 0 0;
+    color: var(--aiv-muted);
+    font-size: .82rem;
+    line-height: 1.5;
+  }
+  .manual-station-message a { color: var(--aiv-orange); font-weight: 700; }
+  .manual-station-error { color: #b42318; }
+  html.dark-mode .manual-station-error { color: #fca5a5; }
+  .manual-station-choice .ai-valuation-btn:disabled { opacity: .55; cursor: not-allowed; }
+
   /* Submit button */
   .submit-container {
     text-align: center;
@@ -1773,10 +1792,24 @@
       <button type="button" class="ai-valuation-btn secondary" id="aiValuationManual" {% if edit_item %}hidden{% endif %}>Submit for manual review instead</button>
       <button type="button" class="ai-valuation-btn primary" id="aiValuationAccept">{{ 'Accept & save changes' if edit_item else 'Accept & submit' }}</button>
     </div>
-    <p class="ai-valuation-disclaimer">{% if edit_item %}A fresh AI valuation is required. If it is unavailable, cancel and retry later; your original item will not change.{% else %}Manual review requires physical verification before activation. You may take the verified item home or transfer ownership to Barter Express; credits follow approved video publishing.{% endif %}</p>
+    {% if edit_item %}<p class="ai-valuation-disclaimer">A fresh AI valuation is required. If it is unavailable, cancel and retry later; your original item will not change.</p>{% endif %}
     <div class="ai-valuation-actions" id="aiValuationFallbackActions" style="display:none;">
       <button type="button" class="ai-valuation-btn secondary" id="aiValuationCancel">Cancel</button>
       <button type="button" class="ai-valuation-btn primary" id="aiValuationSubmitAnyway" {% if edit_item %}hidden{% endif %}>Submit for manual review</button>
+    </div>
+    <div class="manual-station-choice" id="manualStationChoice" hidden>
+      <label for="manualStationSelect" id="manualStationLabel">Verification station{% if current_user.state %} in {{ current_user.state }}{% endif %}</label>
+      <select id="manualStationSelect" class="form-input" required>
+        <option value="">Select a station</option>
+        {% for station in manual_stations %}<option value="{{ station.id }}">{{ station.name }} — {{ station.address }}, {{ station.city }}</option>{% endfor %}
+      </select>
+      <p class="manual-station-message manual-station-error" id="manualStationError" role="alert" hidden>Please select a verification station.</p>
+      <p class="manual-station-message" id="manualStationUnavailable" role="status" {% if manual_stations %}hidden{% endif %}>No stations are available in your profile state. <a id="manualStationProfile" href="{{ url_for('user.settings', edit='profile') }}#profile" target="_blank" rel="noopener">Update your profile</a> or contact support.</p>
+      <p class="manual-station-message manual-station-error" id="manualStationRefreshError" role="alert" hidden></p>
+      <div class="ai-valuation-actions">
+        <button type="button" class="ai-valuation-btn secondary" id="manualStationBack">Back</button>
+        <button type="button" class="ai-valuation-btn primary" id="manualStationSubmit" {% if not manual_stations %}disabled{% endif %}>Submit for manual review</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2174,7 +2207,7 @@
     submitBtn.disabled = false;
   }
 
-  function startRealUpload(aiToken, manualReview = false) {
+  function startRealUpload(aiToken, manualReview = false, stationId = null) {
     // Add loading state
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
@@ -2194,7 +2227,10 @@
     formData.append('condition', form.elements['condition'].value);
     formData.append('usage_duration', form.elements['usage_duration'].value);
     formData.append('category', form.elements['category'].value);
-    if (manualReview) formData.append('manual_review', '1');
+    if (manualReview) {
+      formData.append('manual_review', '1');
+      formData.append('manual_station_id', stationId);
+    }
     if (aiToken) {
       formData.append('ai_valuation_token', aiToken);
     }
@@ -2218,7 +2254,7 @@
     // XMLHttpRequest exposes upload progress while the multipart request is sent.
     const xhr = new XMLHttpRequest();
     xhr.open('POST', form.action, true);
-    if (editItemId) xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    if (editItemId || manualReview) xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
     xhr.upload.addEventListener('progress', function(event) {
       if (!event.lengthComputable) {
@@ -2231,12 +2267,12 @@
     });
 
     xhr.addEventListener('load', function() {
-      if (editItemId) {
+      if (editItemId || manualReview) {
         let result;
         try {
           result = JSON.parse(xhr.responseText);
         } catch (error) {
-          handleUploadError(new Error('The server could not save your changes. Refresh the page and retry.'));
+          handleUploadError(new Error('The server could not save your item. Please try again.'));
           return;
         }
         if (xhr.status !== 200 || !result.success) {
@@ -2300,12 +2336,18 @@
 
   // ==================== AI VALUATION MODAL ====================
   const aiOverlay = document.getElementById('aiValuationOverlay');
+  const aiTitle = document.getElementById('aiValuationTitle');
   const aiSubtitle = document.getElementById('aiValuationSubtitle');
   const aiLoading = document.getElementById('aiValuationLoading');
   const aiResult = document.getElementById('aiValuationResult');
   const aiError = document.getElementById('aiValuationError');
   const aiActions = document.getElementById('aiValuationActions');
   const aiFallbackActions = document.getElementById('aiValuationFallbackActions');
+  const manualStationChoice = document.getElementById('manualStationChoice');
+  let manualStationSource = null;
+  let aiPreviousSubtitle = '';
+  let manualStationNeedsUpdate = false;
+  let manualStationUpdating = false;
   const aiValueAmount = document.getElementById('aiValueAmount');
   const aiValueRange = document.getElementById('aiValueRange');
   const aiConfidenceBadge = document.getElementById('aiConfidenceBadge');
@@ -2537,7 +2579,9 @@
   })();
 
   function openAiValuationModal() {
+    manualStationChoice.hidden = true;
     aiOverlay.hidden = false;
+    aiTitle.textContent = 'AI Value Estimate';
     aiSubtitle.textContent = 'Analyzing your item…';
     aiLoading.style.display = 'block';
     aiResult.style.display = 'none';
@@ -2570,15 +2614,79 @@
     startRealUpload(token);
   });
 
-  document.getElementById('aiValuationSubmitAnyway').addEventListener('click', function() {
-    closeAiValuationModal();
-    startRealUpload(null, true);
+  function chooseManualStation(source) {
+    manualStationSource = source;
+    aiPreviousSubtitle = aiSubtitle.textContent;
+    aiTitle.textContent = 'Choose a verification station';
+    aiSubtitle.textContent = 'You can change your station until physical review is recorded.';
+    aiResult.style.display = 'none';
+    aiError.style.display = 'none';
+    aiActions.style.display = 'none';
+    aiFallbackActions.style.display = 'none';
+    manualStationChoice.hidden = false;
+    if (manualStationNeedsUpdate) updateManualStations();
+    const select = document.getElementById('manualStationSelect');
+    if (select) select.focus();
+    else document.getElementById('manualStationBack').focus();
+  }
+  document.getElementById('aiValuationSubmitAnyway').addEventListener('click', () => chooseManualStation('fallback'));
+  document.getElementById('aiValuationManual').addEventListener('click', () => chooseManualStation('result'));
+  document.getElementById('manualStationBack').addEventListener('click', function() {
+    manualStationChoice.hidden = true;
+    aiTitle.textContent = 'AI Value Estimate';
+    aiSubtitle.textContent = aiPreviousSubtitle;
+    if (manualStationSource === 'result') {
+      aiResult.style.display = 'block';
+      aiActions.style.display = 'flex';
+    } else {
+      aiError.style.display = 'block';
+      aiFallbackActions.style.display = 'flex';
+    }
   });
-
-  document.getElementById('aiValuationManual').addEventListener('click', function() {
-    if (!confirm('Submit for manual physical review? You cannot activate this item or receive credits until an admin physically verifies it and its activation video is published.')) return;
+  const manualStationSubmit = document.getElementById('manualStationSubmit');
+  document.getElementById('manualStationProfile').addEventListener('click', function() {
+    manualStationNeedsUpdate = true;
+  });
+  async function updateManualStations() {
+    if (manualStationUpdating) return;
+    manualStationUpdating = true;
+    const error = document.getElementById('manualStationRefreshError');
+    error.hidden = true;
+    manualStationSubmit.disabled = true;
+    try {
+      const response = await fetch('{{ url_for("items.manual_verification_stations") }}', {headers: {'Accept': 'application/json'}});
+      if (!response.ok || response.redirected) throw new Error('Could not update stations.');
+      const data = await response.json();
+      const select = document.getElementById('manualStationSelect');
+      const previousSelection = select.value;
+      select.replaceChildren(new Option('Select a station', ''));
+      data.stations.forEach(station => select.add(new Option(`${station.name} — ${station.address}, ${station.city}`, station.id)));
+      if (data.stations.some(station => String(station.id) === previousSelection)) select.value = previousSelection;
+      document.getElementById('manualStationLabel').textContent = data.state ? `Verification station in ${data.state}` : 'Verification station';
+      document.getElementById('manualStationUnavailable').hidden = data.stations.length > 0;
+      document.getElementById('manualStationError').hidden = true;
+      manualStationNeedsUpdate = false;
+      manualStationSubmit.disabled = data.stations.length === 0;
+    } catch (err) {
+      console.error('Could not update verification stations:', err);
+      error.textContent = 'Could not update stations. Check your connection, then go back and select manual review again to retry.';
+      error.hidden = false;
+    } finally {
+      manualStationUpdating = false;
+    }
+  }
+  window.addEventListener('focus', function() {
+    if (manualStationNeedsUpdate && !aiOverlay.hidden && !manualStationChoice.hidden) updateManualStations();
+  });
+  manualStationSubmit.addEventListener('click', function() {
+    const select = document.getElementById('manualStationSelect');
+    if (!select.value) {
+      document.getElementById('manualStationError').hidden = false;
+      select.focus();
+      return;
+    }
     closeAiValuationModal();
-    startRealUpload(null, true);
+    startRealUpload(null, true, select.value);
   });
 
   function runAiValuationPreview() {

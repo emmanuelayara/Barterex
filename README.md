@@ -9,6 +9,24 @@ settlement, and fulfillment, not a cart or combined checkout. Legacy cart and
 checkout URLs redirect to Favorites or the relevant item without purchasing
 or deleting historical cart records. Cart notification controls are retired.
 
+## Manual item verification
+
+When requesting manual review during upload, select a verification station in
+your profile state. If none are available, update your profile or contact support.
+Track pending items under **My Manual Verifications**, save a custody choice and
+consent, and bring the item to the selected station. The station can be changed
+until staff record a physical review. Existing pending items without a station
+must select one before staff can verify them. Referenced stations cannot be
+edited or deleted; create a new station if details change. A failed review stays
+on the manual page; contact the team for next steps. After a successful review
+the item moves to **My Valuations** for its existing video activation process.
+Physical review itself grants no credits.
+
+Deployments must back up the database, stop web and worker traffic, and run
+`flask db upgrade` before starting the new code. Migration
+`manual_station_20261112` adds a nullable station reference without assigning
+stations to existing items.
+
 ## Trading-level rewards
 
 Approved uploads earn 10 trading points and purchases earn 20. Level-ups

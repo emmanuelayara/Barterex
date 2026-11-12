@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 
 from app import db, app
-from models import Item, ItemImage, ItemVideo, Cart, CartItem, Trade, Order, OrderItem, PickupStation, Notification
+from models import Item, ItemImage, ItemVideo, Cart, CartItem, Trade, Order, OrderItem, PickupStation, Notification, VerificationIntake
 from forms import UploadItemForm, OrderForm, StolenItemReportForm
 from routes.auth import send_email_async
 from services.email_notifications import notify_admins
@@ -164,7 +164,47 @@ def choose_manual_custody(item_id):
     item.manual_custody_choice = choice
     item.manual_custody_consent_at = datetime.utcnow()
     flash('Custody choice saved. Bring your item for physical verification; no credits have been granted.', 'success')
-    return redirect(url_for('user.my_valuations'))
+    return redirect(url_for('user.my_manual_verifications'))
+
+
+@items_bp.route('/items/<int:item_id>/manual-station', methods=['POST'])
+@login_required
+@handle_errors
+@safe_database_operation('choose_manual_station')
+def choose_manual_station(item_id):
+    from flask_wtf import FlaskForm
+    if not FlaskForm().validate_on_submit():
+        return 'Invalid or expired form token. Refresh the page and try again.', 400
+    item = Item.query.filter_by(id=item_id, user_id=current_user.id).with_for_update().first()
+    if item is None:
+        return 'Item not found.', 404
+    if item.status != 'manual_review_pending' or not item.manual_review_requested:
+        flash('This item is not awaiting manual physical review.', 'warning')
+        return redirect(url_for('user.my_manual_verifications'))
+    if item.manual_station_id and VerificationIntake.query.filter_by(item_id=item.id, workflow_type='manual_valuation').first():
+        flash('The station cannot be changed after physical review has been recorded.', 'warning')
+        return redirect(url_for('user.my_manual_verifications'))
+    station_id = request.form.get('station_id', type=int)
+    station = PickupStation.query.filter_by(id=station_id, state=current_user.state).with_for_update().first() if current_user.state else None
+    if not station:
+        flash('Select a verification station in your profile state. Update your profile if needed.', 'danger')
+        return redirect(url_for('user.my_manual_verifications'))
+    item.manual_station_id = station.id
+    flash(f'Verification station set to {station.name}.', 'success')
+    return redirect(url_for('user.my_manual_verifications'))
+
+
+@items_bp.route('/manual-verification-stations')
+@login_required
+def manual_verification_stations():
+    stations = PickupStation.query.filter_by(state=current_user.state).order_by(
+        PickupStation.name, PickupStation.id,
+    ).all() if current_user.state else []
+    return jsonify({
+        'state': current_user.state,
+        'stations': [{'id': station.id, 'name': station.name, 'address': station.address, 'city': station.city}
+                     for station in stations],
+    })
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'})
@@ -297,6 +337,7 @@ def upload_item():
     edit_committed = False
     edit_item = None
     edit_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' and 'edit' in request.args
+    manual_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.form.get('manual_review') == '1'
 
     def edit_failure(message, status=400):
         if edit_ajax:
@@ -367,6 +408,14 @@ def upload_item():
         
         if form.validate_on_submit() and not image_validation_errors:
             manual_review = request.form.get('manual_review') == '1'
+            manual_station = None
+            if manual_review:
+                station_id = request.form.get('manual_station_id', type=int)
+                manual_station = PickupStation.query.filter_by(
+                    id=station_id, state=current_user.state,
+                ).with_for_update().first() if current_user.state else None
+                if not manual_station:
+                    return jsonify({'success': False, 'error': 'Select a verification station in your profile state before submitting for manual review.'}), 400
             accepted_ai_fields = consume_accepted_ai_valuation(
                 name=form.name.data, description=form.description.data,
                 condition=form.condition.data, usage_duration=form.usage_duration.data,
@@ -390,6 +439,7 @@ def upload_item():
                 is_approved=False,
                 status='manual_review_pending' if manual_review else 'valuation_only',
                 manual_review_requested=manual_review,
+                manual_station_id=manual_station.id if manual_station else None,
             )
             if edit_item:
                 new_item.name = form.name.data
@@ -454,7 +504,7 @@ def upload_item():
                                     unique_filename = f'{secrets.token_hex(8)}_{unique_filename}'
                                 upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
                                 image_path = os.path.join(upload_root, unique_filename)
-                                if edit_item:
+                                if edit_item or manual_review:
                                     saved_image_paths.append(image_path)
                                 os.makedirs(os.path.dirname(image_path), exist_ok=True)
                                 file.seek(0)
@@ -520,6 +570,8 @@ def upload_item():
                 logger.warning(f"Item upload aborted due to image errors - User: {current_user.username}")
                 if edit_item:
                     return edit_failure('Changes were not saved. ' + ' '.join(validation_errors))
+                if manual_ajax:
+                    return jsonify({'success': False, 'error': ' '.join(validation_errors) or 'Image upload failed. Please try again.'}), 400
                 
                 # Flash all validation errors for user visibility
                 if validation_errors:
@@ -536,6 +588,8 @@ def upload_item():
                 db.session.rollback()
                 if edit_item:
                     return edit_failure('Changes were not saved. Please take 6-15 new camera photos.')
+                if manual_ajax:
+                    return jsonify({'success': False, 'error': 'No images were successfully uploaded. Please try again.'}), 400
                 flash('No images were successfully uploaded. Please try again.', 'danger')
                 return redirect(url_for('items.upload_item'))
             
@@ -564,7 +618,7 @@ def upload_item():
                 if manual_review:
                     notify_admins(
                         'items.manual_review', 'Manual physical review requested',
-                        f'{current_user.username} requested manual valuation for {new_item.name}. No credits have been granted.',
+                        f'{current_user.username} requested manual valuation for {new_item.name} at {manual_station.name}. No credits have been granted.',
                         cta_endpoint='admin.manual_review_queue', cta_label='Review Items',
                     )
                 db.session.commit()
@@ -586,8 +640,10 @@ def upload_item():
                         logger.warning(f"Could not start AI valuation for item {new_item.id}: {ai_err}")
 
                 if manual_review:
-                    flash('Item submitted for manual review. Arrange physical verification with Barter Express before activation.', 'success')
-                    return redirect(url_for('user.my_valuations'))
+                    flash('Item submitted for manual review. Bring it to your selected verification station.', 'success')
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return jsonify({'success': True, 'redirect_url': url_for('user.my_manual_verifications')})
+                    return redirect(url_for('user.my_manual_verifications'))
                 flash(f'✅ Success! Your item was successfully saved to My Valuations with {len(uploaded_images)} image(s). '
                       f'When you\'re ready to exchange it, open it from My Valuations and select "Trade This Item".', "success")
                 return redirect(url_for('user.my_valuations'))
@@ -597,6 +653,8 @@ def upload_item():
                 flash('There was a problem saving your item. Please try again.', 'danger')
                 if edit_item:
                     return edit_failure('Changes were not saved. There was a problem saving your item. Please try again.', 500)
+                if manual_ajax:
+                    return jsonify({'success': False, 'error': 'There was a problem saving your item. Please try again.'}), 500
                 return redirect(url_for('items.upload_item'))
         else:
             # Log form validation errors and show user-friendly messages
@@ -618,7 +676,11 @@ def upload_item():
         if edit_item and request.method == 'POST':
             errors = image_validation_errors + [error for errors in form.errors.values() for error in errors]
             return edit_failure('Changes were not saved. ' + ' '.join(errors))
-        return render_template('upload.html', form=form, edit_item=edit_item)
+        if manual_ajax:
+            errors = image_validation_errors + [error for errors in form.errors.values() for error in errors]
+            return jsonify({'success': False, 'error': ' '.join(errors) or 'Please check the item details and try again.'}), 400
+        stations = PickupStation.query.filter_by(state=current_user.state).order_by(PickupStation.name, PickupStation.id).all() if current_user.state else []
+        return render_template('upload.html', form=form, edit_item=edit_item, manual_stations=stations)
         
     except (FileUploadError, DatabaseError) as e:
         logger.warning(f"Upload error: {str(e)}")
@@ -626,9 +688,11 @@ def upload_item():
         flash(user_message, 'danger')
         if edit_item:
             return edit_failure(user_message)
+        if manual_ajax:
+            return jsonify({'success': False, 'error': user_message}), 400
         return redirect(url_for('items.upload_item'))
     finally:
-        if edit_item and not edit_committed:
+        if (edit_item or manual_ajax or request.form.get('manual_review') == '1') and not edit_committed:
             db.session.rollback()
             for path in saved_image_paths:
                 if os.path.isfile(path):

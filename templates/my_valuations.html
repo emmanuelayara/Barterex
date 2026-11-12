@@ -258,6 +258,7 @@
       {{ fx.floaters('banner') }}
       <h1 class="page-title">📊 My Valuations</h1>
       <p class="page-subtitle">Saved valuations expire after 30 days. Upload the item again for current value.</p>
+      <a href="{{ url_for('user.my_manual_verifications') }}">My Manual Verifications</a>
     </div>
 
     {% if items.items %}
@@ -321,7 +322,7 @@
                 {% endif %}
               </div>
               <div class="valuation-actions">
-                {% if (item.status == 'manual_review_pending' or item.can_submit_activation_video()) and
+                {% if item.can_submit_activation_video() and
                       (not current_user.is_profile_complete() or not current_user.has_submitted_identity()) %}
                   <div class="activate-help" role="status">
                     <p>You can upload items and view valuations now. Before trading, complete your profile and submit your NIN and government ID.</p>
@@ -331,19 +332,6 @@
                       <a class="trade-this-btn" href="{{ url_for('user.settings') }}#verification">Submit identity details to trade</a>
                     {% endif %}
                   </div>
-                {% elif item.status == 'manual_review_pending' %}
-                  <form method="post" action="{{ url_for('items.choose_manual_custody', item_id=item.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <label>After physical verification
-                      <select name="custody_choice" class="trade-input" required>
-                        <option value="">Choose an option</option>
-                        <option value="home" {% if item.manual_custody_choice == 'home' %}selected{% endif %}>Take my item home (provisional BXC)</option>
-                        <option value="company" {% if item.manual_custody_choice == 'company' %}selected{% endif %}>Transfer ownership to Barter Express (spendable BXC)</option>
-                      </select>
-                    </label>
-                    <label class="trade-checkbox"><input type="checkbox" name="consent" value="1" required>I agree to this choice. Company custody transfers ownership; credits are granted only after video approval and publishing.</label>
-                    <button type="submit" class="trade-submit-btn">Save custody choice</button>
-                  </form>
                 {% elif item.can_submit_activation_video() %}
                   <details class="trade-details">
                     <summary class="trade-this-btn">Trade This Item</summary>
@@ -367,6 +355,7 @@
                           <h2 id="video-camera-title-{{ item.id }}">Item video</h2>
                           <span class="camera-count recording-time">0 / {{ max_video_duration_seconds }}s</span>
                           <button type="button" class="camera-flash" aria-pressed="false" title="Continuous camera light, where supported" hidden disabled>Flash off</button>
+                          <span class="camera-light-unavailable" role="status" hidden>Flash unavailable on this video camera</span>
                           <button type="button" class="camera-flash camera-focus" title="Request focus at the centre of the frame" hidden disabled>Focus</button>
                           <button type="button" class="camera-close close-video-camera" autofocus>Cancel</button>
                         </div>
@@ -461,6 +450,7 @@
     const cameraDialog = form.querySelector('.activation-camera-dialog');
     const cameraGuidance = cameraDialog.querySelector('.camera-guidance');
     const recordingTime = cameraDialog.querySelector('.recording-time');
+    const lightUnavailable = cameraDialog.querySelector('.camera-light-unavailable');
     const previewHome = document.createComment('Video preview position');
     preview.before(previewHome);
     const maxDuration = Number(form.dataset.maxVideoDuration);
@@ -502,6 +492,7 @@
 
     function releaseCamera() {
       videoTorch.reset();
+      lightUnavailable.hidden = true;
       videoReadiness.reset();
       clearInterval(timer);
       timer = null;
@@ -570,7 +561,7 @@
           return;
         }
         stream = camera;
-        videoTorch.attach(camera);
+        lightUnavailable.hidden = videoTorch.attach(camera);
         camera.getVideoTracks().forEach(track => track.addEventListener('ended', () => {
           if (stream === camera) {
             discardRecording();

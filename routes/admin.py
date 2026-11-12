@@ -219,7 +219,7 @@ def _settlement_queue_filter():
 @admin_login_required
 def manual_review_queue():
     items = Item.query.filter_by(status='manual_review_pending').options(
-        joinedload(Item.images), joinedload(Item.user),
+        joinedload(Item.images), joinedload(Item.user), joinedload(Item.manual_station),
     ).order_by(Item.id.asc()).all()
     return render_template('admin/manual_review.html', items=items)
 
@@ -240,6 +240,8 @@ def verify_manual_item(item_id):
     item = Item.query.filter_by(id=item_id).with_for_update().first_or_404()
     if item.status != 'manual_review_pending' or not item.manual_review_requested:
         raise ValidationError('This item is not awaiting manual physical review.')
+    if not item.manual_station_id or not item.manual_station:
+        raise ValidationError('The user must select a verification station before physical review.')
     if not item.manual_custody_consent_at or item.manual_custody_choice not in ('home', 'company'):
         raise ValidationError('The user must save their custody choice and consent before verification.')
     outcome = request.form.get('outcome')
@@ -280,13 +282,15 @@ def verify_manual_item(item_id):
     db.session.add(AuditLog(
         admin_id=session['admin_id'], action_type='manual_item_verification',
         target_type='item', target_id=item.id,
-        description=f'Manual verification {outcome}; custody choice {item.manual_custody_choice}. No credits granted.',
+        description=f'Manual verification {outcome}; station {item.manual_station.name} (#{item.manual_station_id}); custody choice {item.manual_custody_choice}. No credits granted.',
     ))
     notify_user(
         item.uploaded_by_id, f"Manual physical review of '{item.name}': {outcome}. "
         + ('You can now submit your activation video. Credits follow successful publishing.' if outcome == 'passed'
            else 'Your item has not been activated. Contact our team for next steps.'),
-        subject='Manual physical review update', cta_endpoint='user.my_valuations', cta_label='My Valuations',
+        subject='Manual physical review update',
+        cta_endpoint='user.my_valuations' if outcome == 'passed' else 'user.my_manual_verifications',
+        cta_label='My Valuations' if outcome == 'passed' else 'My Manual Verifications',
     )
     flash('Physical review recorded. No credits have been granted.', 'success')
     return redirect(url_for('admin.manual_review_queue'))
@@ -2488,10 +2492,16 @@ def edit_pickup_station(station_id):
     try:
         from audit_logger import log_audit_action
         
-        station = PickupStation.query.get_or_404(station_id)
+        station = PickupStation.query.filter_by(id=station_id).with_for_update().first_or_404()
         form = PickupStationForm(obj=station)
 
         if form.validate_on_submit():
+            if Item.query.filter_by(manual_station_id=station.id).first() and (
+                station.name != form.name.data or station.address != form.address.data
+                or station.city != form.city.data or station.state != form.state.data
+            ):
+                flash('This station is referenced by manual verification records and cannot be changed. Create a new station instead.', 'warning')
+                return redirect(url_for('admin.manage_pickup_stations'))
             old_data = f"{station.name}, {station.address}, {station.city}, {station.state}"
             
             station.name = form.name.data
@@ -2537,7 +2547,10 @@ def delete_pickup_station(station_id):
     try:
         from audit_logger import log_audit_action
         
-        station = PickupStation.query.get_or_404(station_id)
+        station = PickupStation.query.filter_by(id=station_id).with_for_update().first_or_404()
+        if Item.query.filter_by(manual_station_id=station.id).first():
+            flash('This station is referenced by manual verification records and cannot be deleted.', 'warning')
+            return redirect(url_for('admin.manage_pickup_stations'))
         station_name = station.name
         db.session.delete(station)
         db.session.commit()

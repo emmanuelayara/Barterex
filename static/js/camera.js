@@ -153,12 +153,12 @@
       reset();
       const candidate = stream.getVideoTracks()[0];
       if (!candidate || typeof candidate.getCapabilities !== 'function'
-          || typeof candidate.applyConstraints !== 'function') return;
+          || typeof candidate.applyConstraints !== 'function') return false;
       try {
-        if (candidate.getCapabilities().torch !== true) return;
+        if (candidate.getCapabilities().torch !== true) return false;
       } catch (error) {
         console.warn('Camera torch capabilities unavailable:', error);
-        return;
+        return false;
       }
       track = candidate;
       const settings = typeof track.getSettings === 'function' ? track.getSettings() : {};
@@ -167,6 +167,7 @@
       button.setAttribute('aria-pressed', String(enabled));
       button.hidden = false;
       button.disabled = false;
+      return true;
     }
     button.addEventListener('click', async () => {
       if (!track || button.disabled) return;

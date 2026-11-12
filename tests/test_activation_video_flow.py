@@ -83,6 +83,8 @@ class ActivationVideoFlowTests(unittest.TestCase):
         self.assertIn('Camera recording only; gallery videos are not allowed.', page)
         self.assertIn('Start Recording', page)
         self.assertIn('item-camera-dialog activation-camera-dialog', page)
+        self.assertIn('Flash unavailable on this video camera', page)
+        self.assertIn('lightUnavailable.hidden = videoTorch.attach(camera)', page)
         self.assertIn('css/camera.css', page)
         self.assertIn('js/camera.js', page)
         self.assertIn("ItemCamera.openStream('video'", page)
@@ -199,6 +201,8 @@ class ActivationVideoFlowTests(unittest.TestCase):
         for status in ('pending_activation', 'manual_review_pending', 'approved'):
             with self.subTest(status=status):
                 self.item.status = status
+                self.item.manual_review_requested = status == 'manual_review_pending'
+                self.item.uploaded_by_id = self.owner.id
                 db.session.commit()
                 self.assertIsNone(self.item.valuation_expires_at)
                 self.assertFalse(self.item.valuation_is_expired())
@@ -206,7 +210,8 @@ class ActivationVideoFlowTests(unittest.TestCase):
                     Item.unexpired_valuation_filter(datetime.utcnow())
                 ).count(), 1)
                 if status in Item.LIFECYCLE_STATUSES:
-                    page = client.get('/my_valuations').get_data(as_text=True)
+                    target = '/my-manual-verifications' if status == 'manual_review_pending' else '/my_valuations'
+                    page = client.get(target).get_data(as_text=True)
                     self.assertIn(self.item.name, page)
                     self.assertNotIn('data-valuation-expires=', page)
         self.item.status = 'valuation_only'

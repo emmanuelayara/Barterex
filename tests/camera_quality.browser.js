@@ -217,7 +217,7 @@ window.runCameraQualityTests = async function () {
     const flash = document.createElement('button');
     const flashErrors = [];
     const torch = ItemCamera.bindTorch(flash, message => flashErrors.push(message));
-    torch.attach(camera());
+    assert(torch.attach(camera()) === false, 'Unsupported torch must report unavailable');
     assert(flash.hidden && flash.disabled, 'Unsupported torch must remain hidden');
     const torchStream = camera();
     const torchTrack = torchStream.getVideoTracks()[0];
@@ -225,7 +225,7 @@ window.runCameraQualityTests = async function () {
     torchTrack.getCapabilities = () => ({torch: true});
     torchTrack.getSettings = () => ({torch: lit});
     torchTrack.applyConstraints = async constraints => { lit = constraints.advanced[0].torch; };
-    torch.attach(torchStream);
+    assert(torch.attach(torchStream) === true, 'Supported torch must report available');
     assert(!flash.hidden && !flash.disabled, 'Supported torch not enabled');
     flash.click();
     await Promise.resolve();

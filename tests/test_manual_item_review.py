@@ -29,12 +29,14 @@ class ManualReviewTests(unittest.TestCase):
             id_verification_status='submitted',
         )
         self.admin = Admin(username='boss', email='boss@example.com', password='test', is_super_admin=True)
-        db.session.add_all([self.user, self.admin])
+        self.station = PickupStation(name='Lagos Office', state='Lagos', city='Lagos', address='Test road')
+        db.session.add_all([self.user, self.admin, self.station])
         db.session.flush()
         self.item = Item(
             name='Test phone', category='Phones & Gadgets', condition='Brand New',
             user_id=self.user.id, uploaded_by_id=self.user.id,
             status='manual_review_pending', manual_review_requested=True,
+            manual_station_id=self.station.id,
             ai_estimated_value=50,
         )
         db.session.add(self.item)
@@ -138,7 +140,7 @@ class ManualReviewTests(unittest.TestCase):
     def test_manual_custody_consent_requires_complete_account(self):
         self.user.id_verification_status = 'not_submitted'
         db.session.commit()
-        page = self.client.get('/my_valuations').get_data(as_text=True)
+        page = self.client.get('/my-manual-verifications').get_data(as_text=True)
         self.assertIn('Submit identity details to trade', page)
         self.assertNotIn('Save custody choice', page)
         response = self.client.post(f'/items/{self.item.id}/manual-custody', data={
@@ -219,15 +221,217 @@ class ManualReviewTests(unittest.TestCase):
             response = self.client.post('/upload', data={
                 'name': 'Manual test item', 'description': 'A detailed test description for this item.',
                 'category': 'Phones & Gadgets', 'condition': 'Brand New',
-                'manual_review': '1', 'images': [image() for _ in range(6)],
+                'manual_review': '1', 'manual_station_id': str(self.station.id), 'images': [image() for _ in range(6)],
             })
         self.assertEqual(response.status_code, 302)
         uploaded = Item.query.filter_by(name='Manual test item').one()
         self.assertEqual(uploaded.status, 'manual_review_pending')
+        self.assertEqual(uploaded.manual_station_id, self.station.id)
         self.assertTrue(uploaded.manual_review_requested)
         self.assertFalse(uploaded.is_available)
         self.assertIsNone(uploaded.ai_estimated_value)
         valuation.assert_not_called()
+
+    def test_station_selection_legacy_visibility_and_admin_gate(self):
+        self.item.manual_station_id = None
+        db.session.commit()
+        self.choose('home')
+        page = self.client.get('/my-manual-verifications')
+        self.assertIn(b'No station selected', page.data)
+        self.assertIn(b'Test phone', page.data)
+        self.assertNotIn(b'Test phone', self.client.get('/my_valuations').data)
+        self.assertIn(b'Not selected', self.reviewer.get('/admin/manual-review').data)
+        self.verify()
+        self.assertEqual(VerificationIntake.query.count(), 0)
+        self.client.post(f'/items/{self.item.id}/manual-station', data={'station_id': self.station.id})
+        db.session.refresh(self.item)
+        self.assertEqual(self.item.manual_station_id, self.station.id)
+        self.assertIn(b'Lagos Office', self.reviewer.get('/admin/manual-review').data)
+        self.verify()
+        self.assertIn(b'Test phone', self.client.get('/my_valuations').data)
+        self.assertNotIn(b'Test phone', self.client.get('/my-manual-verifications').data)
+        self.client.post(f'/items/{self.item.id}/manual-station', data={'station_id': self.station.id})
+        db.session.refresh(self.item)
+        self.assertEqual(self.item.status, 'valuation_only')
+
+    def test_tracker_navigation_and_valuation_badge_exclude_pending_manual_items(self):
+        response = self.client.get('/settings')
+        self.assertIn(b'Manual Verifications', response.data)
+        page = self.client.get('/my_valuations')
+        self.assertIn(b'My Manual Verifications', page.data)
+        self.assertNotIn(b'Valuations (1 pending)', page.data)
+        self.assertIn(b'Test phone', self.client.get('/my-manual-verifications').data)
+
+    def test_tracker_uses_edit_controls_for_saved_choices(self):
+        page = self.client.get('/my-manual-verifications').get_data(as_text=True)
+        self.assertIn('aria-label="Edit verification station for Test phone"', page)
+        self.assertNotIn('aria-label="Edit custody choice for Test phone"', page)
+        self.assertIn('name="consent" value="1" required', page)
+        self.choose('company')
+        page = self.client.get('/my-manual-verifications').get_data(as_text=True)
+        self.assertIn('aria-label="Edit custody choice for Test phone"', page)
+        self.assertIn('Transfer to Barter Express', page)
+        self.assertEqual(page.count('<details class="manual-editor">'), 2)
+        self.verify(outcome='failed')
+        page = self.client.get('/my-manual-verifications').get_data(as_text=True)
+        self.assertNotIn('aria-label="Edit verification station for Test phone"', page)
+        self.assertIn('aria-label="Edit custody choice for Test phone"', page)
+
+    def test_legacy_missing_station_has_visible_selection_form(self):
+        self.item.manual_station_id = None
+        db.session.commit()
+        page = self.client.get('/my-manual-verifications').get_data(as_text=True)
+        self.assertIn('No station selected', page)
+        self.assertIn('name="station_id" required', page)
+        self.assertNotIn('aria-label="Edit verification station for Test phone"', page)
+
+    def test_tracker_forms_and_pagination_are_accessible(self):
+        from html.parser import HTMLParser
+
+        class TrackerMarkup(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.select_depth = 0
+                self.links_inside_select = []
+                self.forms = []
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'select':
+                    self.select_depth += 1
+                if tag == 'a' and self.select_depth:
+                    self.links_inside_select.append(attrs)
+                if tag == 'form':
+                    self.forms.append(attrs)
+
+            def handle_endtag(self, tag):
+                if tag == 'select':
+                    self.select_depth -= 1
+
+        db.session.add_all([
+            Item(name=f'Pending item {index}', category='Phones & Gadgets', condition='Brand New',
+                 user_id=self.user.id, uploaded_by_id=self.user.id, status='manual_review_pending',
+                 manual_review_requested=True, manual_station_id=self.station.id)
+            for index in range(10)
+        ])
+        db.session.commit()
+        response = self.client.get('/my-manual-verifications')
+        html = response.get_data(as_text=True)
+        parser = TrackerMarkup()
+        parser.feed(html)
+        self.assertIn('manual-verifications.css', html)
+        self.assertIn('aria-label="Manual verification pages"', html)
+        self.assertIn('Page 1 of 2', html)
+        self.assertEqual(len(parser.forms), 20)
+        self.assertEqual(parser.links_inside_select, [])
+        self.assertTrue(all(form['method'] == 'post' for form in parser.forms))
+        second = self.client.get('/my-manual-verifications?page=2').get_data(as_text=True)
+        self.assertIn('Test phone', second)
+        self.assertIn('Page 2 of 2', second)
+        self.assertIn('Previous', second)
+
+    def test_station_changes_are_owner_scoped_and_locked_after_review(self):
+        other_station = PickupStation(name='Second', state='Lagos', city='Lagos', address='Second road')
+        foreign_station = PickupStation(name='Abuja', state='Abuja', city='Abuja', address='Road')
+        db.session.add_all([other_station, foreign_station])
+        db.session.commit()
+        for invalid in ('', '999999', str(foreign_station.id)):
+            self.client.post(f'/items/{self.item.id}/manual-station', data={'station_id': invalid})
+            db.session.refresh(self.item)
+            self.assertEqual(self.item.manual_station_id, self.station.id)
+        self.client.post(f'/items/{self.item.id}/manual-station', data={'station_id': other_station.id})
+        db.session.refresh(self.item)
+        self.assertEqual(self.item.manual_station_id, other_station.id)
+        self.choose('home')
+        self.verify(outcome='failed')
+        self.assertIn(b'Last review failed', self.client.get('/my-manual-verifications').data)
+        self.client.post(f'/items/{self.item.id}/manual-station', data={'station_id': self.station.id})
+        db.session.refresh(self.item)
+        self.assertEqual(self.item.manual_station_id, other_station.id)
+        other = User(username='other-user', email='other2@example.com', password_hash='test', state='Lagos')
+        db.session.add(other)
+        db.session.commit()
+        g.pop('_login_user', None)
+        with self.client.session_transaction() as session:
+            session['_user_id'] = str(other.id)
+        self.assertEqual(self.client.post(f'/items/{self.item.id}/manual-station',
+                                          data={'station_id': self.station.id}).status_code, 404)
+
+    def test_station_csrf_and_deletion_guard(self):
+        with patch.dict(app.config, {'WTF_CSRF_ENABLED': True}):
+            response = self.client.post(f'/items/{self.item.id}/manual-station', data={'station_id': self.station.id})
+            self.assertEqual(response.status_code, 400)
+        db.session.refresh(self.item)
+        self.assertEqual(self.item.manual_station_id, self.station.id)
+        self.reviewer.post(f'/admin/pickup_stations/delete/{self.station.id}')
+        self.assertIsNotNone(db.session.get(PickupStation, self.station.id))
+        self.reviewer.post(f'/admin/pickup_stations/edit/{self.station.id}', data={
+            'name': 'Changed', 'state': 'Lagos', 'city': 'Lagos', 'address': 'New road',
+        })
+        db.session.refresh(self.station)
+        self.assertEqual(self.station.name, 'Lagos Office')
+
+    def test_manual_upload_requires_station_in_profile_state(self):
+        foreign = PickupStation(name='Abuja', state='Abuja', city='Abuja', address='Road')
+        db.session.add(foreign)
+        db.session.commit()
+        def image():
+            stream = io.BytesIO()
+            Image.new('RGB', (30, 30), 'blue').save(stream, 'PNG')
+            stream.seek(0)
+            return stream, 'test.png'
+        for station_id in ('', '999999', str(foreign.id)):
+            response = self.client.post('/upload', headers={'X-Requested-With': 'XMLHttpRequest'}, data={
+                'name': 'Invalid station item', 'description': 'A detailed test description for this item.',
+                'category': 'Phones & Gadgets', 'condition': 'Brand New', 'manual_review': '1',
+                'manual_station_id': station_id, 'images': [image() for _ in range(6)],
+            })
+            self.assertEqual(response.status_code, 400)
+            self.assertIn('verification station', response.get_json()['error'])
+            self.assertIsNone(Item.query.filter_by(name='Invalid station item').first())
+        self.user.state = None
+        db.session.commit()
+        response = self.client.post('/upload', headers={'X-Requested-With': 'XMLHttpRequest'}, data={
+            'name': 'Invalid station item', 'description': 'A detailed test description for this item.',
+            'category': 'Phones & Gadgets', 'condition': 'Brand New', 'manual_review': '1',
+            'manual_station_id': str(self.station.id), 'images': [image() for _ in range(6)],
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b'No stations are available in your profile state', self.client.get('/upload').data)
+        self.assertIsNone(Item.query.filter_by(name='Invalid station item').first())
+
+    def test_manual_ajax_upload_redirects_to_manual_tracker(self):
+        def image():
+            stream = io.BytesIO()
+            Image.new('RGB', (30, 30), 'blue').save(stream, 'PNG')
+            stream.seek(0)
+            return stream, 'test.png'
+        with tempfile.TemporaryDirectory() as folder, \
+             patch.dict(app.config, {'UPLOAD_FOLDER': folder}), \
+             patch('routes.items.notify_admins'), \
+             patch('image_analyzer.analyze_image_url', return_value={}):
+            response = self.client.post('/upload', headers={'X-Requested-With': 'XMLHttpRequest'}, data={
+                'name': 'AJAX manual item', 'description': 'A detailed test description for this item.',
+                'category': 'Phones & Gadgets', 'condition': 'Brand New', 'manual_review': '1',
+                'manual_station_id': str(self.station.id), 'images': [image() for _ in range(6)],
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()['redirect_url'], '/my-manual-verifications')
+        self.assertEqual(Item.query.filter_by(name='AJAX manual item').one().manual_station_id, self.station.id)
+
+    def test_station_refresh_uses_current_profile_state(self):
+        other = PickupStation(name='Abuja Office', state='Abuja', city='Abuja', address='Road')
+        db.session.add(other)
+        db.session.commit()
+        response = self.client.get('/manual-verification-stations')
+        self.assertEqual([station['id'] for station in response.get_json()['stations']], [self.station.id])
+        self.user.state = 'Abuja'
+        db.session.commit()
+        response = self.client.get('/manual-verification-stations')
+        self.assertEqual(response.get_json()['state'], 'Abuja')
+        self.assertEqual([station['id'] for station in response.get_json()['stations']], [other.id])
+        g.pop('_login_user', None)
+        self.assertEqual(app.test_client().get('/manual-verification-stations').status_code, 302)
 
     def test_company_purchase_route_completes_and_does_not_repay_uploader(self):
         self.choose('company')
@@ -331,6 +535,33 @@ class ManualReviewTests(unittest.TestCase):
 
 
 class ManualReviewMigrationTests(unittest.TestCase):
+    def test_manual_station_migration_preserves_existing_items(self):
+        from alembic.migration import MigrationContext
+        from alembic.operations import Operations
+        from sqlalchemy import create_engine, inspect
+        path = Path(__file__).resolve().parent.parent / 'migrations' / 'versions' / 'add_manual_verification_station.py'
+        spec = importlib.util.spec_from_file_location('manual_station_migration', path)
+        migration = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(migration)
+        engine = create_engine('sqlite:///:memory:')
+        with engine.begin() as connection:
+            connection.exec_driver_sql('CREATE TABLE pickup_station (id INTEGER PRIMARY KEY)')
+            connection.exec_driver_sql('CREATE TABLE item (id INTEGER PRIMARY KEY, status VARCHAR(50))')
+            connection.exec_driver_sql("INSERT INTO item VALUES (1, 'manual_review_pending')")
+            with Operations.context(MigrationContext.configure(connection)):
+                migration.upgrade()
+                self.assertEqual(connection.exec_driver_sql('SELECT status, manual_station_id FROM item').one(),
+                                 ('manual_review_pending', None))
+                self.assertEqual(inspect(connection).get_foreign_keys('item')[0]['referred_table'], 'pickup_station')
+                connection.exec_driver_sql('INSERT INTO pickup_station VALUES (1)')
+                connection.exec_driver_sql('UPDATE item SET manual_station_id=1 WHERE id=1')
+                with self.assertRaises(RuntimeError):
+                    migration.downgrade()
+                connection.exec_driver_sql('UPDATE item SET manual_station_id=NULL WHERE id=1')
+                migration.downgrade()
+                self.assertNotIn('manual_station_id', {c['name'] for c in inspect(connection).get_columns('item')})
+        engine.dispose()
+
     def test_existing_rows_upgrade_and_direct_acquisitions_block_downgrade(self):
         from alembic.migration import MigrationContext
         from alembic.operations import Operations

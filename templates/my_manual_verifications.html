@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
+{% block title %}My Manual Verifications{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mypages.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/manual-verifications.css') }}">
+{% endblock %}
+{% macro station_form(item) %}
+<form class="manual-form" method="post" action="{{ url_for('items.choose_manual_station', item_id=item.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="station-{{ item.id }}">Verification station in {{ current_user.state }}</label>
+  <select id="station-{{ item.id }}" name="station_id" required>
+    <option value="">Select a station</option>
+    {% for station in stations %}
+    <option value="{{ station.id }}" {% if item.manual_station_id == station.id %}selected{% endif %}>{{ station.name }} — {{ station.address }}, {{ station.city }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="manual-button manual-button-secondary">Save station</button>
+</form>
+{% endmacro %}
+{% macro custody_form(item) %}
+<form class="manual-form" method="post" action="{{ url_for('items.choose_manual_custody', item_id=item.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="custody-{{ item.id }}">After physical verification</label>
+  <select id="custody-{{ item.id }}" name="custody_choice" required>
+    <option value="">Choose an option</option>
+    <option value="home" {% if item.manual_custody_choice == 'home' %}selected{% endif %}>Take my item home (provisional BXC)</option>
+    <option value="company" {% if item.manual_custody_choice == 'company' %}selected{% endif %}>Transfer ownership to Barter Express (spendable BXC)</option>
+  </select>
+  <label class="manual-consent"><input type="checkbox" name="consent" value="1" required><span>I agree to this choice. Company custody transfers ownership; credits are granted only after video approval and publishing.</span></label>
+  <button type="submit" class="manual-button manual-button-primary">Save custody choice</button>
+</form>
+{% endmacro %}
+{% block content %}
+<main class="page-container mp manual-page">
+  <div class="main-content">
+    <header class="page-header">
+      {{ fx.floaters('banner') }}
+      <h1 class="page-title">My Manual Verifications</h1>
+      <p class="page-subtitle">Choose a station, save your custody choice, and bring your item for physical review.</p>
+    </header>
+
+    <div class="manual-content">
+      <nav class="manual-links" aria-label="Related pages">
+        <a href="{{ url_for('user.my_valuations') }}"><i class="fas fa-chart-line" aria-hidden="true"></i> My Valuations</a>
+        <a href="{{ url_for('items.upload_item') }}"><i class="fas fa-plus" aria-hidden="true"></i> Upload an item</a>
+      </nav>
+
+      {% for item in items.items %}
+      <article class="manual-card">
+        <div class="manual-item">
+          {% set thumb = item.image_url or (item.images[0].image_url if item.images else None) %}
+          {% if thumb %}
+          <img class="manual-thumb" src="{{ thumb | image_url }}" alt="{{ item.name }}">
+          {% else %}
+          <div class="manual-thumb manual-thumb-placeholder" aria-hidden="true"><i class="fas fa-box"></i></div>
+          {% endif %}
+          <div class="manual-item-info">
+            <h2>{{ item.name }}</h2>
+            <p class="manual-meta">{{ item.category }} · {{ item.condition }}</p>
+            <span class="status-badge status-pending"><i class="fas fa-clock" aria-hidden="true"></i> Awaiting physical verification</span>
+          </div>
+        </div>
+
+        {% if item.rejection_reason %}
+        <div class="manual-alert manual-alert-warning" role="status"><i class="fas fa-circle-exclamation" aria-hidden="true"></i><p><strong>Last review failed:</strong> {{ item.rejection_reason }}. Contact the team for next steps.</p></div>
+        {% endif %}
+
+        <div class="manual-sections">
+          <section class="manual-section" aria-labelledby="station-heading-{{ item.id }}">
+            <div class="manual-section-heading">
+              <span class="manual-section-icon"><i class="fas fa-location-dot" aria-hidden="true"></i></span>
+              <div><h3 id="station-heading-{{ item.id }}">Verification station</h3><p>Bring your item to your selected station.</p></div>
+            </div>
+            {% if item.manual_station %}
+            <div class="manual-detail{% if stations and item.id not in reviewed_ids %} manual-detail-editable{% endif %}">
+              <span class="manual-detail-label">Selected station</span>
+              <strong>{{ item.manual_station.name }}</strong>
+              <span>{{ item.manual_station.address }}, {{ item.manual_station.city }}, {{ item.manual_station.state }}</span>
+              {% if stations and item.id not in reviewed_ids %}
+              <details class="manual-editor">
+                <summary class="manual-edit-icon" aria-label="Edit verification station for {{ item.name }}" title="Edit verification station"><i class="fas fa-pen" aria-hidden="true"></i></summary>
+                {{ station_form(item) }}
+              </details>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="manual-alert manual-alert-warning" role="status"><i class="fas fa-circle-exclamation" aria-hidden="true"></i><p><strong>No station selected.</strong> Select one before your physical review can be recorded.</p></div>
+            {% endif %}
+            {% if item.manual_station_id and item.id in reviewed_ids %}
+            <p class="manual-help"><i class="fas fa-lock" aria-hidden="true"></i> The station cannot be changed after physical review has been recorded.</p>
+            {% elif not item.manual_station and stations %}
+            {{ station_form(item) }}
+            {% elif not stations %}
+            <p class="manual-help" role="status">No verification stations are available in your profile state{% if current_user.state %} ({{ current_user.state }}){% endif %}. <a href="{{ url_for('user.settings', edit='profile') }}#profile">Update your profile</a> or contact support.</p>
+            {% endif %}
+          </section>
+
+          <section class="manual-section" aria-labelledby="custody-heading-{{ item.id }}">
+            <div class="manual-section-heading">
+              <span class="manual-section-icon"><i class="fas fa-box-open" aria-hidden="true"></i></span>
+              <div><h3 id="custody-heading-{{ item.id }}">Custody choice</h3><p>Choose what happens to your item after verification.</p></div>
+            </div>
+            {% if not current_user.is_profile_complete() or not current_user.has_submitted_identity() %}
+            <div class="manual-alert"><i class="fas fa-user-shield" aria-hidden="true"></i><p>Before physical verification, complete your profile and submit your identity details.</p></div>
+            {% if not current_user.is_profile_complete() %}<a class="manual-button manual-button-primary" href="{{ url_for('user.settings', edit='profile') }}#profile">Complete profile to trade</a>
+            {% else %}<a class="manual-button manual-button-primary" href="{{ url_for('user.settings') }}#verification">Submit identity details to trade</a>{% endif %}
+            {% else %}
+            {% if item.manual_custody_consent_at %}
+            <div class="manual-detail manual-detail-editable">
+              <span class="manual-detail-label">Saved custody choice</span>
+              <strong>{{ 'Transfer to Barter Express' if item.manual_custody_choice == 'company' else 'Take item home' }}</strong>
+              <details class="manual-editor">
+                <summary class="manual-edit-icon" aria-label="Edit custody choice for {{ item.name }}" title="Edit custody choice"><i class="fas fa-pen" aria-hidden="true"></i></summary>
+                {{ custody_form(item) }}
+              </details>
+            </div>
+            {% else %}
+            {{ custody_form(item) }}
+            {% endif %}
+            {% endif %}
+          </section>
+        </div>
+        <div class="manual-next"><i class="fas fa-circle-info" aria-hidden="true"></i><p>Once physical verification passes, the item moves to My Valuations for the activation video. No credits are granted at this stage.</p></div>
+      </article>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-clipboard-check" aria-hidden="true"></i></div>
+        <h2 class="empty-title">No manual verifications yet</h2>
+        <p class="empty-description">Items submitted for manual review will appear here.</p>
+        <a class="btn-upload" href="{{ url_for('items.upload_item') }}">Upload an item</a>
+      </div>
+      {% endfor %}
+
+      {% if items.has_prev or items.has_next %}
+      <nav class="pagination-container" aria-label="Manual verification pages">
+        {% if items.has_prev %}<a class="pagination-btn" href="{{ url_for('user.my_manual_verifications', page=items.prev_num) }}">Previous</a>{% endif %}
+        <span class="pagination-info">Page {{ items.page }} of {{ items.pages }}</span>
+        {% if items.has_next %}<a class="pagination-btn" href="{{ url_for('user.my_manual_verifications', page=items.next_num) }}">Next</a>{% endif %}
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}
