@@ -15,7 +15,7 @@ from app import app, db, limiter, load_user
 from models import Admin, EmailLoginChallenge, SystemSettings, User
 from routes.auth import generate_reset_token
 from services.account_security import confirm_email_change, request_email_change
-from services.email_two_factor import fingerprint
+from services.email_two_factor import fingerprint, ADMIN_DEVICE_COOKIE
 
 
 class EmailTwoFactorTests(unittest.TestCase):
@@ -128,6 +128,105 @@ class EmailTwoFactorTests(unittest.TestCase):
         self.assertEqual(self.client.get('/two-factor/verify').status_code, 200)
         self.assertIn('/admin/dashboard', self.verify().location)
         self.assertEqual(self.client.get('/admin/users').status_code, 200)
+
+    def test_admin_verified_browser_skips_code_after_logout_without_renewal(self):
+        self.admin_login()
+        self.verify()
+        cookie = self.client.get_cookie(ADMIN_DEVICE_COOKIE)
+        self.assertIsNotNone(cookie)
+        self.assertTrue(cookie.http_only)
+        self.assertEqual(cookie.same_site, 'Lax')
+        self.assertEqual(cookie.max_age, 30 * 24 * 60 * 60)
+        original = cookie.value
+        self.client.get('/admin/logout')
+        self.assertEqual(self.client.get('/admin/users').status_code, 302)
+        self.send.reset_mock()
+        response = self.admin_login()
+        self.assertIn('/admin/dashboard', response.location)
+        self.assertFalse(any(ADMIN_DEVICE_COOKIE in value for value in response.headers.getlist('Set-Cookie')))
+        self.assertEqual(self.client.get_cookie(ADMIN_DEVICE_COOKIE).value, original)
+        self.send.assert_not_called()
+        self.assertEqual(self.client.get('/admin/users').status_code, 200)
+
+    def test_admin_device_verification_expires_after_fixed_thirty_days(self):
+        from itsdangerous import TimestampSigner
+        issued = 1800000000
+        with patch.object(TimestampSigner, 'get_timestamp', return_value=issued):
+            self.admin_login()
+            self.verify()
+        self.client.get('/admin/logout')
+        self.age_send()
+        with patch.object(TimestampSigner, 'get_timestamp', return_value=issued + 30 * 86400 - 1):
+            self.assertIn('/admin/dashboard', self.admin_login().location)
+        self.client.get('/admin/logout')
+        with patch.object(TimestampSigner, 'get_timestamp', return_value=issued + 30 * 86400 + 1):
+            self.assertIn('/two-factor/verify', self.admin_login().location)
+        with self.client.session_transaction() as state:
+            self.assertNotIn('admin_id', state)
+
+    def test_admin_new_browser_and_tampered_cookie_require_code(self):
+        self.admin_login()
+        self.verify()
+        self.client.get('/admin/logout')
+        self.age_send()
+        other = app.test_client()
+        response = other.post('/admin/login', data={'email': self.admin.email, 'password': self.password})
+        self.assertIn('/two-factor/verify', response.location)
+        self.age_send()
+        self.client.set_cookie(ADMIN_DEVICE_COOKIE, self.client.get_cookie(ADMIN_DEVICE_COOKIE).value + 'tampered')
+        self.assertIn('/two-factor/verify', self.admin_login().location)
+
+    def test_admin_remembered_device_still_requires_password_and_active_account(self):
+        self.admin_login()
+        self.verify()
+        self.client.get('/admin/logout')
+        self.send.reset_mock()
+        response = self.client.post('/admin/login', data={'email': self.admin.email, 'password': 'wrong'})
+        self.assertNotIn('/admin/dashboard', response.location or '')
+        with self.client.session_transaction() as state:
+            self.assertNotIn('admin_id', state)
+        self.admin.account_locked_until = datetime.utcnow() + timedelta(minutes=15)
+        db.session.commit()
+        self.assertEqual(self.admin_login().status_code, 200)
+        self.admin.account_locked_until = None
+        self.admin.is_active = False
+        db.session.commit()
+        self.assertEqual(self.admin_login().status_code, 200)
+        self.send.assert_not_called()
+        with self.client.session_transaction() as state:
+            self.assertNotIn('admin_id', state)
+
+    def test_admin_device_cookie_is_secure_over_https(self):
+        self.admin_login()
+        response = self.client.post('/two-factor/verify', data={'code': self.code()}, base_url='https://localhost')
+        cookie_headers = response.headers.getlist('Set-Cookie')
+        self.assertTrue(any(ADMIN_DEVICE_COOKIE in value and '; Secure;' in value for value in cookie_headers))
+
+    def test_admin_credential_changes_invalidate_browser_verification(self):
+        self.admin_login()
+        self.verify()
+        self.client.get('/admin/logout')
+        self.age_send()
+        self.admin.password = generate_password_hash('ChangedSecure!123')
+        db.session.commit()
+        response = self.client.post('/admin/login', data={'email': self.admin.email, 'password': 'ChangedSecure!123'})
+        self.assertIn('/two-factor/verify', response.location)
+
+    def test_admin_email_change_and_different_account_require_new_verification(self):
+        self.admin_login()
+        self.verify()
+        self.client.get('/admin/logout')
+        self.age_send()
+        self.admin.email = 'new-admin@example.com'
+        other = Admin(username='second-admin', email='second-admin@example.com',
+                      password=generate_password_hash(self.password), is_super_admin=True)
+        db.session.add(other)
+        db.session.commit()
+        self.assertIn('/two-factor/verify', self.admin_login().location)
+        response = self.client.post('/admin/login', data={'email': other.email, 'password': self.password})
+        self.assertIn('/two-factor/verify', response.location)
+        with self.client.session_transaction() as state:
+            self.assertNotIn('admin_id', state)
 
     def test_existing_admin_session_without_second_factor_is_rejected(self):
         with self.client.session_transaction() as state:

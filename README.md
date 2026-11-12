@@ -118,6 +118,13 @@ The security hardening release requires deployment work before serving traffic:
 
 Email codes are **optional for users and mandatory for every administrator**,
 including super admins. Existing administrator sessions must sign in again.
+Administrators enter their password at every login; a successful email code
+verifies that browser for a fixed 30 days. Logging out does not clear this
+verification or extend its deadline. New browsers, cleared cookies, expired
+verification, password/email changes or a signing-key rotation require a new
+code. The signed, HTTP-only device cookie is not an authenticated session and
+cannot bypass password checks, account locks or deactivation. Use HTTPS in
+production. This change requires no database migration.
 Configure working `MAIL_SERVER`, `MAIL_PORT`, TLS/SSL, `MAIL_USERNAME`,
 `MAIL_PASSWORD` and `MAIL_DEFAULT_SENDER` before deployment. Keep `MAIL_DEBUG`
 and `MAIL_SUPPRESS_SEND` off in production; verify actual delivery to staff inboxes.

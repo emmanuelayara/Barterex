@@ -6,7 +6,8 @@ from flask_login import current_user, login_user, logout_user
 from app import db
 from models import Admin
 from services.email_two_factor import (
-    challenge_account, fingerprint, pending_challenge, start_challenge, verify_code,
+    challenge_account, pending_challenge, start_challenge, verify_code,
+    complete_admin_login, remember_admin_device,
 )
 
 two_factor_bp = Blueprint('two_factor', __name__, url_prefix='/two-factor')
@@ -60,19 +61,9 @@ def verify():
                 flash('Email two-step verification updated. Please sign in again. Wait 60 seconds between verification email requests.', 'success')
                 return redirect(url_for('auth.login'))
             if isinstance(account, Admin):
-                account.failed_login_attempts = 0
-                account.account_locked_until = None
-                db.session.commit()
-                session['admin_id'] = account.id
-                session['admin_username'] = account.username
-                session['admin_mfa'] = fingerprint(account)
-                from audit_logger import log_audit_action
-                log_audit_action(
-                    action_type='admin_login', target_type='admin', target_id=account.id,
-                    target_name=account.username, description='Admin signed in with password and email code.',
-                )
+                complete_admin_login(account, verified_by_email=True)
                 flash('Administrator email verification complete.', 'success')
-                return redirect(url_for('admin.admin_dashboard'))
+                return remember_admin_device(redirect(url_for('admin.admin_dashboard')), account)
             from datetime import datetime
             account.failed_login_attempts = 0
             account.account_locked_until = None

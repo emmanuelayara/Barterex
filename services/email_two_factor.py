@@ -6,8 +6,9 @@ import secrets
 from datetime import datetime, timedelta
 from smtplib import SMTPException
 
-from flask import current_app, render_template, session
+from flask import current_app, render_template, request, session
 from flask_mail import Message
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy.exc import IntegrityError
 
 from app import db, mail
@@ -17,6 +18,57 @@ CODE_LIFETIME = timedelta(minutes=5)
 BUDGET_WINDOW = timedelta(minutes=15)
 MAX_ATTEMPTS = 5
 MAX_SENDS = 5
+ADMIN_DEVICE_COOKIE = 'admin_email_verified'
+ADMIN_DEVICE_LIFETIME = timedelta(days=30)
+
+
+def _admin_device_serializer():
+    return URLSafeTimedSerializer(current_app.config['SECRET_KEY'], salt='admin-email-verified-device')
+
+
+def admin_device_verified(account):
+    """Device proof never replaces the password check or extends its own lifetime."""
+    token = request.cookies.get(ADMIN_DEVICE_COOKIE)
+    if not token:
+        return False
+    try:
+        proof = _admin_device_serializer().loads(token, max_age=int(ADMIN_DEVICE_LIFETIME.total_seconds()))
+    except (BadSignature, SignatureExpired):
+        return False
+    return (
+        isinstance(proof, dict) and proof.get('admin_id') == account.id
+        and isinstance(proof.get('credential_hash'), str)
+        and hmac.compare_digest(proof['credential_hash'], fingerprint(account))
+    )
+
+
+def remember_admin_device(response, account):
+    token = _admin_device_serializer().dumps({
+        'admin_id': account.id, 'credential_hash': fingerprint(account),
+    })
+    response.set_cookie(
+        ADMIN_DEVICE_COOKIE, token, max_age=int(ADMIN_DEVICE_LIFETIME.total_seconds()),
+        secure=current_app.config.get('SESSION_COOKIE_SECURE', False) or request.is_secure,
+        httponly=True, samesite='Lax', path='/',
+    )
+    return response
+
+
+def complete_admin_login(account, *, verified_by_email):
+    account.failed_login_attempts = 0
+    account.account_locked_until = None
+    db.session.commit()
+    session.pop('email_2fa_pending', None)
+    session['admin_id'] = account.id
+    session['admin_username'] = account.username
+    session['admin_mfa'] = fingerprint(account)
+    from audit_logger import log_audit_action
+    log_audit_action(
+        action_type='admin_login', target_type='admin', target_id=account.id,
+        target_name=account.username,
+        description='Admin signed in with password and email code.' if verified_by_email
+        else 'Admin signed in with password on a browser verified by email within 30 days.',
+    )
 
 
 def fingerprint(account):

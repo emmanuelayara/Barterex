@@ -591,10 +591,13 @@ def admin_login():
                     flash('This admin account has been deactivated.', 'danger')
                     return render_template('admin/login.html', form=form)
 
-                from services.email_two_factor import start_challenge
+                from services.email_two_factor import start_challenge, admin_device_verified, complete_admin_login
                 from flask_login import logout_user
                 logout_user()
                 _clear_admin_session()
+                if admin_device_verified(admin):
+                    complete_admin_login(admin, verified_by_email=False)
+                    return redirect(url_for('admin.admin_dashboard'))
                 success, error = start_challenge(admin, 'login')
                 if not success:
                     flash(error, 'danger')
