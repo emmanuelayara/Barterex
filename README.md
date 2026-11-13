@@ -3,6 +3,10 @@ Trade by Barter
 
 ## Saving and acquiring items
 
+New Paystack funding and delivery-fee payment references use the `barterxpress_`
+prefix. Existing payments retain their original reference for gateway verification,
+receipts and reconciliation; no database migration or historical rewrite is needed.
+
 Favorites is the user-facing saved-items list; saving does not hold an item.
 Users acquire items through individual funded reservations, verification,
 settlement, and fulfillment, not a cart or combined checkout. Legacy cart and

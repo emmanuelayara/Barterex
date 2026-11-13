@@ -242,6 +242,8 @@ class CompanyOwnedReservationTests(unittest.TestCase):
         self.assertEqual(post.call_count, 1)
         self.assertEqual(post.call_args.kwargs['json']['amount'], 500000)
         self.assertEqual(post.call_args.kwargs['json']['currency'], 'NGN')
+        self.assertTrue(initiated['reference'].startswith(f'barterxpress_delivery_{reservation.id}_'))
+        self.assertEqual(post.call_args.kwargs['json']['reference'], initiated['reference'])
         self.assertEqual(Payment.query.count(), 1)
 
     def test_unknown_initialization_outcome_does_not_create_second_charge(self):

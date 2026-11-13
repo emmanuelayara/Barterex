@@ -79,6 +79,24 @@ class SecurityHardeningTests(unittest.TestCase):
         self.assertEqual(CreditTransaction.query.filter_by(payment_id=payment.id).count(), 1)
         gateway.assert_called_once()
 
+    def test_new_payment_reference_uses_barterxpress_brand(self):
+        response = Mock(status_code=200)
+        response.json.side_effect = lambda: {
+            'status': True, 'data': {
+                'reference': gateway.call_args.kwargs['json']['reference'],
+                'authorization_url': 'https://checkout.paystack.com/test',
+                'access_code': 'test-access-code',
+            },
+        }
+        with patch.object(PaystackPaymentService, 'TEST_MODE', False), \
+             patch.object(PaystackPaymentService, 'get_auth_header', return_value={}), \
+             patch('paystack_payment_service.requests.post', return_value=response) as gateway:
+            result = PaystackPaymentService.initiate_payment(self.user.id, 1000)
+        self.assertTrue(result['success'])
+        self.assertTrue(result['reference'].startswith(f'barterxpress_{self.user.id}_'))
+        self.assertEqual(Payment.query.one().paystack_reference, result['reference'])
+        self.assertEqual(gateway.call_args.kwargs['json']['reference'], result['reference'])
+
     def test_amount_currency_and_reference_must_match(self):
         payment = self.payment()
         for mismatch in [{'amount': 100}, {'currency': 'USD'}, {'reference': 'wrong-reference'}]:

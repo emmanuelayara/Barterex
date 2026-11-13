@@ -121,7 +121,7 @@ class PaystackPaymentService:
             }
 
         import uuid
-        reference = f'barterex_delivery_{reservation.id}_{uuid.uuid4().hex[:12]}'
+        reference = f'barterxpress_delivery_{reservation.id}_{uuid.uuid4().hex[:12]}'
         payment.paystack_reference = reference
         db.session.add(payment)
         db.session.commit()
@@ -324,7 +324,7 @@ class PaystackPaymentService:
             amount_kobo = int(amount_naira * 100)
             
             import uuid
-            reference = f'barterex_{user_id}_{int(datetime.utcnow().timestamp())}'
+            reference = f'barterxpress_{user_id}_{int(datetime.utcnow().timestamp())}'
             
             payload = {
                 'email': user.email,
