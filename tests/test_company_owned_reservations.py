@@ -242,7 +242,8 @@ class CompanyOwnedReservationTests(unittest.TestCase):
         self.assertEqual(post.call_count, 1)
         self.assertEqual(post.call_args.kwargs['json']['amount'], 500000)
         self.assertEqual(post.call_args.kwargs['json']['currency'], 'NGN')
-        self.assertTrue(initiated['reference'].startswith(f'barterxpress_delivery_{reservation.id}_'))
+        self.assertTrue(initiated['reference'].startswith(f'barterxpress-delivery-{reservation.id}-'))
+        self.assertRegex(initiated['reference'], r'\A[A-Za-z0-9.=-]+\Z')
         self.assertEqual(post.call_args.kwargs['json']['reference'], initiated['reference'])
         self.assertEqual(Payment.query.count(), 1)
 
