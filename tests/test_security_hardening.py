@@ -93,7 +93,8 @@ class SecurityHardeningTests(unittest.TestCase):
              patch('paystack_payment_service.requests.post', return_value=response) as gateway:
             result = PaystackPaymentService.initiate_payment(self.user.id, 1000)
         self.assertTrue(result['success'])
-        self.assertTrue(result['reference'].startswith(f'barterxpress_{self.user.id}_'))
+        self.assertTrue(result['reference'].startswith(f'barterxpress-{self.user.id}-'))
+        self.assertRegex(result['reference'], r'\A[A-Za-z0-9.=-]+\Z')
         self.assertEqual(Payment.query.one().paystack_reference, result['reference'])
         self.assertEqual(gateway.call_args.kwargs['json']['reference'], result['reference'])
 
