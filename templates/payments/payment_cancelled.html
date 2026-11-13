@@ -136,7 +136,11 @@
     <div class="cancelled-icon">⏸️</div>
     
     <h1 class="cancelled-title">Payment Cancelled</h1>
+    {% if service_fee_order %}
+    <p class="cancelled-message">Checkout was closed. This does not cancel your reservation or confirm whether payment went through. Check your order before retrying; if your bank shows a debit, contact support.</p>
+    {% else %}
     <p class="cancelled-message">You have cancelled the payment. Your account has not been charged and no BXC have been added.</p>
+    {% endif %}
     
     {% if reference %}
     <div class="cancelled-details">
@@ -146,9 +150,9 @@
     {% endif %}
 
     <div class="action-buttons">
-      <a href="{{ url_for('payments.fund_account') }}" class="btn btn-primary">
+      <a href="{{ url_for('user.view_order_details', order_id=service_fee_order.id) if service_fee_order else url_for('payments.fund_account') }}" class="btn btn-primary">
         <i class="fas fa-redo"></i>
-        Try Again
+        {{ 'View order' if service_fee_order else 'Try Again' }}
       </a>
       <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
         <i class="fas fa-home"></i>
@@ -157,7 +161,11 @@
     </div>
 
     <div class="footer-text">
+      {% if service_fee_order %}
+      Service fees are separate from BXC funding. Your reservation deadline still applies.
+      {% else %}
       You can fund your account anytime from the Dashboard credit balance card.
+      {% endif %}
     </div>
   </div>
 </div>

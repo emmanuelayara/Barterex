@@ -95,11 +95,14 @@ def verify_payment(reference):
             print(f'Verifying TEST payment: {reference}')
         
         payment = Payment.query.filter_by(paystack_reference=reference).first()
-        if payment and payment.purpose == 'reservation_delivery_fee' and payment.user_id != current_user.id:
+        if payment and payment.purpose in ('reservation_delivery_fee', 'reservation_service_fee') and payment.user_id != current_user.id:
             return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         result = PaystackPaymentService.verify_payment(reference)
         
         if result['success']:
+            if payment and payment.purpose == 'reservation_service_fee':
+                flash('Service-fee payment confirmed. Check your order for fulfillment or support-review status.', 'success')
+                return redirect(url_for('user.view_order_details', order_id=payment.reservation.order.id))
             if payment and payment.purpose == 'reservation_delivery_fee':
                 flash('Home-service fee paid. Fulfillment can proceed after verification passes.', 'success')
                 return redirect(url_for('user.my_reservations'))
@@ -110,6 +113,9 @@ def verify_payment(reference):
                 reference=reference
             )
         else:
+            if payment and payment.purpose == 'reservation_service_fee':
+                return render_template('payments/service_fee_result.html',
+                                       success=False, reference=reference, error=result['error'])
             return render_template(
                 'payments/payment_failed.html',
                 error=result['error'],
@@ -173,11 +179,14 @@ def webhook():
                     error='No payment reference provided'
                 ), 400
             
+            payment = Payment.query.filter_by(paystack_reference=reference).first()
             # Verify the payment
             result = PaystackPaymentService.verify_payment(reference)
             
             if result['success']:
                 payment = Payment.query.filter_by(paystack_reference=reference).first()
+                if payment and payment.purpose == 'reservation_service_fee':
+                    return render_template('payments/service_fee_result.html', success=True, reference=reference)
                 if payment and payment.purpose == 'reservation_delivery_fee':
                     return render_template(
                         'payments/delivery_fee_result.html',
@@ -192,6 +201,9 @@ def webhook():
                     reference=reference
                 )
             else:
+                if payment and payment.purpose == 'reservation_service_fee':
+                    return render_template('payments/service_fee_result.html',
+                                           success=False, reference=reference, error=result['error'])
                 return render_template(
                     'payments/payment_failed.html',
                     error=result['error'],
@@ -258,4 +270,9 @@ def cancel_payment():
     Handle cancelled payment
     """
     reference = request.args.get('reference')
-    return render_template('payments/payment_cancelled.html', reference=reference)
+    payment = Payment.query.filter_by(
+        paystack_reference=reference, user_id=current_user.id,
+        purpose='reservation_service_fee',
+    ).first() if reference else None
+    return render_template('payments/payment_cancelled.html', reference=reference,
+                           service_fee_order=payment.reservation.order if payment else None)

@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}Home-service payment{% endblock %}
+{% block title %}Retired booking payment{% endblock %}
 {% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css') }}">{% endblock %}
 {% block content %}
 {% if success %}
 <div class="success-container">
   <div class="success-card">
     <div class="success-icon">✓</div>
-    <h1 class="success-title">Home-service fee paid</h1>
-    <p class="success-message">Your non-refundable home-service fee was verified. This is separate from the 5% completed-transaction fee (minimum ₦1,000, maximum ₦10,000). Active reservations proceed after inspection; a closed or expired reservation is not reopened by payment. Contact support if your reservation is closed.</p>
+    <h1 class="success-title">Retired booking payment recorded</h1>
+    <p class="success-message">A payment for a retired test booking was verified. No item was released or booking reopened. Contact support for payment reconciliation.</p>
     <div class="reference-box"><strong>Reference:</strong> {{ reference }}</div>
     <div class="action-buttons">
       <a class="btn btn-primary" href="{{ url_for('user.my_reservations') }}"><i class="fas fa-bookmark"></i> View my reservations</a>
@@ -19,7 +19,7 @@
   <div class="error-card">
     <div class="error-icon">✗</div>
     <h1 class="error-title">Payment not completed</h1>
-    <p class="error-message">{{ error or 'Paystack could not verify this delivery-fee payment.' }}</p>
+    <p class="error-message">{{ error or 'Paystack could not verify this historical payment.' }}</p>
     <div class="reference-box"><strong>Reference:</strong> {{ reference }}</div>
     <div class="action-buttons">
       <a class="btn btn-primary" href="{{ url_for('user.my_reservations') }}"><i class="fas fa-bookmark"></i> View my reservations</a>

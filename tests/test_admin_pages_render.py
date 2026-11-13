@@ -89,7 +89,7 @@ class AdminPagesRenderTests(unittest.TestCase):
         response = app.test_client().get('/admin/login')
         self.assertEqual(response.status_code, 200)
 
-    def test_settlement_layout_preserves_inspection_forms_and_payment_gate(self):
+    def test_settlement_layout_preserves_inspection_forms_and_blocks_retired_bookings(self):
         from html.parser import HTMLParser
 
         class Forms(HTMLParser):
@@ -112,9 +112,8 @@ class AdminPagesRenderTests(unittest.TestCase):
 
         reservation = Reservation(
             user_id=self.user.id, item_id=self.item.id, status='active',
-            provisional_credits_used=100, delivery_method='home delivery',
-            delivery_address='1 Test Road', delivery_fee_status='paid',
-            delivery_quote_naira=5000, expires_at=datetime.utcnow() + timedelta(days=1),
+            provisional_credits_used=100, delivery_method='pickup', pickup_station_id=self.station.id,
+            delivery_fee_status='not_required', expires_at=datetime.utcnow() + timedelta(days=1),
         )
         db.session.add(reservation)
         db.session.flush()
@@ -126,7 +125,8 @@ class AdminPagesRenderTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.get_data(as_text=True)
         self.assertIn('adm-page settlement-page', body)
-        self.assertIn('Service address', body)
+        self.assertIn('Verification-centre collection', body)
+        self.assertNotIn('Service address', body)
         self.assertIn('Valuation &amp; review notes', body)
         parser = Forms()
         parser.feed(body)
@@ -149,10 +149,11 @@ class AdminPagesRenderTests(unittest.TestCase):
                     {field.get('value') for field in fields if field.get('name') == 'result'},
                     {'pass', 'fail'},
                 )
-        reservation.delivery_fee_status = 'awaiting_payment'
+        reservation.delivery_method = 'home delivery'
         db.session.commit()
         unpaid = client.get('/admin/settlement-queue').get_data(as_text=True)
-        self.assertIn('Waiting for the buyer to pay', unpaid)
+        self.assertIn('Retired test booking', unpaid)
+        self.assertNotIn('Waiting for the buyer to pay', unpaid)
         for action in actions:
             self.assertNotIn(f'action="{action}"', unpaid)
 
@@ -276,7 +277,7 @@ class AdminPagesRenderTests(unittest.TestCase):
         db.session.commit()
         expected = {
             'items': 1, 'videos': 2, 'reconfirmations': 1,
-            'settlements': 3, 'orders': 4, 'appeals': 1, 'messages': 3, 'stolen_reports': 0,
+            'settlements': 2, 'orders': 4, 'appeals': 1, 'messages': 3, 'stolen_reports': 0,
             'manual_reviews': 0,
         }
         with app.test_request_context('/admin/dashboard'):

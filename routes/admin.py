@@ -205,11 +205,6 @@ def _settlement_queue_filter():
 
     return db.or_(
         Reservation.status == 'active',
-        db.and_(
-            Reservation.status == 'completed',
-            Reservation.delivery_method == 'home delivery',
-            Reservation.delivery_fee_status == 'quote_pending',
-        ),
         Reservation.backing_return_status == 'return_required',
     )
 
@@ -1874,41 +1869,7 @@ def settlement_queue():
 @admin_login_required
 @handle_errors
 def set_reservation_delivery_quote(reservation_id):
-    from models import Reservation
-
-    reservation = Reservation.query.get_or_404(reservation_id)
-    if reservation.delivery_method != 'home delivery':
-        flash('Only home-service reservations require a delivery quote.', 'danger')
-        return redirect(url_for('admin.settlement_queue'))
-    if reservation.status not in ('active', 'completed'):
-        flash('A delivery quote cannot be issued for this reservation status.', 'danger')
-        return redirect(url_for('admin.settlement_queue'))
-    if reservation.delivery_fee_status != 'quote_pending':
-        flash('This reservation already has a delivery quote or payment.', 'warning')
-        return redirect(url_for('admin.settlement_queue'))
-
-    from flask_wtf import FlaskForm
-    if not FlaskForm().validate_on_submit():
-        flash('Invalid or expired form token.', 'danger')
-        return redirect(url_for('admin.settlement_queue'))
-    from services.reservation_service import HOME_SERVICE_FEE_NAIRA
-
-    reservation.delivery_quote_naira = HOME_SERVICE_FEE_NAIRA
-    reservation.delivery_fee_status = 'awaiting_payment'
-    notify_user(
-        reservation.user_id,
-        (
-            f"The standard non-refundable home-service fee is ₦{reservation.delivery_quote_naira:,.2f} "
-            f"for reservation {reservation.id}. Pay through Paystack before verification, pickup or dispatch. This excludes the transaction fee."
-        ),
-        subject="Action needed: pay your home-service fee",
-        cta_endpoint='user.my_reservations',
-        cta_label='View My Reservations',
-        notification_type='reservation',
-        category='alert',
-    )
-    db.session.commit()
-    flash('Standard home-service fee sent to the buyer.', 'success')
+    flash('Delivery quotes are disabled. Only verification-centre collection is available.', 'warning')
     return redirect(url_for('admin.settlement_queue'))
 
 
@@ -1947,9 +1908,9 @@ def record_reservation_backing_return(reservation_id):
             record_custody_handoff(
                 intake,
                 session.get('admin_id'),
-                reservation.delivery_address,
+                reservation.pickup_station.address if reservation.pickup_station else None,
                 reservation.user.username,
-                'Returned to the buyer through the booked home-service route. The home-service fee remains non-refundable.',
+                'Collected by the buyer at the verification centre.',
             )
         reservation.backing_return_status = 'returned'
         db.session.commit()
@@ -2686,8 +2647,18 @@ def update_order_status(order_id):
         
         order = Order.query.filter_by(id=order_id).with_for_update().populate_existing().first_or_404()
         old_status = order.status
+        if order.delivery_method != 'pickup':
+            flash('Only verification-centre collection is available. This test delivery order cannot be dispatched.', 'warning')
+            return redirect(url_for('admin.manage_orders'))
         if order.cancelled or order.status == 'Cancelled':
             flash('Cancelled orders cannot be dispatched or delivered.', 'warning')
+            return redirect(url_for('admin.manage_orders'))
+        if order.reservation and order.reservation.service_fee_status != 'not_required' and (
+            order.reservation.status != 'completed'
+            or order.reservation.service_fee_status != 'paid'
+            or not order.reservation.final_terms_accepted_at
+        ):
+            flash('This order cannot be released until final terms, service-fee payment and BXC settlement are complete.', 'danger')
             return redirect(url_for('admin.manage_orders'))
         if old_status == 'Delivered':
             recorded, missing = record_order_delivery_custody(order, session['admin_id'], historical=True)
@@ -2699,24 +2670,13 @@ def update_order_status(order_id):
                 flash('Delivery custody is synchronized. The order was already delivered.', 'info')
             return redirect(url_for('admin.manage_orders'))
         
-        if order.reservation and (
-            order.reservation.delivery_method == 'home delivery'
-            and order.reservation.delivery_fee_status != 'paid'
-        ):
-            flash('This home-service order cannot be dispatched until the buyer pays the home-service fee.', 'danger')
-            return redirect(url_for('admin.manage_orders'))
-
-        if order.reservation and order.delivery_method == 'pickup':
-            if order.status == "Pending":
-                order.status = "Ready for Pickup"
-            elif order.status == "Ready for Pickup":
-                order.status = "Delivered"
-        elif order.status == "Pending":
-            order.status = "Shipped"
-        elif order.status == "Shipped":
-            order.status = "Out for Delivery"
-        elif order.status == "Out for Delivery":
+        if order.status == "Pending":
+            order.status = "Ready for Pickup"
+        elif order.status == "Ready for Pickup":
             order.status = "Delivered"
+        else:
+            flash('Only pending or ready-for-collection orders can advance.', 'warning')
+            return redirect(url_for('admin.manage_orders'))
 
         if order.status == 'Delivered':
             recorded, missing = record_order_delivery_custody(order, session['admin_id'])
@@ -2727,10 +2687,8 @@ def update_order_status(order_id):
         item_names = ", ".join([f"{oi.item.name}" for oi in order.items])
 
         status_messages = {
-            "Shipped": f"Your order for {item_names} has been shipped.",
             "Ready for Pickup": f"Your order for {item_names} is ready for collection at your selected Verification Station.",
-            "Out for Delivery": f"Your order for {item_names} is out for delivery.",
-            "Delivered": f"Your order for {item_names} has been delivered. 🎉",
+            "Delivered": f"Your order for {item_names} has been collected. 🎉",
         }
 
         note = Notification(
@@ -2759,10 +2717,11 @@ def update_order_status(order_id):
             
             db.session.add(note)
 
+        collection_status = 'Collected' if order.status == 'Delivered' else 'Ready for collection'
         queue_email(
             order.user.email,
-            f"Order {order.order_number}: {order.status}",
-            f"Your order is {order.status.lower()}",
+            f"Order {order.order_number}: {collection_status}",
+            f"Your order is {collection_status.lower()}",
             note.message,
             username=order.user.username,
             details=[f"Order number: {order.order_number}", f"Items: {item_names}"],

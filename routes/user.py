@@ -458,6 +458,8 @@ def profile_settings() -> Union[str, Response]:
 @handle_errors
 def user_orders():
     try:
+        from services.reservation_service import release_expired_reservations
+        release_expired_reservations()
         from models import Order
         page = request.args.get('page', 1, type=int)
         orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.date_ordered.desc()).paginate(page=page, per_page=6)
@@ -696,14 +698,11 @@ def pay_reservation_delivery_fee(reservation_id):
     reservation = Reservation.query.filter_by(
         id=reservation_id,
         user_id=current_user.id,
-    ).first_or_404()
-    from paystack_payment_service import PaystackPaymentService
-
-    result = PaystackPaymentService.initiate_delivery_fee_payment(reservation, current_user)
-    if not result.get('success'):
-        flash(result.get('error', 'Could not initialize the delivery-fee payment.'), 'danger')
-        return redirect(url_for('user.my_reservations'))
-    return redirect(result['payment_link'])
+    ).first()
+    if not reservation:
+        raise ResourceNotFoundError('Reservation', reservation_id)
+    flash('Delivery payments are disabled. Only verification-centre collection is available.', 'warning')
+    return redirect(url_for('user.my_reservations'))
 
 
 @user_bp.route('/order/<int:order_id>')
@@ -712,6 +711,8 @@ def pay_reservation_delivery_fee(reservation_id):
 def view_order_details(order_id):
     """View detailed order information with transaction clarity"""
     try:
+        from services.reservation_service import release_expired_reservations
+        release_expired_reservations()
         order = Order.query.options(joinedload(Order.items)).get_or_404(order_id)
         
         # Verify user owns this order
@@ -734,6 +735,38 @@ def view_order_details(order_id):
         return redirect(url_for('user.user_orders'))
 
 
+@user_bp.route('/order/<int:order_id>/service-fee', methods=['POST'])
+@login_required
+@handle_errors
+def pay_order_service_fee(order_id):
+    order = Order.query.filter_by(id=order_id, user_id=current_user.id).first()
+    if not order:
+        raise ResourceNotFoundError('Order', order_id)
+    reservation = order.reservation
+    if not reservation:
+        raise ValidationError('This order does not have a reservation service fee.')
+    from services.reservation_service import accept_final_terms
+    from paystack_payment_service import PaystackPaymentService
+
+    if not reservation.final_terms_accepted_at:
+        if request.form.get('accept_terms') != 'yes':
+            flash('Accept the final terms before continuing to payment.', 'danger')
+            return redirect(url_for('user.view_order_details', order_id=order.id))
+        ok, error = accept_final_terms(
+            reservation, current_user, request.form.get('purchase_value'), request.form.get('service_fee'),
+        )
+        if not ok:
+            flash(error, 'danger')
+            return redirect(url_for('user.view_order_details', order_id=order.id))
+    result = PaystackPaymentService.initiate_service_fee_payment(reservation, current_user)
+    if not result.get('success'):
+        logger.warning('Service-fee initialization failed for order %s: %s', order.id, result.get('error'))
+        flash(result.get('error', 'Could not initialize the service-fee payment.'), 'danger')
+    else:
+        flash('Your payment link is ready below and has been queued for email delivery.', 'success')
+    return redirect(url_for('user.view_order_details', order_id=order.id))
+
+
 @user_bp.route('/order/<int:order_id>/download-receipt')
 @login_required
 @handle_errors
@@ -746,6 +779,11 @@ def download_receipt(order_id):
         if order.user_id != current_user.id:
             logger.warning(f"Unauthorized receipt download attempt - User: {current_user.username}, Order: {order_id}")
             raise AuthorizationError("You don't have access to this order's receipt")
+        if order.reservation and order.reservation.service_fee_status != 'not_required' and (
+            order.reservation.status != 'completed'
+        ):
+            flash('A purchase receipt is available after payment and BXC settlement are complete.', 'warning')
+            return redirect(url_for('user.view_order_details', order_id=order.id))
         
         # Generate PDF receipt
         pdf_buffer = generate_pdf_receipt(order, current_user)

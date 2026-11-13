@@ -35,6 +35,7 @@ def queue_email(
     details=None,
     cta_endpoint=None,
     cta_label=None,
+    cta_url=None,
     **cta_values,
 ):
     """Render a branded email now and send it after the current transaction commits."""
@@ -47,7 +48,8 @@ def queue_email(
             # caller's cached login state in `g` is left untouched.
             stack.enter_context(current_app.app_context())
             stack.enter_context(current_app.test_request_context(base_url=current_app.config['APP_URL']))
-        cta_url = url_for(cta_endpoint, _external=True, **cta_values) if cta_endpoint else None
+        if cta_url is None and cta_endpoint:
+            cta_url = url_for(cta_endpoint, _external=True, **cta_values)
         html_body = render_template(
             'emails/notification.html',
             heading=heading,

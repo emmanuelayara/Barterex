@@ -505,7 +505,7 @@
     <section class="transaction-list" style="margin-top: 28px;">
       <div class="transaction-header">
         <h2 class="transaction-title">Payment Status</h2>
-        <p class="transaction-subtitle">External payments are shown separately from BXC. A delivery-fee payment never adds credits to your wallet.</p>
+        <p class="transaction-subtitle">External payments are shown separately from BXC. Service fees never add credits to your wallet.</p>
       </div>
       {% for payment in payments %}
         <div class="transaction-card">
@@ -514,11 +514,11 @@
               <div class="transaction-icon">💳</div>
               <div class="transaction-type">
                 <span class="transaction-type-label">
-                  {% if payment.purpose == 'reservation_delivery_fee' %}Home-service delivery fee{% else %}BXC purchase payment{% endif %}
+                  {% if payment.purpose == 'reservation_service_fee' %}Transaction service fee{% elif payment.purpose == 'reservation_delivery_fee' %}Historical logistics payment{% else %}BXC purchase payment{% endif %}
                 </span>
                 <span class="transaction-type-name">
-                  {% if payment.purpose == 'reservation_delivery_fee' %}
-                    Non-refundable logistics charge{% if payment.reservation_id %} · Reservation #{{ payment.reservation_id }}{% endif %}
+                  {% if payment.purpose in ['reservation_service_fee', 'reservation_delivery_fee'] %}
+                    {% if payment.purpose == 'reservation_service_fee' %}Service fee{% else %}Retired test booking{% endif %}{% if payment.reservation_id %} · Reservation #{{ payment.reservation_id }}{% endif %}
                   {% else %}
                     ₦{{ "{:,.2f}".format(payment.amount_naira) }} payment for {{ "{:,.0f}".format(payment.credits_purchased) }} BXC
                   {% endif %}
@@ -543,7 +543,7 @@
           </div>
           <div class="transaction-footer">
             <span>{{ payment.created_at.strftime('%d %b %Y, %I:%M %p') }} · Reference: {{ payment.paystack_reference or payment.monnify_reference or 'Not assigned' }}</span>
-            {% if payment.purpose == 'reservation_delivery_fee' %}
+            {% if payment.purpose in ['reservation_service_fee', 'reservation_delivery_fee'] %}
               <a href="{{ url_for('user.my_reservations') }}" style="color: #667eea; text-decoration: none;">View reservation →</a>
             {% elif payment.status == 'completed' %}
               <span>{{ "{:,.0f}".format(payment.credits_purchased) }} BXC credited</span>
@@ -621,8 +621,8 @@
               {% elif reservation.status == 'completed' %}
                 · Order is being prepared
               {% endif %}
-              {% if reservation.delivery_method == 'home delivery' %}
-                · Home fee: {{ reservation.delivery_fee_status|replace('_', ' ')|title }}
+              {% if reservation.delivery_method != 'pickup' %}
+                · Retired test booking
                 {% if reservation.delivery_quote_naira %} (₦{{ "{:,.2f}".format(reservation.delivery_quote_naira) }}){% endif %}
               {% elif reservation.pickup_station %}
                 · Pickup: {{ reservation.pickup_station.name }}

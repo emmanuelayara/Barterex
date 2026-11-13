@@ -63,17 +63,14 @@
                     <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Orders</option>
                     <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
                     <option value="Ready for Pickup" {% if status_filter == 'Ready for Pickup' %}selected{% endif %}>Ready for Pickup</option>
-                    <option value="Shipped" {% if status_filter == 'Shipped' %}selected{% endif %}>Shipped</option>
-                    <option value="Out for Delivery" {% if status_filter == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
-                    <option value="Delivered" {% if status_filter == 'Delivered' %}selected{% endif %}>Delivered</option>
+                    <option value="Delivered" {% if status_filter == 'Delivered' %}selected{% endif %}>Collected</option>
                     <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
                 </select>
 
                 <!-- Delivery Method Filter -->
                 <select name="delivery" class="form-select" id="deliveryFilter">
-                    <option value="all" {% if delivery_filter == 'all' %}selected{% endif %}>All Delivery Methods</option>
+                    <option value="all" {% if delivery_filter == 'all' %}selected{% endif %}>All Bookings</option>
                     <option value="pickup" {% if delivery_filter == 'pickup' %}selected{% endif %}>Pickup</option>
-                    <option value="home delivery" {% if delivery_filter == 'home delivery' %}selected{% endif %}>Home Delivery</option>
                 </select>
 
                 <!-- Sort By -->
@@ -97,11 +94,8 @@
                 <a href="{{ url_for('admin.manage_orders', status='Pending') }}" class="adm-tab filter-btn {% if status_filter == 'Pending' %}active{% endif %}">
                     <span class="mo-tab-label"><i class="bi bi-hourglass-split"></i> Pending</span> <span class="adm-count">{{ pending_count }}</span>
                 </a>
-                <a href="{{ url_for('admin.manage_orders', status='Shipped') }}" class="adm-tab filter-btn {% if status_filter == 'Shipped' %}active{% endif %}">
-                    <span class="mo-tab-label"><i class="bi bi-truck"></i> Shipped</span> <span class="adm-count">{{ shipped_count }}</span>
-                </a>
                 <a href="{{ url_for('admin.manage_orders', status='Delivered') }}" class="adm-tab filter-btn {% if status_filter == 'Delivered' %}active{% endif %}">
-                    <span class="mo-tab-label"><i class="bi bi-check-circle"></i> Delivered</span> <span class="adm-count">{{ delivered_count }}</span>
+                    <span class="mo-tab-label"><i class="bi bi-check-circle"></i> Collected</span> <span class="adm-count">{{ delivered_count }}</span>
                 </a>
             </div>
         </div>
@@ -157,16 +151,13 @@
                     <td class="delivery-info">
                     <div class="delivery-method">
                         <span class="adm-pill info method-badge method-{{ order.delivery_method }}">
-                        {% if order.delivery_method == 'pickup' %}<i class="bi bi-shop"></i>{% else %}<i class="bi bi-truck"></i>{% endif %}
-                        {{ order.delivery_method|title }}
+                        {% if order.delivery_method == 'pickup' %}<i class="bi bi-shop"></i> Verification Centre{% else %}Retired test booking{% endif %}
                         </span>
                     </div>
                     <div class="delivery-details mo-delivery-details">
                         {% if order.delivery_method == 'pickup' %}
                         <span class="pickup-location">{{ order.pickup_station.name if order.pickup_station else 'Station not assigned' }}</span>
                         {% if order.pickup_station %}<span class="pickup-state">({{ order.pickup_station.state }})</span>{% endif %}
-                        {% else %}
-                        <span class="delivery-address">{{ order.delivery_address }}</span>
                         {% endif %}
                     </div>
                     </td>
@@ -194,17 +185,16 @@
                     </td>
                     <td class="actions-cell">
                     {% if order.status != 'Delivered' and order.status != 'Cancelled' %}
-                      {% if order.reservation and order.delivery_method == 'home delivery' and order.reservation.delivery_fee_status != 'paid' %}
-                        <span class="adm-pill warn status-complete">Waiting for delivery-fee payment</span>
+                      {% if order.delivery_method != 'pickup' %}
+                        <span class="adm-pill warn status-complete">Retired test booking</span>
+                      {% elif order.reservation and order.reservation.service_fee_status != 'not_required' and (order.reservation.service_fee_status != 'paid' or order.reservation.status != 'completed') %}
+                        <span class="adm-pill warn status-complete">Waiting for final acceptance, service fee and BXC settlement</span>
                       {% else %}
                         <form method="POST" action="{{ url_for('admin.update_order_status', order_id=order.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="adm-btn cta sm action-btn">
-                            {% if order.reservation and order.delivery_method == 'pickup' and order.status == 'Pending' %}<i class="bi bi-shop"></i> Mark Ready for Pickup
+                            {% if order.status == 'Pending' %}<i class="bi bi-shop"></i> Mark Ready for Pickup
                             {% elif order.status == 'Ready for Pickup' %}<i class="bi bi-check-circle"></i> Mark as Collected
-                            {% elif order.status == 'Pending' %}<i class="bi bi-truck"></i> Mark as Shipped
-                            {% elif order.status == 'Shipped' %}<i class="bi bi-geo-alt"></i> Mark as Out for Delivery
-                            {% elif order.status == 'Out for Delivery' %}<i class="bi bi-check-circle"></i> Mark as Delivered
                             {% endif %}
                         </button>
                         </form>

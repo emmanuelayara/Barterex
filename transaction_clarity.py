@@ -20,11 +20,6 @@ logger = setup_logger(__name__)
 # ==================== DELIVERY TIMELINES ====================
 
 DELIVERY_TIMELINES = {
-    'home delivery': {
-        'min_days': 3,
-        'max_days': 7,
-        'description': 'Order will be delivered to your home address'
-    },
     'pickup': {
         'min_days': 1,
         'max_days': 2,
@@ -37,38 +32,35 @@ def calculate_estimated_delivery(delivery_method):
     Calculate estimated delivery date based on delivery method
     
     Args:
-        delivery_method: 'home delivery' or 'pickup'
+        delivery_method: 'pickup'
     
     Returns:
         datetime object representing estimated delivery
     """
-    try:
-        if delivery_method not in DELIVERY_TIMELINES:
-            delivery_method = 'home delivery'
-        
-        timeline = DELIVERY_TIMELINES[delivery_method]
-        # Use average of min and max days
-        avg_days = (timeline['min_days'] + timeline['max_days']) / 2
-        estimated_date = datetime.utcnow() + timedelta(days=int(avg_days))
-        
-        logger.info(f"Calculated delivery estimate - Method: {delivery_method}, Date: {estimated_date}")
-        return estimated_date
-    except Exception as e:
-        logger.error(f"Error calculating delivery date: {str(e)}", exc_info=True)
-        return datetime.utcnow() + timedelta(days=5)
+    if delivery_method not in DELIVERY_TIMELINES:
+        raise ValueError('Only verification-centre collection is available.')
+    timeline = DELIVERY_TIMELINES[delivery_method]
+    avg_days = (timeline['min_days'] + timeline['max_days']) / 2
+    return datetime.utcnow() + timedelta(days=int(avg_days))
 
 def get_delivery_explanation(delivery_method):
     """
     Get user-friendly explanation of delivery method and timeline
     
     Args:
-        delivery_method: 'home delivery' or 'pickup'
+        delivery_method: 'pickup', or a retired method on an archived order
     
     Returns:
         dict with explanation and timeline details
     """
     if delivery_method not in DELIVERY_TIMELINES:
-        delivery_method = 'home delivery'
+        return {
+            'method': 'Retired test booking',
+            'description': 'This booking cannot be fulfilled. Contact support.',
+            'min_days': None,
+            'max_days': None,
+            'full_text': 'This booking cannot be fulfilled. Contact support.',
+        }
     
     timeline = DELIVERY_TIMELINES[delivery_method]
     return {
@@ -172,6 +164,18 @@ def get_status_explanation(status):
         dict with status details and what happens next
     """
     explanations = {
+        'Awaiting Final Acceptance': {
+            'title': 'Review Final Terms',
+            'description': 'Verification complete.',
+            'what_happens': 'Review and accept below to pay.',
+            'icon': '📋'
+        },
+        'Awaiting Service Fee': {
+            'title': 'Service Fee Awaiting Payment',
+            'description': 'Final terms accepted.',
+            'what_happens': 'Pay the service fee below.',
+            'icon': '📋'
+        },
         'Pending': {
             'title': 'Order Received',
             'description': 'Your order has been received and is being reviewed',
@@ -180,9 +184,15 @@ def get_status_explanation(status):
         },
         'Processing': {
             'title': 'Processing',
-            'description': 'Your items are being prepared for delivery',
-            'what_happens': 'Your order will be ready for shipping soon',
+            'description': 'Your items are being prepared for collection',
+            'what_happens': 'We will notify you when your items are ready',
             'icon': '⚙️'
+        },
+        'Ready for Pickup': {
+            'title': 'Ready for Collection',
+            'description': 'Your order is ready at your verification centre',
+            'what_happens': 'Visit the centre to collect your items',
+            'icon': '✅'
         },
         'Shipped': {
             'title': 'On the Way',
@@ -191,8 +201,8 @@ def get_status_explanation(status):
             'icon': '🚚'
         },
         'Delivered': {
-            'title': 'Delivered',
-            'description': 'Your order has been successfully delivered',
+            'title': 'Collected',
+            'description': 'Your order has been collected',
             'what_happens': 'Enjoy your items!',
             'icon': '✅'
         },
@@ -395,10 +405,11 @@ def generate_pdf_receipt(order, user):
             elements.append(KeepTogether(funding_elements))
 
         elements.append(Paragraph(
-            ('04' if reservation else '03') + ' / DELIVERY & SERVICE FEES', heading,
+            ('04' if reservation else '03') + ' / COLLECTION & SERVICE FEES', heading,
         ))
-        delivery_rows = [('Delivery method', order.delivery_method.title())]
-        if order.delivery_address:
+        delivery_rows = [('Collection method', 'Verification centre' if order.delivery_method == 'pickup'
+                          else 'Retired test booking')]
+        if order.delivery_method != 'pickup' and order.delivery_address:
             delivery_rows.append(('Delivery address', order.delivery_address))
         if order.pickup_station:
             station = order.pickup_station
@@ -407,22 +418,30 @@ def generate_pdf_receipt(order, user):
             ))
         if order.estimated_delivery_date:
             delivery_rows.append((
-                'Estimated delivery', order.estimated_delivery_date.strftime('%d %B %Y'),
+                'Estimated collection', order.estimated_delivery_date.strftime('%d %B %Y'),
             ))
         if order.actual_delivery_date:
             delivery_rows.append((
-                'Delivered on', order.actual_delivery_date.strftime('%d %B %Y'),
+                'Collected on', order.actual_delivery_date.strftime('%d %B %Y'),
             ))
-        delivery_rows.append(('Home-service fee', amount(order.logistics_fee_naira, 'NGN')))
-        if reservation:
+        if order.delivery_method != 'pickup' and order.logistics_fee_naira:
+            delivery_rows.append(('Historical logistics fee', amount(order.logistics_fee_naira, 'NGN')))
+        if reservation and reservation.service_fee_status != 'not_required':
+            delivery_rows.extend([
+                ('Transaction service fee', amount(reservation.service_fee_naira, 'NGN')),
+                ('Service-fee payment status', reservation.service_fee_status.replace('_', ' ').title()),
+                ('Final terms accepted', reservation.final_terms_accepted_at.strftime('%d %B %Y, %H:%M UTC')
+                 if reservation.final_terms_accepted_at else 'Not accepted'),
+            ])
+        if reservation and order.delivery_method != 'pickup':
             delivery_rows.append((
                 'Fee status', reservation.delivery_fee_status.replace('_', ' ').title(),
             ))
         elements.append(details(delivery_rows))
-        if reservation and order.delivery_method == 'home delivery':
+        if order.delivery_method != 'pickup':
             elements.extend([Spacer(1, 7), text(
-                'The home-service fee is charged separately in NGN and is non-refundable. '
-                'A quoted or pending fee is not proof of payment.', small,
+                'This retired test booking cannot be fulfilled. Historical charges are '
+                'recorded for reconciliation only. Contact support about any payment.', small,
             )])
         if order.cancelled or order.cancellation_reason:
             elements.append(Paragraph('CANCELLATION RECORD', heading))

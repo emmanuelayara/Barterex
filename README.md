@@ -3,7 +3,7 @@ Trade by Barter
 
 ## Saving and acquiring items
 
-New Paystack funding and delivery-fee payment references use the `barterxpress_`
+New Paystack funding and service-fee payment references use the `barterxpress_`
 prefix. Existing payments retain their original reference for gateway verification,
 receipts and reconciliation; no database migration or historical rewrite is needed.
 
@@ -12,6 +12,56 @@ Users acquire items through individual funded reservations, verification,
 settlement, and fulfillment, not a cart or combined checkout. Legacy cart and
 checkout URLs redirect to Favorites or the relevant item without purchasing
 or deleting historical cart records. Cart notification controls are retired.
+
+### Transaction service fee
+
+New reservations show a separate NGN service fee: 5% of the agreed value of the
+item the buyer receives, minimum NGN 1,000 and maximum NGN 10,000, rounded to kobo.
+Station collection is seller-first for fee-bearing reservations: notify the owner
+to bring the reserved item to the selected centre, verify it, then invite the buyer.
+Spendable-BXC buyers attend to accept, pay and collect; item-backed buyers first
+bring their backing items for verification. One 48-hour window begins when the
+reserved item passes and includes attendance, backing-item checks, valuation
+decisions, shortfall coverage, acceptance and payment. Backing-item inspection is
+blocked before the reserved item passes. Revaluation/shortfall deadlines cannot
+extend this collection window. Company inventory is already verified, so the
+invitation/window starts at reservation. Buyers are not penalized for missing
+backing-item checks while still waiting for the seller's item.
+
+Verification-centre collection is the only supported fulfillment method.
+New requests specifying another method are rejected server-side. The centre
+must be in the buyer's profile state. If none are available, update the profile
+or contact support; there is no alternate delivery option.
+Required verification, accepted revaluations and sufficient held BXC
+must be complete before final terms/payment are available.
+Legacy fee-exempt reservations retain their existing flow. No additional schema
+migration is needed for seller-first collection beyond the service-fee migration.
+Acceptance saves version `service_fee_v1` and creates
+a Paystack checkout link using the registered email, with card/bank-transfer
+channels. The same saved link is emailed and displayed on the pending order.
+The order shows a compact amount/deadline/acceptance summary; verification-ready
+and payment-link emails include the full fee calculation, payment and expiry details.
+The payment buys no BXC. Confirmed payment settles the existing held-BXC
+purchase once; only then can staff release the item for collection.
+
+Deploy with web/worker traffic stopped and a database backup, then run
+`flask db upgrade` before restarting. Migration `service_fee_20261113` leaves
+existing reservations exempt (`not_required`); only newly created reservations
+receive the fee. Existing completed orders keep their terms. Do not downgrade
+while service-fee records exist. No live database migration is performed by tests.
+
+Expiry cancels the pending order and releases held purchase BXC using the existing
+reservation rules. Previously acquired backing items remain company property
+and their credited BXC remains the user's, as already disclosed in backing-item
+consent. Late verified payments are recorded and flagged to support/admins;
+they never reopen a closed reservation or authorize release. Refund/reconciliation
+of these payments requires support; this change adds no automatic refund.
+The former logistics payment and quote endpoints are retired and cannot create
+or reuse checkouts. Existing test logistics records are retained only for history
+and payment reconciliation; they cannot be dispatched or settled. No database
+records are deleted and no automatic refunds or booking conversions are performed.
+Ensure Paystack bank-transfer checkout is enabled for the merchant account and
+the public webhook/callback and outbound email settings are configured.
 
 ## Manual item verification
 

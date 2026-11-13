@@ -12,7 +12,7 @@ from PIL import Image
 from flask import g
 from app import app, db, limiter
 from services.email_two_factor import fingerprint
-from models import Admin, Item, ItemImage, ItemVideo, User, VerificationIntake, ReservationCreditEntry, ClearingInventoryItem, PickupStation, Reservation, Order
+from models import Admin, Item, ItemImage, ItemVideo, User, VerificationIntake, ReservationCreditEntry, ClearingInventoryItem, PickupStation, Reservation, Order, Payment
 from services.item_activation_service import activate_item
 
 
@@ -446,13 +446,25 @@ class ManualReviewTests(unittest.TestCase):
         with self.client.session_transaction() as session:
             session['_user_id'] = str(buyer.id)
         self.assertIn(b'physically verified', self.client.get(f'/item/{self.item.id}').data)
-        self.assertIn(b'completes this purchase immediately', self.client.get(
+        self.assertIn(b'accept the final terms and pay the service fee', self.client.get(
             f'/item/{self.item.id}/choose-backing-assets').data)
         response = self.client.post(f'/item/{self.item.id}/reserve', data={
             'funding_mode': 'spendable', 'delivery_method': 'pickup', 'pickup_station_id': station.id,
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.location, '/my_orders')
+        self.assertEqual(response.location, f'/order/{Order.query.one().id}')
+        self.assertEqual(Reservation.query.one().status, 'active')
+        self.assertEqual(self.item.owner_type, 'barterex')
+        reservation = Reservation.query.one()
+        from paystack_payment_service import PaystackPaymentService
+        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
+            self.client.post(f'/order/{Order.query.one().id}/service-fee', data={
+                'accept_terms': 'yes', 'purchase_value': str(reservation.purchase_value),
+                'service_fee': f'{reservation.service_fee_naira:.2f}',
+            })
+            payment = Payment.query.filter_by(purpose='reservation_service_fee').one()
+            result = PaystackPaymentService.verify_payment(payment.paystack_reference)
+            self.assertTrue(result['success'], result)
         self.assertEqual(Reservation.query.one().status, 'completed')
         self.assertEqual(Order.query.one().user_id, buyer.id)
         self.assertEqual(self.user.credits, 500)

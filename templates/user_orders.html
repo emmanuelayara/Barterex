@@ -853,18 +853,20 @@
                           ✅ Delivered
                       {% elif order.status == 'Cancelled' %}
                           ❌ Cancelled
+                      {% else %}
+                          {{ order.status }}
                       {% endif %}
                   </span>
                 </div>
               </div>
 
               <div class="detail-row">
-                <div class="detail-label">🚚 Delivery Method</div>
+                <div class="detail-label">Collection Method</div>
                 <div class="detail-value">
                   {% if order.delivery_method == 'pickup' %}
                     <span class="delivery-method method-pickup">🏪 Verification Station</span>
                   {% else %}
-                    <span class="delivery-method method-delivery">🚚 Home Delivery</span>
+                    <span class="delivery-method">Retired test booking</span>
                   {% endif %}
                 </div>
               </div>
@@ -879,15 +881,6 @@
                       <small>{{ order.pickup_station.address }}, {{ order.pickup_station.city }}, {{ order.pickup_station.state }}</small>
                     </div>
                   </div> 
-                </div>
-              {% elif order.delivery_address %}
-                <div class="detail-row">
-                  <div class="detail-label">🏠 Delivery Address</div>
-                  <div class="detail-value">
-                    <div class="delivery-address">
-                      {{ order.delivery_address }}
-                    </div>
-                  </div>
                 </div>
               {% endif %}
             </div>

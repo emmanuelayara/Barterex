@@ -105,7 +105,7 @@
     <div class="page-header">
       {{ fx.floaters('banner') }}
       <h1 class="page-title">🧺 Reserve This Purchase</h1>
-      <p class="page-subtitle">Choose how to fund "{{ item.name }}" and where you want it routed.</p>
+      <p class="page-subtitle">Choose how to fund "{{ item.name }}" and your verification centre.</p>
     </div>
 
     <div class="target-banner">
@@ -113,7 +113,7 @@
       <strong class="reserve-item-name">{{ item.name }}</strong>
       <span class="reserve-price">ᗸ{{ '{:,.0f}'.format(item.value) }} BXC</span>
     {% if item.owner_type == 'barterex' %}
-    <p class="action-hint">Company inventory is already physically verified. Spendable BXC completes this purchase immediately at a Verification Station, or after home-service payment; item-backed purchases wait for your backing items to pass inspection.</p>
+    <p class="action-hint">Company inventory is already physically verified. Spendable BXC is held while you accept the final terms and pay the service fee; item-backed purchases also wait for your backing items to pass inspection.</p>
     {% endif %}
     </div>
 
@@ -121,6 +121,12 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <fieldset class="surrender-consent">
         <legend>Funding</legend>
+        <p>Estimated service fee: <strong>₦{{ '{:,.2f}'.format(service_fee_naira) }}</strong>.
+          This is 5% of the agreed value of the item you receive (minimum ₦1,000, maximum ₦10,000).
+          It is paid separately in naira through Paystack after verification and your final acceptance,
+          not deducted from BXC. For station collection, we verify the reserved item first, then notify you
+          to visit within 48 hours, bring any backing items for inspection, accept and pay before collection.
+          Any revised agreed value will update this fee. Collection at the centre has no extra charge.</p>
         {% if eligible_items %}
           <label><input type="radio" name="funding_mode" value="item_backed" checked> Use provisional BXC backed by my items</label>
         {% endif %}
@@ -169,33 +175,28 @@
       </div>
 
       <fieldset class="surrender-consent">
-        <legend>Delivery or pickup</legend>
-        <label><input type="radio" name="delivery_method" value="pickup" {% if stations %}checked{% else %}disabled{% endif %}> Verification Station</label>
-        <label><input type="radio" name="delivery_method" value="home delivery" {% if not stations %}checked{% endif %}> Home service &mdash; ₦{{ '{:,.0f}'.format(home_service_fee_naira) }}</label>
+        <legend>Verification centre collection</legend>
+        <input type="hidden" name="delivery_method" value="pickup">
         <div id="pickupStationFields">
           {% if stations %}
             <label for="pickupStation">Verification Station</label>
-            <select name="pickup_station_id" id="pickupStation">
+            <select name="pickup_station_id" id="pickupStation" required>
               <option value="">Choose a station</option>
               {% for station in stations %}
                 <option value="{{ station.id }}">{{ station.name }} — {{ station.city }}, {{ station.state }}</option>
               {% endfor %}
             </select>
           {% else %}
-            <p>No Verification Stations are available in your state; choose home service.</p>
+            <p>No verification centres are available in your profile state.
+              <a href="{{ url_for('user.settings') }}">Update your profile</a> or contact support before reserving.</p>
           {% endif %}
-        </div>
-        <div id="homeAddressFields" hidden>
-          <label for="deliveryAddress">Home delivery address</label>
-          <input type="text" name="delivery_address" id="deliveryAddress" value="{{ current_user.address or '' }}" maxlength="200">
-          <p>The standard non-refundable home-service fee is ₦{{ '{:,.0f}'.format(home_service_fee_naira) }}. Submitting this reservation takes you to Paystack to pay immediately, before home verification, pickup or dispatch. This is separate from the 5% completed-transaction fee (minimum ₦1,000, maximum ₦10,000).</p>
         </div>
       </fieldset>
 
       <div class="running-total insufficient" id="runningTotal" {% if not eligible_items %}hidden{% endif %}>
           Selected: ᗸ0 / ᗸ{{ '{:,.0f}'.format(item.value) }}
       </div>
-      <button type="submit" class="confirm-btn" id="confirmBtn"
+      <button type="submit" class="confirm-btn" id="confirmBtn" disabled
               data-spendable-balance="{{ current_user.credits or 0 }}">Confirm &amp; Reserve</button>
     </form>
     {% if not eligible_items and (current_user.credits or 0) < (item.value or 0) %}
@@ -214,9 +215,7 @@
   const spendableBalance = parseFloat(confirmBtn.dataset.spendableBalance || '0');
   const surrenderConsent = document.getElementById('surrenderConsent');
   const fundingInputs = document.querySelectorAll('input[name="funding_mode"]');
-  const deliveryInputs = document.querySelectorAll('input[name="delivery_method"]');
   const stationSelect = document.getElementById('pickupStation');
-  const deliveryAddress = document.getElementById('deliveryAddress');
 
   function selectedValue(inputs) {
     return Array.from(inputs).find(input => input.checked)?.value;
@@ -226,25 +225,17 @@
     let total = 0;
     checkboxes.forEach(cb => { if (cb.checked) total += parseFloat(cb.dataset.value || '0'); });
     const itemBacked = selectedValue(fundingInputs) === 'item_backed';
-    const deliveryMethod = selectedValue(deliveryInputs);
     const sufficient = itemBacked ? total >= target : spendableBalance >= target;
     const consented = !itemBacked || (surrenderConsent && surrenderConsent.checked);
-    const stationSelected = deliveryMethod !== 'pickup' || !stationSelect || stationSelect.value !== '';
-    const addressEntered = deliveryMethod !== 'home delivery' || (deliveryAddress && deliveryAddress.value.trim() !== '');
+    const stationSelected = stationSelect && stationSelect.value !== '';
     document.getElementById('backingAssets').hidden = !itemBacked;
     checkboxes.forEach(checkbox => { checkbox.disabled = !itemBacked; });
     if (surrenderConsent) surrenderConsent.disabled = !itemBacked;
     runningTotal.hidden = !itemBacked;
-    document.getElementById('pickupStationFields').hidden = deliveryMethod !== 'pickup';
-    document.getElementById('homeAddressFields').hidden = deliveryMethod !== 'home delivery';
-    if (stationSelect) stationSelect.required = deliveryMethod === 'pickup';
-    if (deliveryAddress) deliveryAddress.required = deliveryMethod === 'home delivery';
     runningTotal.classList.toggle('sufficient', sufficient);
     runningTotal.classList.toggle('insufficient', !sufficient);
-    confirmBtn.disabled = !sufficient || !consented || !stationSelected || !addressEntered;
-    confirmBtn.textContent = deliveryMethod === 'home delivery'
-      ? 'Reserve & pay home-service fee'
-      : 'Confirm reservation';
+    confirmBtn.disabled = !sufficient || !consented || !stationSelected;
+    confirmBtn.textContent = 'Confirm reservation';
     if (itemBacked) {
       runningTotal.childNodes[0].textContent = `Selected: ᗸ${total.toLocaleString()} / ᗸ${target.toLocaleString()} `;
     }
@@ -252,10 +243,8 @@
 
   checkboxes.forEach(cb => cb.addEventListener('change', updateTotal));
   fundingInputs.forEach(input => input.addEventListener('change', updateTotal));
-  deliveryInputs.forEach(input => input.addEventListener('change', updateTotal));
   if (surrenderConsent) surrenderConsent.addEventListener('change', updateTotal);
   if (stationSelect) stationSelect.addEventListener('change', updateTotal);
-  if (deliveryAddress) deliveryAddress.addEventListener('input', updateTotal);
   updateTotal();
 </script>
 {% endblock %}

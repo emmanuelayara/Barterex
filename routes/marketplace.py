@@ -14,7 +14,8 @@ from exceptions import ResourceNotFoundError, DatabaseError
 from error_handlers import handle_errors
 from services.reservation_service import (
     create_reservation, cancel_reservation, get_active_reservation,
-    get_eligible_backing_items, RESERVATION_HOLD_HOURS, HOME_SERVICE_FEE_NAIRA
+    get_eligible_backing_items, RESERVATION_HOLD_HOURS,
+    calculate_service_fee,
 )
 from search_discovery import (
     get_search_suggestions,
@@ -274,7 +275,7 @@ def choose_backing_assets(item_id: int) -> Union[str, Response]:
         item=item,
         eligible_items=eligible_items,
         stations=stations,
-        home_service_fee_naira=HOME_SERVICE_FEE_NAIRA,
+        service_fee_naira=calculate_service_fee(item.value),
     )
 
 
@@ -290,8 +291,10 @@ def reserve_item(item_id: int) -> Response:
 
     backing_item_ids = request.form.getlist('backing_item_id', type=int)
     funding_mode = request.form.get('funding_mode', 'item_backed')
-    delivery_method = request.form.get('delivery_method')
-    delivery_address = request.form.get('delivery_address')
+    delivery_method = request.form.get('delivery_method', 'pickup')
+    if delivery_method != 'pickup':
+        flash('Only verification-centre collection is available.', 'danger')
+        return redirect(url_for('marketplace.choose_backing_assets', item_id=item_id))
     pickup_station_id = request.form.get('pickup_station_id', type=int)
     consent_confirmed = (
         funding_mode == 'spendable'
@@ -312,25 +315,27 @@ def reserve_item(item_id: int) -> Response:
         consent_confirmed=consent_confirmed,
         funding_mode=funding_mode,
         delivery_method=delivery_method,
-        delivery_address=delivery_address,
         pickup_station_id=pickup_station_id,
     )
     if error:
         logger.info(f"Reservation failed - Item: {item_id}, User: {current_user.username}, Reason: {error}")
         flash(error, 'danger')
         return redirect(url_for('marketplace.choose_backing_assets', item_id=item_id))
-    if delivery_method == 'home delivery':
-        from paystack_payment_service import PaystackPaymentService
-
-        result = PaystackPaymentService.initiate_delivery_fee_payment(reservation, current_user)
-        if not result.get('success'):
-            logger.warning('Home-service payment initialization failed for reservation %s: %s',
-                           reservation.id, result.get('error'))
-            flash(result.get('error', 'Could not initialize home-service payment.'),
-                  'danger')
-            flash('Your reservation is saved. Pay the home-service fee from Reservations before verification can begin.', 'warning')
-            return redirect(url_for('user.my_reservations'))
-        return redirect(result['payment_link'])
+    if reservation.order and reservation.service_fee_status == 'awaiting_acceptance':
+        flash('Your item is verified. Visit your verification centre within 48 hours to accept the terms, pay the service fee and collect.', 'info')
+        return redirect(url_for('user.view_order_details', order_id=reservation.order.id))
+    if reservation.seller_first_collection:
+        flash(
+            'Reservation saved. ' + (
+                'Your item is already verified. Bring your backing items to your verification centre '
+                'within 48 hours, complete inspection, accept the terms and pay the service fee to collect.'
+                if reservation.seller_item_verification_status == 'passed' else
+                'The owner will be asked to bring the reserved item for verification first. '
+                'We will notify you when to visit; you will then have 48 hours to complete '
+                'any backing-item checks, accept the terms, pay and collect.'
+            ), 'success',
+        )
+        return redirect(url_for('user.my_reservations'))
     if reservation.status == 'completed':
         flash(f"'{item.name}' was purchased with spendable BXC. Your order is ready for processing.", 'success')
         return redirect(url_for('user.user_orders'))

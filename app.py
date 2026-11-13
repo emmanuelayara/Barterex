@@ -427,7 +427,8 @@ def inject_favorites_info():
             'pending_orders_count': Order.query.filter(
                 Order.user_id == current_user.id,
                 Order.cancelled.is_(False),
-                Order.status.in_(('Pending', 'Processing', 'Shipped', 'Ready for Pickup')),
+                Order.status.in_(('Awaiting Final Acceptance', 'Awaiting Service Fee',
+                                  'Pending', 'Processing', 'Shipped', 'Ready for Pickup')),
             ).count(),
             'pending_valuations_count': Item.query.filter(
                 db.or_(Item.user_id == current_user.id, db.and_(

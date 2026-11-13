@@ -158,11 +158,19 @@ def record_custody_handoff(intake, admin_id, location, custodian_name, notes=Non
 
 def record_order_delivery_custody(order, admin_id, historical=False):
     """Close the receipt cycle for purchased items without releasing buyer backing items."""
+    if order.delivery_method != 'pickup':
+        raise IntakeValidationError('Only verification-centre collection can release items.')
     admin = db.session.get(Admin, admin_id)
     if not admin:
         raise IntakeValidationError('Your admin session is no longer valid. Please sign in again.')
     if order.status != 'Delivered' or order.cancelled:
         raise IntakeValidationError('Only a delivered, non-cancelled order can release items to its buyer.')
+    if order.reservation and order.reservation.service_fee_status != 'not_required' and (
+        order.reservation.status != 'completed'
+        or order.reservation.service_fee_status != 'paid'
+        or not order.reservation.final_terms_accepted_at
+    ):
+        raise IntakeValidationError('Final acceptance, service-fee payment and BXC settlement are required before release.')
     if not order.user:
         raise IntakeValidationError('The delivered order has no buyer record.')
 
@@ -215,8 +223,8 @@ def record_order_delivery_custody(order, admin_id, historical=False):
 
 
 def reconcile_delivered_order_custody(admin_id):
-    """Repair existing delivered orders, retaining original inspection and movement history."""
-    orders = Order.query.filter_by(status='Delivered', cancelled=False).order_by(
+    """Repair collected centre orders, retaining inspection and movement history."""
+    orders = Order.query.filter_by(status='Delivered', cancelled=False, delivery_method='pickup').order_by(
         Order.date_ordered, Order.id,
     ).with_for_update().all()
     recorded = 0

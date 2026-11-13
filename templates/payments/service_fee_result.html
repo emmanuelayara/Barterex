@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Service-fee payment{% endblock %}
+{% block head_extra %}<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css') }}">{% endblock %}
+{% block content %}
+<div class="success-container">
+  <div class="success-card">
+    {% if success %}
+    <h1 class="success-title">Service-fee payment confirmed</h1>
+    <p class="success-message">Your payment has been recorded. Centre collection requires completed verification and BXC settlement. Payments cannot reopen closed, expired or retired bookings; contact support for payment resolution in those cases.</p>
+    {% else %}
+    <h1 class="success-title">Service-fee payment not confirmed</h1>
+    <p class="success-message">{{ error }} Check your order before retrying. If your bank shows a debit, contact support rather than starting another payment.</p>
+    {% endif %}
+    <div class="reference-box"><strong>Reference:</strong> {{ reference }}</div>
+    <div class="action-buttons">
+      <a class="btn btn-primary" href="{{ url_for('user.user_orders') }}">View my orders</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -194,10 +194,8 @@ class UploadItemForm(FlaskForm):
 
 class OrderForm(FlaskForm):
     delivery_method = SelectField("Delivery Method", choices=[
-        ("home delivery", "Home Delivery"),
-        ("pickup", "Pickup")
+        ("pickup", "Verification Centre Collection")
     ])
-    delivery_address = StringField("Delivery Address", validators=[Optional()])
     pickup_station = SelectField("Verification Station", choices=[], coerce=int, validators=[Optional()])
     submit = SubmitField("Place Order")
 

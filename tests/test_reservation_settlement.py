@@ -62,7 +62,7 @@ class ReservationSettlementTests(unittest.TestCase):
         db.drop_all()
         self.app_context.pop()
 
-    def _create_reservation(self, purchase_value, backing_values):
+    def _create_reservation(self, purchase_value, backing_values, legacy=False):
         buyer = User(
             username='buyer',
             email='buyer@example.com',
@@ -113,15 +113,38 @@ class ReservationSettlementTests(unittest.TestCase):
         )
         self.assertIsNone(error)
         self.assertIsNotNone(reservation)
+        if legacy:
+            reservation.service_fee_status = 'not_required'
+            db.session.commit()
         return buyer, seller, seller_item, reservation
 
     def _complete_reservation(self, reservation):
+        ok, error = verify_seller_item(reservation, passed=True)
+        self.assertTrue(ok, error)
         for asset in reservation.backing_assets:
             ok, error = verify_backing_asset(asset, passed=True)
             self.assertTrue(ok, error)
 
-        ok, error = verify_seller_item(reservation, passed=True)
+        self._pay_service_fee(reservation)
+
+    def _pay_service_fee(self, reservation):
+        from services.reservation_service import accept_final_terms
+        if reservation.service_fee_status == 'not_required':
+            return
+        self.assertEqual(reservation.status, 'active')
+        self.assertEqual(reservation.service_fee_status, 'awaiting_acceptance')
+        ok, error = accept_final_terms(
+            reservation, reservation.user, str(reservation.purchase_value),
+            f'{reservation.service_fee_naira:.2f}',
+        )
         self.assertTrue(ok, error)
+        with patch.object(PaystackPaymentService, 'TEST_MODE', True), patch(
+            'trading_points.award_points_for_purchase', return_value=None
+        ):
+            payment = PaystackPaymentService.initiate_service_fee_payment(reservation, reservation.user)
+            self.assertTrue(payment['success'], payment)
+            result = PaystackPaymentService.verify_payment(payment['reference'])
+        self.assertTrue(result['success'], result)
 
     def test_exact_backing_does_not_issue_change_and_settles_assets(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
@@ -239,37 +262,27 @@ class ReservationSettlementTests(unittest.TestCase):
             seller_item,
             [],
             funding_mode='spendable',
-            delivery_method='home delivery',
-            delivery_address='12 Test Street, Lagos',
+            delivery_method='pickup',
         )
         self.assertIsNone(error)
         self.assertEqual(reservation.backing_assets, [])
         self.assertEqual(buyer.credits, 200)
         self.assertEqual(reservation.spendable_credits_held, 300)
-        self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-        self.assertEqual(reservation.delivery_quote_naira, 5000)
-
-        ok, error = verify_seller_item(reservation, passed=True)
-        self.assertFalse(ok)
-        self.assertIn('must pay', error)
-        self.assertEqual(Order.query.filter_by(reservation_id=reservation.id).count(), 0)
-        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
-            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            payment = db.session.get(Payment, initiated['payment_id'])
-            verified = PaystackPaymentService.verify_payment(payment.paystack_reference)
-        self.assertTrue(verified['success'])
-        self.assertEqual(verified['credits_added'], 0)
+        self.assertEqual(reservation.delivery_fee_status, 'not_required')
+        self.assertIsNone(reservation.delivery_quote_naira)
         self.assertEqual(reservation.status, 'active')
 
         ok, error = verify_seller_item(reservation, passed=True)
         self.assertTrue(ok, error)
+        self._pay_service_fee(reservation)
         db.session.refresh(buyer)
         self.assertEqual(reservation.status, 'completed')
         self.assertEqual(buyer.credits, 200)
         self.assertEqual(reservation.spendable_credits_held, 0)
         order = Order.query.filter_by(reservation_id=reservation.id).one()
-        self.assertEqual(order.delivery_method, 'home delivery')
-        self.assertEqual(order.delivery_address, '12 Test Street, Lagos')
+        self.assertEqual(order.delivery_method, 'pickup')
+        self.assertIsNone(order.delivery_address)
+        self.assertIsNone(order.logistics_fee_naira)
         self.assertEqual(order.status, 'Pending')
 
     def test_failed_spendable_reservation_releases_held_balance(self):
@@ -316,178 +329,6 @@ class ReservationSettlementTests(unittest.TestCase):
         self.assertEqual(reservation.spendable_credits_held, 0)
         self.assertEqual(Order.query.filter_by(reservation_id=reservation.id).count(), 0)
 
-    def test_delivery_fee_payment_is_not_credited_and_is_idempotent(self):
-        buyer, seller, seller_item, reservation = self._create_reservation(
-            purchase_value=300,
-            backing_values=[300],
-        )
-        reservation.delivery_method = 'home delivery'
-        reservation.delivery_address = '12 Test Street, Lagos'
-        reservation.delivery_quote_naira = 250
-        reservation.delivery_fee_status = 'awaiting_payment'
-        db.session.commit()
-        original_balance = buyer.credits
-
-        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
-            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            repeated_initiation = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            self.assertTrue(initiated['success'])
-            self.assertEqual(repeated_initiation['payment_id'], initiated['payment_id'])
-            payment = Payment.query.get(initiated['payment_id'])
-            verified = PaystackPaymentService.verify_payment(payment.paystack_reference)
-            repeated = PaystackPaymentService.verify_payment(payment.paystack_reference)
-
-        db.session.refresh(buyer)
-        db.session.refresh(reservation)
-        self.assertTrue(verified['success'])
-        self.assertTrue(repeated['success'])
-        self.assertEqual(verified['credits_added'], 0)
-        self.assertEqual(buyer.credits, original_balance)
-        self.assertEqual(reservation.delivery_fee_status, 'paid')
-        self.assertEqual(payment.purpose, 'reservation_delivery_fee')
-
-    def test_home_delivery_fixed_fee_and_dispatch_gate(self):
-        buyer = User(
-            username='home-buyer',
-            email='home-buyer@example.com',
-            password_hash='test-hash',
-            credits=500,
-            provisional_credits=0,
-        )
-        seller = User(
-            username='home-seller',
-            email='home-seller@example.com',
-            password_hash='test-hash',
-            credits=0,
-            provisional_credits=300,
-        )
-        db.session.add_all([buyer, seller])
-        db.session.flush()
-        seller_item = Item(
-            name='Home delivery requested item',
-            category='Electronics',
-            user_id=seller.id,
-            value=300,
-            status='approved',
-            is_approved=True,
-            is_available=True,
-            provisional_credit_amount=300,
-            provisional_credit_settled=False,
-        )
-        db.session.add(seller_item)
-        db.session.commit()
-        reservation, error = create_reservation(
-            buyer,
-            seller_item,
-            [],
-            funding_mode='spendable',
-            delivery_method='home delivery',
-            delivery_address='12 Test Street, Lagos',
-        )
-        self.assertIsNone(error)
-        ok, error = verify_seller_item(reservation, passed=True)
-        self.assertFalse(ok)
-        self.assertEqual(Order.query.filter_by(reservation_id=reservation.id).count(), 0)
-
-        admin = Admin(
-            username='fulfillment-admin',
-            email='fulfillment-admin@example.com',
-            is_super_admin=True,
-            password='test-hash',
-        )
-        db.session.add(admin)
-        db.session.commit()
-
-        with app.test_client() as client:
-            with client.session_transaction() as session:
-                session['admin_id'] = admin.id
-                session['admin_mfa'] = fingerprint(admin)
-            response = client.post(
-                f'/admin/settlement-queue/{reservation.id}/delivery-quote',
-                data={'amount_naira': '250.00'},
-            )
-            self.assertEqual(response.status_code, 302)
-            db.session.refresh(reservation)
-            self.assertEqual(reservation.delivery_quote_naira, 5000)
-            self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-
-        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
-            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            payment = Payment.query.get(initiated['payment_id'])
-            verified = PaystackPaymentService.verify_payment(payment.paystack_reference)
-        self.assertTrue(verified['success'])
-        ok, error = verify_seller_item(reservation, passed=True)
-        self.assertTrue(ok, error)
-        order = Order.query.filter_by(reservation_id=reservation.id).one()
-        self.assertEqual(order.logistics_fee_naira, 5000)
-        self.assertEqual(order.status, 'Pending')
-
-        with app.test_client() as client:
-            with client.session_transaction() as session:
-                session['admin_id'] = admin.id
-                session['admin_mfa'] = fingerprint(admin)
-            response = client.post(f'/admin/update_order_status/{order.id}')
-        self.assertEqual(response.status_code, 302)
-        db.session.refresh(order)
-        self.assertEqual(order.status, 'Shipped')
-
-    def test_home_service_blocks_backing_item_verification_until_fee_is_paid(self):
-        buyer, seller, seller_item, reservation = self._create_reservation(
-            purchase_value=300,
-            backing_values=[300],
-        )
-        reservation.delivery_method = 'home delivery'
-        reservation.delivery_address = '12 Test Street, Lagos'
-        reservation.delivery_quote_naira = 250
-        reservation.delivery_fee_status = 'awaiting_payment'
-        db.session.commit()
-        ok, error = verify_backing_asset(reservation.backing_assets[0], passed=True)
-        self.assertFalse(ok)
-        self.assertIn('must pay', error)
-        self.assertEqual(reservation.backing_assets[0].verification_status, 'not_submitted')
-
-        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
-            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            payment = Payment.query.get(initiated['payment_id'])
-            verified = PaystackPaymentService.verify_payment(payment.paystack_reference)
-        self.assertTrue(verified['success'])
-        ok, error = verify_backing_asset(reservation.backing_assets[0], passed=True)
-        self.assertTrue(ok, error)
-
-    def test_admin_legacy_fee_action_is_fixed_and_preserves_issued_amounts(self):
-        buyer, seller, item, reservation = self._create_reservation(300, [300])
-        reservation.delivery_method = 'home delivery'
-        reservation.delivery_address = '12 Test Street, Lagos'
-        reservation.delivery_fee_status = 'quote_pending'
-        admin = Admin(
-            username='fee-admin', email='fee-admin@example.com',
-            is_super_admin=True, password='test-hash',
-        )
-        db.session.add(admin)
-        db.session.commit()
-        with app.test_client() as client:
-            with client.session_transaction() as session:
-                session['admin_id'] = admin.id
-                session['admin_mfa'] = fingerprint(admin)
-            response = client.post(
-                f'/admin/settlement-queue/{reservation.id}/delivery-quote',
-                data={'amount_naira': '100'},
-            )
-            self.assertEqual(response.status_code, 302)
-            self.assertEqual(reservation.delivery_quote_naira, 5000)
-            self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-            for fee_status in ('awaiting_payment', 'paid'):
-                reservation.delivery_quote_naira = 250
-                reservation.delivery_fee_status = fee_status
-                db.session.commit()
-                response = client.post(
-                    f'/admin/settlement-queue/{reservation.id}/delivery-quote',
-                    data={'amount_naira': '100'},
-                )
-                self.assertEqual(response.status_code, 302)
-                self.assertEqual(reservation.delivery_quote_naira, 250)
-                self.assertEqual(reservation.delivery_fee_status, fee_status)
-
     def test_backing_title_waits_until_requested_item_passes(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
@@ -504,6 +345,7 @@ class ReservationSettlementTests(unittest.TestCase):
         ok, error = verify_backing_asset(reservation.backing_assets[0], passed=True)
         self.assertTrue(ok, error)
 
+        self._pay_service_fee(reservation)
         db.session.refresh(reservation)
         db.session.refresh(backing_item)
         self.assertEqual(reservation.status, 'completed')
@@ -552,7 +394,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_legacy_reservation_keeps_original_immediate_transfer_behavior(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[100],
+            backing_values=[100], legacy=True,
         )
         reservation.backing_asset_consent_version = LEGACY_BACKING_ASSET_CONSENT_VERSION
         db.session.commit()
@@ -602,6 +444,7 @@ class ReservationSettlementTests(unittest.TestCase):
                     intake = VerificationIntake.query.filter_by(item_id=item.id).one()
                     self.assertEqual(intake.observed_serial_number, serial)
                     self.assertEqual(intake.inspected_by_admin_id, admin.id)
+        self._pay_service_fee(reservation)
         self.assertEqual(reservation.status, 'completed')
 
     def test_excess_backing_is_credited_as_change_and_all_assets_settle(self):
@@ -808,7 +651,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_any_failed_backing_asset_cancels_and_releases_reservation(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[200, 100],
+            backing_values=[200, 100], legacy=True,
         )
         assets_by_amount = {asset.amount: asset for asset in reservation.backing_assets}
 
@@ -851,7 +694,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_duplicate_verification_is_rejected_without_repeating_side_effects(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[100],
+            backing_values=[100], legacy=True,
         )
         asset = reservation.backing_assets[0]
         backing_item = asset.item
@@ -898,7 +741,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_failed_requested_item_waits_for_buyer_title_transfer_decision(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[200],
+            backing_values=[200], legacy=True,
         )
         backing_item = reservation.backing_assets[0].item
 
@@ -924,7 +767,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_buyer_can_confirm_title_transfer_after_requested_item_fails(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[200],
+            backing_values=[200], legacy=True,
         )
         backing_item = reservation.backing_assets[0].item
         verify_backing_asset(reservation.backing_assets[0], passed=True)
@@ -948,7 +791,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_buyer_can_decline_title_transfer_after_requested_item_fails(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[200],
+            backing_values=[200], legacy=True,
         )
         backing_item = reservation.backing_assets[0].item
         verify_backing_asset(reservation.backing_assets[0], passed=True)
@@ -972,7 +815,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_title_transfer_timeout_restores_item_and_provisional_bxc(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[200],
+            backing_values=[200], legacy=True,
         )
         backing_item = reservation.backing_assets[0].item
         verify_backing_asset(reservation.backing_assets[0], passed=True)
@@ -1010,7 +853,7 @@ class ReservationSettlementTests(unittest.TestCase):
         self.assertEqual(reservation.status, 'expired')
         self.assertEqual(buyer.provisional_credits, 100)
         self.assertEqual(buyer.credits, 25)
-        self.assertEqual(buyer.reliability_score, 90)
+        self.assertEqual(buyer.reliability_score, 100)
         self.assertEqual(seller.reliability_score, 90)
         self.assertTrue(seller_item.is_available)
         self.assertTrue(reservation.backing_assets[0].item.is_available)
@@ -1071,12 +914,13 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_settlement_rolls_back_fully_if_seller_provisional_balance_is_inconsistent(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=100,
-            backing_values=[100],
+            backing_values=[100], legacy=True,
         )
         asset = reservation.backing_assets[0]
         ok, error = verify_backing_asset(asset, passed=True)
         self.assertTrue(ok, error)
         seller.provisional_credits = 0
+        reservation.service_fee_status = 'not_required'
         db.session.commit()
 
         with self.assertRaisesRegex(ValueError, 'seller.*provisional BXC balance'):
@@ -1138,6 +982,7 @@ class ReservationSettlementTests(unittest.TestCase):
 
         ok, error = cover_reservation_shortfall(reservation, buyer, 50)
         self.assertTrue(ok, error)
+        self._pay_service_fee(reservation)
         db.session.refresh(reservation)
         db.session.refresh(buyer)
         db.session.refresh(seller)
@@ -1150,7 +995,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_rejected_backing_revaluation_releases_item_and_opens_shortfall_window(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=300,
-            backing_values=[300],
+            backing_values=[300], legacy=True,
         )
         asset = reservation.backing_assets[0]
         ok, error = verify_backing_asset(asset, passed=True, revised_value=250)
@@ -1176,7 +1021,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_revaluation_timeout_excludes_backing_item_and_preserves_reservation(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=300,
-            backing_values=[300],
+            backing_values=[300], legacy=True,
         )
         reservation.expires_at = datetime.utcnow() + timedelta(hours=1)
         seller_item.reservation_expires_at = reservation.expires_at
@@ -1210,7 +1055,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_seller_revaluation_rejection_uses_renewed_title_consent(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=300,
-            backing_values=[300],
+            backing_values=[300], legacy=True,
         )
         asset = reservation.backing_assets[0]
         ok, error = verify_backing_asset(asset, passed=True)
@@ -1241,7 +1086,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_insufficient_seller_provisional_for_downward_revaluation_never_goes_negative(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=300,
-            backing_values=[300],
+            backing_values=[300], legacy=True,
         )
         asset = reservation.backing_assets[0]
         ok, error = verify_backing_asset(asset, passed=True)
@@ -1270,7 +1115,7 @@ class ReservationSettlementTests(unittest.TestCase):
     def test_buyer_can_add_backing_asset_to_cover_revaluation_shortfall(self):
         buyer, seller, seller_item, reservation = self._create_reservation(
             purchase_value=300,
-            backing_values=[300],
+            backing_values=[300], legacy=True,
         )
         initial_asset = reservation.backing_assets[0]
         ok, error = verify_backing_asset(initial_asset, passed=True, revised_value=250)
@@ -1312,6 +1157,7 @@ class ReservationSettlementTests(unittest.TestCase):
 
         db.session.refresh(reservation)
         db.session.refresh(extra_item)
+        self._pay_service_fee(reservation)
         self.assertEqual(reservation.status, 'completed')
         self.assertEqual(extra_item.owner_type, 'barterex')
 
@@ -1465,7 +1311,7 @@ class ReservationSettlementTests(unittest.TestCase):
         seller_notes = [n.message for n in Notification.query.filter_by(user_id=seller.id)]
         buyer_notes = [n.message for n in Notification.query.filter_by(user_id=buyer.id)]
         self.assertTrue(any("wasn't brought in" in message for message in seller_notes))
-        self.assertTrue(any("backing item(s) weren't brought in" in message for message in buyer_notes))
+        self.assertTrue(any("expired before the exchange" in message for message in buyer_notes))
 
     def test_buyer_cancellation_notifies_seller(self):
         with patch('routes.auth.send_email_async') as send_email:
@@ -1512,13 +1358,13 @@ class ReservationSettlementTests(unittest.TestCase):
             db.session.commit()
             self.assertEqual(send_reservation_deadline_reminders(), 1)
             self.assertEqual(send_reservation_deadline_reminders(), 0)
-            self.assertCountEqual(self._recipients(send_email), [seller.email, buyer.email])
+            self.assertCountEqual(self._recipients(send_email), [seller.email])
 
             send_email.reset_mock()
             reservation.expires_at = datetime.utcnow() + timedelta(hours=5)
             db.session.commit()
             self.assertEqual(send_reservation_deadline_reminders(), 1)
-            self.assertEqual(len(self._recipients(send_email)), 2)
+            self.assertEqual(len(self._recipients(send_email)), 1)
 
     def test_queued_emails_are_dropped_when_the_transaction_rolls_back(self):
         from services.email_notifications import notify_user

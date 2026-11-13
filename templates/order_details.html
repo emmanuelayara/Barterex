@@ -1091,13 +1091,14 @@
       </div>
     </div>
 
-    <!-- Delivery Information -->
+    <!-- Collection Information -->
     <div class="info-card">
-      <h3>Delivery Information</h3>
+      <h3>Collection Information</h3>
       <div class="info-row">
         <span class="info-label">Method:</span>
         <span class="info-value">{{ transaction_exp['delivery_method']['method'] | title }}</span>
       </div>
+      {% if order.delivery_method == 'pickup' %}
       <div class="info-row">
         <span class="info-label">Estimated:</span>
         <span class="info-value">{{ transaction_exp['estimated_delivery'] }}</span>
@@ -1106,26 +1107,17 @@
         <span class="info-label">Timeline:</span>
         <span class="info-value">{{ transaction_exp['delivery_method']['min_days'] }}-{{ transaction_exp['delivery_method']['max_days'] }} days</span>
       </div>
-      {% if order.delivery_address %}
+      {% endif %}
+      {% if order.delivery_method != 'pickup' %}
       <div class="info-row">
-        <span class="info-label">Address:</span>
-        <span class="info-value">{{ order.delivery_address }}</span>
+        <span class="info-label">Booking:</span>
+        <span class="info-value">Retired test booking. Contact support; do not pay an old checkout link.</span>
       </div>
       {% endif %}
       {% if order.pickup_station %}
       <div class="info-row">
         <span class="info-label">Verification Station:</span>
         <span class="info-value">{{ order.pickup_station.name }} — {{ order.pickup_station.address }}</span>
-      </div>
-      {% endif %}
-      {% if order.reservation and order.delivery_method == 'home delivery' %}
-      <div class="info-row">
-        <span class="info-label">Home-service fee:</span>
-        <span class="info-value">
-          {% if order.logistics_fee_naira %}₦{{ '{:,.2f}'.format(order.logistics_fee_naira) }}{% endif %}
-          · {{ order.reservation.delivery_fee_status|replace('_', ' ')|title }}
-          · Non-refundable
-        </span>
       </div>
       {% endif %}
     </div>
@@ -1164,9 +1156,56 @@
     {% endif %}
   </div>
 
+  {% if order.delivery_method == 'pickup' and order.reservation and order.reservation.service_fee_status != 'not_required' %}
+  {% set reservation = order.reservation %}
+  <div class="info-card">
+    <h3>Review and pay</h3>
+    <div class="info-row"><span class="info-label">Item value / BXC required:</span><strong>ᗸ{{ '{:,.0f}'.format(reservation.purchase_value) }} BXC</strong></div>
+    <div class="info-row"><span class="info-label">Service fee (NGN):</span><strong>₦{{ '{:,.2f}'.format(reservation.service_fee_naira) }}</strong></div>
+    <p>Service fee is separate from BXC. Full details are in your email.</p>
+    <p>Payment status: <strong>{{ reservation.service_fee_status|replace('_', ' ')|title }}</strong></p>
+    {% if reservation.status == 'active' %}
+      <p>Pay by <strong>{{ reservation.service_fee_deadline.strftime('%d %b %Y, %H:%M UTC') }}</strong>.</p>
+      {% if reservation.service_fee_status == 'awaiting_acceptance' %}
+      <form method="POST" action="{{ url_for('user.pay_order_service_fee', order_id=order.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="purchase_value" value="{{ reservation.purchase_value }}">
+        <input type="hidden" name="service_fee" value="{{ '{:.2f}'.format(reservation.service_fee_naira) }}">
+        <p><label><input type="checkbox" name="accept_terms" value="yes" required>
+          I accept the item value, BXC required and fees shown.
+        </label></p>
+        <button type="submit" class="btn-primary">Accept and continue to payment</button>
+      </form>
+      {% elif reservation.service_fee_status == 'awaiting_payment' %}
+        {% set payment_link = reservation.service_fee_payment_link %}
+        {% if payment_link %}
+          <a class="btn-primary" href="{{ payment_link }}">Pay service fee ₦{{ '{:,.2f}'.format(reservation.service_fee_naira) }}</a>
+          <p>Card or bank transfer via Paystack.</p>
+        {% else %}
+          <form method="POST" action="{{ url_for('user.pay_order_service_fee', order_id=order.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-primary">Get payment link</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    {% elif reservation.status != 'completed' %}
+      <p>Order closed. Do not pay. Already charged? Contact support.</p>
+    {% else %}
+      <p>Payment confirmed. BXC settled.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <!-- BXC Summary -->
   <div class="credits-summary">
     <h3 style="margin-top: 0; color: white;">BXC Transaction Summary</h3>
+    {% if order.reservation and order.reservation.service_fee_status != 'not_required' and order.reservation.status != 'completed' %}
+    {% if order.reservation.status == 'active' %}
+    <p>BXC held. Item release awaits payment and settlement.</p>
+    {% else %}
+    <p>Order closed. Purchase not completed.</p>
+    {% endif %}
+    {% else %}
     <div class="credits-row">
       <span>Your Balance Before Order:</span>
       <strong>ᗸ{{ transaction_exp['credits']['balance_before'] }}</strong>
@@ -1186,13 +1225,16 @@
     <div class="explanation-box" style="background: rgba(255, 255, 255, 0.1); border-color: white; color: white; margin-top: 15px;">
       {{ transaction_exp['credits']['explanation'] }}
     </div>
+    {% endif %}
   </div>
 
   <!-- Action Buttons -->
   <div class="action-buttons">
+    {% if not order.reservation or order.reservation.service_fee_status == 'not_required' or order.reservation.status == 'completed' %}
     <a href="{{ url_for('user.download_receipt', order_id=order.id) }}" class="btn-primary">
       📥 Download Receipt
     </a>
+    {% endif %}
     
     <!-- Cancel Button - Only show for pending/processing orders -->
     {% if order.status.lower() in ['pending', 'processing'] and not order.cancelled and not order.reservation_id %}
@@ -1201,7 +1243,7 @@
     </button>
     {% endif %}
     {% if order.reservation_id and order.status.lower() in ['pending', 'processing'] %}
-    <p class="text-muted">Reservation purchases are settled during physical verification and cannot be cancelled through standard order cancellation. Contact support if you need help.</p>
+    <p class="text-muted">This reservation purchase has completed its ownership and BXC settlement and cannot use standard order cancellation. Contact support if you need help.</p>
     {% endif %}
     
     <a href="{{ url_for('user.user_orders') }}" class="btn-secondary">

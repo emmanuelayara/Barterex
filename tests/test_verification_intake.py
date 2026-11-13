@@ -289,7 +289,7 @@ class VerificationIntakeTests(unittest.TestCase):
             record_custody_handoff(intake, self.admin.id, 'Secure store', '')
         self.assertEqual(CustodyEvent.query.count(), 1)
 
-    def _delivery_fixture(self, method='home delivery'):
+    def _delivery_fixture(self, method='pickup'):
         buyer = User(username='delivery-buyer', email='buyer@example.com', password_hash='x')
         db.session.add(buyer)
         db.session.flush()
@@ -348,8 +348,18 @@ class VerificationIntakeTests(unittest.TestCase):
         with self.assertRaisesRegex(IntakeValidationError, 'closed'):
             record_custody_handoff(intake, self.admin.id, 'Office', 'Staff')
 
-    def test_home_delivery_closes_custody_once(self):
-        self._assert_delivery_closes_custody('home delivery')
+    def test_retired_home_delivery_does_not_release_custody(self):
+        client, order, intake, buyer = self._delivery_fixture('home delivery')
+        with patch('trading_points.award_points_for_purchase') as points:
+            response = client.post(f'/admin/update_order_status/{order.id}')
+        self.assertEqual(response.status_code, 302)
+        points.assert_not_called()
+        self.assertEqual(order.status, 'Out for Delivery')
+        self.assertIsNone(order.actual_delivery_date)
+        self.assertEqual(CustodyEvent.query.filter_by(intake_id=intake.id).count(), 1)
+        order.status = 'Delivered'
+        db.session.commit()
+        self.assertEqual(reconcile_delivered_order_custody(self.admin.id), (0, []))
 
     def test_station_collection_closes_custody_once(self):
         self._assert_delivery_closes_custody('pickup')
@@ -364,7 +374,7 @@ class VerificationIntakeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         points.assert_not_called()
         db.session.refresh(order)
-        self.assertEqual(order.status, 'Out for Delivery')
+        self.assertEqual(order.status, 'Ready for Pickup')
         self.assertIsNone(order.actual_delivery_date)
         self.assertEqual(CustodyEvent.query.filter_by(intake_id=intake.id).count(), 1)
 
@@ -415,7 +425,7 @@ class VerificationIntakeTests(unittest.TestCase):
         db.session.commit()
         response = client.post(f'/admin/update_order_status/{order.id}')
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(order.status, 'Out for Delivery')
+        self.assertEqual(order.status, 'Ready for Pickup')
         self.assertEqual(CustodyEvent.query.filter_by(intake_id=intake.id).count(), 1)
 
     def test_missing_legacy_intake_is_reported_without_fabrication(self):

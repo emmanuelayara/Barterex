@@ -61,7 +61,7 @@
   <div class="adm-head">
     <div>
       <h1>Settlement Queue {{ pending_badge('settlements') }}</h1>
-      <p>Verified backing items stay buyer-owned until the requested item passes. If the requested item fails, ask the buyer to reconfirm title transfer before any backing item enters Barter Express inventory.</p>
+      <p>Verify the reserved item first. The buyer then has 48 hours to attend, complete backing-item checks, accept and pay before collection. Legacy verified backing items need renewed title consent if the requested item fails.</p>
     </div>
     <div class="adm-head-actions">
       <a href="{{ url_for('admin.clearing_inventory') }}" class="adm-btn ghost sm"><i class="bi bi-box-seam"></i> View clearing inventory</a>
@@ -100,8 +100,7 @@
           <div class="sq-side">
             <h3><i class="bi bi-arrow-return-left"></i> Return buyer-owned backing item(s)</h3>
             <div class="sq-meta">
-              Return through the existing home-service booking to {{ reservation.user.username }} at
-              {{ reservation.delivery_address }}. The original fee remains non-refundable.
+              Arrange collection at the verification centre with {{ reservation.user.username }}.
               {% if reservation.status == 'awaiting_consent' %}
                 Wait until the buyer decides whether any passed item transfers to Barter Express.
               {% else %}
@@ -120,21 +119,14 @@
         {% endif %}
 
         <div class="sq-side">
-          <h3><i class="bi bi-truck"></i> Fulfillment: {{ reservation.delivery_method|replace('_', ' ')|title }}</h3>
-          {% if reservation.delivery_method == 'home delivery' %}
-            <dl class="sq-facts">
-              <div><dt>Service address</dt><dd>{{ reservation.delivery_address }}</dd></div>
-              <div><dt>Payment status</dt><dd><span class="adm-pill {{ 'ok' if reservation.delivery_fee_status == 'paid' else 'info' }}">{{ reservation.delivery_fee_status|replace('_', ' ')|title }}</span></dd></div>
-              <div><dt>Home-service fee</dt><dd>{{ '₦{:,.2f}'.format(reservation.delivery_quote_naira) if reservation.delivery_quote_naira else 'Not yet issued' }}</dd></div>
-            </dl>
-            <p class="sq-help">Non-refundable and required before verification, pickup or dispatch. Separate from the completed-transaction fee.</p>
-            {% if reservation.delivery_fee_status == 'quote_pending' %}
-              <form method="POST" action="{{ url_for('admin.set_reservation_delivery_quote', reservation_id=reservation.id) }}" class="sq-form">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <p>Legacy reservation: apply the standard ₦5,000 home-service fee. Existing issued quotes and payments are preserved.</p>
-                <button type="submit" class="adm-btn cta sm">Apply standard fee</button>
-              </form>
-            {% endif %}
+          <h3><i class="bi bi-shop"></i> Verification-centre collection</h3>
+          {% if reservation.service_fee_status != 'not_required' %}
+            <p>Service fee: <strong>₦{{ '{:,.2f}'.format(reservation.service_fee_naira) }}</strong>
+              · {{ reservation.service_fee_status|replace('_', ' ')|title }}.
+              Final acceptance, confirmed payment and BXC settlement are required before release.</p>
+          {% endif %}
+          {% if reservation.delivery_method != 'pickup' %}
+            <p>Retired test booking. No payment, inspection or dispatch is available.</p>
           {% elif reservation.pickup_station %}
             <div class="sq-meta">Verification Station: {{ reservation.pickup_station.name }}, {{ reservation.pickup_station.address }}</div>
           {% endif %}
@@ -146,7 +138,7 @@
           </h3>
           <div class="sq-meta">Owner: {{ reservation.item.user.username if reservation.item and reservation.item.user else '—' }} · Value: ᗸ{{ '{:,.0f}'.format(reservation.item.value) if reservation.item and reservation.item.value else '—' }}</div>
           {% if reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted'
-                and (reservation.delivery_method != 'home delivery' or reservation.delivery_fee_status == 'paid') %}
+                and reservation.delivery_method == 'pickup' %}
             <form method="POST" action="{{ url_for('admin.verify_seller_item_route', reservation_id=reservation.id) }}" class="sq-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               {% with inspection_item=reservation.item %}
@@ -168,8 +160,6 @@
                 </div>
               </div>
             </form>
-          {% elif reservation.status == 'active' and reservation.seller_item_verification_status == 'not_submitted' and reservation.delivery_method == 'home delivery' %}
-            <div class="sq-payment-notice"><i class="bi bi-lock"></i> Waiting for the buyer to pay the home-service fee before pickup and verification.</div>
           {% endif %}
         </div>
 
@@ -183,7 +173,8 @@
               <div class="sq-meta"><strong>Barter Express property</strong> · recorded in clearing inventory for resale.</div>
             {% endif %}
             {% if reservation.status == 'active' and asset.verification_status == 'not_submitted'
-                  and (reservation.delivery_method != 'home delivery' or reservation.delivery_fee_status == 'paid') %}
+                  and (not reservation.seller_first_collection or reservation.seller_item_verification_status == 'passed')
+                  and reservation.delivery_method == 'pickup' %}
               <form method="POST" action="{{ url_for('admin.verify_backing_asset_route', asset_id=asset.id) }}" class="sq-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 {% with inspection_item=asset.item %}
@@ -206,8 +197,8 @@
                 </div>
               </form>
             {% elif reservation.status == 'active' and asset.verification_status == 'not_submitted'
-                  and reservation.delivery_method == 'home delivery' %}
-              <div class="sq-payment-notice"><i class="bi bi-lock"></i> Waiting for the buyer to pay the home-service fee before pickup and verification.</div>
+                  and reservation.seller_first_collection and reservation.seller_item_verification_status != 'passed' %}
+              <div class="sq-payment-notice"><i class="bi bi-lock"></i> Verify the reserved item first. The buyer will then be invited to bring their backing items.</div>
             {% endif %}
           </div>
         {% endfor %}

@@ -1,8 +1,7 @@
 import os
 import unittest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
-import requests
+from unittest.mock import patch
 from flask import g
 
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
@@ -115,21 +114,6 @@ class CompanyOwnedReservationTests(unittest.TestCase):
         db.session.commit()
         return backing_item
 
-    def _home_reservation(self):
-        buyer, former_owner, item, inventory = self._create_company_item(buyer_credits=500)
-        reservation, error = create_reservation(
-            buyer, item, [], funding_mode='spendable', delivery_method='home delivery',
-            delivery_address='12 Test Street, Lagos',
-        )
-        self.assertIsNone(error)
-        self.assertEqual(reservation.status, 'active')
-        self.assertEqual(reservation.delivery_quote_naira, 5000)
-        self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-        self.assertEqual(Order.query.count(), 0)
-        self.assertEqual(item.owner_type, 'barterex')
-        self.assertEqual(inventory.status, 'held_for_resale')
-        return buyer, former_owner, item, inventory, reservation
-
     def _login(self, buyer):
         g.pop('_login_user', None)
         client = app.test_client()
@@ -138,50 +122,21 @@ class CompanyOwnedReservationTests(unittest.TestCase):
             session['_fresh'] = True
         return client
 
-    def test_home_company_purchase_settles_once_only_after_payment(self):
-        buyer, former_owner, item, inventory, reservation = self._home_reservation()
-        with patch.object(PaystackPaymentService, 'TEST_MODE', True), patch(
-            'trading_points.award_points_for_purchase', return_value=None
-        ) as points:
-            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            payment = db.session.get(Payment, initiated['payment_id'])
-            result = PaystackPaymentService.verify_payment(payment.paystack_reference)
-            repeated = PaystackPaymentService.verify_payment(payment.paystack_reference)
-        self.assertTrue(result['success'])
-        self.assertTrue(repeated['success'])
-        self.assertEqual(result['credits_added'], 0)
-        self.assertEqual(points.call_count, 1)
-        self.assertEqual(reservation.status, 'completed')
-        self.assertEqual(reservation.delivery_fee_status, 'paid')
-        self.assertEqual(buyer.credits, 250)
-        self.assertEqual(former_owner.credits, 0)
-        self.assertEqual(item.user_id, buyer.id)
-        self.assertEqual(inventory.status, 'sold')
-        self.assertEqual(Order.query.count(), 1)
-        self.assertEqual(Order.query.one().logistics_fee_naira, 5000)
-        self.assertEqual(CreditTransaction.query.filter_by(reason='reservation_purchase').count(), 1)
-        self.assertEqual(CreditTransaction.query.filter_by(reason='paystack_payment').count(), 0)
+    def _pay_service_fee(self, reservation):
+        from services.reservation_service import accept_final_terms
+        self.assertEqual(reservation.service_fee_status, 'awaiting_acceptance')
+        ok, error = accept_final_terms(
+            reservation, reservation.user, str(reservation.purchase_value),
+            f'{reservation.service_fee_naira:.2f}',
+        )
+        self.assertTrue(ok, error)
+        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
+            initialized = PaystackPaymentService.initiate_service_fee_payment(reservation, reservation.user)
+            self.assertTrue(initialized['success'], initialized)
+            result = PaystackPaymentService.verify_payment(initialized['reference'])
+        self.assertTrue(result['success'], result)
 
-    def test_home_reservation_route_immediately_redirects_to_payment(self):
-        buyer, former_owner, item, inventory = self._create_company_item(buyer_credits=500)
-        client = self._login(buyer)
-        with patch.object(User, 'is_profile_complete', return_value=True), patch.object(
-            PaystackPaymentService, 'TEST_MODE', True
-        ):
-            response = client.post(f'/item/{item.id}/reserve', data={
-                'funding_mode': 'spendable', 'delivery_method': 'home delivery',
-                'delivery_address': '12 Test Street, Lagos', 'amount_naira': '100',
-            })
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/payments/verify-payment/TEST_', response.location)
-        payment = Payment.query.one()
-        self.assertEqual(payment.amount_naira, 5000)
-        self.assertEqual(payment.credits_purchased, 0)
-        self.assertEqual(payment.purpose, 'reservation_delivery_fee')
-        self.assertEqual(Reservation.query.one().status, 'active')
-        self.assertEqual(Order.query.count(), 0)
-
-    def test_station_reservation_route_requires_no_payment(self):
+    def test_station_reservation_route_requires_final_acceptance_before_service_payment(self):
         buyer, former_owner, item, inventory = self._create_company_item(buyer_credits=500)
         buyer.state = 'Lagos'
         station = PickupStation(name='Test Station', state='Lagos', city='Ikeja', address='Test Address')
@@ -196,139 +151,11 @@ class CompanyOwnedReservationTests(unittest.TestCase):
                 'pickup_station_id': station.id,
             })
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/my_orders', response.location)
+        self.assertIn('/order/', response.location)
         initialize.assert_not_called()
         self.assertEqual(Payment.query.count(), 0)
         self.assertEqual(Reservation.query.one().delivery_fee_status, 'not_required')
         self.assertIsNone(Reservation.query.one().delivery_quote_naira)
-
-    def test_home_initialization_failure_preserves_reservation_and_retry(self):
-        buyer, former_owner, item, inventory = self._create_company_item(buyer_credits=500)
-        client = self._login(buyer)
-        with patch.object(User, 'is_profile_complete', return_value=True), patch.object(
-            PaystackPaymentService, 'initiate_delivery_fee_payment',
-            return_value={'success': False, 'error': 'Payment gateway unavailable'},
-        ):
-            response = client.post(f'/item/{item.id}/reserve', data={
-                'funding_mode': 'spendable', 'delivery_method': 'home delivery',
-                'delivery_address': '12 Test Street, Lagos',
-            })
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/my_reservations', response.location)
-        reservation = Reservation.query.one()
-        self.assertEqual(reservation.status, 'active')
-        self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-        page = client.get(response.location)
-        self.assertIn(b'Payment gateway unavailable', page.data)
-        self.assertIn(b'Pay home-service fee', page.data)
-        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
-            retried = client.post(f'/reservation/{reservation.id}/delivery-fee')
-        self.assertEqual(retried.status_code, 302)
-        self.assertIn('/payments/verify-payment/TEST_', retried.location)
-
-    def test_home_live_initialization_charges_exact_kobo_and_reuses_link(self):
-        buyer, _, _, _, reservation = self._home_reservation()
-        response = Mock(status_code=200, text='mock')
-        response.json.return_value = {'status': True, 'data': {
-            'authorization_url': 'https://checkout.paystack.com/test',
-        }}
-        with patch.object(PaystackPaymentService, 'TEST_MODE', False), patch.object(
-            PaystackPaymentService, 'get_auth_header', return_value={}
-        ), patch('paystack_payment_service.requests.post', return_value=response) as post:
-            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            retried = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-        self.assertTrue(initiated['success'])
-        self.assertEqual(initiated['payment_link'], retried['payment_link'])
-        self.assertEqual(post.call_count, 1)
-        self.assertEqual(post.call_args.kwargs['json']['amount'], 500000)
-        self.assertEqual(post.call_args.kwargs['json']['currency'], 'NGN')
-        self.assertTrue(initiated['reference'].startswith(f'barterxpress_delivery_{reservation.id}_'))
-        self.assertEqual(post.call_args.kwargs['json']['reference'], initiated['reference'])
-        self.assertEqual(Payment.query.count(), 1)
-
-    def test_unknown_initialization_outcome_does_not_create_second_charge(self):
-        buyer, _, _, _, reservation = self._home_reservation()
-        with patch.object(PaystackPaymentService, 'TEST_MODE', False), patch.object(
-            PaystackPaymentService, 'get_auth_header', return_value={}
-        ), patch('paystack_payment_service.requests.post', side_effect=requests.Timeout('mock')) as post:
-            result = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            retry = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-        self.assertFalse(result['success'])
-        self.assertFalse(retry['success'])
-        self.assertEqual(post.call_count, 1)
-        self.assertEqual(Payment.query.count(), 1)
-        self.assertEqual(Payment.query.one().status, 'pending')
-
-    def test_late_payment_does_not_reopen_cancelled_or_expired_reservation(self):
-        for status in ('cancelled', 'expired'):
-            with self.subTest(status=status):
-                db.session.remove()
-                db.drop_all()
-                db.create_all()
-                buyer, former_owner, item, inventory, reservation = self._home_reservation()
-                with patch.object(PaystackPaymentService, 'TEST_MODE', True):
-                    initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-                    if status == 'cancelled':
-                        ok, error = cancel_reservation(reservation, buyer)
-                        self.assertTrue(ok, error)
-                    else:
-                        reservation.expires_at = datetime.utcnow() - timedelta(seconds=1)
-                        db.session.commit()
-                    with patch('paystack_payment_service.notify_admins') as admins:
-                        result = PaystackPaymentService.verify_payment(initiated['reference'])
-                        repeated = PaystackPaymentService.verify_payment(initiated['reference'])
-                self.assertTrue(result['success'])
-                self.assertTrue(repeated['success'])
-                admins.assert_called_once()
-                self.assertEqual(reservation.status, status)
-                self.assertEqual(reservation.delivery_fee_status, 'paid')
-                self.assertEqual(buyer.credits, 500)
-                self.assertEqual(Order.query.count(), 0)
-                self.assertEqual(item.owner_type, 'barterex')
-                self.assertTrue(item.is_available)
-                self.assertEqual(inventory.status, 'held_for_resale')
-                self.assertFalse(PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)['success'])
-
-    def test_home_fee_rejects_other_user_and_amount_mismatch(self):
-        buyer, former_owner, _, _, reservation = self._home_reservation()
-        self.assertFalse(PaystackPaymentService.initiate_delivery_fee_payment(
-            reservation, former_owner
-        )['success'])
-        with patch.object(PaystackPaymentService, 'TEST_MODE', True):
-            initiated = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            payment = db.session.get(Payment, initiated['payment_id'])
-            payment.amount_naira = 100
-            db.session.commit()
-            retry = PaystackPaymentService.initiate_delivery_fee_payment(reservation, buyer)
-            self.assertFalse(retry['success'])
-            with self.assertRaisesRegex(ValueError, 'does not match'):
-                PaystackPaymentService._complete_delivery_fee_payment(payment, 'test_card')
-        self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-        self.assertEqual(Order.query.count(), 0)
-
-    def test_live_verification_rejects_wrong_currency_or_amount(self):
-        buyer, _, _, _, reservation = self._home_reservation()
-        payment = Payment(
-            user_id=buyer.id, amount_naira=5000, credits_purchased=0,
-            status='pending', purpose='reservation_delivery_fee',
-            reservation_id=reservation.id, paystack_reference='mock-home-fee',
-        )
-        db.session.add(payment)
-        db.session.commit()
-        for currency, amount in (('USD', 500000), ('NGN', 499999)):
-            with self.subTest(currency=currency, amount=amount):
-                response = Mock(status_code=200, text='mock')
-                response.json.return_value = {'status': True, 'data': {
-                    'status': 'success', 'currency': currency, 'amount': amount,
-                }}
-                with patch.object(PaystackPaymentService, 'TEST_MODE', False), patch.object(
-                    PaystackPaymentService, 'get_auth_header', return_value={}
-                ), patch('paystack_payment_service.requests.get', return_value=response):
-                    result = PaystackPaymentService.verify_payment(payment.paystack_reference)
-                self.assertFalse(result['success'])
-                self.assertEqual(reservation.delivery_fee_status, 'awaiting_payment')
-                self.assertEqual(reservation.status, 'active')
-                self.assertEqual(Order.query.count(), 0)
 
     def test_spendable_purchase_completes_without_payment_to_former_owner(self):
         buyer, former_owner, item, inventory_record = self._create_company_item(
@@ -339,6 +166,7 @@ class CompanyOwnedReservationTests(unittest.TestCase):
             reservation, error = create_reservation(
                 buyer, item, [], funding_mode='spendable'
             )
+            self._pay_service_fee(reservation)
 
         self.assertIsNone(error)
         db.session.refresh(buyer)
@@ -386,6 +214,7 @@ class CompanyOwnedReservationTests(unittest.TestCase):
                 ReservationAsset.query.filter_by(reservation_id=reservation.id).one(),
                 passed=True,
             )
+            self._pay_service_fee(reservation)
 
         self.assertTrue(ok, error)
         db.session.refresh(buyer)

@@ -98,7 +98,7 @@ class OrderReceiptTests(unittest.TestCase):
         pdf = self.readable_pdf()
         for content in (
             b'RESERVATION & FUNDING', b'Backing laptop', b'300.00 BXC',
-            b'1,500.00 NGN', b'Paid', b'non-refundable',
+            b'1,500.00 NGN', b'Paid', b'Historical logistics fee', b'reconciliation',
         ):
             self.assert_pdf_text(pdf, content)
 

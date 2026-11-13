@@ -114,7 +114,7 @@ class NotificationEmailRouteTests(unittest.TestCase):
         db.session.flush()
         order = Order(
             user_id=self.user.id, order_number='ORD-TEST-1', total_credits=50, credits_used=50,
-            delivery_method='home delivery', status='Pending',
+            delivery_method='pickup', status='Pending',
         )
         db.session.add(order)
         db.session.flush()
@@ -126,7 +126,7 @@ class NotificationEmailRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self._recipients(send_email), [self.user.email])
-        self.assertIn('shipped', Notification.query.filter_by(user_id=self.user.id).first().message)
+        self.assertIn('ready for collection', Notification.query.filter_by(user_id=self.user.id).first().message)
 
     def test_shared_layout_keeps_commit_and_rollback_email_behavior(self):
         from services.email_notifications import notify_user

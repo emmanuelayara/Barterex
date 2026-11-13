@@ -15,6 +15,7 @@ passes physical verification and recorded in clearing inventory. Reservation
 success only determines whether the requested marketplace item also transfers.
 """
 from datetime import datetime, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 from app import db
 from models import (
@@ -36,8 +37,8 @@ from logger_config import setup_logger
 from services.email_notifications import notify_admins, notify_user
 
 logger = setup_logger(__name__)
-HOME_SERVICE_FEE_NAIRA = 5000
-
+FINAL_TERMS_VERSION = 'service_fee_v1'
+SERVICE_FEE_PAYMENT_HOURS = 48
 RESERVATION_HOLD_HOURS = 72
 RESERVATION_REMINDER_HOURS = (24, 6)
 TITLE_TRANSFER_CONSENT_HOURS = 24
@@ -48,6 +49,144 @@ RELIABILITY_PENALTY = 10
 RELIABILITY_BONUS = 2
 MAX_RELIABILITY = 100
 
+
+def calculate_service_fee(value):
+    value = Decimal(str(value))
+    if not value.is_finite() or value <= 0:
+        raise ValueError('An agreed positive item value is required.')
+    return min(Decimal('10000'), max(Decimal('1000'), value * Decimal('0.05'))).quantize(
+        Decimal('0.01'), rounding=ROUND_HALF_UP
+    )
+
+
+def service_fee_email_details(reservation):
+    return [
+        f"Agreed item value and BXC requirement: {reservation.purchase_value:,} BXC.",
+        f"Service fee: NGN {reservation.service_fee_naira:,.2f}. This is 5% of the agreed "
+        "value of the item you receive, with a minimum of NGN 1,000 and maximum of NGN 10,000.",
+        "The service fee is a separate naira payment. It does not add or deduct BXC. "
+        "Verification-centre collection has no extra charge.",
+        "After accepting the final terms on your order, pay by card or bank transfer through "
+        "the order-specific Paystack link. The same checkout link is emailed and displayed on your order.",
+        f"Accept and pay by {_format_deadline(reservation.service_fee_deadline)}. "
+        + ("The 48-hour window starts when the reserved item passes verification and includes "
+           "your visit, any backing-item verification, final acceptance and payment; "
+           if reservation.seller_first_collection else
+           "The 48-hour window starts when verification and required BXC coverage are complete; ") +
+        "generating or reopening the payment link does not extend it.",
+        "The item can be released for collection only after payment is confirmed "
+        "and the required BXC settlement is complete.",
+        "If the deadline expires, the reservation closes under its BXC and backing-item terms. "
+        "Do not pay an old checkout link for a closed order. If already charged, contact support "
+        "for reconciliation; a late payment does not reopen the reservation.",
+    ]
+
+
+def _service_fee_ready(reservation):
+    return (
+        reservation.status == 'active'
+        and reservation.seller_item_verification_status == 'passed'
+        and not reservation.seller_item_revaluation_failed
+        and not _has_pending_revaluations(reservation)
+        and not get_reservation_shortfall(reservation)
+        and all(asset.verification_status == 'passed'
+                for asset in reservation.backing_assets if not asset.excluded_from_settlement)
+        and reservation.delivery_method == 'pickup'
+    )
+
+
+def _invite_collection_buyer(reservation):
+    if not reservation.seller_first_collection or reservation.service_fee_deadline is not None:
+        return
+    reservation.service_fee_deadline = datetime.utcnow() + timedelta(hours=SERVICE_FEE_PAYMENT_HOURS)
+    reservation.expires_at = reservation.service_fee_deadline
+    reservation.deadline_reminder_hours = None
+    reservation.item.reservation_expires_at = reservation.expires_at
+    station = reservation.pickup_station
+    destination = (
+        f"{station.name}, {station.address}, {station.city}, {station.state}"
+        if station else 'your verification centre (contact support to confirm the location)'
+    )
+    backing_needed = any(
+        asset.verification_status != 'passed'
+        for asset in reservation.backing_assets if not asset.excluded_from_settlement
+    )
+    next_step = (
+        'Bring your backing item(s) for inspection, then accept the final terms, pay the '
+        'service fee through Paystack and collect your reserved item.'
+        if backing_needed else
+        'Come to accept the final terms, pay the service fee through Paystack and collect your reserved item.'
+    )
+    notify_user(
+        reservation.user,
+        f"'{reservation.item.name}' passed verification. Visit {destination}. {next_step} "
+        f"Complete these steps by {_format_deadline(reservation.service_fee_deadline)}.",
+        subject='Your reserved item is verified - visit the verification centre',
+        details=[
+            f"Verification centre: {destination}.",
+            "You have 48 hours from the reserved item's verification, including any backing-item "
+            "checks, revised-value decisions, BXC shortfall coverage, acceptance and service-fee payment.",
+            "Collection requires confirmed Paystack payment and completed BXC settlement.",
+        ],
+        cta_endpoint='user.my_reservations', cta_label='View reservation',
+        notification_type='reservation',
+    )
+
+
+def _prepare_service_fee_order(reservation):
+    if reservation.order is not None:
+        return
+    reservation.service_fee_naira = calculate_service_fee(reservation.purchase_value)
+    reservation.service_fee_status = 'awaiting_acceptance'
+    if reservation.service_fee_deadline is None:
+        reservation.service_fee_deadline = datetime.utcnow() + timedelta(hours=SERVICE_FEE_PAYMENT_HOURS)
+    reservation.expires_at = reservation.service_fee_deadline
+    reservation.deadline_reminder_hours = None
+    reservation.item.reservation_expires_at = reservation.expires_at
+    order = Order(
+        user_id=reservation.user_id, reservation=reservation,
+        order_number=f"RSV-{datetime.utcnow():%Y%m%d}-{reservation.id:06d}",
+        delivery_method=reservation.delivery_method,
+        delivery_address=None,
+        pickup_station_id=reservation.pickup_station_id,
+        logistics_fee_naira=None,
+        status='Awaiting Final Acceptance', total_credits=reservation.purchase_value,
+        credits_used=0, credits_balance_before=reservation.user.credits or 0,
+        credits_balance_after=reservation.user.credits or 0,
+    )
+    db.session.add(order)
+    db.session.flush()
+    db.session.add(OrderItem(order_id=order.id, item_id=reservation.item_id))
+    notify_user(
+        reservation.user, 'Verification is complete. Accept the final terms and pay '
+        f"the service fee of NGN {reservation.service_fee_naira:,.2f} by "
+        f"{_format_deadline(reservation.service_fee_deadline)}. Collection is at your verification centre.",
+        subject='Your verified order is ready for final acceptance',
+        details=service_fee_email_details(reservation),
+        cta_endpoint='user.view_order_details', cta_label='Review final terms', order_id=order.id,
+    )
+
+
+def accept_final_terms(reservation, user, purchase_value, fee):
+    release_expired_reservations(item_id=reservation.item_id)
+    reservation = _lock_reservation_for_update(reservation.id)
+    if not reservation or reservation.user_id != user.id:
+        return _reject_transition('You can only accept terms for your own reservation.')
+    if not _service_fee_ready(reservation) or reservation.service_fee_status not in (
+        'awaiting_acceptance', 'awaiting_payment',
+    ):
+        return _reject_transition('This reservation is not ready for final acceptance.')
+    if not reservation.service_fee_deadline or reservation.service_fee_deadline <= datetime.utcnow():
+        return _reject_transition('The final acceptance and payment deadline has expired.')
+    if str(purchase_value) != str(reservation.purchase_value) or str(fee) != f'{reservation.service_fee_naira:.2f}':
+        return _reject_transition('The final terms changed. Reload the order and review them again.')
+    if not reservation.final_terms_accepted_at:
+        reservation.final_terms_accepted_at = datetime.utcnow()
+        reservation.final_terms_version = FINAL_TERMS_VERSION
+        reservation.service_fee_status = 'awaiting_payment'
+        reservation.order.status = 'Awaiting Service Fee'
+    db.session.commit()
+    return True, None
 
 def _reject_reservation(message):
     db.session.rollback()
@@ -194,6 +333,8 @@ def _create_revaluation(reservation, item, original_value, proposed_value, admin
 
     now = datetime.utcnow()
     deadline = now + timedelta(hours=REVALUATION_DECISION_HOURS)
+    if reservation.seller_first_collection and reservation.service_fee_deadline:
+        deadline = min(deadline, reservation.service_fee_deadline)
     proposal = ReservationRevaluation(
         reservation_id=reservation.id,
         item_id=item.id,
@@ -747,17 +888,9 @@ def create_reservation(
 
     if funding_mode not in ('item_backed', 'spendable'):
         return _reject_reservation("Choose a valid BXC funding method.")
-    if delivery_method not in ('pickup', 'home delivery'):
-        return _reject_reservation("Choose a valid delivery method.")
-    if delivery_method == 'home delivery':
-        delivery_address = (delivery_address or '').strip()
-        if not delivery_address:
-            return _reject_reservation("Enter the home delivery address.")
-        if len(delivery_address) > 200:
-            return _reject_reservation("The home delivery address must be 200 characters or fewer.")
-        pickup_station_id = None
-    else:
-        delivery_address = None
+    if delivery_method != 'pickup':
+        return _reject_reservation("Only verification-centre collection is available.")
+    delivery_address = None
 
     backing_item_ids = list(dict.fromkeys(backing_item_ids or []))
     locked_items = Item.query.filter(
@@ -842,8 +975,10 @@ def create_reservation(
             delivery_method=delivery_method,
             delivery_address=delivery_address,
             pickup_station_id=pickup_station_id,
-            delivery_fee_status='awaiting_payment' if delivery_method == 'home delivery' else 'not_required',
-            delivery_quote_naira=HOME_SERVICE_FEE_NAIRA if delivery_method == 'home delivery' else None,
+            delivery_fee_status='not_required',
+            service_fee_status='awaiting_verification',
+            service_fee_naira=calculate_service_fee(purchase_amount),
+            delivery_quote_naira=None,
             backing_asset_consent_at=(
                 datetime.utcnow() if funding_mode == 'item_backed' else None
             ),
@@ -906,7 +1041,11 @@ def create_reservation(
                 details=[
                     f"Item: {item.name} (#{item.item_number})",
                     f"Deadline: {deadline}",
-                    "Bring the item to Barter Express for physical inspection. For home service, wait for the buyer's fee payment before pickup and verification.",
+                    (f"Bring the item to {reservation.pickup_station.name}, "
+                     f"{reservation.pickup_station.address}, {reservation.pickup_station.city}, "
+                     f"{reservation.pickup_station.state} for physical inspection."
+                     if reservation.seller_first_collection and reservation.pickup_station else
+                     "Bring the item to Barter Express for physical inspection."),
                     "If it passes inspection, the exchange proceeds and the item moves to its new owner.",
                     "Missing the deadline or failing verification reduces your reliability score.",
                 ],
@@ -915,14 +1054,8 @@ def create_reservation(
                 notification_type='reservation',
                 category='alert',
             )
-        if company_inventory_item and (
-            funding_mode == 'item_backed' or delivery_method == 'home delivery'
-        ):
-            details = (
-                "The acquired item is already physically verified; verify any buyer backing items."
-                if funding_mode == 'item_backed' else
-                "The acquired item is already physically verified; home service requires payment before fulfillment."
-            )
+        if company_inventory_item and funding_mode == 'item_backed':
+            details = "The acquired item is already physically verified; verify any buyer backing items."
             notify_admins(
                 'settlement.manage',
                 f"Company inventory order needs follow-up: {item.name}",
@@ -934,8 +1067,10 @@ def create_reservation(
             notify_admins(
                 'settlement.manage',
                 f"New reservation awaiting verification: {item.name}",
-                f"'{item.name}' (#{item.item_number}) was reserved by {user.username}. Both sides must be "
-                f"physically verified by {deadline}.",
+                f"'{item.name}' (#{item.item_number}) was reserved by {user.username}. "
+                + (f"Verify the reserved item by {deadline}, then invite the buyer for their 48-hour collection window."
+                   if reservation.seller_first_collection else
+                   f"Both sides must be physically verified by {deadline}."),
                 cta_endpoint='admin.settlement_queue',
                 cta_label='Open Settlement Queue',
             )
@@ -1042,6 +1177,11 @@ def _cancel_reservation(reservation, new_status, relist_seller_item, relist_asse
 
     _update_backing_return_status(reservation)
     reservation.status = new_status
+    if reservation.order and reservation.order.status in ('Awaiting Final Acceptance', 'Awaiting Service Fee'):
+        reservation.order.status = 'Cancelled'
+        reservation.order.cancelled = True
+        reservation.order.cancelled_at = datetime.utcnow()
+        reservation.order.cancellation_reason = f'Reservation {new_status} before service-fee settlement.'
     if new_status == 'cancelled':
         reservation.cancelled_at = datetime.utcnow()
 
@@ -1142,13 +1282,14 @@ def release_expired_reservations(item_id=None):
         ):
             continue
         seller_missed = reservation.seller_item_verification_status == 'not_submitted'
-        buyer_missed = any(
+        buyer_expected = not reservation.seller_first_collection or not seller_missed
+        buyer_missed = buyer_expected and any(
             asset.verification_status == 'not_submitted' for asset in reservation.backing_assets
         )
         if seller_missed:
             _adjust_reliability(reservation.item.user if reservation.item else None, -RELIABILITY_PENALTY)
         for asset in reservation.backing_assets:
-            if asset.verification_status == 'not_submitted':
+            if buyer_expected and asset.verification_status == 'not_submitted':
                 _adjust_reliability(reservation.user, -RELIABILITY_PENALTY)
         try:
             _cancel_reservation(reservation, new_status='expired', relist_seller_item=True, relist_assets=True)
@@ -1240,6 +1381,22 @@ def send_reservation_deadline_reminders():
         deadline = _format_deadline(reservation.expires_at)
         item = reservation.item
         try:
+            if reservation.seller_first_collection and reservation.service_fee_deadline:
+                _notice(
+                    reservation.user_id,
+                    f"Reminder: visit your verification centre, complete any backing-item checks, "
+                    f"accept the terms and pay the service fee by {deadline}. The reservation then expires.",
+                    'Your collection deadline is approaching',
+                )
+            elif reservation.service_fee_status in ('awaiting_acceptance', 'awaiting_payment') and reservation.order:
+                notify_user(
+                    reservation.user,
+                    f"Reminder: accept the final terms and pay the service fee for order "
+                    f"{reservation.order.order_number} by {deadline}, or the reservation will expire.",
+                    subject='Your service-fee payment deadline is approaching',
+                    cta_endpoint='user.view_order_details', cta_label='View order',
+                    order_id=reservation.order.id,
+                )
             if (
                 item
                 and reservation.seller_item_verification_status == 'not_submitted'
@@ -1252,7 +1409,9 @@ def send_reservation_deadline_reminders():
                     "is released and your reliability score is reduced.",
                     f"Reminder: bring '{item.name}' for verification before {deadline}",
                 )
-            if any(asset.verification_status == 'not_submitted' for asset in reservation.backing_assets):
+            if not reservation.seller_first_collection and any(
+                asset.verification_status == 'not_submitted' for asset in reservation.backing_assets
+            ):
                 _notice(
                     reservation.user_id,
                     f"Reminder: your backing item(s) for '{item.name if item else 'your reservation'}' still "
@@ -1400,8 +1559,8 @@ def verify_seller_item(
         return _reject_transition("This reservation is no longer active.")
     if reservation.seller_item_verification_status != 'not_submitted':
         return _reject_transition("The seller's item has already been verified.")
-    if reservation.delivery_method == 'home delivery' and reservation.delivery_fee_status != 'paid':
-        return _reject_transition("The buyer must pay the home-service fee before physical verification.")
+    if reservation.delivery_method != 'pickup':
+        return _reject_transition("Only verification-centre collection is available.")
 
     try:
         if intake_details is not None:
@@ -1429,6 +1588,8 @@ def verify_seller_item(
                 "Your item did not pass physical verification",
             )
         elif reservation.item:
+            if reservation.seller_first_collection:
+                _invite_collection_buyer(reservation)
             _create_revaluation(
                 reservation,
                 reservation.item,
@@ -1475,13 +1636,10 @@ def verify_backing_asset(
         return _reject_transition("This backing item no longer exists.")
     if reservation.status != 'active':
         return _reject_transition("This reservation is no longer active.")
-    if (
-        reservation.delivery_method == 'home delivery'
-        and reservation.delivery_fee_status != 'paid'
-    ):
-        return _reject_transition(
-            "The buyer must pay the non-refundable home-service fee before backing-item pickup and verification."
-        )
+    if reservation.seller_first_collection and reservation.seller_item_verification_status != 'passed':
+        return _reject_transition("Verify the reserved item before inspecting the buyer's backing items.")
+    if reservation.delivery_method != 'pickup':
+        return _reject_transition("Only verification-centre collection is available.")
     if asset.verification_status != 'not_submitted':
         return _reject_transition("This backing item has already been verified.")
 
@@ -1542,13 +1700,15 @@ def _resolve_reservation(reservation):
     if reservation.status != 'active':
         return False
 
-    if reservation.delivery_method == 'home delivery' and reservation.delivery_fee_status != 'paid':
+    if reservation.delivery_method != 'pickup':
         return False
 
     assets = reservation.backing_assets
     any_failed = any(a.verification_status == 'failed' for a in assets)
     all_assets_done = all(a.verification_status in ('passed', 'failed') for a in assets)
     seller_status = reservation.seller_item_verification_status
+    if seller_status == 'passed' and not reservation.seller_item_revaluation_failed:
+        _invite_collection_buyer(reservation)
 
     if seller_status == 'failed' or reservation.seller_item_revaluation_failed:
         for proposal in reservation.revaluations:
@@ -1655,6 +1815,8 @@ def _resolve_reservation(reservation):
             shortfall_deadline = datetime.utcnow() + timedelta(
                 hours=REVALUATION_DECISION_HOURS
             )
+            if reservation.seller_first_collection and reservation.service_fee_deadline:
+                shortfall_deadline = min(shortfall_deadline, reservation.service_fee_deadline)
             reservation.revaluation_shortfall_expires_at = shortfall_deadline
             if reservation.expires_at < shortfall_deadline:
                 reservation.expires_at = shortfall_deadline
@@ -1694,14 +1856,27 @@ def _resolve_reservation(reservation):
         return False
 
     if seller_status == 'passed' and all_assets_done and not any_failed:
+        if reservation.service_fee_status != 'not_required':
+            if not _service_fee_ready(reservation):
+                return False
+            _prepare_service_fee_order(reservation)
+            if reservation.service_fee_status != 'paid':
+                return False
         return _settle_reservation(reservation)
     return False
 
 
 def _settle_reservation(reservation):
     """Both sides passed: transfer ownership and apply all BXC changes atomically."""
-    if reservation.delivery_method == 'home delivery' and reservation.delivery_fee_status != 'paid':
-        raise ValueError('Home-service payment is required before settlement.')
+    if reservation.service_fee_status != 'not_required' and (
+        reservation.service_fee_status != 'paid'
+        or not reservation.final_terms_accepted_at
+        or reservation.final_terms_version != FINAL_TERMS_VERSION
+        or not _service_fee_ready(reservation)
+    ):
+        raise ValueError('Verified items, accepted final terms and service-fee payment are required before settlement.')
+    if reservation.delivery_method != 'pickup':
+        raise ValueError('Only verification-centre collection is available.')
     buyer = reservation.user
     seller_item = reservation.item
     company_owned_item = _is_company_inventory_item(seller_item)
@@ -1890,23 +2065,21 @@ def _settle_reservation(reservation):
         _adjust_reliability(seller, RELIABILITY_BONUS)
 
     order_number = f"RSV-{datetime.utcnow():%Y%m%d}-{reservation.id:06d}"
-    order = Order(
-        user_id=buyer.id,
-        delivery_method=reservation.delivery_method,
-        delivery_address=reservation.delivery_address,
-        pickup_station_id=reservation.pickup_station_id,
-        status='Pending',
-        order_number=order_number,
-        total_credits=purchase_amount,
-        credits_used=purchase_amount,
-        credits_balance_before=(buyer.credits or 0) + purchase_amount,
-        credits_balance_after=buyer.credits or 0,
-        reservation_id=reservation.id,
-        logistics_fee_naira=reservation.delivery_quote_naira,
-    )
-    db.session.add(order)
-    db.session.flush()
-    db.session.add(OrderItem(order_id=order.id, item_id=seller_item.id))
+    order = reservation.order
+    if order is None:
+        order = Order(user_id=buyer.id, delivery_method=reservation.delivery_method,
+                      order_number=order_number, reservation_id=reservation.id)
+        db.session.add(order)
+        db.session.flush()
+        db.session.add(OrderItem(order_id=order.id, item_id=seller_item.id))
+    order.delivery_address = reservation.delivery_address
+    order.pickup_station_id = reservation.pickup_station_id
+    order.status = 'Pending'
+    order.total_credits = purchase_amount
+    order.credits_used = purchase_amount
+    order.credits_balance_before = (buyer.credits or 0) + purchase_amount
+    order.credits_balance_after = buyer.credits or 0
+    order.logistics_fee_naira = None
 
     reservation.status = 'completed'
     reservation.completed_at = datetime.utcnow()
@@ -1920,14 +2093,8 @@ def _settle_reservation(reservation):
     _notice(buyer.id, buyer_message, "Your purchase is complete")
     _notice(
         buyer.id,
-        (
-            f"Your purchase is verified and order {order_number} is ready for fulfillment."
-            if reservation.delivery_method == 'pickup'
-            else f"Your purchase is verified and the home-service fee is paid. Order {order_number} is ready for processing."
-        ),
-        "Your order is ready for fulfillment"
-        if reservation.delivery_method == 'pickup'
-        else "Your home-service order is ready for processing",
+        f"Your purchase is verified and order {order_number} is ready for collection.",
+        "Your order is ready for collection",
     )
     if seller:
         _notice(

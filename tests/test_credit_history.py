@@ -63,10 +63,10 @@ class CreditHistoryTests(unittest.TestCase):
             spendable_credits_held=125,
             clearing_mode='company_inventory',
             funding_mode='spendable',
-            delivery_method='home delivery',
-            delivery_address='12 Test Street, Lagos',
-            delivery_quote_naira=250,
-            delivery_fee_status='awaiting_payment',
+            delivery_method='pickup',
+            delivery_fee_status='not_required',
+            service_fee_naira=1000,
+            service_fee_status='awaiting_payment',
             status='active',
             expires_at=datetime.utcnow() + timedelta(hours=24),
         )
@@ -94,12 +94,12 @@ class CreditHistoryTests(unittest.TestCase):
             ),
             Payment(
                 user_id=self.user.id,
-                amount_naira=250,
+                amount_naira=1000,
                 credits_purchased=0,
                 status='pending',
-                purpose='reservation_delivery_fee',
+                purpose='reservation_service_fee',
                 reservation_id=self.reservation.id,
-                paystack_reference='delivery-ref-123',
+                paystack_reference='service-ref-123',
             ),
         ])
         db.session.commit()
@@ -129,9 +129,10 @@ class CreditHistoryTests(unittest.TestCase):
         self.assertIn('Payment Status', page)
         self.assertIn('Awaiting payment', page)
         self.assertIn('Reservation active · verification pending', page)
-        self.assertIn('Home fee:', page)
-        self.assertIn('Awaiting Payment', page)
-        self.assertIn('₦250.00', page)
+        self.assertNotIn('Home fee:', page)
+        self.assertIn('Transaction service fee', page)
+        self.assertIn('₦1,000.00', page)
+        self.assertNotIn('0 BXC credited', page)
 
     def test_zero_balance_snapshot_is_not_reported_as_missing(self):
         transaction = CreditTransaction(

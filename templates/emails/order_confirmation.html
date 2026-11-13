@@ -7,7 +7,7 @@
   {{ email.paragraph('Hello ' ~ username ~ ',') }}
   {{ email.paragraph('Your order is confirmed and is being processed by Barter Express.') }}
   {% call email.section('Order summary') %}
-    {{ email.facts([('Order ID', '#' ~ order_id), ('Order date', order_date), ('Fulfillment method', 'Home service' if delivery_method == 'home delivery' else 'Verification Station' if delivery_method == 'pickup' else delivery_method|title)]) }}
+    {{ email.facts([('Order ID', '#' ~ order_id), ('Order date', order_date), ('Collection method', 'Verification centre' if delivery_method == 'pickup' else 'Retired test booking')]) }}
   {% endcall %}
   {% call email.section('Items in your order') %}
     {% for item in items %}
@@ -15,9 +15,7 @@
       {% if item.description %}{{ email.paragraph(item.description) }}{% endif %}
     {% endfor %}
   {% endcall %}
-  {% if delivery_method == 'home delivery' %}
-    {% call email.section('Delivery address') %}{{ email.paragraph(delivery_address) }}{% endcall %}
-  {% elif delivery_method == 'pickup' and pickup_station %}
+  {% if delivery_method == 'pickup' and pickup_station %}
     {% call email.section('Verification Station') %}{{ email.paragraph(pickup_station.name ~ '\n' ~ pickup_station.address) }}{% endcall %}
   {% endif %}
   {{ email.paragraph('We will notify you when the order status changes. Check your orders for the latest update and any action required.') }}

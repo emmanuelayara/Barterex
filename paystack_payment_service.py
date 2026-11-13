@@ -40,38 +40,51 @@ class PaystackPaymentService:
 
     @staticmethod
     def initiate_delivery_fee_payment(reservation, user):
-        """Charge the reservation's home-service fee, never account credits."""
+        """Retired endpoint: never create or reuse a logistics checkout."""
+        return {'success': False, 'error': 'Only verification-centre collection is available. Delivery-fee payments are disabled.'}
+
+    @staticmethod
+    def initiate_service_fee_payment(reservation, user):
+        return PaystackPaymentService._initiate_reservation_fee(reservation, user, 'reservation_service_fee')
+
+    @staticmethod
+    def _initiate_reservation_fee(reservation, user, purpose):
+        if purpose != 'reservation_service_fee':
+            return {'success': False, 'error': 'Delivery-fee payments are disabled. Use verification-centre collection.'}
         if reservation.user_id != user.id:
-            return {'success': False, 'error': 'You can only pay delivery fees for your own reservation.'}
+            return {'success': False, 'error': 'You can only pay fees for your own reservation.'}
         from services.reservation_service import _lock_reservation_for_update
 
         reservation = _lock_reservation_for_update(reservation.id)
         if not reservation or reservation.user_id != user.id:
             return {'success': False, 'error': 'This reservation is no longer available for payment.'}
-        if reservation.delivery_method != 'home delivery':
-            return {'success': False, 'error': 'This reservation does not require a home-service fee.'}
-        if reservation.status not in ('active', 'completed') or (
-            reservation.status == 'active' and reservation.expires_at <= datetime.utcnow()
+        from services.reservation_service import _service_fee_ready, FINAL_TERMS_VERSION
+        if (
+            reservation.delivery_method != 'pickup'
+            or not _service_fee_ready(reservation)
+            or reservation.service_fee_status != 'awaiting_payment'
+            or not reservation.final_terms_accepted_at
+            or reservation.final_terms_version != FINAL_TERMS_VERSION
+            or not reservation.service_fee_deadline
+            or reservation.service_fee_deadline <= datetime.utcnow()
         ):
-            return {'success': False, 'error': 'This reservation is closed or expired; a new home-service payment cannot be started.'}
-        if reservation.delivery_fee_status not in ('awaiting_payment', 'paid'):
-            return {'success': False, 'error': 'There is no home-service fee ready for payment.'}
-        if reservation.delivery_fee_status == 'paid':
-            return {'success': False, 'error': 'The delivery fee has already been paid.'}
+            return {'success': False, 'error': 'Verification-centre collection, verification and final acceptance are required within the payment deadline.'}
+        if reservation.status != 'active' or reservation.expires_at <= datetime.utcnow():
+            return {'success': False, 'error': 'This reservation is closed or expired; a new reservation-fee payment cannot be started.'}
 
-        amount_naira = float(reservation.delivery_quote_naira or 0)
+        amount_naira = float(reservation.service_fee_naira or 0)
         if not PaystackPaymentService.MIN_AMOUNT <= amount_naira <= PaystackPaymentService.MAX_AMOUNT:
-            return {'success': False, 'error': 'The delivery quote is outside Paystack payment limits.'}
+            return {'success': False, 'error': 'The reservation fee is outside Paystack payment limits.'}
 
         existing = Payment.query.filter_by(
             reservation_id=reservation.id,
-            purpose='reservation_delivery_fee',
+            purpose=purpose,
         ).filter(Payment.status.in_(('pending', 'test_pending'))).order_by(
             Payment.created_at.desc()
         ).first()
         if existing:
             if round(existing.amount_naira * 100) != round(amount_naira * 100):
-                return {'success': False, 'error': 'The pending payment amount differs from the home-service fee. Contact support.'}
+                return {'success': False, 'error': 'The pending payment amount differs from the reservation fee. Contact support.'}
             payment_link = None
             if existing.status == 'test_pending':
                 payment_link = f'/payments/verify-payment/{existing.paystack_reference}?test=true'
@@ -93,16 +106,17 @@ class PaystackPaymentService:
             amount_naira=amount_naira,
             credits_purchased=0,
             status='pending',
-            purpose='reservation_delivery_fee',
+            purpose=purpose,
             reservation_id=reservation.id,
             customer_email=user.email,
             customer_phone=user.phone_number,
-            expires_at=datetime.utcnow() + timedelta(hours=24),
+            expires_at=reservation.service_fee_deadline,
         )
         metadata = {
-            'purpose': 'reservation_delivery_fee',
+            'purpose': purpose,
             'reservation_id': reservation.id,
         }
+        metadata.update(order_id=reservation.order.id, final_terms_version=reservation.final_terms_version)
 
         if PaystackPaymentService.TEST_MODE:
             import uuid
@@ -111,6 +125,10 @@ class PaystackPaymentService:
             payment.status = 'test_pending'
             payment.payment_metadata = {'mode': 'test', **metadata}
             db.session.add(payment)
+            db.session.flush()
+            PaystackPaymentService._notify_service_fee_link(
+                reservation, f'/payments/verify-payment/{reference}?test=true'
+            )
             db.session.commit()
             return {
                 'success': True,
@@ -121,7 +139,7 @@ class PaystackPaymentService:
             }
 
         import uuid
-        reference = f'barterxpress_delivery_{reservation.id}_{uuid.uuid4().hex[:12]}'
+        reference = f"barterxpress_service_{reservation.id}_{uuid.uuid4().hex[:12]}"
         payment.paystack_reference = reference
         db.session.add(payment)
         db.session.commit()
@@ -132,6 +150,7 @@ class PaystackPaymentService:
             'reference': reference,
             'callback_url': PaystackPaymentService.CALLBACK_URL,
             'metadata': metadata,
+            'channels': ['card', 'bank_transfer'],
         }
         try:
             response = requests.post(
@@ -184,6 +203,7 @@ class PaystackPaymentService:
             'paystack_response': response_data,
         }
         db.session.add(payment)
+        PaystackPaymentService._notify_service_fee_link(reservation, authorization_url)
         db.session.commit()
         return {
             'success': True,
@@ -191,6 +211,63 @@ class PaystackPaymentService:
             'reference': payment.paystack_reference,
             'payment_id': payment.id,
         }
+
+    @staticmethod
+    def _notify_service_fee_link(reservation, payment_link):
+        from flask import url_for, has_request_context
+        from services.reservation_service import service_fee_email_details
+        if payment_link.startswith('/'):
+            if has_request_context():
+                payment_link = url_for('payments.verify_payment',
+                                       reference=payment_link.split('/')[-1].split('?')[0],
+                                       test='true', _external=True)
+            else:
+                payment_link = current_app.config['APP_URL'].rstrip('/') + payment_link
+        notify_user(
+            reservation.user,
+            f"Pay the NGN {reservation.service_fee_naira:,.2f} service fee for order "
+            f"{reservation.order.order_number}. Collection is at your verification centre. "
+            f"Payment deadline: {reservation.service_fee_deadline:%d %b %Y, %H:%M UTC}.",
+            subject='Your order service-fee payment link',
+            details=service_fee_email_details(reservation),
+            cta_endpoint=None, cta_label='Pay service fee', cta_url=payment_link,
+        )
+
+    @staticmethod
+    def _complete_service_fee_payment(payment, payment_method):
+        from services.reservation_service import (
+            _lock_reservation_for_update, _resolve_reservation, FINAL_TERMS_VERSION,
+        )
+        reservation = _lock_reservation_for_update(payment.reservation_id)
+        if (
+            not reservation or reservation.user_id != payment.user_id
+            or not reservation.final_terms_accepted_at
+            or reservation.final_terms_version != FINAL_TERMS_VERSION
+            or round(float(reservation.service_fee_naira or 0) * 100) != round(payment.amount_naira * 100)
+        ):
+            raise ValueError('Service-fee payment does not match the accepted reservation terms.')
+        payment.status = 'completed'
+        payment.paid_at = datetime.utcnow()
+        payment.payment_method = payment_method
+        reservation.service_fee_status = 'paid'
+        # A late provider confirmation must never resurrect or release a closed reservation.
+        if (
+            reservation.delivery_method != 'pickup'
+            or reservation.status != 'active'
+            or reservation.expires_at <= datetime.utcnow()
+        ):
+            payment.error_message = 'Service fee received for a closed, expired or retired reservation; support reconciliation required.'
+            current_app.logger.warning('Unfulfillable service-fee payment %s for reservation %s', payment.id, reservation.id)
+            notify_user(reservation.user, 'Your service-fee payment was received for a closed, expired '
+                        'or retired reservation. No item was released. Contact support for payment resolution.',
+                        subject='Service-fee payment needs support review')
+            notify_admins('orders.manage', 'Service-fee payment needs reconciliation',
+                          f'Payment {payment.id} for reservation {reservation.id} requires reconciliation.')
+            return False
+        settled = _resolve_reservation(reservation)
+        if not settled:
+            raise ValueError('Paid service-fee reservation no longer satisfies settlement requirements.')
+        return True
 
     @staticmethod
     def _complete_delivery_fee_payment(payment, payment_method):
@@ -215,34 +292,29 @@ class PaystackPaymentService:
         payment.paid_at = datetime.utcnow()
         payment.payment_method = payment_method
         reservation.delivery_fee_status = 'paid'
-        settled = False
         if reservation.status == 'active':
-            from services.reservation_service import _resolve_reservation, _cancel_reservation
+            from services.reservation_service import _cancel_reservation
             if reservation.expires_at <= datetime.utcnow():
                 _cancel_reservation(reservation, new_status='expired', relist_seller_item=True, relist_assets=True)
-            else:
-                settled = _resolve_reservation(reservation)
-        closed = reservation.status not in ('active', 'completed')
-        if closed:
-            notify_admins(
-                'settlement.manage',
-                'Home-service payment received for a closed reservation',
-                f"Reservation {reservation.id} is {reservation.status}; payment {payment.id} "
-                "was received without reopening or settling the reservation. Contact the buyer to resolve the payment.",
-                cta_endpoint='admin.settlement_queue',
-                cta_label='Open Settlement Queue',
-            )
+        payment.error_message = 'Payment for a retired logistics booking; support reconciliation required.'
+        notify_admins(
+            'settlement.manage',
+            'Payment received for a retired booking',
+            f"Reservation {reservation.id} is {reservation.status}; payment {payment.id} "
+            "requires reconciliation. No item was released or booking reopened.",
+            cta_endpoint='admin.settlement_queue',
+            cta_label='Open Settlement Queue',
+        )
         notify_user(
             reservation.user_id,
-            f"Your non-refundable home-service fee for reservation {reservation.id} is paid. "
-            + ("This reservation is closed and has not been reopened. Contact support about this payment."
-               if closed else "Dispatch may proceed after verification succeeds. This excludes the transaction fee."),
-            subject="Home-service fee received",
+            f"A payment was received for retired reservation {reservation.id}. "
+            "No item was released or booking reopened. Contact support for payment reconciliation.",
+            subject="Retired booking payment needs review",
             cta_endpoint='user.my_reservations',
             cta_label='View My Reservations',
             notification_type='reservation',
         )
-        return settled
+        return False
     
     @staticmethod
     def get_auth_header():
@@ -440,8 +512,11 @@ class PaystackPaymentService:
                 if payment.status == 'test_pending':
                     if not PaystackPaymentService._claim_payment(payment):
                         return {'success': False, 'error': 'Payment is already being processed. Check its status.'}
-                    if payment.purpose == 'reservation_delivery_fee':
-                        settled = PaystackPaymentService._complete_delivery_fee_payment(payment, 'test_card')
+                    if payment.purpose in ('reservation_delivery_fee', 'reservation_service_fee'):
+                        complete = (PaystackPaymentService._complete_service_fee_payment
+                                    if payment.purpose == 'reservation_service_fee'
+                                    else PaystackPaymentService._complete_delivery_fee_payment)
+                        settled = complete(payment, 'test_card')
                         payment.payment_metadata = {
                             **(payment.payment_metadata or {}),
                             'verified': True,
@@ -453,7 +528,7 @@ class PaystackPaymentService:
                         user = User.query.get(payment.user_id)
                         return {
                             'success': True,
-                            'message': 'Delivery fee payment verified',
+                            'message': 'Reservation fee payment verified',
                             'credits_added': 0,
                             'new_balance': user.credits,
                         }
@@ -546,8 +621,11 @@ class PaystackPaymentService:
                                 return {'success': True, 'message': 'Payment already verified', 'credits_added': 0,
                                         'new_balance': db.session.get(User, existing.user_id).credits}
                             return {'success': False, 'error': 'Payment is already being processed. Check its status.'}
-                        if payment.purpose == 'reservation_delivery_fee':
-                            settled = PaystackPaymentService._complete_delivery_fee_payment(
+                        if payment.purpose in ('reservation_delivery_fee', 'reservation_service_fee'):
+                            complete = (PaystackPaymentService._complete_service_fee_payment
+                                        if payment.purpose == 'reservation_service_fee'
+                                        else PaystackPaymentService._complete_delivery_fee_payment)
+                            settled = complete(
                                 payment,
                                 response_data.get('channel', 'card'),
                             )

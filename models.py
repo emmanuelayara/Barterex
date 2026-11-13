@@ -738,6 +738,11 @@ class Reservation(db.Model):
     pickup_station_id = db.Column(db.Integer, db.ForeignKey('pickup_station.id'), nullable=True)
     delivery_quote_naira = db.Column(db.Float, nullable=True)
     delivery_fee_status = db.Column(db.String(20), nullable=False, default='not_required')
+    service_fee_status = db.Column(db.String(24), nullable=False, default='not_required')
+    service_fee_naira = db.Column(db.Numeric(12, 2), nullable=True)
+    service_fee_deadline = db.Column(db.DateTime, nullable=True)
+    final_terms_accepted_at = db.Column(db.DateTime, nullable=True)
+    final_terms_version = db.Column(db.String(40), nullable=True)
     backing_return_status = db.Column(db.String(20), nullable=False, default='not_required')
     backing_asset_consent_at = db.Column(db.DateTime, nullable=True)
     backing_asset_consent_version = db.Column(db.String(40), nullable=True)
@@ -790,6 +795,25 @@ class Reservation(db.Model):
                 and now > self.revaluation_shortfall_expires_at
             )
         )
+
+    @property
+    def seller_first_collection(self):
+        return self.delivery_method == 'pickup' and self.service_fee_status != 'not_required'
+
+    @property
+    def service_fee_payment_link(self):
+        if self.delivery_method != 'pickup':
+            return None
+        payment = Payment.query.filter_by(
+            reservation_id=self.id, purpose='reservation_service_fee',
+        ).filter(Payment.status.in_(('pending', 'test_pending'))).order_by(
+            Payment.created_at.desc()
+        ).first()
+        if not payment:
+            return None
+        if payment.status == 'test_pending':
+            return f'/payments/verify-payment/{payment.paystack_reference}?test=true'
+        return (payment.payment_metadata or {}).get('paystack_response', {}).get('authorization_url')
 
 
 class ReservationAsset(db.Model):
@@ -1020,7 +1044,7 @@ class Trade(db.Model):
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    delivery_method = db.Column(db.String(20), nullable=False)  # 'home delivery' or 'pickup'
+    delivery_method = db.Column(db.String(20), nullable=False)  # 'pickup'; retired methods retained for history
     delivery_address = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default="Pending")  # Pending, Processing, Shipped, Delivered, Cancelled
     date_ordered = db.Column(db.DateTime, default=db.func.now())
@@ -1491,6 +1515,7 @@ class Payment(db.Model):
     
     # Relationship
     user = db.relationship('User', backref=db.backref('payments', lazy=True))
+    reservation = db.relationship('Reservation')
     
     def __repr__(self):
         return f'<Payment id={self.id}, user_id={self.user_id}, amount={self.amount_naira}, status={self.status}>'
