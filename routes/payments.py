@@ -215,6 +215,12 @@ def webhook():
                 reference = data.get('data', {}).get('reference')
                 if reference:
                     result = PaystackPaymentService.verify_payment(reference)
+                    if result.get('success') is not True:
+                        # Keep failed verification eligible for Paystack retries.
+                        return jsonify({
+                            'success': False,
+                            'error': 'Payment verification is incomplete. Please retry.',
+                        }), 503
                     return jsonify({'success': True, 'result': result})
             
             return jsonify({'success': True})
