@@ -1,6 +1,17 @@
 {% extends 'base.html' %}
 {% import '_floaters.html' as fx %}
-{% block title %}Swap Smarter{% endblock %}
+{% block title %}Barter Express | Swap What You Have for What You Need{% endblock %}
+{% block meta_description %}Get your used phone or gadget valued for free, earn BXC credits and swap it for something you need. Cashless trading with verified items and members.{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">{{ {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Barter Express",
+    "url": site_url,
+    "logo": site_url ~ url_for('static', filename='logo.png')
+}|tojson }}</script>
+{% endblock %}
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 <script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
@@ -27,6 +38,7 @@
         {% else %}
           <a href="https://docs.google.com/forms/d/e/1FAIpQLSfgleoaXGXOV-bNH0rlJxOpbxH5419y8LS3c2su3nmzwUNy0A/viewform?usp=dialog" class="hm-btn primary"><i class="fas fa-rocket"></i> Join the Waitlist</a>
           <a href="{{ url_for('marketplace.how_it_works') }}" class="hm-btn ghost">Learn how</a>
+          <a href="{{ url_for('seo.check_item_value') }}" class="hm-btn ghost"><i class="fas fa-magnifying-glass-dollar"></i> What's my item worth?</a>
         {% endif %}
       </div>
       <ul class="hm-trust">

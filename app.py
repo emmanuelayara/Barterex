@@ -1,6 +1,6 @@
 import os
 import click
-from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, abort
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify, abort, has_request_context
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -108,6 +108,7 @@ from routes_account import account_bp
 from routes.payments import payment_bp
 from notifications import NotificationService
 from routes.two_factor import two_factor_bp
+from routes.seo import seo_bp, is_private_path
 csrf.exempt('routes.payments.webhook')
 
 
@@ -362,7 +363,8 @@ def check_maintenance_mode():
     settings = SystemSettings.get_settings()
     if settings.maintenance_mode:
         # Allow only essential user routes (login, etc.)
-        allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'two_factor.verify', 'static']
+        allowed_routes = ['auth.login', 'auth.logout', 'auth.register', 'two_factor.verify', 'static',
+                          'seo.robots_txt', 'seo.sitemap_xml']
         current_route = request.endpoint
         
         if current_route not in allowed_routes:
@@ -394,9 +396,21 @@ def inject_favorites_info():
     from flask_wtf.csrf import generate_csrf
     from models import Favorite, Item, Order, Reservation
     
+    # Canonical URL: configured site origin + the route's own path, never the query string.
+    canonical_path = ''
+    if has_request_context():
+        canonical_path = request.path
+        if request.endpoint and request.endpoint != 'static':
+            try:
+                canonical_path = url_for(request.endpoint, **(request.view_args or {}))
+            except Exception:
+                pass
+
     context = {
         'csrf_token': generate_csrf,
         'current_year': datetime.utcnow().year,
+        'site_url': app.config['APP_URL'],
+        'canonical_url': app.config['APP_URL'] + canonical_path,
     }
     
     if current_user.is_authenticated:
@@ -463,6 +477,7 @@ app.register_blueprint(account_bp)
 app.register_blueprint(contact_bp)
 app.register_blueprint(payment_bp)
 app.register_blueprint(two_factor_bp)
+app.register_blueprint(seo_bp)
 
 # ✅ Error Handlers
 from logger_config import setup_logger
@@ -574,6 +589,8 @@ def apply_cache_control_headers(response):
     """
     # Get the request path to check if it's a static file
     path = request.path.lower()
+    if is_private_path(path):
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow'
     static_extensions = ('.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.woff', '.woff2', '.ttf', '.eot', '.mp4', '.webm')
     
     # Don't cache static files served from /static/

@@ -10,14 +10,40 @@
         /* Apply the user's saved dark-mode choice before first paint (no flash). Default is light. */
         try { if (localStorage.getItem('barterex-dark-mode') === 'true') document.documentElement.classList.add('dark-mode'); } catch (e) {}
     </script>
-    <title>Barter Express - {% block title %}{% endblock %}</title>
+    {% set page_title %}{% block title %}Barter Express{% endblock %}{% endset %}
+    {% set page_title = page_title|striptags|trim %}
+    {% set full_title = page_title if 'Barter Express' in page_title else 'Barter Express - ' ~ page_title %}
+    {% set page_description %}{% block meta_description %}Barter Express is a cashless marketplace where you value what you own, earn BXC credits and swap it for what you need.{% endblock %}{% endset %}
+    {% set page_description = page_description|striptags|trim %}
+    {# Pages are private by default; public pages opt in by overriding the robots block with "index, follow". #}
+    {% set robots_directive %}{% block robots %}noindex, nofollow{% endblock %}{% endset %}
+    {% set robots_directive = robots_directive|trim %}
+    <title>{{ full_title }}</title>
+    <meta name="description" content="{{ page_description }}">
+    <meta name="robots" content="{{ robots_directive }}">
+    {% if robots_directive.startswith('index') %}
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta property="og:site_name" content="Barter Express">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ full_title }}">
+    <meta property="og:description" content="{{ page_description }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='logo.png') }}">
+    <meta name="twitter:card" content="summary">
+    {% endif %}
+    {% block structured_data %}{% endblock %}
     <!-- Modern Design System CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
-    <!-- Font Awesome Icons -->
+    <!-- Fonts and icons load without blocking first paint -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </noscript>
     <style>
         /* ========================================
            CONSISTENT BASE STYLES - ALWAYS LOADED
@@ -1230,6 +1256,7 @@
 <footer class="bx-footer">
     <div class="bx-footer__inner">
         <ul class="bx-footer__links">
+            <li><a href="{{ url_for('seo.check_item_value') }}">Check your item's value</a></li>
             <li><a href="{{ url_for('marketplace.about') }}">About</a></li>
             <li><a href="{{ url_for('marketplace.how_it_works') }}">How it works</a></li>
             <li><a href="{{ url_for('marketplace.safety') }}">Safety</a></li>

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
+
+{% set faqs = [
+    ("How much is my used phone worth?",
+     "A used phone's value depends mainly on its model and storage, battery health, screen and body condition, age, whether it is network or account locked, and whether you still have the box and accessories. On Barter Express you add your phone with clear photos and a description, and our AI valuation estimates its fair market value in BXC. Our team reviews the estimate and may adjust it."),
+    ("Is checking my item's value free?",
+     "Creating an account is free and your first valuation each day is free. Additional valuations in the same day cost ₦150 each."),
+    ("Is the valuation final?",
+     "No. The valuation is an estimate based on your photos and description. Provisional BXC are confirmed only when your item passes physical verification during an exchange, so honest photos and condition details give you the most accurate number."),
+    ("Do I have to hand over my phone to get a valuation?",
+     "No. Your item stays with you when it is valued. It is only inspected at a verification centre when you use it in an exchange."),
+    ("What kinds of items can I value?",
+     "Phones & gadgets, consumer electronics, fashion accessories, footwear, beauty & personal care, gaming & accessories, and kitchen wares & appliances."),
+    ("Is my information safe?",
+     "This page is general guidance and never displays anyone's valuations, account details or verification documents. Account, valuation, order and verification pages require you to log in and are excluded from search engines."),
+] %}
+
+{% block title %}How Much Is My Used Phone Worth? Check Item Value | Barter Express{% endblock %}
+{% block meta_description %}Find out what your used phone, laptop, console or other item is worth. See what affects resale value and get a free daily AI valuation in BXC on Barter Express.{% endblock %}
+{% block robots %}index, follow{% endblock %}
+
+{% block structured_data %}
+{% set ns = namespace(entities=[]) %}
+{% for question, answer in faqs %}
+{% set _ = ns.entities.append({"@type": "Question", "name": question, "acceptedAnswer": {"@type": "Answer", "text": answer}}) %}
+{% endfor %}
+<script type="application/ld+json">{{ {
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "WebPage",
+            "name": "How much is my used phone worth? Check your item's value",
+            "url": canonical_url,
+            "description": "What affects the resale value of a used phone or other item, and how Barter Express values it.",
+            "isPartOf": {"@type": "WebSite", "name": "Barter Express", "url": site_url}
+        },
+        {"@type": "FAQPage", "mainEntity": ns.entities}
+    ]
+}|tojson }}</script>
+{% endblock %}
+
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
+
+{% block content %}
+<div class="pp">
+    {% call pp.hero('fas fa-magnifying-glass-dollar', 'Check your item’s value', 'How much is my used phone worth?', 'See what drives the value of a used phone or any item you own, then get a free daily valuation in BXC.') %}
+    <div class="pp-actions">
+        <a class="pp-btn primary" href="{{ url_for('items.upload_item') }}"><i class="fas fa-camera"></i> Value my item</a>
+        {% if not current_user.is_authenticated %}
+        <a class="pp-btn" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Create a free account</a>
+        {% endif %}
+    </div>
+    {% endcall %}
+
+    <main class="pp-main pp-stack">
+        <section class="pp-card pp-reveal">
+            <div class="pp-section-head">
+                <span class="pp-icon"><i class="fas fa-mobile-screen-button"></i></span>
+                <h2>What decides what a used phone is worth</h2>
+            </div>
+            <ul class="pp-checks">
+                <li><strong>Model and storage.</strong> Newer flagship models and larger storage sizes hold their value best.</li>
+                <li><strong>Screen and body condition.</strong> Cracks, deep scratches and dents lower the value; a clean screen and frame raise it.</li>
+                <li><strong>Battery health.</strong> A phone that lasts a full day is worth more than one that needs charging every few hours.</li>
+                <li><strong>Age and usage.</strong> Tell us how long you have used it. Fairly used items need a usage duration.</li>
+                <li><strong>Locks and repairs.</strong> Network, iCloud or Google account locks and non-original repairs reduce value, so be upfront about them.</li>
+                <li><strong>Box and accessories.</strong> The original charger, cable and box make a phone easier to trade.</li>
+            </ul>
+            <p class="pp-muted" style="margin-top:12px">The same logic applies to laptops, consoles, TVs, footwear and other items: condition, age and current market demand set the price.</p>
+        </section>
+
+        <section class="pp-card pp-reveal">
+            <div class="pp-section-head">
+                <span class="pp-icon blue"><i class="fas fa-route"></i></span>
+                <h2>Get your item’s value in three steps</h2>
+            </div>
+            <ol class="pp-steps">
+                <li class="pp-step">
+                    <h3>Add your item</h3>
+                    <p>Create a free account, choose a category and condition, write a clear description and upload 6 to 15 photos.</p>
+                </li>
+                <li class="pp-step">
+                    <h3>Receive your valuation</h3>
+                    <p>Our AI compares your item with current market data, then our team reviews the estimate. Your first valuation each day is free; extra valuations cost ₦150 each.</p>
+                </li>
+                <li class="pp-step">
+                    <h3>Use your BXC</h3>
+                    <p>Accept the valuation to receive provisional Barter Express Credits and use them to reserve items from other members. Credits are confirmed when your item passes physical verification.</p>
+                </li>
+            </ol>
+            <div class="pp-actions" style="margin-top:16px">
+                <a class="pp-btn primary" href="{{ url_for('items.upload_item') }}"><i class="fas fa-camera"></i> Start my valuation</a>
+            </div>
+        </section>
+
+        <section class="pp-reveal">
+            <div class="pp-section-head" style="padding:0 4px">
+                <span class="pp-icon green"><i class="fas fa-layer-group"></i></span>
+                <h2>Items you can value</h2>
+            </div>
+            <div class="pp-grid cols-2">
+                {% for category in ['Phones & Gadgets', 'Consumer Electronics', 'Fashion Accessories', 'Footwear', 'Beauty & Personal Care', 'Gaming & Accessories', 'Kitchen Wares & Appliances'] %}
+                <a class="pp-tile" href="{{ url_for('marketplace.marketplace', category=category) }}">
+                    <h3 style="margin-top:0">{{ category }}</h3>
+                    <p>Browse what members are trading in this category.</p>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="pp-card pp-reveal">
+            <div class="pp-callout">
+                <i class="fas fa-lock"></i>
+                <div>
+                    <strong>Your information stays private.</strong>
+                    This page is open to everyone and shows no personal data. Your valuations, account details and verification documents sit behind your login and are kept out of search engines.
+                </div>
+            </div>
+        </section>
+
+        <section class="pp-reveal">
+            <div class="pp-section-head" style="padding:0 4px">
+                <span class="pp-icon blue"><i class="fas fa-circle-question"></i></span>
+                <h2>Item value questions</h2>
+            </div>
+            <div class="pp-faq-list">
+                {% for question, answer in faqs %}
+                <details class="pp-faq-item">
+                    <summary>{{ question }}</summary>
+                    <div class="pp-faq-answer"><p>{{ answer }}</p></div>
+                </details>
+                {% endfor %}
+            </div>
+        </section>
+
+        {{ pp.explore('value') }}
+    </main>
+</div>
+{% endblock %}

@@ -22,6 +22,7 @@
 <nav class="pp-explore" aria-label="More about Barter Express">
     <h2>Explore</h2>
     <ul>
+        <li><a href="{{ url_for('seo.check_item_value') }}" {% if current == 'value' %}aria-current="page"{% endif %}><i class="fas fa-magnifying-glass-dollar"></i> Check item value</a></li>
         <li><a href="{{ url_for('marketplace.about') }}" {% if current == 'about' %}aria-current="page"{% endif %}><i class="fas fa-circle-info"></i> About</a></li>
         <li><a href="{{ url_for('marketplace.how_it_works') }}" {% if current == 'how' %}aria-current="page"{% endif %}><i class="fas fa-route"></i> How it works</a></li>
         <li><a href="{{ url_for('marketplace.safety') }}" {% if current == 'safety' %}aria-current="page"{% endif %}><i class="fas fa-shield-halved"></i> Safety</a></li>

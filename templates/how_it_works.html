@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% import '_public_macros.html' as pp %}
-{% block title %}How It Works - Barter Express{% endblock %}
+{% block title %}How Barter Express Works: Value, Reserve, Verify, Swap{% endblock %}
+{% block meta_description %}Six simple steps from valuing your item to collecting a verified swap on Barter Express: list, get valued, earn BXC, reserve, verify and collect.{% endblock %}
+{% block robots %}index, follow{% endblock %}
 {% block head_extra %}{{ pp.assets() }}{% endblock %}
 
 {% block content %}
@@ -8,6 +10,7 @@
     {% call pp.hero('fas fa-route', 'How it works', 'Simple steps to start trading', 'From valuation to verified exchange in six clear steps.') %}
     <div class="pp-actions">
         <a class="pp-btn primary" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Get started free</a>
+        <a class="pp-btn" href="{{ url_for('seo.check_item_value') }}"><i class="fas fa-magnifying-glass-dollar"></i> Check your item's value</a>
     </div>
     {% endcall %}
 
