@@ -76,7 +76,7 @@ def is_enabled() -> bool:
     return bool(_base_url())
 
 
-MAX_IMAGES_SENT = 3          # photos sent per item (cost + speed)
+MAX_IMAGES_SENT = 15          # photos sent per item (cost + speed)
 MAX_IMAGE_SIDE = 1280        # px; bigger photos are shrunk before sending
 
 # ---------------------------------------------------------------------------
