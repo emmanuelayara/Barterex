@@ -2699,9 +2699,9 @@
     if (csrfToken) {
       previewData.append('csrf_token', csrfToken.value);
     }
-    // Only a few photos are needed for the AI to judge the item (see MAX_IMAGES_SENT).
+    // Preview every selected photo, up to the fifteen-photo upload limit.
     if (editItemId) previewData.append('edit_item_id', editItemId);
-    (editItemId ? selectedFiles : selectedFiles.slice(0, 3)).forEach(file => previewData.append('images', file));
+    selectedFiles.slice(0, 15).forEach(file => previewData.append('images', file));
 
     fetch('{{ url_for("items.estimate_value") }}', {
       method: 'POST',
