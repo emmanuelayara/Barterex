@@ -159,6 +159,7 @@ class FreshnessServiceTests(unittest.TestCase):
                 "reservation_reminders": 1,
                 "stale_items": 2,
                 "freshness_warnings": 0,
+                "expired_guest_valuations": 0,
             },
         )
         expire_reservations.assert_called_once_with()

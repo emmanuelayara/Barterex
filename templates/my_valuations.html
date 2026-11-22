@@ -210,6 +210,12 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    scroll-margin-top: 80px;
+  }
+
+  .valuation-card-wrap:target .valuation-card {
+    outline: 3px solid #ff7a00;
+    outline-offset: 2px;
   }
 
   .rejection-note {
@@ -265,7 +271,7 @@
       <div class="valuations-list" data-server-now="{{ valuation_now.isoformat() }}Z">
         {% for item in items.items %}
           {% set thumb = item.image_url or (item.images[0].image_url if item.images else None) %}
-          <div class="valuation-card-wrap">
+          <div class="valuation-card-wrap" id="item-{{ item.id }}">
             <div class="valuation-card">
               {% if thumb %}
                 <img src="{{ thumb | image_url }}" class="valuation-thumb" alt="{{ item.name }}">

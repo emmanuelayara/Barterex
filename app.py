@@ -109,6 +109,7 @@ from routes.payments import payment_bp
 from notifications import NotificationService
 from routes.two_factor import two_factor_bp
 from routes.seo import seo_bp, is_private_path
+from routes.guest_valuation import guest_valuation_bp
 csrf.exempt('routes.payments.webhook')
 
 
@@ -478,6 +479,7 @@ app.register_blueprint(contact_bp)
 app.register_blueprint(payment_bp)
 app.register_blueprint(two_factor_bp)
 app.register_blueprint(seo_bp)
+app.register_blueprint(guest_valuation_bp)
 
 # ✅ Error Handlers
 from logger_config import setup_logger

@@ -46,7 +46,7 @@
 <div class="pp">
     {% call pp.hero('fas fa-magnifying-glass-dollar', 'Check your item’s value', 'How much is my used phone worth?', 'See what drives the value of a used phone or any item you own, then get a free daily valuation in BXC.') %}
     <div class="pp-actions">
-        <a class="pp-btn primary" href="{{ url_for('items.upload_item') }}"><i class="fas fa-camera"></i> Value my item</a>
+        <a class="pp-btn primary" href="{{ url_for('items.upload_item') if current_user.is_authenticated else url_for('guest_valuation.start', category='Phones & Gadgets') }}"><i class="fas fa-camera"></i> Value my item</a>
         {% if not current_user.is_authenticated %}
         <a class="pp-btn" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Create a free account</a>
         {% endif %}
@@ -78,7 +78,7 @@
             <ol class="pp-steps">
                 <li class="pp-step">
                     <h3>Add your item</h3>
-                    <p>Create a free account, choose a category and condition, write a clear description and upload 6 to 15 photos.</p>
+                    <p>Create a free account, choose a category and condition, write a clear description and take 6 to 15 photos. Your first valuation needs no account at all: we keep it private and attach it to your account when you sign up.</p>
                 </li>
                 <li class="pp-step">
                     <h3>Receive your valuation</h3>
@@ -90,7 +90,7 @@
                 </li>
             </ol>
             <div class="pp-actions" style="margin-top:16px">
-                <a class="pp-btn primary" href="{{ url_for('items.upload_item') }}"><i class="fas fa-camera"></i> Start my valuation</a>
+                <a class="pp-btn primary" href="{{ url_for('items.upload_item') if current_user.is_authenticated else url_for('guest_valuation.start') }}"><i class="fas fa-camera"></i> Start my valuation</a>
             </div>
         </section>
 

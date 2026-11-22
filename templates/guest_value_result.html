@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
+{% block title %}Your Free Item Estimate | Barter Express{% endblock %}
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
+
+{% block content %}
+<div class="pp">
+    {% call pp.hero('fas fa-magnifying-glass-dollar', 'Free estimate', record.name, 'Your private estimate. Only this browser can see it.') %}{% endcall %}
+
+    <main class="pp-main pp-stack">
+        {% if record.status == 'processing' %}
+        <section class="pp-card" id="processing" role="status" aria-live="polite">
+            <div class="pp-section-head">
+                <span class="pp-icon"><i class="fas fa-hourglass-half"></i></span>
+                <h2>Estimating your item…</h2>
+            </div>
+            <p class="pp-lead">This usually takes under a minute. You can leave this page open, or come back on this browser later; your estimate keeps running.</p>
+        </section>
+
+        {% elif record.status == 'ready' %}
+        <section class="pp-card">
+            <div class="pp-section-head">
+                <span class="pp-icon green"><i class="fas fa-circle-check"></i></span>
+                <h2>Estimated value</h2>
+            </div>
+            <p class="pp-lead" style="font-size:2rem;font-weight:800">ᗸ{{ '{:,.0f}'.format(result.estimated_value) }}</p>
+            {% if result.low and result.high %}
+            <p class="pp-muted">Likely range: ᗸ{{ '{:,.0f}'.format(result.low) }} to ᗸ{{ '{:,.0f}'.format(result.high) }}</p>
+            {% endif %}
+            <p class="pp-muted">
+                {% if result.confidence %}Confidence: {{ result.confidence|replace('_', ' ')|capitalize }}.{% endif %}
+                {% if result.market_listings %}Based on {{ result.market_listings }} comparable listing{{ '' if result.market_listings == 1 else 's' }}.{% endif %}
+            </p>
+            <div class="pp-callout warn">
+                <i class="fas fa-circle-info"></i>
+                <div>AI estimate only. Nothing has been listed and no BXC has been added. The final value is confirmed at physical verification.</div>
+            </div>
+        </section>
+
+        <section class="pp-card">
+            <div class="pp-section-head">
+                <span class="pp-icon blue"><i class="fas fa-floppy-disk"></i></span>
+                <h2>Save it to your account</h2>
+            </div>
+            {% if current_user.is_authenticated %}
+            <p>Add this estimate and your photos to your account. You will not need to upload again or pay for another valuation.</p>
+            <form method="post" action="{{ url_for('guest_valuation.claim') }}" class="pp-actions" style="margin-top:14px">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="pp-btn primary"><i class="fas fa-floppy-disk"></i> Save to my account</button>
+            </form>
+            {% else %}
+            <p>Create a free account or log in and this exact estimate, with your photos, opens straight away. No second upload and no second valuation.</p>
+            <div class="pp-actions" style="margin-top:14px">
+                <a class="pp-btn primary" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Create free account</a>
+                <a class="pp-btn" href="{{ url_for('auth.login') }}"><i class="fas fa-right-to-bracket"></i> Log in</a>
+            </div>
+            <p class="pp-muted" style="margin-top:12px">Unsaved estimates are deleted {{ record.expires_at.strftime('%d %b %Y, %H:%M') }} UTC. If you register, verify your email and log in to finish saving it.</p>
+            {% endif %}
+        </section>
+
+        {% else %}
+        <section class="pp-card" role="alert">
+            <div class="pp-section-head">
+                <span class="pp-icon"><i class="fas fa-triangle-exclamation"></i></span>
+                <h2>We could not finish this estimate</h2>
+            </div>
+            <p>{{ record.error_message or 'We could not estimate this item right now. Please try again.' }}</p>
+            <div class="pp-actions" style="margin-top:14px">
+                <a class="pp-btn primary" href="{{ url_for('guest_valuation.start') }}"><i class="fas fa-rotate-right"></i> Try again</a>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if photo_count and record.status != 'failed' %}
+        <section class="pp-card">
+            <div class="pp-section-head">
+                <span class="pp-icon blue"><i class="fas fa-images"></i></span>
+                <h2>Your photos ({{ photo_count }})</h2>
+            </div>
+            <div class="pp-grid cols-3">
+                {% for index in range(photo_count) %}
+                <img src="{{ url_for('guest_valuation.photo', index=index) }}" alt="Photo {{ index + 1 }} of {{ record.name }}" loading="lazy" decoding="async" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px">
+                {% endfor %}
+            </div>
+            <p class="pp-muted" style="margin-top:10px">These photos are private to this browser until you save them to an account.</p>
+        </section>
+        {% endif %}
+    </main>
+</div>
+
+{% if record.status == 'processing' %}
+<script>
+(function () {
+  var statusUrl = {{ url_for('guest_valuation.status')|tojson }};
+  function poll() {
+    fetch(statusUrl, {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
+      .then(function (r) { return r.ok ? r.json() : {status: 'missing'}; })
+      .then(function (data) {
+        if (data.status === 'processing') { setTimeout(poll, 3000); } else { window.location.reload(); }
+      })
+      .catch(function () { setTimeout(poll, 5000); });
+  }
+  setTimeout(poll, 3000);
+})();
+</script>
+{% endif %}
+{% endblock %}

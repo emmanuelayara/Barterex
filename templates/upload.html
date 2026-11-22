@@ -1561,156 +1561,168 @@
 </style>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/item-form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
 
-<div class="upload-page">
-  <div class="upload-container">
-
-    <!-- Header -->
-    <div class="upload-header fade-in">
-      {{ fx.floaters('banner') }}
-      <h1>
-        <div class="upload-icon">📤</div>
-        {{ 'Edit Your Item' if edit_item else 'Upload Your Item' }}
-      </h1>
-      <p class="upload-subtitle">Share what you have and discover what you need</p>
+<div class="gv">
+  <header class="gv-hero">
+    {{ fx.floaters('banner') }}
+    <div class="gv-hero__inner">
+      <span class="gv-kicker">{{ 'Edit item' if edit_item else 'New valuation' }}</span>
+      <h1>{{ 'Edit Your Item' if edit_item else 'Upload Your Item' }}</h1>
+      <p>Share what you have and discover what you need.</p>
       {% if edit_item %}
-        <p class="upload-subtitle">Take 6-15 new camera photos and accept a fresh AI valuation to save your changes. Your original item stays unchanged until saving succeeds.</p>
+        <p>Take 6-15 new camera photos and accept a fresh AI valuation to save your changes. Your original item stays unchanged until saving succeeds.</p>
+      {% else %}
+        <ul class="gv-chips" aria-label="Highlights">
+        </ul>
       {% endif %}
     </div>
+  </header>
 
-    <!-- Guidelines -->
-    <div class="guidelines-section fade-in collapsed" id="guidelinesSection">
-      <div class="guidelines-header" id="guidelinesHeader">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="warning-icon">⚠️</div>
-          <h3 class="guidelines-title">Important Guidelines Before Uploading</h3>
-        </div>
-        <button type="button" class="guidelines-toggle-btn collapsed" id="guidelinesToggle" title="Toggle guidelines">▼</button>
-      </div>
-      <ul class="guidelines-list collapsed" id="guidelinesList">
-        <li>
-          <div class="guideline-icon">📅</div>
-          <div class="guideline-text">
-            The item must not be older than <strong>5 years</strong> from purchase date
-          </div>
-        </li>
-        <li>
-          <div class="guideline-icon">⭐</div>
-          <div class="guideline-text">
-            The item should be in <strong>good and functional condition</strong>
-          </div>
-        </li>
-        <li>
-          <div class="guideline-icon">⚖️</div>
-          <div class="guideline-text">
-            Items should preferably weigh <strong>10KG or Less</strong> Items above 10KG may attract additional logistics and handling charges
-          </div>
-        </li>
-        <li>
-          <div class="guideline-icon">🧾</div>
-          <div class="guideline-text">
-            During appraisal, you'll need to present a <strong>receipt</strong> as proof of ownership and purchase date
-          </div>
-        </li>
-        <li>
-          <div class="guideline-icon">📸</div>
-          <div class="guideline-text">
-            Take <strong>6 to 15 clear photos using the in-app camera</strong> from different angles. Gallery uploads are not allowed.
-          </div>
-        </li>
+  <main class="gv-main">
+    <details class="gv-shots gv-shots--rules">
+      <summary>
+        <span class="gv-shots__icon" aria-hidden="true">&#9888;&#65039;</span>
+        <span class="gv-shots__title">Before you upload<small>5 quick rules for a smooth valuation</small></span>
+        <span class="gv-shots__chev" aria-hidden="true"></span>
+      </summary>
+      <ul class="gv-shots__list">
+        <li><span aria-hidden="true">&#128197;</span><div>The item must not be older than <strong>5 years</strong> from purchase date.</div></li>
+        <li><span aria-hidden="true">&#11088;</span><div>It should be in <strong>good and functional condition</strong>.</div></li>
+        <li><span aria-hidden="true">&#9878;&#65039;</span><div>Preferably <strong>10KG or less</strong>. Heavier items may attract extra logistics and handling charges.</div></li>
+        <li><span aria-hidden="true">&#129534;</span><div>At appraisal you will need to present a <strong>receipt</strong> as proof of ownership and purchase date.</div></li>
+        <li><span aria-hidden="true">&#128248;</span><div>Take <strong>6 to 15 clear photos with the in-app camera</strong> from different angles. Gallery uploads are not allowed.</div></li>
       </ul>
-    </div>
+    </details>
 
-    <!-- Form -->
-    <div class="form-container fade-in">
-      <form method="POST" action="{{ url_for('items.upload_item', edit=edit_item.id) if edit_item else url_for('items.upload_item') }}" enctype="multipart/form-data" id="uploadForm" class="no-loading"
-            {% if edit_item %}data-edit-item-id="{{ edit_item.id }}"{% endif %}>
-        {{ form.hidden_tag() }}
+    <form method="POST" action="{{ url_for('items.upload_item', edit=edit_item.id) if edit_item else url_for('items.upload_item') }}" enctype="multipart/form-data" id="uploadForm" class="gv-form no-loading" novalidate
+          {% if edit_item %}data-edit-item-id="{{ edit_item.id }}"{% endif %}>
+      {{ form.hidden_tag() }}
 
-        <div class="form-group">
-          <label class="form-label">
-            <span class="label-icon">📂</span>
-            {{ form.category.label.text }}
-          </label>
-          {{ form.category(class="form-select", id="category") }}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="label-icon">⭐</span>
-            {{ form.condition.label.text }}
-          </label>
-          {{ form.condition(class="form-select", id="condition") }}
-        </div>
-
-        <div class="form-group" id="usageDurationGroup" style="display: none;">
-          <label class="form-label" for="usage_duration">
-            <span class="label-icon">🕒</span>
-            {{ form.usage_duration.label.text }}
-          </label>
-          {{ form.usage_duration(class="form-input", id="usage_duration", placeholder="e.g. 6 months, 2 years") }}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="label-icon">🏷️</span>
-            {{ form.name.label.text }}
-          </label>
-          {{ form.name(class="form-input", placeholder="Enter a descriptive name for your item") }}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="label-icon">📝</span>
-            {{ form.description.label.text }}
-          </label>
-          {{ form.description(class="form-textarea", id="description", rows="4", placeholder="Describe your item in detail - include brand, model, features, and any important details") }}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <span class="label-icon">📸</span>
-            Take Item Photos (6-15)
-          </label>
-          <div class="file-upload-container">
-            <button type="button" class="file-upload-area" id="fileUploadArea">
-              <span class="file-upload-icon" id="uploadIcon">📷</span>
-              <span class="file-upload-text">Open In-Page Camera</span>
-              <span class="file-upload-subtext">Take 6 to 15 photos of the actual item.</span>
-            </button>
-            <p class="camera-status" id="cameraStatus" role="status" aria-live="polite">Photograph the front, back, left, right, top and bottom. Add close-ups of damage, serial numbers and accessories.</p>
-            <noscript><p>JavaScript and camera access are required to take item photos. Use a camera-enabled device and enable JavaScript.</p></noscript>
-            
-            <div class="images-preview-container" id="imagesPreviewContainer" style="display: none;">
-              <div class="upload-counter">
-                <span id="imageCount">0</span> / 15 photos taken
-              </div>
-              <div class="upload-actions">
-                <button type="button" class="upload-action-btn add-more-btn" id="addMoreBtn">➕ Take More Photos</button>
-                <button type="button" class="upload-action-btn clear-all-btn" id="clearAllBtn">🗑️ Remove All</button>
-              </div>
-              <div class="images-preview-grid" id="imagesPreviewGrid"></div>
-            </div>
+      <section class="gv-card" aria-labelledby="gvStep1">
+        <div class="gv-card__head">
+          <span class="gv-step" aria-hidden="true">1</span>
+          <div>
+            <h2 id="gvStep1">About your item</h2>
+            <p>The basics help us find comparable items on the market.</p>
           </div>
         </div>
+        <div class="gv-fields">
+          <div class="gv-field">
+            <label class="gv-label" for="category">{{ form.category.label.text }}</label>
+            {{ form.category(class="gv-select", id="category") }}
+          </div>
 
-        <div class="submit-container">
-          {{ form.submit(class="submit-btn", id="submitBtn") }}
-          <div class="upload-progress" id="uploadProgress" hidden aria-live="polite">
-            <div class="upload-progress-header">
-              <span id="uploadProgressLabel">Uploading images...</span>
-              <span class="upload-progress-percent" id="uploadProgressPercent">0%</span>
+          <div class="gv-field">
+            <span class="gv-label" id="conditionLabel">{{ form.condition.label.text }}</span>
+            <div class="gv-segment" role="radiogroup" aria-labelledby="conditionLabel">
+              <label><input type="radio" name="condition_choice" value="Brand New"{% if (form.condition.data or 'Brand New') == 'Brand New' %} checked{% endif %}><span>Brand new</span></label>
+              <label><input type="radio" name="condition_choice" value="Fairly Used"{% if form.condition.data == 'Fairly Used' %} checked{% endif %}><span>Fairly used</span></label>
             </div>
-            <div class="upload-progress-track" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-              <div class="upload-progress-bar" id="uploadProgressBar"></div>
-            </div>
-            <p class="upload-progress-status" id="uploadProgressStatus">Keep this page open while your item is being uploaded.</p>
+            {{ form.condition(class="gv-sr", id="condition", tabindex="-1", **{'aria-hidden': 'true'}) }}
+          </div>
+
+          <div class="gv-field gv-field--full" id="usageDurationGroup" style="display: none;">
+            <label class="gv-label" for="usage_duration">{{ form.usage_duration.label.text }}</label>
+            {{ form.usage_duration(class="gv-input", id="usage_duration", placeholder="e.g. 8 months, 2 years", maxlength="100") }}
+          </div>
+
+          <div class="gv-field gv-field--full">
+            <label class="gv-label" for="name">{{ form.name.label.text }}</label>
+            {{ form.name(class="gv-input", id="name", placeholder="e.g. iPhone 12 128GB Black", maxlength="100", autocomplete="off") }}
+            <span class="gv-hint">Brand and model, plus storage or size where it applies.</span>
           </div>
         </div>
-      </form>
-    </div>
-  </div>
+      </section>
+
+      <section class="gv-card" aria-labelledby="gvStep2">
+        <div class="gv-card__head">
+          <span class="gv-step" aria-hidden="true">2</span>
+          <div>
+            <h2 id="gvStep2">Describe it</h2>
+            <p>The more detail you give, the closer the estimate will be.</p>
+          </div>
+        </div>
+        <div class="gv-field">
+          <label class="gv-label" for="description">{{ form.description.label.text }} <small>(at least 20 characters)</small></label>
+          {{ form.description(class="gv-textarea", id="description", rows="8", maxlength="2000", placeholder="Describe your item in detail - include brand, model, features, and any important details") }}
+          <div class="gv-desc-meta"><span id="descCount" aria-live="off">0 / 2000</span></div>
+          <div class="gv-meter">
+            <div class="gv-meter__track"><div class="gv-meter__bar" id="descMeterBar" data-level="low"></div></div>
+            <span class="gv-meter__text" id="descMeterText" role="status" aria-live="polite">Add details so the AI can estimate accurately.</span>
+          </div>
+        </div>
+        <div class="gv-guide">
+          <p class="gv-guide__why">Unmentioned damage, locks or missing parts are the most common reasons an estimate turns out higher than the verified value. Say what is wrong as well as what is right.</p>
+        </div>
+      </section>
+
+      <section class="gv-card" aria-labelledby="gvStep3">
+        <div class="gv-card__head">
+          <span class="gv-step" aria-hidden="true">3</span>
+          <div>
+            <h2 id="gvStep3">Take photos</h2>
+            <p>Take 6 to 15 photos with the in-page camera. Gallery uploads are not allowed.</p>
+          </div>
+        </div>
+        <details class="gv-shots">
+          <summary>
+            <span class="gv-shots__icon" aria-hidden="true">&#128161;</span>
+            <span class="gv-shots__title">Photo ideas<small>Angles that help the AI</small></span>
+            <span class="gv-shots__chev" aria-hidden="true"></span>
+          </summary>
+          <ul class="gv-shots__list">
+            <li><span aria-hidden="true">&#128241;</span>Front</li>
+            <li><span aria-hidden="true">&#128260;</span>Back</li>
+            <li><span aria-hidden="true">&#8596;&#65039;</span>Left &amp; right</li>
+            <li><span aria-hidden="true">&#8597;&#65039;</span>Top &amp; bottom</li>
+            <li><span aria-hidden="true">&#128161;</span>Screen on</li>
+            <li><span aria-hidden="true">&#128290;</span>Serial number</li>
+            <li><span aria-hidden="true">&#128269;</span>Damage close-ups</li>
+            <li><span aria-hidden="true">&#128268;</span>Accessories</li>
+          </ul>
+        </details>
+
+        <button type="button" class="gv-camera-btn" id="fileUploadArea">
+          <span class="gv-camera-btn__icon" id="uploadIcon" aria-hidden="true">&#128247;</span>
+          <span class="gv-camera-btn__title">Open In-Page Camera</span>
+          <span class="gv-camera-btn__sub">Photograph the actual item you are valuing</span>
+        </button>
+        <p class="gv-camera-status" id="cameraStatus" role="status" aria-live="polite">Photograph the front, back, left, right, top and bottom. Add close-ups of damage, serial numbers and accessories.</p>
+        <noscript><p class="gv-notice gv-notice--error">JavaScript and camera access are required to take item photos. Use a camera-enabled device and enable JavaScript.</p></noscript>
+
+        <div class="gv-meter gv-photo-meter">
+          <div class="gv-meter__track"><div class="gv-meter__bar" id="photoMeterBar" style="width:0"></div></div>
+          <span class="gv-meter__text" id="photoMeterText">0 of 6 photos taken (minimum). You can add up to 15.</span>
+        </div>
+
+        <div class="gv-previews" id="imagesPreviewContainer" style="display: none;">
+          <div class="gv-previews__actions">
+            <button type="button" class="gv-btn-ghost" id="addMoreBtn">&#10133; Take more</button>
+            <button type="button" class="gv-btn-ghost gv-btn-ghost--danger" id="clearAllBtn">&#128465; Remove all</button>
+          </div>
+          <div class="gv-grid" id="imagesPreviewGrid"></div>
+          <span id="imageCount" hidden>0</span>
+        </div>
+      </section>
+
+      <div class="gv-submit">
+        {{ form.submit(class="gv-submit__btn", id="submitBtn") }}
+        <div class="gv-progress" id="uploadProgress" hidden aria-live="polite">
+          <div class="gv-progress__head">
+            <span id="uploadProgressLabel">Uploading images...</span>
+            <span id="uploadProgressPercent">0%</span>
+          </div>
+          <div class="gv-progress__track" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="gv-progress__bar" id="uploadProgressBar"></div>
+          </div>
+          <p class="gv-submit__note" id="uploadProgressStatus">Keep this page open while your item is being uploaded.</p>
+        </div>
+        <p class="gv-submit__note">&#128274; Your item stays with you. Saving a valuation does not list it or add any BXC.</p>
+      </div>
+    </form>
+  </main>
 </div>
 
 <dialog class="camera-panel item-camera-dialog" id="cameraPanel" aria-labelledby="cameraTitle" aria-describedby="cameraCaptureStatus">
@@ -2128,7 +2140,7 @@
     
     if (selectedFiles.length === 0) {
       imagesPreviewContainer.style.display = 'none';
-      fileUploadArea.style.display = 'block';
+      fileUploadArea.style.display = '';
       return;
     }
     
@@ -2139,15 +2151,15 @@
       const previewUrl = URL.createObjectURL(file);
       previewUrls.push(previewUrl);
       const previewItem = document.createElement('div');
-      previewItem.className = `image-preview-item ${index === primaryImageIndex ? 'primary' : ''}`;
+      previewItem.className = `gv-photo ${index === primaryImageIndex ? 'gv-photo--primary' : ''}`;
         
       previewItem.innerHTML = `
-        <img src="${previewUrl}" alt="Captured photo ${index + 1}" class="preview-image">
-        <div class="image-preview-controls">
-          <button type="button" class="set-primary" onclick="setPrimaryImage(${index})" title="Set as primary">⭐</button>
-          <button type="button" class="remove-image" onclick="removeImage(${index})" title="Remove">✕</button>
-        </div>
-        ${index === primaryImageIndex ? '<div class="primary-badge">Primary</div>' : ''}
+        <img src="${previewUrl}" alt="Captured photo ${index + 1}">
+        <span class="gv-photo__num">${index + 1}</span>
+        <button type="button" class="gv-photo__remove" onclick="removeImage(${index})" title="Remove photo ${index + 1}" aria-label="Remove photo ${index + 1}">✕</button>
+        ${index === primaryImageIndex
+          ? '<span class="gv-photo__badge">Cover</span>'
+          : `<button type="button" class="gv-photo__star" onclick="setPrimaryImage(${index})" title="Use as cover photo" aria-label="Use photo ${index + 1} as cover photo">⭐</button>`}
       `;
         
       imagesPreviewGrid.appendChild(previewItem);
@@ -2177,6 +2189,13 @@
 
   function updateImageCount() {
     imageCountDisplay.textContent = selectedFiles.length;
+    const count = selectedFiles.length;
+    const meterBar = document.getElementById('photoMeterBar');
+    meterBar.style.width = Math.min(100, Math.round(count / minImages * 100)) + '%';
+    meterBar.dataset.level = count >= minImages ? 'great' : 'low';
+    document.getElementById('photoMeterText').textContent = count >= minImages
+      ? `${count} photos taken. You are ready${count < maxImages ? `, or add up to ${maxImages - count} more.` : '.'}`
+      : `${count} of ${minImages} photos taken (minimum). You can add up to ${maxImages}.`;
   }
 
   // Form validation and submission
@@ -2795,83 +2814,44 @@
     aiValuationClose.style.visibility = 'visible';
   }
 
-  // Form field interactions
-  const formInputs = document.querySelectorAll('.form-input, .form-textarea, .form-select');
-  
-  formInputs.forEach(input => {
-    input.addEventListener('focus', function() {
-      this.parentElement.style.transform = 'translateY(-2px)';
-    });
-    
-    input.addEventListener('blur', function() {
-      this.parentElement.style.transform = 'translateY(0)';
-    });
-  });
+  // ==================== FORM POLISH: condition toggle + description quality meter ====================
+  const conditionRadios = document.querySelectorAll('input[name="condition_choice"]');
+  conditionRadios.forEach(radio => radio.addEventListener('change', () => {
+    if (!radio.checked) return;
+    conditionSelect.value = radio.value;
+    conditionSelect.dispatchEvent(new Event('change'));
+  }));
 
-  // Scroll animations
-  const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-  };
+  const descCount = document.getElementById('descCount');
+  const descMeterBar = document.getElementById('descMeterBar');
+  const descMeterText = document.getElementById('descMeterText');
 
-  const observer = new IntersectionObserver(function(entries) {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
-    });
-  }, observerOptions);
-
-  // Observe all fade-in elements
-  document.querySelectorAll('.fade-in').forEach((el, index) => {
-    el.style.transitionDelay = `${index * 0.1}s`;
-    observer.observe(el);
-  });
-
-  // Real-time form validation
-  const nameInput = document.querySelector('input[name="name"]');
-  const descriptionInput = document.querySelector('textarea[name="description"]');
-
-  nameInput.addEventListener('input', function() {
-    if (this.value.length > 0) {
-      this.style.borderColor = '#10b981';
-    } else {
-      this.style.borderColor = '#e5e7eb';
+  function updateDescriptionMeter() {
+    const length = descriptionField.value.trim().length;
+    let level = 'low';
+    let message = 'Add details so the AI can estimate accurately.';
+    if (length >= 150) {
+      level = 'great';
+      message = 'Great. Detailed descriptions give the most accurate estimates.';
+    } else if (length >= 60) {
+      level = 'ok';
+      message = 'Good start. Add condition, damage and what is included for a closer estimate.';
+    } else if (length >= 20) {
+      level = 'ok';
+      message = 'A little more detail will improve the estimate.';
     }
-  });
-
-  descriptionInput.addEventListener('input', function() {
-    if (this.value.length > 20) {
-      this.style.borderColor = '#10b981';
+    descCount.textContent = descriptionField.value.length + ' / 2000';
+    descMeterBar.dataset.level = level;
+    descMeterBar.style.width = Math.min(100, Math.round(length / 150 * 100)) + '%';
+    descMeterText.textContent = message;
+    // The long placeholder needs room; once the user types it does not.
+    if (descriptionField.value) {
+      descriptionField.style.minHeight = '160px';
     } else {
-      this.style.borderColor = '#f59e0b';
+      fitDescriptionToPlaceholder();
     }
-  });
-
-  // ==================== COLLAPSIBLE GUIDELINES ====================
-  const guidelinesSection = document.getElementById('guidelinesSection');
-  const guidelinesHeader = document.getElementById('guidelinesHeader');
-  const guidelinesToggle = document.getElementById('guidelinesToggle');
-  const guidelinesList = document.getElementById('guidelinesList');
-
-  if (guidelinesHeader && guidelinesToggle && guidelinesList) {
-    // Initialize as collapsed (these classes are already set in HTML)
-    // Add click event to toggle
-    guidelinesHeader.addEventListener('click', function(e) {
-      e.preventDefault();
-      guidelinesToggle.classList.toggle('collapsed');
-      guidelinesList.classList.toggle('collapsed');
-      guidelinesSection.classList.toggle('collapsed');
-    });
-
-    // Also allow clicking the button directly
-    guidelinesToggle.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      guidelinesToggle.classList.toggle('collapsed');
-      guidelinesList.classList.toggle('collapsed');
-      guidelinesSection.classList.toggle('collapsed');
-    });
   }
+  descriptionField.addEventListener('input', updateDescriptionMeter);
+  updateDescriptionMeter();
 </script>
 {% endblock %}

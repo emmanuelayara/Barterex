@@ -487,6 +487,16 @@ def _run_valuation_job(job: dict):
             pass
 
 
+def queue_valuator_task(fn, *args) -> bool:
+    """Runs fn(*args) on the shared valuator pool so every valuation respects the same parallel cap."""
+    try:
+        _executor.submit(fn, *args)
+        return True
+    except Exception as e:
+        logger.error(f"Could not queue valuator task: {e}", exc_info=True)
+        return False
+
+
 def start_ai_valuation(item, user, upload_root: str) -> bool:
     """
     Queues the AI valuation of a just-saved item. Call it AFTER the item

@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% import '_floaters.html' as fx %}
+{% block title %}Free Item Value Estimate | Barter Express{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/item-form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="gv">
+  <header class="gv-hero">
+    {{ fx.floaters('banner') }}
+    <div class="gv-hero__inner">
+      <span class="gv-kicker">Free &middot; No account needed</span>
+      <h1>What is your item worth?</h1>
+      <p>Describe it, take a few photos and get an AI value estimate in about a minute.</p>
+      <ul class="gv-chips" aria-label="Highlights">
+        <li>&#127873; 1 free estimate</li>
+        <li>&#128274; Private to you</li>
+        <li>&#9201; About 1 minute</li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="gv-main">
+    {% if not valuator_ready %}
+      <p class="gv-notice gv-notice--error" role="alert">AI valuation is not available right now. Please try again later.</p>
+    {% endif %}
+    {% if previous_failed %}
+      <p class="gv-notice" role="status">Your last estimate could not be completed. You can try again.</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('guest_valuation.submit') }}" enctype="multipart/form-data" id="guestValueForm" class="gv-form no-loading" novalidate>
+      {{ form.hidden_tag() }}
+
+      <section class="gv-card" aria-labelledby="gvStep1">
+        <div class="gv-card__head">
+          <span class="gv-step" aria-hidden="true">1</span>
+          <div>
+            <h2 id="gvStep1">About your item</h2>
+            <p>The basics help us find comparable items on the market.</p>
+          </div>
+        </div>
+        <div class="gv-fields">
+          <div class="gv-field">
+            <label class="gv-label" for="category">Category</label>
+            {{ form.category(class="gv-select", id="category") }}
+          </div>
+
+          <div class="gv-field">
+            <span class="gv-label" id="conditionLabel">Condition</span>
+            <div class="gv-segment" role="radiogroup" aria-labelledby="conditionLabel">
+              <label><input type="radio" name="condition" value="Brand New"{% if form.condition.data == 'Brand New' %} checked{% endif %}><span>Brand new</span></label>
+              <label><input type="radio" name="condition" value="Fairly Used"{% if form.condition.data == 'Fairly Used' %} checked{% endif %}><span>Fairly used</span></label>
+            </div>
+          </div>
+
+          <div class="gv-field gv-field--full" id="usageDurationGroup" hidden>
+            <label class="gv-label" for="usage_duration">How long have you used it?</label>
+            {{ form.usage_duration(class="gv-input", id="usage_duration", placeholder="e.g. 8 months, 2 years", maxlength="100") }}
+          </div>
+
+          <div class="gv-field gv-field--full">
+            <label class="gv-label" for="name">Item name</label>
+            {{ form.name(class="gv-input", id="name", placeholder="e.g. iPhone 12 128GB Black", maxlength="100", autocomplete="off") }}
+            <span class="gv-hint">Brand and model, plus storage or size where it applies.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="gv-card" aria-labelledby="gvStep2">
+        <div class="gv-card__head">
+          <span class="gv-step" aria-hidden="true">2</span>
+          <div>
+            <h2 id="gvStep2">Describe it</h2>
+            <p>The more detail you give, the closer the estimate will be.</p>
+          </div>
+        </div>
+        <div class="gv-field">
+          <label class="gv-label" for="description">Description <small>(at least 20 characters)</small></label>
+          {{ form.description(class="gv-textarea", id="description", rows="10", maxlength="2000") }}
+          <div class="gv-desc-meta">
+            <span id="descCount" aria-live="off">0 / 2000</span>
+          </div>
+          <div class="gv-meter">
+            <div class="gv-meter__track"><div class="gv-meter__bar" id="descMeterBar" data-level="low"></div></div>
+            <span class="gv-meter__text" id="descMeterText" role="status" aria-live="polite">Add details so the AI can estimate accurately.</span>
+          </div>
+        </div>
+        <div class="gv-guide">
+          <p class="gv-guide__why">Unmentioned damage, locks or missing parts are the most common reasons an estimate turns out higher than the verified value. Say what is wrong as well as what is right.</p>
+        </div>
+      </section>
+
+      <section class="gv-card" aria-labelledby="gvStep3">
+        <div class="gv-card__head">
+          <span class="gv-step" aria-hidden="true">3</span>
+          <div>
+            <h2 id="gvStep3">Take photos</h2>
+            <p>Take 6 to 15 photos with the in-page camera. Gallery uploads are not allowed.</p>
+          </div>
+        </div>
+        <details class="gv-shots">
+          <summary>
+            <span class="gv-shots__icon" aria-hidden="true">&#128161;</span>
+            <span class="gv-shots__title">Photo ideas<small>8 angles that help the AI</small></span>
+            <span class="gv-shots__chev" aria-hidden="true"></span>
+          </summary>
+          <ul class="gv-shots__list">
+            <li><span aria-hidden="true">&#128241;</span>Front</li>
+            <li><span aria-hidden="true">&#128260;</span>Back</li>
+            <li><span aria-hidden="true">&#8596;&#65039;</span>Left &amp; right</li>
+            <li><span aria-hidden="true">&#8597;&#65039;</span>Top &amp; bottom</li>
+            <li><span aria-hidden="true">&#128161;</span>Screen on</li>
+            <li><span aria-hidden="true">&#9881;&#65039;</span>About Phone page</li>
+            <li><span aria-hidden="true">&#128269;</span>Damage close-ups</li>
+            <li><span aria-hidden="true">&#128268;</span>Accessories</li>
+          </ul>
+        </details>
+
+        <button type="button" class="gv-camera-btn" id="fileUploadArea">
+          <span class="gv-camera-btn__icon" aria-hidden="true">&#128247;</span>
+          <span class="gv-camera-btn__title">Open camera</span>
+          <span class="gv-camera-btn__sub">Photograph the actual item you are valuing</span>
+        </button>
+        <p class="gv-camera-status" id="cameraStatus" role="status" aria-live="polite">Make sure the item is well lit and fills the frame.</p>
+        <noscript><p class="gv-notice gv-notice--error">JavaScript and camera access are required to take item photos.</p></noscript>
+
+        <div class="gv-meter gv-photo-meter">
+          <div class="gv-meter__track"><div class="gv-meter__bar" id="photoMeterBar" style="width:0"></div></div>
+          <span class="gv-meter__text" id="photoMeterText">0 of 6 photos taken (minimum). You can add up to 15.</span>
+        </div>
+
+        <div class="gv-previews" id="imagesPreviewContainer" hidden>
+          <div class="gv-previews__actions">
+            <button type="button" class="gv-btn-ghost" id="addMoreBtn">&#10133; Take more</button>
+            <button type="button" class="gv-btn-ghost gv-btn-ghost--danger" id="clearAllBtn">&#128465; Remove all</button>
+          </div>
+          <div class="gv-grid" id="imagesPreviewGrid"></div>
+          <span id="imageCount" hidden>0</span>
+        </div>
+      </section>
+
+      <div class="gv-submit">
+        <p class="gv-notice gv-notice--error" id="guestFormError" role="alert" hidden></p>
+        <button type="submit" class="gv-submit__btn" id="submitBtn"{% if not valuator_ready %} disabled{% endif %}>Get my free estimate</button>
+        <div class="gv-progress" id="uploadProgress" hidden aria-live="polite">
+          <div class="gv-progress__head">
+            <span id="uploadProgressLabel">Uploading photos...</span>
+            <span id="uploadProgressPercent">0%</span>
+          </div>
+          <div class="gv-progress__track" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="gv-progress__bar" id="uploadProgressBar"></div>
+          </div>
+        </div>
+        <p class="gv-login">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a> to use the full upload page.</p>
+      </div>
+    </form>
+  </main>
+</div>
+
+<dialog class="camera-panel item-camera-dialog" id="cameraPanel" aria-labelledby="cameraTitle" aria-describedby="cameraCaptureStatus">
+  <div class="camera-toolbar">
+    <h2 id="cameraTitle">Item camera</h2>
+    <span class="camera-count" id="cameraPhotoCount">0 / 15 photos</span>
+    <button type="button" class="camera-flash" id="photoFlashBtn" aria-pressed="false" title="Continuous camera light, where supported" hidden disabled>Flash off</button>
+    <button type="button" class="camera-flash" id="photoFocusBtn" title="Request focus at the centre of the frame" hidden disabled>Focus</button>
+    <button type="button" class="camera-close" id="stopCameraBtn" autofocus>Done</button>
+  </div>
+  <div class="camera-viewfinder">
+    <video class="camera-preview" id="cameraPreview" autoplay muted playsinline aria-label="Live item camera preview"></video>
+  </div>
+  <div class="camera-controls">
+    <p class="camera-guidance" id="cameraCaptureStatus" role="status" aria-live="polite">Getting the camera ready...</p>
+    <button type="button" class="camera-shutter" id="capturePhotoBtn" aria-label="Take photo" disabled><span aria-hidden="true"></span></button>
+    <span class="camera-capture-label">Take photo</span>
+  </div>
+</dialog>
+
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/guest-valuation.js') }}"></script>
+{% endblock %}

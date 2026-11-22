@@ -612,6 +612,50 @@ class ItemImage(db.Model):
         return len(self.get_quality_flags()) > 0
 
 
+class GuestValuation(db.Model):
+    """Private, temporary valuation made before sign-up (see services/guest_valuation_service.py).
+
+    The visitor's secret token lives only in their cookie; only its hash is stored. Photos stay in
+    a private instance folder, never under static/. Nothing here is listed, approved or credited.
+    """
+    STATUSES = ('processing', 'ready', 'failed', 'claimed')
+
+    id = db.Column(db.Integer, primary_key=True)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    status = db.Column(db.String(20), nullable=False, default='processing')
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+
+    name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    condition = db.Column(db.String(20), nullable=False)
+    usage_duration = db.Column(db.String(100), nullable=True)
+    category = db.Column(db.String(100), nullable=False)
+    image_files = db.Column(db.Text, nullable=False, default='[]')   # JSON list of private file names
+
+    ai_fields = db.Column(db.Text, nullable=True)                    # JSON of Item ai_* columns
+    ai_valuated_at = db.Column(db.DateTime, nullable=True)
+    error_message = db.Column(db.String(255), nullable=True)
+
+    # Set at registration so the record survives email verification (and other devices).
+    pending_user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True, index=True)
+    claimed_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
+    claimed_item_id = db.Column(db.Integer, db.ForeignKey('item.id', ondelete='SET NULL'), nullable=True, unique=True)
+    claimed_at = db.Column(db.DateTime, nullable=True)
+
+    def image_file_list(self):
+        try:
+            return list(json.loads(self.image_files or '[]'))
+        except (TypeError, ValueError):
+            return []
+
+    def ai_field_dict(self):
+        try:
+            return dict(json.loads(self.ai_fields)) if self.ai_fields else {}
+        except (TypeError, ValueError):
+            return {}
+
+
 class StolenItemReport(db.Model):
     PENDING_STATUSES = ('pending', 'under_review')
     STATUSES = ('pending', 'under_review', 'confirmed', 'dismissed')

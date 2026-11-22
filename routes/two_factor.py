@@ -77,6 +77,12 @@ def verify():
                   if first_login and not account.is_banned else 'Sign-in verified.', 'success')
             if account.is_banned:
                 return redirect(url_for('auth.banned'))
+            if purpose == 'login':
+                from services.guest_valuation_service import claim_for_user, current_token
+                from routes.guest_valuation import open_claimed_item_response
+                guest_item = claim_for_user(account, current_token())
+                if guest_item is not None:
+                    return open_claimed_item_response(guest_item)
             # Only relative, same-site paths may survive the password/code round trip.
             if target and target.startswith('/') and not target.startswith('//') and '\\' not in target:
                 return redirect(target)

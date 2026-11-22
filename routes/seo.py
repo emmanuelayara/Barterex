@@ -38,7 +38,7 @@ PRIVATE_PATHS = (
     '/item/*/report-stolen',
     '/login', '/logout', '/register', '/forgot_password', '/reset_password/', '/verify-email/',
     '/confirm-email-change/', '/resend-verification', '/banned', '/request_unban',
-    '/contact-form', '/contact-success/',
+    '/contact-form', '/contact-success/', '/value/',
 )
 
 

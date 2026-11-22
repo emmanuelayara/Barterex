@@ -112,6 +112,10 @@ def register():
             )
             
             logger.info(f"Verification email sent to new user: {user.username} ({user.email})")
+
+            # Keep a free guest estimate (if any) reserved for this account through email verification
+            from services.guest_valuation_service import bind_to_new_user, current_token
+            estimate_saved = bind_to_new_user(user, current_token())
             
             # Handle referral if provided
             if form.referral_code.data:
@@ -143,7 +147,8 @@ def register():
             logger.info(f"New user registered (pending email verification): {user.username}")
 
             # ✅ Show message about email verification required
-            flash('✅ Registration successful! Please check your email to verify your account before logging in.', 'info')
+            flash('✅ Registration successful! Please check your email to verify your account before logging in.'
+                  + (' Your free estimate is saved and will open when you log in.' if estimate_saved else ''), 'info')
             return redirect(url_for('auth.login'))
         
         except Exception as e:
@@ -187,6 +192,8 @@ def verify_email(token):
         # Mark email as verified
         user.mark_email_verified()
         db.session.commit()
+        from services.guest_valuation_service import keep_for_pending_user
+        keep_for_pending_user(user)
         
         logger.info(f"✅ Email verified for user: {user.username}")
         
@@ -245,6 +252,8 @@ def resend_verification():
         # Generate new verification token
         verification_token = user.generate_email_verification_token()
         db.session.commit()
+        from services.guest_valuation_service import keep_for_pending_user
+        keep_for_pending_user(user)
         
         # Send verification email
         from flask import url_for
@@ -371,6 +380,10 @@ def login():
                 
                 logger.info(f"User logged in: {user.username} (Remember Me: {remember_me})")
 
+                # Attach a free guest estimate (this browser's, or the one reserved at registration)
+                from services.guest_valuation_service import claim_for_user, current_token
+                guest_item = claim_for_user(user, current_token())
+
                 if user.first_login:
                     flash(
                         "🎉 Welcome to Barter Express! You've received ᗸ1,000 starter BXC. Let's get trading!",
@@ -385,6 +398,9 @@ def login():
                         flash('Login successful!', 'success')
 
                 # Redirect to next_page if provided and safe, otherwise to dashboard
+                if guest_item is not None:
+                    from routes.guest_valuation import open_claimed_item_response
+                    return open_claimed_item_response(guest_item)
                 if next_page:
                     return redirect(next_page)
                 return redirect(url_for('user.dashboard'))

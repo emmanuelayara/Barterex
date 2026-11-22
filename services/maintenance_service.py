@@ -1,6 +1,7 @@
 """Scheduled maintenance tasks for reservation deadlines and listing freshness."""
 
 from services.freshness_service import deactivate_stale_items, warn_items_nearing_freshness_deadline
+from services.guest_valuation_service import purge_expired
 from services.reservation_service import release_expired_reservations, send_reservation_deadline_reminders
 
 
@@ -10,9 +11,11 @@ def run_maintenance_sweep():
     reservation_reminders = send_reservation_deadline_reminders()
     stale_items = deactivate_stale_items()
     freshness_warnings = warn_items_nearing_freshness_deadline()
+    expired_guest_valuations = purge_expired()
     return {
         "expired_reservations": expired_reservations,
         "reservation_reminders": reservation_reminders,
         "stale_items": stale_items,
         "freshness_warnings": freshness_warnings,
+        "expired_guest_valuations": expired_guest_valuations,
     }

@@ -62,7 +62,7 @@ class SeoPagesTests(unittest.TestCase):
         robots = self.client.get('/robots.txt')
         self.assertEqual(robots.mimetype, 'text/plain')
         text = robots.get_data(as_text=True)
-        for private in ('/admin/', '/account/', '/my_', '/my-', '/upload', '/payments/'):
+        for private in ('/admin/', '/account/', '/my_', '/my-', '/upload', '/payments/', '/value/'):
             self.assertIn(f'Disallow: {private}', text)
         self.assertNotIn('Disallow: /check-item-value', text)
         self.assertIn(f'Sitemap: {app.config["APP_URL"]}/sitemap.xml', text)
