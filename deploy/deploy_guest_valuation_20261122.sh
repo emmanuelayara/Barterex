@@ -92,9 +92,11 @@ with app.app_context():
         raise SystemExit("STOP: existing maintenance settings need review.")
     if not is_enabled():
         raise SystemExit("STOP: the valuator is not configured in this service environment.")
-    drain = max(30, math.ceil(_timeout()) + 15)
-    if drain > 300:
-        raise SystemExit("STOP: the valuator timeout requires a longer deployment window.")
+    timeout = _timeout()
+    if not math.isfinite(timeout) or not 0 < timeout <= 2147483632:
+        raise SystemExit("STOP: the valuator timeout must be finite, positive, and fit the deployment timer.")
+    drain = max(30, math.ceil(timeout) + 15)
+    print("AI_TIMEOUT_SECONDS=" + str(timeout))
     print("SETTINGS_ID=" + str(settings[0].id))
     print("DRAIN_SECONDS=" + str(drain))
     print("Production PostgreSQL and parent migration verified.")
