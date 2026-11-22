@@ -238,6 +238,31 @@ class GuestValuationTests(unittest.TestCase):
         self.assertEqual(self.valuate.call_count, 1)
         self.assertIsNone(guest.get_cookie(GUEST_COOKIE))
 
+    def test_two_factor_login_claims_only_after_the_code_is_verified(self):
+        user = self.make_user()
+        user.two_factor_enabled = True
+        db.session.commit()
+        guest = self.ready_guest_client()
+
+        with patch('services.email_two_factor.mail.send') as send:
+            response = self.login(guest, user)
+            self.assertIn('/two-factor/verify', response.location)
+            self.assertEqual(Item.query.count(), 0)
+            self.assertEqual(self.record().status, 'ready')
+            code = re.search(r'code is (\d{6})', send.call_args.args[0].body).group(1)
+            response = guest.post('/two-factor/verify', data={'code': code})
+
+        item = Item.query.one()
+        self.assertIn(f'/my_valuations#item-{item.id}', response.location)
+        self.assertEqual(item.user_id, user.id)
+        self.assertEqual(item.ai_estimated_value, 250000.0)
+        self.assertEqual(ItemImage.query.filter_by(item_id=item.id).count(), 6)
+        self.assertFalse(item.is_approved or item.is_available or item.credited)
+        db.session.refresh(user)
+        self.assertEqual((user.credits, user.provisional_credits), (1000, 0))
+        self.assertIsNone(guest.get_cookie(GUEST_COOKIE))
+        self.assertEqual(self.valuate.call_count, 1)
+
     def test_logged_in_visitor_can_save_the_estimate_from_the_result_page(self):
         token = self.ready_guest_client().get_cookie(GUEST_COOKIE).value
         user = self.make_user()
@@ -278,11 +303,13 @@ class GuestValuationTests(unittest.TestCase):
         user = self.make_user()
         guest = app.test_client()
         self.submit(guest)
+        folder = guests.record_dir(self.record().id)
         self.login(guest, user)
         item = Item.query.one()
         self.assertIsNone(item.ai_valuated_at)
         self.assertEqual(item.verification_status, 'pending_valuation')
         self.assertIsNone(item.ai_estimated_value)
+        self.assertTrue(os.path.isdir(folder))  # the queued job still needs these originals
 
         self.run_jobs()
         db.session.refresh(item)
@@ -290,6 +317,58 @@ class GuestValuationTests(unittest.TestCase):
         self.assertIsNotNone(item.ai_valuated_at)
         self.assertFalse(item.is_approved or item.is_available)
         self.assertEqual(self.valuate.call_count, 1)
+        self.assertEqual(self.valuate.call_args.kwargs['image_count'], 6)
+        self.assertEqual(len(self.valuate.call_args.kwargs['images']), 6)
+        self.assertFalse(os.path.exists(folder))
+
+    def test_claim_during_photo_encoding_preserves_all_job_inputs(self):
+        from valuator_client import encode_image_file_to_base64
+
+        user = self.make_user()
+        self.submit()
+        token = self.client.get_cookie(GUEST_COOKIE).value
+        folder = guests.record_dir(self.record().id)
+        claimed_items = []
+
+        def encode_then_claim(path):
+            encoded = encode_image_file_to_base64(path)
+            if not claimed_items:
+                claimed_items.append(guests.claim_for_user(user, token))
+            return encoded
+
+        with patch('valuator_client.encode_image_file_to_base64', side_effect=encode_then_claim):
+            self.run_jobs()
+
+        self.assertEqual(len(claimed_items), 1)
+        self.assertIsNotNone(claimed_items[0])
+        item = Item.query.one()
+        self.assertEqual(item.ai_estimated_value, 250000.0)
+        self.assertFalse(item.is_approved or item.is_available)
+        self.assertEqual(ItemImage.query.filter_by(item_id=item.id).count(), 6)
+        self.assertEqual(self.valuate.call_count, 1)
+        self.assertEqual(self.valuate.call_args.kwargs['image_count'], 6)
+        self.assertEqual(len(self.valuate.call_args.kwargs['images']), 6)
+        self.assertFalse(os.path.exists(folder))
+
+    def test_failed_job_after_claim_cleans_originals_and_keeps_item_photos(self):
+        user = self.make_user()
+        self.submit()
+        folder = guests.record_dir(self.record().id)
+        self.login(self.client, user)
+        self.valuate.return_value = {'success': False, 'error': 'temporary valuation failure'}
+
+        self.run_jobs()
+
+        item = Item.query.one()
+        self.assertIsNone(item.ai_estimated_value)
+        self.assertEqual(item.verification_status, 'valuation_unavailable')
+        self.assertIsNotNone(item.ai_valuated_at)
+        self.assertFalse(item.is_approved or item.is_available)
+        self.assertFalse(os.path.exists(folder))
+        self.assertEqual(len(item.images), 6)
+        self.assertTrue(all(os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], image.image_url))
+                            for image in item.images))
+        self.assertEqual(len(self.valuate.call_args.kwargs['images']), 6)
 
     # --- expiry ----------------------------------------------------------------------------------
     def test_unclaimed_records_and_photos_expire(self):
