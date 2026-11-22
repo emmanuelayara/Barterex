@@ -3,6 +3,7 @@
 {% block title %}Free Item Value Estimate | Barter Express{% endblock %}
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/item-form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/valuation-loader.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
 {% endblock %}
 
@@ -30,7 +31,7 @@
       <p class="gv-notice" role="status">Your last estimate could not be completed. You can try again.</p>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('guest_valuation.submit') }}" enctype="multipart/form-data" id="guestValueForm" class="gv-form no-loading" novalidate>
+    <form method="POST" action="{{ url_for('guest_valuation.submit') }}" enctype="multipart/form-data" id="guestValueForm" data-status-url="{{ url_for('guest_valuation.status') }}" class="gv-form no-loading" novalidate>
       {{ form.hidden_tag() }}
 
       <section class="gv-card" aria-labelledby="gvStep1">
@@ -144,15 +145,6 @@
       <div class="gv-submit">
         <p class="gv-notice gv-notice--error" id="guestFormError" role="alert" hidden></p>
         <button type="submit" class="gv-submit__btn" id="submitBtn"{% if not valuator_ready %} disabled{% endif %}>Get my free estimate</button>
-        <div class="gv-progress" id="uploadProgress" hidden aria-live="polite">
-          <div class="gv-progress__head">
-            <span id="uploadProgressLabel">Uploading photos...</span>
-            <span id="uploadProgressPercent">0%</span>
-          </div>
-          <div class="gv-progress__track" role="progressbar" aria-label="Upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-            <div class="gv-progress__bar" id="uploadProgressBar"></div>
-          </div>
-        </div>
         <p class="gv-login">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a> to use the full upload page.</p>
       </div>
     </form>
@@ -177,6 +169,29 @@
   </div>
 </dialog>
 
+<!-- Same valuation modal as the upload page: shown while the photos upload and the AI works -->
+<div class="ai-valuation-overlay" id="aiValuationOverlay" hidden>
+  <div class="ai-valuation-modal" role="dialog" aria-modal="true" aria-labelledby="aiValuationTitle">
+    <div class="ai-valuation-header">
+      <div>
+        <h3 class="ai-valuation-title" id="aiValuationTitle">AI Value Estimate</h3>
+        <p class="ai-valuation-subtitle" id="aiValuationSubtitle">Analyzing your item…</p>
+      </div>
+    </div>
+    <div class="ai-valuation-loading" id="aiValuationLoading" role="status">
+      <span class="aiv-sr">Estimating the value of your item. Please wait.</span>
+      <div aria-hidden="true">
+        <div class="aiv-orb"><div class="aiv-icon" id="aiLoaderIcon"></div></div>
+        <div class="aiv-phrase-wrap"><p class="aiv-phrase" id="aiLoaderPhrase">Initializing Valuation Engine…</p></div>
+        <div class="aiv-timer">Elapsed<strong id="aiLoaderTimer">0:00</strong></div>
+        <div class="aiv-bar"><span id="aiLoaderBar"></span></div>
+      </div>
+      <p class="ai-valuation-hint">This usually takes 30-45 seconds. Please keep this page open.</p>
+    </div>
+  </div>
+</div>
+
 <script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/valuation-loader.js') }}"></script>
 <script src="{{ url_for('static', filename='js/guest-valuation.js') }}"></script>
 {% endblock %}

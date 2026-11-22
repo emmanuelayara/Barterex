@@ -27,11 +27,15 @@
   const clearAllBtn = $('clearAllBtn');
   const submitBtn = $('submitBtn');
   const errorBox = $('guestFormError');
-  const progress = $('uploadProgress');
-  const progressLabel = $('uploadProgressLabel');
-  const progressPercent = $('uploadProgressPercent');
-  const progressBar = $('uploadProgressBar');
-  const progressTrack = progress.querySelector('[role="progressbar"]');
+  const overlay = $('aiValuationOverlay');
+  const subtitle = $('aiValuationSubtitle');
+  const loader = ValuationLoader.create({
+    loading: $('aiValuationLoading'),
+    icon: $('aiLoaderIcon'),
+    phrase: $('aiLoaderPhrase'),
+    timer: $('aiLoaderTimer'),
+    bar: $('aiLoaderBar')
+  });
   const photoMeterBar = $('photoMeterBar');
   const photoMeterText = $('photoMeterText');
 
@@ -407,11 +411,23 @@
     cameraStatus.textContent = 'Photos removed. Take at least ' + MIN_PHOTOS + ' new photos from different angles.';
   });
 
+  function openModal(message) {
+    subtitle.textContent = message;
+    overlay.hidden = false;
+    document.body.classList.add('item-camera-open');   // stops the page behind from scrolling
+    loader.start();
+  }
+
+  function closeModal() {
+    loader.stop();
+    overlay.hidden = true;
+    document.body.classList.remove('item-camera-open');
+  }
+
   function finishWithError(message) {
     showError(message);
     submitBtn.disabled = false;
     submitBtn.classList.remove('loading');
-    progress.hidden = true;
   }
 
   function markInvalid(...fields) {
@@ -464,28 +480,73 @@
 
     submitBtn.disabled = true;
     submitBtn.classList.add('loading');
-    progress.hidden = false;
+    openModal('Uploading your photos…');
     const xhr = new XMLHttpRequest();
     xhr.open('POST', form.action, true);
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.upload.addEventListener('progress', e => {
       if (!e.lengthComputable) return;
-      const percent = Math.min(99, Math.round(e.loaded / e.total * 100));
-      progressBar.style.width = percent + '%';
-      progressPercent.textContent = percent + '%';
-      progressTrack.setAttribute('aria-valuenow', percent);
+      subtitle.textContent = 'Uploading your photos… ' + Math.min(99, Math.round(e.loaded / e.total * 100)) + '%';
     });
     xhr.addEventListener('load', () => {
       let result = {};
       try { result = JSON.parse(xhr.responseText); } catch (error) { /* handled below */ }
-      if (result.success || (xhr.status === 409 && result.redirect_url)) {
-        progressLabel.textContent = 'Photos received. Opening your estimate...';
-        window.location.href = result.redirect_url;
+      if (xhr.status === 409 && result.redirect_url) {
+        window.location.href = result.redirect_url;   // this browser already has an estimate
         return;
       }
-      finishWithError(result.error || 'We could not submit your item. Please try again.');
+      if (!result.success) {
+        closeModal();
+        finishWithError(result.error || 'We could not submit your item. Please try again.');
+        return;
+      }
+      subtitle.textContent = 'Analyzing your item…';
+      pollForResult(result.redirect_url);
     });
-    xhr.addEventListener('error', () => finishWithError('Network error while uploading. Please try again.'));
+    xhr.addEventListener('error', () => {
+      closeModal();
+      finishWithError('Network error while uploading. Please try again.');
+    });
     xhr.send(data);
   });
+
+  // The AI runs in the background; wait here (with the loader) until it is ready, then open the result page.
+  function pollForResult(resultUrl) {
+    const statusUrl = form.dataset.statusUrl;
+    const giveUpAt = Date.now() + 5 * 60 * 1000;
+    let networkErrors = 0;
+
+    function next(delay) { setTimeout(check, delay); }
+
+    function check() {
+      if (Date.now() > giveUpAt) {
+        window.location.href = resultUrl;   // the result page keeps waiting and can be reopened later
+        return;
+      }
+      fetch(statusUrl, {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
+        .then(response => response.json().catch(() => ({status: 'missing'})))
+        .then(data => {
+          networkErrors = 0;
+          if (data.status === 'processing') {
+            next(2500);
+          } else if (data.status === 'ready') {
+            loader.finish(() => { window.location.href = resultUrl; });
+          } else {
+            closeModal();
+            finishWithError(data.status === 'failed'
+              ? (data.error || 'We could not estimate this item right now. Please try again.')
+              : 'Your estimate could not be found. Please try again.');
+          }
+        })
+        .catch(() => {
+          networkErrors += 1;
+          if (networkErrors >= 5) {
+            window.location.href = resultUrl;
+          } else {
+            next(4000);
+          }
+        });
+    }
+    next(2000);
+  }
 })();

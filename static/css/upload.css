@@ -156,13 +156,7 @@ html.dark-mode .upload-page .upload-counter { color: #ffb066; }
 .upload-page .upload-progress-bar { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--bx-orange), #ffb066); transition: width .25s ease; }
 .upload-page .upload-progress-status { margin-top: 8px; color: var(--bx-muted); font-size: .82rem; }
 
-/* ---------- AI valuation modal: bottom sheet on phones, same animations ---------- */
-.ai-valuation-overlay { align-items: flex-end; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-.ai-valuation-overlay .ai-valuation-modal {
-    max-width: 520px; max-height: 92vh; padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
-    border-radius: 24px 24px 0 0; background: var(--bx-surface); border-color: var(--bx-border);
-}
-.ai-valuation-overlay .ai-valuation-close { width: 44px; height: 44px; background: var(--bx-tint); font-size: 1.05rem; }
+/* ---------- AI valuation modal: result-state buttons (shell and loader are in valuation-loader.css) ---------- */
 .ai-valuation-overlay .ai-valuation-actions { display: flex; flex-direction: column-reverse; gap: 10px; }
 .ai-valuation-overlay .ai-valuation-btn { width: 100%; min-height: 50px; border-radius: 14px; font-size: .98rem; font-weight: 700; }
 .ai-valuation-overlay .ai-valuation-btn.primary { background: var(--bx-orange); color: #fff; border-color: transparent; box-shadow: 0 8px 18px rgba(255, 122, 0, .3); }
@@ -174,8 +168,6 @@ html.dark-mode .upload-page .upload-counter { color: #ffb066; }
     .upload-page .form-container { padding: 28px; }
     .upload-page .images-preview-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
     .upload-page .upload-actions { grid-template-columns: auto auto; justify-content: start; }
-    .ai-valuation-overlay { align-items: center; padding: 16px; }
-    .ai-valuation-overlay .ai-valuation-modal { border-radius: 24px; max-width: 440px; }
     .ai-valuation-overlay .ai-valuation-actions { flex-direction: row; justify-content: flex-end; }
     .ai-valuation-overlay .ai-valuation-btn { width: auto; min-width: 150px; }
 }

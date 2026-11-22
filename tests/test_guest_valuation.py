@@ -421,6 +421,9 @@ class GuestValuationTests(unittest.TestCase):
         html = page.get_data(as_text=True)
         self.assertIn('id="cameraPanel"', html)
         self.assertNotIn('type="file"', html)
+        for shared in ('id="aiValuationOverlay"', 'id="aiLoaderPhrase"', 'js/valuation-loader.js',
+                       'css/valuation-loader.css', 'data-status-url="/value/status"'):
+            self.assertIn(shared, html)
         value_page = self.client.get('/check-item-value').get_data(as_text=True)
         self.assertIn('/value/start?category=Phones', value_page)
 
