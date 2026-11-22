@@ -523,19 +523,33 @@
         window.location.href = resultUrl;   // the result page keeps waiting and can be reopened later
         return;
       }
-      fetch(statusUrl, {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
-        .then(response => response.json().catch(() => ({status: 'missing'})))
+      const controller = new AbortController();
+      const requestTimer = setTimeout(() => controller.abort(), 15000);
+      fetch(statusUrl, {
+        headers: {'Accept': 'application/json'},
+        credentials: 'same-origin',
+        signal: controller.signal
+      })
+        .then(response => {
+          if (response.status === 404) return {status: 'missing'};
+          if (!response.ok) throw new Error('Status request failed');
+          return response.json();
+        })
         .then(data => {
+          if (!data || !['processing', 'ready', 'failed', 'missing'].includes(data.status)) {
+            throw new Error('Invalid status response');
+          }
           networkErrors = 0;
           if (data.status === 'processing') {
             next(2500);
           } else if (data.status === 'ready') {
             loader.finish(() => { window.location.href = resultUrl; });
-          } else {
+          } else if (data.status === 'failed') {
             closeModal();
-            finishWithError(data.status === 'failed'
-              ? (data.error || 'We could not estimate this item right now. Please try again.')
-              : 'Your estimate could not be found. Please try again.');
+            finishWithError(data.error || 'We could not estimate this item right now. Please try again.');
+          } else {
+            // The result route handles expiry and estimates saved in another tab.
+            window.location.href = resultUrl;
           }
         })
         .catch(() => {
@@ -545,7 +559,8 @@
           } else {
             next(4000);
           }
-        });
+        })
+        .finally(() => clearTimeout(requestTimer));
     }
     next(2000);
   }
