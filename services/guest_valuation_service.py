@@ -204,7 +204,11 @@ def _store_result(record_id, fields):
             item = db.session.get(Item, record.claimed_item_id)
             if item is not None and item.ai_valuated_at is None:
                 _apply_ai_fields(item, record.ai_field_dict(), now)
+        # Capture this while the row is locked so completion and claim can safely race.
+        remove_private_photos = record.status == 'claimed'
         db.session.commit()
+        if remove_private_photos:
+            _remove_dir(record_id)
 
 
 def _apply_ai_fields(item, fields, valuated_at):
@@ -327,6 +331,8 @@ def _claim_record(user, record_id, now):
 
     record = db.session.get(GuestValuation, record_id)
     db.session.refresh(record)
+    # A queued/running job still reads the private originals, even after an account claims them.
+    valuation_finished = record.ai_valuated_at is not None
     copied = []
     try:
         item = Item(
@@ -351,14 +357,15 @@ def _claim_record(user, record_id, now):
             if os.path.isfile(path):
                 os.remove(path)
         raise
-    _remove_dir(record.id)
+    if valuation_finished:
+        _remove_dir(record_id)
     logger.info('Guest valuation %s claimed by user %s as item %s', record.id, user.id, item.id)
     return item
 
 
 def _copy_photos(record, item, copied):
     from image_analyzer import analyze_image_url
-    upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER'].lstrip('/')))
+    upload_root = os.path.normpath(os.path.join(app.root_path, app.config['UPLOAD_FOLDER']))
     os.makedirs(upload_root, exist_ok=True)
     stamp = int(time.time())
     for index, name in enumerate(record.image_file_list()):
