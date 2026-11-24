@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
+{% block title %}Swap Items and Trade by Barter in Nigeria | Barter Express{% endblock %}
+{% block meta_description %}Learn how to swap items across Nigeria with Barter Express, from a private valuation to marketplace reservations and verification.{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
+{% block content %}
+<div class="pp">
+    {% call pp.hero('fas fa-right-left', 'Trade by barter in Nigeria', 'How to swap items in Nigeria', 'Find out how Barter Express connects item valuations with marketplace swaps nationwide.') %}
+    <div class="pp-actions"><a class="pp-btn primary" href="{{ url_for('guest_valuation.start') }}">Check your item’s value</a> <a class="pp-btn" href="{{ url_for('marketplace.marketplace') }}">Browse the marketplace</a></div>
+    {% endcall %}
+    <main class="pp-main pp-stack">
+        <section class="pp-card">
+            <h2>How does trading by barter work?</h2>
+            <ol class="pp-steps">
+                <li class="pp-step"><h3>Check an item’s value</h3><p>Describe and photograph an item you own. You can start with a private estimate before deciding whether to create an account or trade.</p></li>
+                <li class="pp-step"><h3>Explore and reserve</h3><p>Browse approved marketplace listings and use Barter Express Credits (BXC), including eligible item-backed credits, to reserve an item.</p></li>
+                <li class="pp-step"><h3>Verify and collect</h3><p>Choose an available verification centre in your state. Required items are inspected before final acceptance, service-fee payment and collection at the centre.</p></li>
+            </ol>
+        </section>
+        <section class="pp-card">
+            <h2>Swapping across Nigeria</h2>
+            <p>Barter Express serves users nationwide. Browse the marketplace by state to see listed items; listings and verification-centre availability can vary by location. Check the available centres when making a reservation.</p>
+            <p>Items stay with their owners until needed for verification. A valuation is an estimate, not a guarantee of a swap. See <a href="{{ url_for('marketplace.how_it_works') }}">how it works</a> for the steps and fees.</p>
+            <div class="pp-actions"><a class="pp-btn" href="{{ url_for('seo.phone_valuation') }}">Value a phone</a> <a class="pp-btn" href="{{ url_for('seo.laptop_valuation') }}">Value a laptop</a></div>
+        </section>
+        {{ pp.explore('swap') }}
+    </main>
+</div>
+{% endblock %}

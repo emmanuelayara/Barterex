@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% import '_floaters.html' as fx %}
-{% block title %}Barter Express | Swap What You Have for What You Need{% endblock %}
-{% block meta_description %}Get your used phone or gadget valued for free, earn BXC credits and swap it for something you need. Cashless trading with verified items and members.{% endblock %}
+{% block title %}Barter Express | Trade by Barter in Nigeria{% endblock %}
+{% block meta_description %}Trade by barter in Nigeria. Check your item's value, earn BXC credits and explore phones, laptops and more on the Barter Express marketplace.{% endblock %}
 {% block robots %}index, follow{% endblock %}
 {% block structured_data %}
 <script type="application/ld+json">{{ {
@@ -23,8 +23,8 @@
   <section class="hm-hero">
     {{ fx.floaters('hero') }}
     <div class="hm-hero__copy">
-      <h1>Swap what you have for <em>what you need</em></h1>
-      <p class="hm-hero__sub">Don't let that item gather dust. Trade it for something you really want.</p>
+      <h1>Trade by barter in Nigeria: swap what you have for <em>what you need</em></h1>
+      <p class="hm-hero__sub">Check your item's value and explore things you can trade across Nigeria.</p>
     </div>
   </section>
 
@@ -32,14 +32,13 @@
 
     <section class="hm-start hm-reveal" aria-label="Get started">
       <div class="hm-actions">
+        <a href="{{ url_for('guest_valuation.start') }}" class="hm-btn primary"><i class="fas fa-magnifying-glass-dollar"></i> Check your item’s value</a>
         {% if current_user.is_authenticated %}
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSfgleoaXGXOV-bNH0rlJxOpbxH5419y8LS3c2su3nmzwUNy0A/viewform?usp=dialog" class="hm-btn primary"><i class="fas fa-rocket"></i> Join the Waitlist</a>
           <a href="{{ url_for('user.dashboard') }}" class="hm-btn ghost"><i class="fas fa-table-cells-large"></i> Your dashboard</a>
         {% else %}
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSfgleoaXGXOV-bNH0rlJxOpbxH5419y8LS3c2su3nmzwUNy0A/viewform?usp=dialog" class="hm-btn primary"><i class="fas fa-rocket"></i> Join the Waitlist</a>
           <a href="{{ url_for('marketplace.how_it_works') }}" class="hm-btn ghost">Learn how</a>
-          <a href="{{ url_for('seo.check_item_value') }}" class="hm-btn ghost"><i class="fas fa-magnifying-glass-dollar"></i> What's my item worth?</a>
         {% endif %}
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfgleoaXGXOV-bNH0rlJxOpbxH5419y8LS3c2su3nmzwUNy0A/viewform?usp=dialog" class="hm-btn ghost"><i class="fas fa-rocket"></i> Join the Waitlist</a>
       </div>
       <ul class="hm-trust">
         <li><i class="fas fa-coins"></i> Cashless with BXC</li>
@@ -134,6 +133,15 @@
         {% else %}
           <p class="hm-empty">No categories to show yet. Check back soon!</p>
         {% endfor %}
+      </div>
+    </section>
+
+    <section class="hm-section">
+      <div class="hm-head"><h2>Explore valuation and swapping guides</h2></div>
+      <div class="hm-cats">
+        <a class="hm-cat" href="{{ url_for('seo.phone_valuation') }}">Phone valuation in Nigeria</a>
+        <a class="hm-cat" href="{{ url_for('seo.laptop_valuation') }}">Laptop valuation in Nigeria</a>
+        <a class="hm-cat" href="{{ url_for('seo.swap_in_nigeria') }}">Swap items in Nigeria</a>
       </div>
     </section>
 

@@ -2,10 +2,12 @@ import json
 import os
 import re
 import unittest
+from xml.etree import ElementTree
 
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
 
 from app import app, db, limiter
+from models import Item
 
 
 class SeoPagesTests(unittest.TestCase):
@@ -77,6 +79,78 @@ class SeoPagesTests(unittest.TestCase):
                 any(path_of(location).startswith(p) for p in ('/admin', '/account', '/my', '/dashboard', '/upload', '/login')),
                 location,
             )
+
+    def test_public_listing_metadata_and_sitemap_exclude_private_items(self):
+        public = Item(name='iPhone 12 & case', description='A blue phone with 128GB storage.',
+                      category='Phones & Gadgets', condition='Like New', value=1000,
+                      status='approved', is_approved=True, is_available=True)
+        no_description = Item(name='Laptop X', category='Consumer Electronics', value=2000,
+                              status='approved', is_approved=True, is_available=True)
+        private = Item(name='Private valuation', category='Phones & Gadgets', value=3000,
+                       status='valuation_only', is_approved=False, is_available=False)
+        inconsistent = Item(name='Private inconsistent valuation', category='Phones & Gadgets', value=3000,
+                            status='valuation_only', is_approved=True, is_available=True)
+        unavailable = Item(name='Unavailable phone', category='Phones & Gadgets', value=1000,
+                           status='approved', is_approved=True, is_available=False)
+        no_value = Item(name='Unpriced phone', category='Phones & Gadgets',
+                        status='approved', is_approved=True, is_available=True)
+        db.session.add_all([public, no_description, private, inconsistent, unavailable, no_value])
+        db.session.commit()
+
+        locations = {node.text for node in ElementTree.fromstring(self.client.get('/sitemap.xml').data)
+                     .iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')}
+        for item in (public, no_description):
+            self.assertIn(f'{app.config["APP_URL"]}/item/{item.id}', locations)
+        for item in (private, inconsistent, unavailable, no_value):
+            self.assertNotIn(f'{app.config["APP_URL"]}/item/{item.id}', locations)
+
+        html = self.client.get(f'/item/{public.id}?source=test').get_data(as_text=True)
+        self.assertIn('<title>Barter Express - iPhone 12 &amp; case for Barter in Nigeria</title>', html)
+        self.assertIn('<meta name="description" content="A blue phone with 128GB storage.">', html)
+        self.assertIn('<meta name="robots" content="index, follow">', html)
+        self.assertIn(f'<link rel="canonical" href="{app.config["APP_URL"]}/item/{public.id}">', html)
+        self.assertEqual(html.count('property="og:title"'), 1)
+        fallback = self.client.get(f'/item/{no_description.id}').get_data(as_text=True)
+        self.assertIn('Explore Laptop X on Barter Express', fallback)
+        for item in (private, inconsistent):
+            response = self.client.get(f'/item/{item.id}')
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(response.headers.get('X-Robots-Tag'), 'noindex, nofollow')
+            self.assertNotIn(item.name, response.get_data(as_text=True))
+        html = self.client.get(f'/item/{unavailable.id}').get_data(as_text=True)
+        self.assertIn('<meta name="robots" content="noindex, nofollow">', html)
+        self.assertNotIn('rel="canonical"', html)
+        html = self.client.get(f'/item/{no_value.id}').get_data(as_text=True)
+        self.assertIn('<meta name="robots" content="noindex, nofollow">', html)
+        public.is_available = False
+        db.session.commit()
+        self.assertNotIn(f'{app.config["APP_URL"]}/item/{public.id}',
+                         self.client.get('/sitemap.xml').get_data(as_text=True))
+        self.assertIn('<meta name="robots" content="noindex, nofollow">',
+                      self.client.get(f'/item/{public.id}').get_data(as_text=True))
+
+    def test_nigeria_guides_and_homepage_are_discoverable(self):
+        home = self.client.get('/home').get_data(as_text=True)
+        self.assertIn('<title>Barter Express | Trade by Barter in Nigeria</title>', home)
+        self.assertIn('Check your item’s value', home)
+        self.assertRegex(home, r'href="/value/start" class="hm-btn primary"')
+        self.assertNotIn("What's my item worth?", home)
+        sitemap = self.client.get('/sitemap.xml').get_data(as_text=True)
+        for path, phrase in (
+            ('/phone-valuation-nigeria', 'used phone'),
+            ('/laptop-valuation-nigeria', 'used laptop'),
+            ('/swap-items-nigeria', 'swap items in nigeria'),
+        ):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                html = response.get_data(as_text=True)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('<meta name="robots" content="index, follow">', html)
+                self.assertIn(f'<link rel="canonical" href="{app.config["APP_URL"]}{path}">', html)
+                self.assertIn(phrase, html.lower())
+                self.assertIn(f'href="{path}"', home)
+                self.assertIn(f'{app.config["APP_URL"]}{path}', sitemap)
+                self.assertIn('href="/value/start', html)
 
 
 if __name__ == '__main__':

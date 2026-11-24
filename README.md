@@ -1,6 +1,19 @@
 # Barterex
 Trade by Barter
 
+## Search visibility
+
+Set `APP_URL` to the public site origin; it is used for canonical links and
+the sitemap. The sitemap includes public guides and item pages only while an
+item is approved, available, priced and in the approved state. Listings that
+leave those conditions are removed from the sitemap and are no longer indexable.
+Pre-listing valuations are private, and account, valuation and verification
+paths remain excluded from crawlers. Robots directives are not access control.
+
+The nationwide swapping guide does not promise a centre in every state:
+reservation requires an available verification centre in the buyer's state.
+The homepage is at `/home`; `/` currently opens the marketplace.
+
 ## Saving and acquiring items
 
 New Paystack funding and service-fee payment references use the `barterxpress-`

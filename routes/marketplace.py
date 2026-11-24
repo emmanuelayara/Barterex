@@ -90,7 +90,7 @@ def marketplace() -> Union[str, Response]:
 
         logger.info(f"Marketplace search - Page: {page}, Search: '{search}', Category: {category_filter}, Condition: {condition_filter}")
 
-        filters = [Item.is_approved == True, Item.is_available == True]
+        filters = [Item.is_public_listing]
 
         if condition_filter:
             filters.append(Item.condition == condition_filter)
@@ -194,6 +194,10 @@ def _get_or_create_og_preview_image(item_id, filename):
 def view_item(item_id: int) -> Union[str, Response]:
     try:
         item = Item.query.get_or_404(item_id)
+        if (not item.is_approved or item.status != 'approved') and (
+            not current_user.is_authenticated or current_user.id != item.user_id
+        ):
+            return '', 404, {'X-Robots-Tag': 'noindex, nofollow'}
         
         item_images = ItemImage.query.filter_by(item_id=item.id).order_by(ItemImage.order_index).all()
         
@@ -208,7 +212,7 @@ def view_item(item_id: int) -> Union[str, Response]:
         related_items = Item.query.options(joinedload(Item.user), joinedload(Item.images)).filter(
             Item.category == item.category,
             Item.id != item.id,
-            Item.is_available == True
+            Item.is_public_listing
         ).limit(5).all()
 
         is_favorited = False
@@ -240,7 +244,8 @@ def view_item(item_id: int) -> Union[str, Response]:
             'item_detail.html', item=item, item_images=item_images, related_items=related_items,
             is_favorited=is_favorited, csrf_token=generate_csrf, breadcrumbs=breadcrumbs,
             og_image_url=og_image_url, og_image_width=og_image_width, og_image_height=og_image_height,
-            active_reservation=active_reservation, reservation_hold_hours=RESERVATION_HOLD_HOURS
+            active_reservation=active_reservation, reservation_hold_hours=RESERVATION_HOLD_HOURS,
+            index_listing=item.is_public_listing,
         )
         
     except Exception as e:

@@ -23,6 +23,7 @@
     <meta name="robots" content="{{ robots_directive }}">
     {% if robots_directive.startswith('index') %}
     <link rel="canonical" href="{{ canonical_url }}">
+    {% block open_graph %}
     <meta property="og:site_name" content="Barter Express">
     <meta property="og:type" content="website">
     <meta property="og:title" content="{{ full_title }}">
@@ -30,6 +31,7 @@
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='logo.png') }}">
     <meta name="twitter:card" content="summary">
+    {% endblock %}
     {% endif %}
     {% block structured_data %}{% endblock %}
     <!-- Modern Design System CSS -->

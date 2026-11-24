@@ -344,6 +344,16 @@ class SecuritySettings(db.Model):
 
 
 class Item(db.Model):
+    @hybrid_property
+    def is_public_listing(self):
+        return bool(self.is_approved and self.is_available and
+                    self.status == 'approved' and self.value is not None)
+
+    @is_public_listing.expression
+    def is_public_listing(cls):
+        return (cls.is_approved.is_(True) & cls.is_available.is_(True) &
+                (cls.status == 'approved') & cls.value.isnot(None))
+
     def activation_credit_amount(self):
         """Use the accepted AI estimate or physically verified manual value."""
         import math

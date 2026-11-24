@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
+{% block title %}Used Phone Valuation in Nigeria | Barter Express{% endblock %}
+{% block meta_description %}Find out what affects a used phone's value in Nigeria and get an AI estimate before trading it on Barter Express.{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
+{% block content %}
+<div class="pp">
+    {% call pp.hero('fas fa-mobile-screen-button', 'Phone valuation in Nigeria', 'How much is my used phone worth?', 'Understand what affects your phone’s value and start a private estimate.') %}
+    <div class="pp-actions"><a class="pp-btn primary" href="{{ url_for('guest_valuation.start', category='Phones & Gadgets') }}">Check your item’s value</a></div>
+    {% endcall %}
+    <main class="pp-main pp-stack">
+        <section class="pp-card">
+            <h2>What affects a used phone’s value?</h2>
+            <ul class="pp-checks">
+                <li><strong>Model and storage:</strong> Include the exact model and storage capacity so it can be compared with similar phones.</li>
+                <li><strong>Condition and battery:</strong> Describe screen damage, scratches, battery health and any faults; photograph them clearly.</li>
+                <li><strong>Locks and repairs:</strong> Disclose account or network locks, replaced parts and previous repairs.</li>
+                <li><strong>Age and accessories:</strong> Say how long you have used it and which charger, box or accessories are included.</li>
+            </ul>
+        </section>
+        <section class="pp-card">
+            <h2>Get a phone estimate and explore a swap</h2>
+            <p>Add your phone’s details and photos to get an AI estimate. A guest can start without an account; the estimate is private and does not list the phone or add credits. The first valuation each day is free for account holders; additional valuations cost ₦150 each.</p>
+            <p>An estimate is not a guaranteed trade value. If you choose to trade, the item and its value are subject to review and physical verification. Your phone stays with you until it is needed for an exchange.</p>
+            <div class="pp-actions"><a class="pp-btn" href="{{ url_for('seo.swap_in_nigeria') }}">How swapping works</a> <a class="pp-btn" href="{{ url_for('seo.laptop_valuation') }}">Value a laptop</a></div>
+        </section>
+        {{ pp.explore('phone') }}
+    </main>
+</div>
+{% endblock %}

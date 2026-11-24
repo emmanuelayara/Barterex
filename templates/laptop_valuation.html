@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% import '_public_macros.html' as pp %}
+{% block title %}Used Laptop Valuation in Nigeria | Barter Express{% endblock %}
+{% block meta_description %}Learn what determines a used laptop's value in Nigeria, from specifications to condition, and start an AI estimate on Barter Express.{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block head_extra %}{{ pp.assets() }}{% endblock %}
+{% block content %}
+<div class="pp">
+    {% call pp.hero('fas fa-laptop', 'Laptop valuation in Nigeria', 'How much is my used laptop worth?', 'Prepare the details that help identify and value your laptop.') %}
+    <div class="pp-actions"><a class="pp-btn primary" href="{{ url_for('guest_valuation.start', category='Consumer Electronics') }}">Check your item’s value</a></div>
+    {% endcall %}
+    <main class="pp-main pp-stack">
+        <section class="pp-card">
+            <h2>What affects a laptop’s value?</h2>
+            <ul class="pp-checks">
+                <li><strong>Make and model:</strong> Give the model and, if known, the generation or year.</li>
+                <li><strong>Specifications:</strong> Include the processor, RAM, storage type and capacity, and graphics if applicable.</li>
+                <li><strong>Working condition:</strong> Describe the screen, keyboard, ports, battery, hinges and any faults or repairs.</li>
+                <li><strong>Accessories and locks:</strong> Mention the charger and other included accessories, and disclose any account or device-management lock.</li>
+            </ul>
+            <p>Clear photos and honest descriptions help the estimator compare like with like. Avoid including passwords or sensitive information in your listing.</p>
+        </section>
+        <section class="pp-card">
+            <h2>From laptop estimate to trade</h2>
+            <p>Submit your laptop details and photos for a private AI estimate. A guest can start without an account; this does not list the laptop or add credits. The first valuation each day is free for account holders; additional valuations cost ₦150 each.</p>
+            <p>The estimate can change after review and physical verification. If you decide to swap, explore available items and the verification process before reserving one.</p>
+            <div class="pp-actions"><a class="pp-btn" href="{{ url_for('seo.swap_in_nigeria') }}">How swapping works</a> <a class="pp-btn" href="{{ url_for('seo.phone_valuation') }}">Value a phone</a></div>
+        </section>
+        {{ pp.explore('laptop') }}
+    </main>
+</div>
+{% endblock %}
