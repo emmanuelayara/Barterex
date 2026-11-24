@@ -528,7 +528,7 @@
         .then(data => {
           networkErrors = 0;
           if (data.status === 'processing') {
-            next(2500);
+            next(1500);
           } else if (data.status === 'ready') {
             loader.finish(() => { window.location.href = resultUrl; });
           } else {
@@ -547,6 +547,6 @@
           }
         });
     }
-    next(2000);
+    next(1000);
   }
 })();

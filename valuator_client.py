@@ -194,8 +194,11 @@ def encode_image_bytes_to_base64(raw: bytes, label: str = '<upload>') -> str:
     try:
         from PIL import Image
         img = Image.open(io.BytesIO(raw))
+        original_side = max(img.size)
+        if img.format == 'JPEG' and original_side > MAX_IMAGE_SIDE:
+            img.draft('RGB', (MAX_IMAGE_SIDE, MAX_IMAGE_SIDE))   # decode at reduced size: much faster for big photos
         img.load()
-        if max(img.size) > MAX_IMAGE_SIDE or img.format not in ('JPEG', 'PNG'):
+        if original_side > MAX_IMAGE_SIDE or img.format not in ('JPEG', 'PNG'):
             if img.mode not in ('RGB', 'L'):
                 img = img.convert('RGB')
             img.thumbnail((MAX_IMAGE_SIDE, MAX_IMAGE_SIDE))

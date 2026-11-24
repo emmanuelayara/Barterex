@@ -131,7 +131,7 @@ def create_record(fields, photos):
             extension = 'jpg' if extension == 'jpeg' else extension
             stored = f'{index:02d}.{extension}'
             with open(os.path.join(folder, stored), 'wb') as handle:
-                handle.write(optimize_image_for_storage(data, extension))
+                handle.write(data)   # already validated; optimised later, only if the visitor claims it
             names.append(stored)
         record.image_files = json.dumps(names)
         db.session.commit()
@@ -144,6 +144,17 @@ def create_record(fields, photos):
     if not queue_valuator_task(run_valuation, record.id):
         _store_result(record.id, None)
     return record, token
+
+
+def _encode_photos(paths, encode, record_id):
+    """Shrink and encode the photos in order, skipping any that cannot be read."""
+    images = []
+    for path in paths:
+        try:
+            images.append(encode(path))
+        except Exception as error:
+            logger.warning('Guest valuation %s: skipped unreadable photo: %s', record_id, error)
+    return images
 
 
 def run_valuation(record_id):
@@ -167,12 +178,7 @@ def run_valuation(record_id):
                 sale_type='new' if record.condition.strip().lower() == 'brand new' else 'second_hand',
                 age_years=parse_usage_duration(usage), category=map_category_to_valuator(record.category),
             )
-        images = []
-        for path in paths[:MAX_IMAGES_SENT]:
-            try:
-                images.append(encode_image_file_to_base64(path))
-            except Exception as error:
-                logger.warning('Guest valuation %s: skipped unreadable photo: %s', record_id, error)
+        images = _encode_photos(paths[:MAX_IMAGES_SENT], encode_image_file_to_base64, record_id)
         response = client.valuate(image_count=len(paths), images=images, account_days=0, **job)
         _store_result(record_id, extract_item_ai_fields(response) if response.get('success') else None)
     except Exception:
@@ -373,7 +379,16 @@ def _copy_photos(record, item, copied):
         extension = name.rsplit('.', 1)[1]
         stored = f'{item.id}_{index}_{stamp}_{secrets.token_hex(4)}.{extension}'
         destination = os.path.join(upload_root, stored)
-        shutil.copyfile(source, destination)
+        # Guest photos are saved untouched so the estimate starts fast; they get the normal
+        # storage optimisation here, once, and only for visitors who actually keep them.
+        with open(source, 'rb') as original:
+            data = original.read()
+        try:
+            data = optimize_image_for_storage(data, extension.lower())
+        except Exception as error:
+            logger.warning('Could not optimise guest photo %s, keeping the original: %s', name, error)
+        with open(destination, 'wb') as handle:
+            handle.write(data)
         copied.append(destination)
         analysis = {}
         try:
