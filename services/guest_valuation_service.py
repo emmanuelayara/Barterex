@@ -13,6 +13,8 @@ import os
 import secrets
 import shutil
 import time
+import threading
+import weakref
 from datetime import datetime, timedelta
 
 from flask import current_app, request
@@ -39,6 +41,47 @@ AI_ITEM_FIELDS = (
     'ai_value_range_high', 'ai_risk_score', 'ai_risk_level', 'ai_risk_flags', 'ai_sources_used',
     'valuator_valuation_id', 'verification_status', 'verification_notes',
 )
+
+
+# Bound only the original-photo bytes retained across queued/running guest jobs.
+# Each Gunicorn process has its own budget; larger/busy uploads use the saved files.
+PHOTO_MEMORY_BUDGET = 32 * 1024 * 1024
+_photo_memory_lock = threading.Lock()
+_photo_memory_used = 0
+
+
+class _RetainedPhotos(list):
+    """List-compatible photo handoff with an idempotent memory reservation."""
+
+
+def _release_photo_bytes(size):
+    global _photo_memory_used
+    with _photo_memory_lock:
+        _photo_memory_used -= size
+
+
+def _retain_photos(photos):
+    global _photo_memory_used
+    size = sum(len(data) for _, data in photos)
+    with _photo_memory_lock:
+        if size > PHOTO_MEMORY_BUDGET - _photo_memory_used:
+            return None
+        _photo_memory_used += size
+    try:
+        batch = _RetainedPhotos(data for _, data in photos)
+        # Also release a reservation if a queued task is cancelled or never retained.
+        batch._release_memory = weakref.finalize(batch, _release_photo_bytes, size)
+        return batch
+    except Exception:
+        _release_photo_bytes(size)
+        logger.warning('Guest photo buffer unavailable; using saved photos.', exc_info=True)
+        return None
+
+
+def _release_retained_photos(photos):
+    if isinstance(photos, _RetainedPhotos):
+        photos.clear()
+        photos._release_memory()
 
 
 def new_token():
@@ -140,12 +183,13 @@ def create_record(fields, photos):
         raise
 
     from valuator_client import queue_valuator_task
-    # The job gets the photos straight from this request, so it doesn't re-read them from disk.
-    # The saved copies are only needed if the visitor later keeps the estimate (or the job restarts).
-    in_memory = [data for _, data in photos]
+    # Reuse uploaded bytes only while the process-wide photo budget has room.
+    # Disk copies remain available for claims and for jobs without an in-memory handoff.
+    in_memory = _retain_photos(photos)
     if not queue_valuator_task(run_valuation, record.id, in_memory):
+        _release_retained_photos(in_memory)
         _store_result(record.id, None)
-    purge_expired()   # housekeeping runs after the job is queued so it never delays an estimate
+    purge_expired()   # queued work can start first; this request still waits for cleanup
     return record, token
 
 
@@ -164,7 +208,8 @@ def run_valuation(record_id, raw_photos=None):
     """Background job: one AI call for the record, stored on the record (never re-run).
 
     `raw_photos` are the uploaded photo bytes when the job starts straight from the upload request;
-    without them (retries, restarts) the saved copies on disk are used.
+    without them the saved copies on disk are used. The process-local queue does not
+    automatically resume jobs after a server restart.
     """
     from valuator_client import (
         MAX_IMAGES_SENT, client, encode_image_bytes_to_base64, encode_image_file_to_base64,
@@ -191,6 +236,7 @@ def run_valuation(record_id, raw_photos=None):
         else:
             images = _encode_photos(paths[:MAX_IMAGES_SENT], encode_image_file_to_base64, record_id)
             photo_count = len(paths)
+        _release_retained_photos(raw_photos)   # release originals before waiting on the API
         response = client.valuate(image_count=photo_count, images=images, account_days=0, **job)
         _store_result(record_id, extract_item_ai_fields(response) if response.get('success') else None)
     except Exception:
@@ -199,6 +245,8 @@ def run_valuation(record_id, raw_photos=None):
             _store_result(record_id, None)
         except Exception:
             logger.error('Could not record failure for guest valuation %s', record_id, exc_info=True)
+    finally:
+        _release_retained_photos(raw_photos)
 
 
 def _store_result(record_id, fields):
