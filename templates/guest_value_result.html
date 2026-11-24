@@ -4,7 +4,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/item-form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/valuation-loader.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/guest-result.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/guest-result.css', v='cdab0f1-1') }}">
 {% endblock %}
 
 {% block content %}
@@ -155,5 +155,5 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/valuation-loader.js') }}"></script>
-<script src="{{ url_for('static', filename='js/guest-result.js') }}"></script>
+<script src="{{ url_for('static', filename='js/guest-result.js', v='cdab0f1-1') }}"></script>
 {% endblock %}
