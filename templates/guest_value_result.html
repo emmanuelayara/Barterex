@@ -1,107 +1,159 @@
 {% extends 'base.html' %}
-{% import '_public_macros.html' as pp %}
+{% import '_floaters.html' as fx %}
 {% block title %}Your Free Item Estimate | Barter Express{% endblock %}
-{% block head_extra %}{{ pp.assets() }}{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/item-form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/valuation-loader.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/guest-result.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="pp">
-    {% call pp.hero('fas fa-magnifying-glass-dollar', 'Free estimate', record.name, 'Your private estimate. Only this browser can see it.') %}{% endcall %}
+{% set confidence_levels = {'high': 4, 'medium': 3, 'low': 2, 'very_low': 1} %}
+{% set confidence_labels = {'high': 'High', 'medium': 'Good', 'low': 'Fair', 'very_low': 'Low'} %}
+<div class="gv gv--result">
+  <header class="gv-hero">
+    {{ fx.floaters('banner') }}
+    <div class="gv-hero__inner">
+      <span class="gv-kicker">{{ 'Your estimate is ready' if record.status == 'ready' else 'Free estimate' }}</span>
+      <h1>{{ record.name }}</h1>
+      <ul class="gv-chips" aria-label="Item details">
+        <li>{{ record.category }}</li>
+        <li>{{ record.condition }}</li>
+        <li>&#128274; Private to this browser</li>
+      </ul>
+    </div>
+  </header>
 
-    <main class="pp-main pp-stack">
-        {% if record.status == 'processing' %}
-        <section class="pp-card" id="processing" role="status" aria-live="polite">
-            <div class="pp-section-head">
-                <span class="pp-icon"><i class="fas fa-hourglass-half"></i></span>
-                <h2>Estimating your item…</h2>
-            </div>
-            <p class="pp-lead">This usually takes under a minute. You can leave this page open, or come back on this browser later; your estimate keeps running.</p>
-        </section>
+  <main class="gv-main">
+    {% if record.status == 'processing' %}
+    <section class="gv-card gr-wait gr-rise" id="grWaiting" data-status-url="{{ url_for('guest_valuation.status') }}" aria-live="polite">
+      <h2>Estimating your item…</h2>
+      <p class="gr-wait__sub">This usually takes under a minute. You can keep this page open, or come back on this browser later. Your estimate keeps running.</p>
+      <div class="ai-valuation-loading" id="aiValuationLoading" role="status">
+        <span class="aiv-sr">Estimating the value of your item. Please wait.</span>
+        <div aria-hidden="true">
+          <div class="aiv-orb"><div class="aiv-icon" id="aiLoaderIcon"></div></div>
+          <div class="aiv-phrase-wrap"><p class="aiv-phrase" id="aiLoaderPhrase">Initializing Valuation Engine…</p></div>
+          <div class="aiv-timer">Elapsed<strong id="aiLoaderTimer">0:00</strong></div>
+          <div class="aiv-bar"><span id="aiLoaderBar"></span></div>
+        </div>
+      </div>
+    </section>
 
-        {% elif record.status == 'ready' %}
-        <section class="pp-card">
-            <div class="pp-section-head">
-                <span class="pp-icon green"><i class="fas fa-circle-check"></i></span>
-                <h2>Estimated value</h2>
-            </div>
-            <p class="pp-lead" style="font-size:2rem;font-weight:800">ᗸ{{ '{:,.0f}'.format(result.estimated_value) }}</p>
-            {% if result.low and result.high %}
-            <p class="pp-muted">Likely range: ᗸ{{ '{:,.0f}'.format(result.low) }} to ᗸ{{ '{:,.0f}'.format(result.high) }}</p>
-            {% endif %}
-            <p class="pp-muted">
-                {% if result.confidence %}Confidence: {{ result.confidence|replace('_', ' ')|capitalize }}.{% endif %}
-                {% if result.market_listings %}Based on {{ result.market_listings }} comparable listing{{ '' if result.market_listings == 1 else 's' }}.{% endif %}
-            </p>
-            <div class="pp-callout warn">
-                <i class="fas fa-circle-info"></i>
-                <div>AI estimate only. Nothing has been listed and no BXC has been added. The final value is confirmed at physical verification.</div>
-            </div>
-        </section>
+    {% elif record.status == 'ready' %}
+    <section class="gr-value gr-rise" aria-labelledby="grValueLabel">
+      <span class="gr-badge"><i class="fas fa-circle-check"></i> AI estimate</span>
+      <p class="gr-label" id="grValueLabel">Estimated value</p>
+      <p class="gr-amount"><span class="gr-amount__unit">BXC</span><span data-count-to="{{ result.estimated_value|round|int }}">{{ '{:,.0f}'.format(result.estimated_value) }}</span></p>
 
-        <section class="pp-card">
-            <div class="pp-section-head">
-                <span class="pp-icon blue"><i class="fas fa-floppy-disk"></i></span>
-                <h2>Save it to your account</h2>
-            </div>
-            {% if current_user.is_authenticated %}
-            <p>Add this estimate and your photos to your account. You will not need to upload again or pay for another valuation.</p>
-            <form method="post" action="{{ url_for('guest_valuation.claim') }}" class="pp-actions" style="margin-top:14px">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="pp-btn primary"><i class="fas fa-floppy-disk"></i> Save to my account</button>
-            </form>
-            {% else %}
-            <p>Create a free account or log in and this exact estimate, with your photos, opens straight away. No second upload and no second valuation.</p>
-            <div class="pp-actions" style="margin-top:14px">
-                <a class="pp-btn primary" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Create free account</a>
-                <a class="pp-btn" href="{{ url_for('auth.login') }}"><i class="fas fa-right-to-bracket"></i> Log in</a>
-            </div>
-            <p class="pp-muted" style="margin-top:12px">Unsaved estimates are deleted {{ record.expires_at.strftime('%d %b %Y, %H:%M') }} UTC. If you register, verify your email and log in to finish saving it.</p>
-            {% endif %}
-        </section>
+      {% if result.low and result.high and result.high > result.low %}
+      {% set position = [[((result.estimated_value - result.low) / (result.high - result.low) * 100), 0]|max, 100]|min %}
+      <div class="gr-range" role="img" aria-label="Likely range ᗸ{{ '{:,.0f}'.format(result.low) }} to ᗸ{{ '{:,.0f}'.format(result.high) }}">
+        <div class="gr-range__track"><span class="gr-range__marker" style="left: {{ position|round(1) }}%"></span></div>
+        <div class="gr-range__ends">
+          <span>Low<strong>ᗸ{{ '{:,.0f}'.format(result.low) }}</strong></span>
+          <span>High<strong>ᗸ{{ '{:,.0f}'.format(result.high) }}</strong></span>
+        </div>
+      </div>
+      {% endif %}
 
-        {% else %}
-        <section class="pp-card" role="alert">
-            <div class="pp-section-head">
-                <span class="pp-icon"><i class="fas fa-triangle-exclamation"></i></span>
-                <h2>We could not finish this estimate</h2>
-            </div>
-            <p>{{ record.error_message or 'We could not estimate this item right now. Please try again.' }}</p>
-            <div class="pp-actions" style="margin-top:14px">
-                <a class="pp-btn primary" href="{{ url_for('guest_valuation.start') }}"><i class="fas fa-rotate-right"></i> Try again</a>
-            </div>
-        </section>
+      {% set level = confidence_levels.get(result.confidence, 0) %}
+      {% if level or result.market_listings %}
+      <div class="gr-stats">
+        {% if level %}
+        <div class="gr-stat">
+          <div class="gr-stat__k">Confidence</div>
+          <div class="gr-stat__v">{{ confidence_labels[result.confidence] }}</div>
+          <div class="gr-conf" aria-hidden="true">{% for i in range(1, 5) %}<span{% if i <= level %} class="is-on"{% endif %}></span>{% endfor %}</div>
+        </div>
         {% endif %}
-
-        {% if photo_count and record.status != 'failed' %}
-        <section class="pp-card">
-            <div class="pp-section-head">
-                <span class="pp-icon blue"><i class="fas fa-images"></i></span>
-                <h2>Your photos ({{ photo_count }})</h2>
-            </div>
-            <div class="pp-grid cols-3">
-                {% for index in range(photo_count) %}
-                <img src="{{ url_for('guest_valuation.photo', index=index) }}" alt="Photo {{ index + 1 }} of {{ record.name }}" loading="lazy" decoding="async" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px">
-                {% endfor %}
-            </div>
-            <p class="pp-muted" style="margin-top:10px">These photos are private to this browser until you save them to an account.</p>
-        </section>
+        {% if result.market_listings %}
+        <div class="gr-stat">
+          <div class="gr-stat__k">Compared with</div>
+          <div class="gr-stat__v">{{ result.market_listings }} listing{{ '' if result.market_listings == 1 else 's' }}</div>
+          <div class="gr-stat__k" style="margin-top:4px;text-transform:none;letter-spacing:0;font-weight:500">on the market</div>
+        </div>
         {% endif %}
-    </main>
+      </div>
+      {% endif %}
+
+      <div class="gr-disclaimer">
+        <i class="fas fa-circle-info" aria-hidden="true"></i>
+        <div>This is an AI estimate. Nothing has been listed and no BXC has been added. The final value is confirmed at physical verification.</div>
+      </div>
+    </section>
+
+    <section class="gr-cta gr-rise" aria-labelledby="grCtaTitle">
+      {% if current_user.is_authenticated %}
+      <h2 id="grCtaTitle">Save this estimate to your account</h2>
+      <p class="gr-cta__lead">It opens in your valuations with your photos. No second upload, no second valuation.</p>
+      <form method="post" action="{{ url_for('guest_valuation.claim') }}" class="gr-actions">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="gr-btn gr-btn--primary"><i class="fas fa-floppy-disk"></i> Save to my account</button>
+      </form>
+      {% else %}
+      <h2 id="grCtaTitle">Keep this estimate: it's free</h2>
+      <p class="gr-cta__lead">Create an account and this exact estimate opens straight away.</p>
+      <ul class="gr-perks">
+        <li><span class="gr-perks__ico" aria-hidden="true">&#9889;</span><div><strong>Opens instantly</strong><span class="gr-perks__txt">No second upload and no second valuation.</span></div></li>
+        <li><span class="gr-perks__ico" aria-hidden="true">&#128247;</span><div><strong>Your photos come with it</strong><span class="gr-perks__txt">Everything you submitted is saved with the estimate.</span></div></li>
+        <li><span class="gr-perks__ico" aria-hidden="true">&#128274;</span><div><strong>You stay in control</strong><span class="gr-perks__txt">Nothing is listed and no BXC is added until you choose.</span></div></li>
+        <li><span class="gr-perks__ico" aria-hidden="true">&#127873;</span><div><strong>Free to join</strong><span class="gr-perks__txt">No sign-up fee. Your first valuation each day is free.</span></div></li>
+      </ul>
+      <div class="gr-actions">
+        <a class="gr-btn gr-btn--primary" href="{{ url_for('auth.register') }}"><i class="fas fa-user-plus"></i> Create free account</a>
+        <a class="gr-btn gr-btn--ghost" href="{{ url_for('auth.login') }}"><i class="fas fa-right-to-bracket"></i> Log in</a>
+      </div>
+      <div class="gr-steps">
+        <p class="gr-steps__title">What happens next</p>
+        <ol style="list-style:none">
+          <li>Create your free account</li>
+          <li>Verify your email</li>
+          <li>Log in and your estimate opens automatically</li>
+        </ol>
+      </div>
+      <p class="gr-expiry"><i class="fas fa-clock" aria-hidden="true"></i><span>Unsaved estimates are deleted in <strong data-expires="{{ record.expires_at.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ record.expires_at.strftime('%d %b %Y, %H:%M') }} UTC</strong>.</span></p>
+      {% endif %}
+    </section>
+
+    {% else %}
+    <section class="gv-card gr-fail gr-rise" role="alert">
+      <div class="gr-fail__ico" aria-hidden="true">&#9888;&#65039;</div>
+      <h2>We could not finish this estimate</h2>
+      <p>{{ record.error_message or 'We could not estimate this item right now. Please try again.' }}</p>
+      <div class="gr-actions">
+        <a class="gr-btn gr-btn--primary" href="{{ url_for('guest_valuation.start') }}"><i class="fas fa-rotate-right"></i> Try again</a>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if photo_count and record.status != 'failed' %}
+    <section class="gv-card gr-rise" aria-labelledby="grPhotosTitle">
+      <div class="gv-card__head">
+        <span class="gv-step" aria-hidden="true">&#128247;</span>
+        <div>
+          <h2 id="grPhotosTitle">Your photos ({{ photo_count }})</h2>
+          <p>Tap a photo to enlarge it.</p>
+        </div>
+      </div>
+      <div class="gr-photos">
+        {% for index in range(photo_count) %}
+        {% set src = url_for('guest_valuation.photo', index=index) %}
+        <button type="button" class="gr-photo" data-photo="{{ src }}" data-alt="Photo {{ index + 1 }} of {{ record.name }}" aria-label="View photo {{ index + 1 }}">
+          <img src="{{ src }}" alt="" loading="lazy" decoding="async">
+        </button>
+        {% endfor %}
+      </div>
+      <p class="gr-photos-note">&#128274; These photos are private to this browser until you save them to an account.</p>
+    </section>
+    <dialog class="gr-lightbox" id="grLightbox" aria-label="Photo viewer">
+      <div class="gr-lightbox__bar"><span data-caption></span><button type="button" aria-label="Close photo">&#10005;</button></div>
+      <img src="" alt="">
+    </dialog>
+    {% endif %}
+  </main>
 </div>
 
-{% if record.status == 'processing' %}
-<script>
-(function () {
-  var statusUrl = {{ url_for('guest_valuation.status')|tojson }};
-  function poll() {
-    fetch(statusUrl, {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
-      .then(function (r) { return r.ok ? r.json() : {status: 'missing'}; })
-      .then(function (data) {
-        if (data.status === 'processing') { setTimeout(poll, 3000); } else { window.location.reload(); }
-      })
-      .catch(function () { setTimeout(poll, 5000); });
-  }
-  setTimeout(poll, 3000);
-})();
-</script>
-{% endif %}
+<script src="{{ url_for('static', filename='js/valuation-loader.js') }}"></script>
+<script src="{{ url_for('static', filename='js/guest-result.js') }}"></script>
 {% endblock %}
