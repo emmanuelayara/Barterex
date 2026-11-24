@@ -1236,8 +1236,8 @@
   }
 </style>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/valuation-loader.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css', v='20261122-loader2') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/valuation-loader.css', v='20261122-loader2') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/item-form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/camera.css') }}">
 
@@ -1498,7 +1498,7 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/camera.js') }}"></script>
-<script src="{{ url_for('static', filename='js/valuation-loader.js') }}"></script>
+<script src="{{ url_for('static', filename='js/valuation-loader.js', v='20261122-loader2') }}"></script>
 <script>
   // Show the "how long used" field only when condition is "Fairly Used"
   const conditionSelect = document.getElementById('condition');
