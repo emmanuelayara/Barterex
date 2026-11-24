@@ -112,7 +112,6 @@ def create_record(fields, photos):
     `fields` holds already-validated name/description/condition/usage_duration/category and `photos`
     already-validated (filename, bytes) pairs. Returns (record, raw_token).
     """
-    purge_expired()
     token = new_token()
     now = datetime.utcnow()
     record = GuestValuation(
@@ -141,27 +140,35 @@ def create_record(fields, photos):
         raise
 
     from valuator_client import queue_valuator_task
-    if not queue_valuator_task(run_valuation, record.id):
+    # The job gets the photos straight from this request, so it doesn't re-read them from disk.
+    # The saved copies are only needed if the visitor later keeps the estimate (or the job restarts).
+    in_memory = [data for _, data in photos]
+    if not queue_valuator_task(run_valuation, record.id, in_memory):
         _store_result(record.id, None)
+    purge_expired()   # housekeeping runs after the job is queued so it never delays an estimate
     return record, token
 
 
-def _encode_photos(paths, encode, record_id):
+def _encode_photos(sources, encode, record_id):
     """Shrink and encode the photos in order, skipping any that cannot be read."""
     images = []
-    for path in paths:
+    for source in sources:
         try:
-            images.append(encode(path))
+            images.append(encode(source))
         except Exception as error:
             logger.warning('Guest valuation %s: skipped unreadable photo: %s', record_id, error)
     return images
 
 
-def run_valuation(record_id):
-    """Background job: one AI call for the record, stored on the record (never re-run)."""
+def run_valuation(record_id, raw_photos=None):
+    """Background job: one AI call for the record, stored on the record (never re-run).
+
+    `raw_photos` are the uploaded photo bytes when the job starts straight from the upload request;
+    without them (retries, restarts) the saved copies on disk are used.
+    """
     from valuator_client import (
-        MAX_IMAGES_SENT, client, encode_image_file_to_base64, extract_item_ai_fields,
-        map_category_to_valuator, map_condition_to_valuator, parse_usage_duration,
+        MAX_IMAGES_SENT, client, encode_image_bytes_to_base64, encode_image_file_to_base64,
+        extract_item_ai_fields, map_category_to_valuator, map_condition_to_valuator, parse_usage_duration,
     )
     try:
         with app.app_context():
@@ -178,8 +185,13 @@ def run_valuation(record_id):
                 sale_type='new' if record.condition.strip().lower() == 'brand new' else 'second_hand',
                 age_years=parse_usage_duration(usage), category=map_category_to_valuator(record.category),
             )
-        images = _encode_photos(paths[:MAX_IMAGES_SENT], encode_image_file_to_base64, record_id)
-        response = client.valuate(image_count=len(paths), images=images, account_days=0, **job)
+        if raw_photos:
+            images = _encode_photos(raw_photos[:MAX_IMAGES_SENT], encode_image_bytes_to_base64, record_id)
+            photo_count = len(raw_photos)
+        else:
+            images = _encode_photos(paths[:MAX_IMAGES_SENT], encode_image_file_to_base64, record_id)
+            photo_count = len(paths)
+        response = client.valuate(image_count=photo_count, images=images, account_days=0, **job)
         _store_result(record_id, extract_item_ai_fields(response) if response.get('success') else None)
     except Exception:
         logger.error('Guest valuation job failed for record %s', record_id, exc_info=True)

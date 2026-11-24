@@ -170,6 +170,23 @@ class GuestValuationTests(unittest.TestCase):
         self.assertEqual(GuestValuation.query.count(), 0)
         self.assertFalse(os.path.exists(os.path.join(self.folder, 'guests')) and os.listdir(os.path.join(self.folder, 'guests')))
 
+    def test_estimate_starts_from_the_uploaded_photos_without_rereading_the_disk(self):
+        jobs = []
+        with patch('valuator_client.queue_valuator_task', lambda fn, *args: jobs.append(args) or True), \
+                patch('valuator_client.encode_image_file_to_base64') as from_disk:
+            self.assertEqual(self.submit().status_code, 200)
+            record_id, photos = jobs[0]
+            self.assertEqual(len(photos), 6)
+            self.assertTrue(all(isinstance(data, bytes) for data in photos))
+            run_valuation(record_id, photos)
+        from_disk.assert_not_called()
+        db.session.expire_all()
+        self.assertEqual(self.record().status, 'ready')
+        self.assertEqual(self.valuate.call_count, 1)
+        self.assertEqual(self.valuate.call_args.kwargs['image_count'], 6)
+        self.assertEqual(len(self.valuate.call_args.kwargs['images']), 6)
+        self.assertEqual(len(self.record().image_file_list()), 6)   # saved copies still exist for claiming
+
     def test_failed_estimate_can_be_retried(self):
         self.valuate.return_value = {'success': False, 'error': 'valuator exploded'}
         self.submit()
